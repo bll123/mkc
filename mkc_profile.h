@@ -57,6 +57,7 @@ mkc_profidx_t mkc_profile_iter_next (mkc_profile_t *profiles, mkc_profidx_t *ite
 
 const char * mkc_profile_get_name (mkc_profile_t *profiles, mkc_profidx_t pidx);
 mkc_prof_comp_t mkc_profile_get_compiler (mkc_profile_t *profiles, mkc_profidx_t pidx);
+const char * mkc_profile_get_comp_name (mkc_profile_t *profiles, mkc_profidx_t pidx);
 mkc_prof_type_t mkc_profile_get_type (mkc_profile_t *profiles, mkc_profidx_t pidx);
 
 mkc_profidx_t mkc_profile_push (mkc_profile_t *profiles);

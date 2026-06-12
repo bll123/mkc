@@ -18,6 +18,8 @@ extern "C" {
 
 typedef struct mkc_check_t mkc_check_t;
 
+extern const char * const mkctestcompflags;
+
 mkc_check_t *mkc_check_init (mkc_profile_t *profiles, mkc_pvar_t *pvar, mkc_log_t *log, mkc_error_t *mkcerr);
 void mkc_check_free (mkc_check_t *check);
 

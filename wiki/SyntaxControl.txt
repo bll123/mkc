@@ -39,6 +39,11 @@
       _statement-list_
     }
 
+__break__ and __continue__ statements may appear in while loops.
+
+    break;
+    continue;
+
 #### foreach statement (not yet implemented)
 
 [Wiki Home](Home)

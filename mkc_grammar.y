@@ -121,6 +121,7 @@
 %token T_ADD_LINK_FLAG        "add_link_flag"
 
 // attributes
+%token T_ATTR_COMP_FLAGS      "compflags"
 %token T_ATTR_HEADER          "header"
 %token T_ATTR_SOURCE          "source"
 %token T_ATTR_NAME            "name"
@@ -145,7 +146,7 @@
 %type <astnode> printstmt setstmt
 %type <astnode> checkcommand compflag linkflag chksize chktype chkstructmember
 %type <astnode> chkfunction
-%type <astnode> name source header negate
+%type <astnode> name source header compflags negate
 
 // precedence rules: the lowest precedence comes first
 %left T_OP_OR
@@ -230,6 +231,10 @@ stmt_any[v]:
 
 attr[v]:
     name[a]
+    {
+      $v = $a;
+    }
+  | compflags[a]
     {
       $v = $a;
     }
@@ -575,7 +580,18 @@ header[v]:
     T_ATTR_HEADER pathlist[l] T_SEMICOLON
     {
       $v = NULL;
-      $v = mkc_ast_mk_attr_header (ast, $l, yylloc.first_line, yylloc.first_column);
+      $v = mkc_ast_mk_attr_header (ast, $l,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+/* a list of compile files */
+compflags[v]:
+    T_ATTR_COMP_FLAGS valuelist[l] T_SEMICOLON
+    {
+      $v = NULL;
+      $v = mkc_ast_mk_attr_compflags (ast, $l,
+          yylloc.first_line, yylloc.first_column);
     }
   ;
 

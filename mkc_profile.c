@@ -325,6 +325,15 @@ mkc_profile_get_compiler (mkc_profile_t *profiles, mkc_profidx_t pidx)
   return pentry->compiler;
 }
 
+const char *
+mkc_profile_get_comp_name (mkc_profile_t *profiles, mkc_profidx_t pidx)
+{
+  mkc_prof_comp_t   compiler;
+
+  compiler = mkc_profile_get_compiler (profiles, pidx);
+  return compnames [compiler];
+}
+
 mkc_prof_type_t
 mkc_profile_get_type (mkc_profile_t *profiles, mkc_profidx_t pidx)
 {

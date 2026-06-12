@@ -23,6 +23,7 @@
 #include "mkc_var.h"
 
 static const char *typenames [MKC_T_MAX] = {
+  [MKC_T_ATTR_COMP_FLAGS] = "attr_comp_flags",
   [MKC_T_ATTR_HEADER] = "attr_header",
   [MKC_T_ATTR_NAME] = "attr_name",
   [MKC_T_ATTR_NEGATE] = "attr_negate",
@@ -193,8 +194,13 @@ typedef struct mkc_ast_attr_header_t {
   mkc_astnode_t     *hdrlist;
 } mkc_ast_attr_header_t;
 
+typedef struct mkc_ast_attr_compflag_t {
+  mkc_astnode_t     *compflaglist;
+} mkc_ast_attr_compflag_t;
+
 typedef struct mkc_astnode_t {
   union {
+    mkc_ast_attr_compflag_t     compflagattr;
     mkc_ast_attr_header_t       hdrattr;
     mkc_ast_attr_name_t         nameattr;
     mkc_ast_chk_comp_flag_t     chkcompflag;
@@ -225,20 +231,20 @@ typedef struct mkc_astnode_t {
 } mkc_astnode_t;
 
 typedef struct mkc_astmain_t {
-  mkc_astnode_t           * stmtblock;
-  mkc_value_t             value;
-  mkc_profile_t           * profiles;
-  mkc_process_t           * process;
-  mkc_context_t           * context;
-  mkc_astnode_t           ** nodelist;
-  mkc_error_t             * mkcerr;
-  mkc_log_t               * log;
-  int32_t                 allocsz;
-  int32_t                 sz;
-  int32_t                 ccidx;
-  int                     rdepth;
-  int                     depth;
-  bool                    maxrdepth;
+  mkc_astnode_t         * stmtblock;
+  mkc_value_t           value;
+  mkc_profile_t         * profiles;
+  mkc_process_t         * process;
+  mkc_context_t         * context;
+  mkc_astnode_t         ** nodelist;
+  mkc_error_t           * mkcerr;
+  mkc_log_t             * log;
+  int32_t               allocsz;
+  int32_t               sz;
+  int32_t               ccidx;
+  int                   rdepth;
+  int                   depth;
+  bool                  maxrdepth;
 } mkc_astmain_t;
 
 static int32_t  mkcnodenum = 0;
@@ -249,7 +255,7 @@ static void mkc_astnode_free (mkc_astmain_t *astmain, mkc_astnode_t *astnode);
 static mkc_value_t *mkc_ast_get_value (mkc_astmain_t *astmain, mkc_astnode_t *astnode);
 
 mkc_astmain_t *
-mkc_ast_init (mkc_log_t *log, mkc_error_t *mkcerr, const char *dfltprof)
+mkc_ast_init (mkc_log_t *log, const char *dfltprof, mkc_error_t *mkcerr)
 {
   mkc_astmain_t   *astmain;
 
@@ -301,6 +307,7 @@ mkc_ast_start (mkc_astmain_t *astmain)
 
   astmain->rdepth = 0;
   mkc_ast_process (astmain, astmain->stmtblock, &ifcond, &loopcond, 0);
+  mkc_process_save_cache (astmain->process);
   return *(astmain->mkcerr);
 }
 
@@ -876,7 +883,7 @@ mkc_ast_mk_attr_name (mkc_astmain_t *astmain,
   mkc_astnode_t   *astnode;
 
   mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
-      "ast-mk: chk-attr-name\n");
+      "ast-mk: attr-name\n");
 
   astnode = mkc_astnode_init (astmain, MKC_T_ATTR_NAME, lineno, colno);
   if (astnode == NULL) {
@@ -894,7 +901,7 @@ mkc_ast_mk_attr_negate (mkc_astmain_t *astmain,
   mkc_astnode_t   *astnode;
 
   mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
-      "ast-mk: chk-attr-negate\n");
+      "ast-mk: attr-negate\n");
 
   astnode = mkc_astnode_init (astmain, MKC_T_ATTR_NEGATE, lineno, colno);
   if (astnode == NULL) {
@@ -912,7 +919,7 @@ mkc_ast_mk_attr_header (mkc_astmain_t *astmain,
   mkc_astnode_t   *astnode;
 
   mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
-      "ast-mk: chk-attr-header\n");
+      "ast-mk: attr-header\n");
 
   astnode = mkc_astnode_init (astmain, MKC_T_ATTR_HEADER, lineno, colno);
   if (astnode == NULL) {
@@ -920,6 +927,25 @@ mkc_ast_mk_attr_header (mkc_astmain_t *astmain,
   }
 
   astnode->hdrattr.hdrlist = hdrlist;
+  return astnode;
+}
+
+mkc_astnode_t *
+mkc_ast_mk_attr_compflags (mkc_astmain_t *astmain,
+    mkc_astnode_t *compflaglist,
+    int32_t lineno, int colno)
+{
+  mkc_astnode_t   *astnode;
+
+  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
+      "ast-mk: attr-comp-flags\n");
+
+  astnode = mkc_astnode_init (astmain, MKC_T_ATTR_COMP_FLAGS, lineno, colno);
+  if (astnode == NULL) {
+    return NULL;
+  }
+
+  astnode->compflagattr.compflaglist = compflaglist;
   return astnode;
 }
 
@@ -1252,6 +1278,22 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
         break;
       }
       mkc_process_attr_header (astmain->process, val);
+      break;
+    }
+
+    case MKC_T_ATTR_COMP_FLAGS: {
+      mkc_value_t   *val;
+
+      if (! mkc_context_check (astmain->context, MKC_CONTEXT_CHECK)) {
+        *(astmain->mkcerr) = MKC_ERR_STMT_NOT_ALLOWED;
+        break;
+      }
+
+      val = mkc_ast_get_value (astmain, astnode->compflagattr.compflaglist);
+      if (*(astmain->mkcerr) != MKC_OK) {
+        break;
+      }
+      mkc_process_attr_comp_flags (astmain->process, val);
       break;
     }
 

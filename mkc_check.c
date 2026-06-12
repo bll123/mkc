@@ -16,6 +16,8 @@
 #include "mkc_os_process.h"
 #include "mkc_string.h"
 
+const char * const mkctestcompflags = "MKC_I_TEST_COMP_FLAGS";
+
 static const char *MKC_INCLUDE_PATH = ".";
 
 typedef struct mkc_check_t {

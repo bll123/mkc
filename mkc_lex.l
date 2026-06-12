@@ -146,6 +146,7 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 "add_compile_flag"          { return T_ADD_COMP_FLAG; }
 "add_link_flag"             { return T_ADD_LINK_FLAG; }
 
+"compflags"                 { return T_ATTR_COMP_FLAGS; }
 "header"                    { return T_ATTR_HEADER; }
 "name"                      { return T_ATTR_NAME; }
 "source"                    { return T_ATTR_SOURCE; }

@@ -32,6 +32,7 @@ typedef struct {
 } argcopy_t;
 
 static void cleanargs (argcopy_t *argcopy);
+static int mkc_parse (FILE *fh, yyscan_t scanner, mkc_astmain_t *astmain, mkc_log_t *log, const char *dfltprof, mkc_error_t *mkcerr);
 
 int
 main (int argc, char *argv [])
@@ -46,9 +47,8 @@ main (int argc, char *argv [])
   int                 fnidx;
   FILE                * fh = NULL;
   const char          * dfltprof = MKC_PROF_RELEASE_NAME;
+  mkc_astmain_t       * astmain = NULL;
   yyscan_t            scanner;
-  YY_BUFFER_STATE     state;
-  mkc_astmain_t       * astproc = NULL;
   int                 rc;
   mkc_error_t         mkcerr = MKC_OK;
   mkc_log_t           * log = NULL;
@@ -56,10 +56,12 @@ main (int argc, char *argv [])
   mstime_t            proctm;
   time_t              etm;
   char                tbuff [40];
+  bool                loadcache = true;
 
   static struct option mkc_options [] = {
-    { "parsedebug",    no_argument,         NULL,   1 },
-    { "profile",       required_argument,   NULL,   'p' },
+    { "no-cache",       no_argument,        NULL,   1, },
+    { "parsedebug",     no_argument,        NULL,   2 },
+    { "profile",        required_argument,  NULL,   'p' },
   };
 
   argcopy.nargc = argc;
@@ -89,6 +91,10 @@ main (int argc, char *argv [])
         break;
       }
       case 1: {
+        loadcache = false;
+        break;
+      }
+      case 2: {
         yydebug = 1;
         break;
       }
@@ -114,20 +120,37 @@ main (int argc, char *argv [])
     }
   }
 
-  mstimestart (&starttm);
-  yylex_init (&scanner);
-  state = yy_create_buffer (fh, YY_BUF_SIZE, scanner);
-  yy_switch_to_buffer (state, scanner);
-  astproc = mkc_ast_init (log, &mkcerr, dfltprof);
+  astmain = mkc_ast_init (log, dfltprof, &mkcerr);
   if (mkcerr != MKC_OK) {
-    mkc_ast_free (astproc);
     mkc_log_free (log);
     cleanargs (&argcopy);
     return mkcerr;
   }
-  rc = yyparse (scanner, astproc);
-  yy_delete_buffer (state, scanner);
+
+  mstimestart (&starttm);
+  yylex_init (&scanner);
+
+  if (loadcache) {
+    FILE    *cachefh;
+
+    cachefh = mkc_fopen ("mkc_files/cache.mkc", "r");
+    if (cachefh != NULL) {
+      mkc_message ("-- loading cache\n");
+      mkc_log (log, MKC_LOG_AST_PROCESS, "== loading cache\n");
+      rc = mkc_parse (cachefh, scanner, astmain, log, dfltprof, &mkcerr);
+      fclose (cachefh);
+    }
+  }
+
+  rc = mkc_parse (fh, scanner, astmain, log, dfltprof, &mkcerr);
+  if (mkcerr != MKC_OK) {
+    mkc_ast_free (astmain);
+    mkc_log_free (log);
+    cleanargs (&argcopy);
+    return rc;
+  }
   yylex_destroy (scanner);
+  mkc_ast_free (astmain);
 
   if (fh != stdin) {
     fclose (fh);
@@ -136,10 +159,6 @@ main (int argc, char *argv [])
   mkc_message ("-- parse: %s\n", mkc_elapsed_disp (etm, tbuff, sizeof (tbuff)));
   mstimestart (&proctm);
 
-  if (rc == 0) {
-    rc = mkc_ast_start (astproc);
-  }
-  mkc_ast_free (astproc);
   mkc_log_free (log);
 
   etm = mstimeend (&proctm);
@@ -164,4 +183,25 @@ cleanargs (argcopy_t *argcopy)
 
     free (argcopy->utf8argv);
   }
+}
+
+static int
+mkc_parse (FILE *fh, yyscan_t scanner, mkc_astmain_t *astmain,
+    mkc_log_t *log, const char *dfltprof,
+    mkc_error_t *mkcerr)
+{
+  int                 rc;
+  YY_BUFFER_STATE     state;
+
+  state = yy_create_buffer (fh, YY_BUF_SIZE, scanner);
+  yy_switch_to_buffer (state, scanner);
+  rc = yyparse (scanner, astmain);
+
+  if (rc == 0) {
+    rc = mkc_ast_start (astmain);
+  }
+
+  yy_delete_buffer (state, scanner);
+
+  return rc;
 }

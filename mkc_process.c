@@ -15,6 +15,7 @@
 #include "mkc_ast.h"
 #include "mkc_check.h"
 #include "mkc_def.h"
+#include "mkc_fileop.h"
 #include "mkc_log.h"
 #include "mkc_process.h"
 #include "mkc_profile.h"
@@ -95,8 +96,8 @@ mkc_process_t *
 mkc_process_init (mkc_profile_t *profiles, mkc_log_t *log, mkc_error_t *mkcerr)
 {
   mkc_process_t   *process;
-  int             rc;
   mkc_profidx_t   pidx;
+  int             rc;
 
   process = malloc (sizeof (mkc_process_t));
 
@@ -594,6 +595,47 @@ mkc_process_attr_header (mkc_process_t *process, mkc_value_t *value)
   return;
 }
 
+void
+mkc_process_attr_comp_flags (mkc_process_t *process, mkc_value_t *value)
+{
+  mkc_listidx_t   iteridx;
+  mkc_listidx_t   lidx;
+  char            * flags = NULL;
+  size_t          flaglen = 1;
+  mkc_profidx_t   pidx;
+
+  if (process == NULL) {
+    return;
+  }
+
+  mkc_list_iter_start (value->list, &iteridx);
+  while ((lidx = mkc_list_iter_next (value->list, &iteridx)) != MKC_ITER_FINISH) {
+    char        tbuff [MKC_VNAME_MAX];
+    mkc_value_t *lvalue;
+    size_t      tlen;
+
+    if (*(process->mkcerr) != MKC_OK) {
+      break;
+    }
+
+    lvalue = mkc_list_get_by_idx (value->list, lidx);
+    snprintf (tbuff, sizeof (tbuff), "%s ", lvalue->sval);
+    tlen = strlen (tbuff);
+    flaglen += tlen;
+    flags = realloc (flags, flaglen);
+    stpecpy (flags + flaglen - tlen - 1, flags + flaglen, tbuff);
+  }
+
+  mkc_profile_push (process->profiles);
+  mkc_pvar_profile_set (process->pvar, MKC_PROF_INTERNAL_NAME,
+      MKC_PROF_COMPILER_GENERAL);
+  mkc_pvar_set_str (process->pvar, mkctestcompflags, flags);
+  pidx = mkc_profile_pop (process->profiles);
+  mkc_pvar_profile_set_idx (process->pvar, pidx);
+
+  return;
+}
+
 mkc_value_t *
 mkc_process_get_value (mkc_process_t *process, const char *nm)
 {
@@ -851,6 +893,120 @@ mkc_process_get_while_limit (mkc_process_t *process)
   }
 
   return limit;
+}
+
+void
+mkc_process_save_cache (mkc_process_t *process)
+{
+  mkc_profidx_t   piter;
+  mkc_profile_t   *profiles;
+  mkc_profidx_t   pidx;
+  FILE            *fh;
+
+  fh = mkc_fopen ("mkc_files/cache.mkc", "w");
+  if (fh == NULL) {
+    return;
+  }
+  mkc_profile_push (process->profiles);
+
+  profiles = process->profiles;
+  mkc_profile_iter_start (profiles, &piter);
+  while ((pidx = mkc_profile_iter_next (profiles, &piter)) != MKC_ITER_FINISH) {
+    const char      *nm;
+    const char      *compname;
+    mkc_varidx_t    viter;
+    mkc_varidx_t    vidx;
+    mkc_pvar_t      *pvar;
+    int             count = 0;
+
+    if (*(process->mkcerr) != MKC_OK) {
+      break;
+    }
+
+    nm = mkc_profile_get_name (profiles, pidx);
+    compname = mkc_profile_get_comp_name (profiles, pidx);
+    fprintf (fh, "profile %s %s {\n", nm, compname);
+
+    pvar = process->pvar;
+    mkc_profile_push (process->profiles);
+
+    if (mkc_pvar_profile_set_idx (process->pvar, pidx) == MKC_PROF_NOT_FOUND) {
+      continue;
+    }
+
+    mkc_pvar_iter_start (pvar, &viter);
+    while ((vidx = mkc_pvar_iter_next (pvar, &viter)) != MKC_ITER_FINISH) {
+      const char      *nm;
+      mkc_value_t     *value;
+
+      nm = mkc_pvar_get_name (pvar, vidx);
+
+      /* temporary variables do not need to be cached */
+      if (strncmp (nm, "MKC_I_", 6) == 0) {
+        continue;
+      }
+
+      value = mkc_pvar_get_by_idx (pvar, vidx);
+
+      if (value->vtype == MKC_VT_LIST) {
+        mkc_list_t    *list;
+        mkc_listidx_t lidx;
+        mkc_listidx_t iteridx;
+
+        list = value->list;
+        mkc_list_iter_start (list, &iteridx);
+        fprintf (fh, "  set %s [ ", nm);
+        while ((lidx = mkc_list_iter_next (list, &iteridx)) != MKC_ITER_FINISH) {
+          mkc_value_t   *tvalue;
+
+          if (*(process->mkcerr) != MKC_OK) {
+            break;
+          }
+          tvalue = mkc_list_get_by_idx (list, lidx);
+          if (tvalue->vtype == MKC_VT_INTEGER) {
+            fprintf (fh, "%d ", tvalue->ival);
+          }
+          if (tvalue->vtype != MKC_VT_INVALID &&
+              tvalue->vtype != MKC_VT_INTEGER &&
+              tvalue->vtype != MKC_VT_LIST) {
+            fprintf (fh, "'%s' ", tvalue->sval);
+          }
+          if (tvalue->vtype == MKC_VT_LIST) {
+// ### argh, will this be valid?
+          }
+        }
+        fprintf (fh, "];\n");
+        ++count;
+      }
+      if (value->vtype == MKC_VT_STRING) {
+        const char  *val;
+
+        val = value->sval;
+        fprintf (fh, "  set %s '%s';\n", nm, val);
+        ++count;
+      }
+      if (value->vtype == MKC_VT_INTEGER) {
+        int32_t     ival;
+
+        ival = value->ival;
+        fprintf (fh, "  set %s %d;\n", nm, ival);
+        ++count;
+      }
+    }
+
+    pidx = mkc_profile_pop (process->profiles);
+    mkc_pvar_profile_set_idx (process->pvar, pidx);
+
+    if (count == 0) {
+      fprintf (fh, "  ;\n");
+    }
+    fprintf (fh, "}\n");
+  }
+
+  pidx = mkc_profile_pop (process->profiles);
+  mkc_pvar_profile_set_idx (process->pvar, pidx);
+
+  fclose (fh);
 }
 
 /* internal routines */
