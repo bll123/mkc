@@ -234,8 +234,9 @@ mkc_profidx_t
 mkc_profile_find_id (mkc_profile_t *profiles, const char *pname,
     mkc_prof_comp_t compiler)
 {
-  mkc_prof_entry_t   tentry;
+  mkc_prof_entry_t  tentry;
   mkc_profidx_t     idx;
+  mkc_listidx_t     loc = MKC_LIST_NOTFOUND;
 
   if (profiles == NULL) {
     return MKC_ERR_FAILURE;
@@ -244,7 +245,7 @@ mkc_profile_find_id (mkc_profile_t *profiles, const char *pname,
   tentry.name = (char *) pname;
   tentry.compiler = compiler;
 
-  idx = mkc_list_find (profiles->list, &tentry);
+  idx = mkc_list_find (profiles->list, &tentry, &loc);
   return idx;
 }
 
@@ -664,9 +665,9 @@ int
 mkc_profile_create_id (mkc_profile_t *profiles, const char *pname,
     mkc_prof_comp_t compiler, mkc_prof_type_t type)
 {
-  mkc_prof_entry_t   *pentry;
-  mkc_prof_entry_t   tentry;
-  mkc_profidx_t     loc;
+  mkc_prof_entry_t    *pentry;
+  mkc_prof_entry_t    tentry;
+  mkc_profidx_t       loc = MKC_LIST_NOTFOUND;
 
   if (profiles == NULL) {
     return MKC_ERR_FAILURE;

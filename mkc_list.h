@@ -37,7 +37,7 @@ mkc_listidx_t mkc_list_size (mkc_list_t *list);
 void * mkc_list_set (mkc_list_t *list, void *data, size_t sz, mkc_listidx_t *loc);
 void * mkc_list_append (mkc_list_t *list, void *data, size_t sz, mkc_listidx_t *loc);
 void mkc_list_pop (mkc_list_t *list, mkc_listidx_t lidx);
-mkc_listidx_t mkc_list_find (mkc_list_t *list, void *data);
+mkc_listidx_t mkc_list_find (mkc_list_t *list, void *data, mkc_listidx_t *loc);
 void * mkc_list_get_by_idx (mkc_list_t *list, mkc_listidx_t idx);
 void mkc_list_iter_start (mkc_list_t *list, mkc_listidx_t *iteridx);
 mkc_listidx_t mkc_list_iter_next (mkc_list_t *list, mkc_listidx_t *iteridx);

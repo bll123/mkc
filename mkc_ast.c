@@ -69,6 +69,7 @@ static const char *typenames [MKC_T_MAX] = {
   [MKC_T_STMT_PRINT] = "stmt_print",
   [MKC_T_STMT_SET] = "stmt_set",
   [MKC_T_STMT_PROFILE] = "stmt_profile",
+  [MKC_T_STMT_WHILE] = "stmt_while",
   [MKC_T_VAL_ENV_VARIABLE] = "val_env_variable",
   [MKC_T_VAL_FALSE] = "val_false",
   [MKC_T_VAL_INTEGER] = "val_integer",
@@ -132,6 +133,11 @@ typedef struct mkc_ast_foreach_t {
   mkc_astnode_t     *range;
   mkc_astnode_t     *stmtblock;
 } mkc_ast_foreach_t;
+
+typedef struct mkc_ast_while_t {
+  mkc_astnode_t     *expr;
+  mkc_astnode_t     *stmtblock;
+} mkc_ast_while_t;
 
 typedef struct mkc_ast_set_t {
   mkc_astnode_t     *nm;
@@ -199,6 +205,7 @@ typedef struct mkc_astnode_t {
     mkc_ast_debug_t             debugstmt;
     mkc_ast_elseif_t            elseif;
     mkc_ast_foreach_t           foreachstmt;
+    mkc_ast_while_t             whilestmt;
     mkc_ast_if_t                ifstmt;
     mkc_ast_list_t              list;
     mkc_ast_main_t              main;
@@ -680,6 +687,27 @@ mkc_ast_mk_foreach_range (mkc_astmain_t *astmain,
 }
 
 mkc_astnode_t *
+mkc_ast_mk_while (mkc_astmain_t *astmain,
+    mkc_astnode_t *expr, mkc_astnode_t *stmtblock,
+    int32_t lineno, int colno)
+{
+  mkc_astnode_t   *astnode;
+
+  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
+      "ast-mk: while\n");
+
+  astnode = mkc_astnode_init (astmain, MKC_T_STMT_WHILE, lineno, colno);
+  if (astnode == NULL) {
+    return NULL;
+  }
+
+  astnode->whilestmt.expr = expr;
+  astnode->whilestmt.stmtblock = stmtblock;
+
+  return astnode;
+}
+
+mkc_astnode_t *
 mkc_ast_mk_function (mkc_astmain_t *astmain,
     mkc_astnode_t *nm, mkc_astnode_t *arglist, mkc_astnode_t *stmtblock,
     int32_t lineno, int colno)
@@ -1071,6 +1099,22 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
         mkc_process_local_set (astmain->process, nm,
             tval->sval, plocalidx);
         mkc_ast_process (astmain, astnode->foreachstmt.stmtblock, ifcond, depth + 1);
+      }
+      break;
+    }
+
+    case MKC_T_STMT_WHILE: {
+      int32_t   rval;
+      int32_t   count = 0;
+      int32_t   limit = 10000;
+
+      mkc_ast_process (astmain, astnode->whilestmt.expr, ifcond, depth);
+      rval = mkc_process_condition (astmain->process, &astmain->value);
+      while (rval && count < limit) {
+        mkc_ast_process (astmain, astnode->whilestmt.stmtblock, &rval, depth + 1);
+        mkc_ast_process (astmain, astnode->whilestmt.expr, ifcond, depth);
+        rval = mkc_process_condition (astmain->process, &astmain->value);
+        ++count;
       }
       break;
     }

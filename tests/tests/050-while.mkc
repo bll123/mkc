@@ -1,0 +1,7 @@
+
+set count 0;
+while (${count} < 5) {
+  print "  ok ${count}";
+  set count ${count} + 1;
+}
+print "  ok fin";

@@ -7,14 +7,16 @@ check_compile_flag '-pedantic-errors';
 check_compile_flag '-Wall';
 check_compile_flag '-Wextra';
 check_compile_flag '-Wno-unused-parameter' { negate; }
-check_compile_flag '-Wno-unused-pragmas' { negate; }
-check_compile_flag '-Wformat';
-check_compile_flag '-Wformat-security';
-check_compile_flag '-Werror=format-security';
 check_compile_flag '-Wdeprecated-declarations';
-
-check_compile_flag '-Wmaybe-uninitialized';
-check_compile_flag '-Wdiscarded-qualifiers';
+check_compile_flag '-Wformat';
+if (MKC_COMPILER_ID_CLANG) {
+  check_compile_flag '-Wformat-security';
+  check_compile_flag '-Werror=format-security';
+}
+if (MKC_COMPILER_ID_GCC) {
+  check_compile_flag '-Wmaybe-uninitialized';
+  check_compile_flag '-Wdiscarded-qualifiers';
+}
 
 profile release {
   add_compile_flag '-O2';
@@ -45,11 +47,7 @@ profile sanitize {
   }
 }
 
-print "== fortify: ${MKC_FORTIFY}";
-
 if (${MKC_FORTIFY}) {
-print "== true";
-  check_compile_flag '-fstack-protector-string';
   check_compile_flag '-fstack-protector-all';
   add_compile_flag '-D_FORTIFY_SOURCE=2';
 } else {
@@ -88,13 +86,13 @@ check_function _wputenv_s {
   header windows.h;
 }
 check_function _wrename {
-  header windows.h;
+  header io.h;
 }
 check_function _wstat64 {
-  header windows.h;
+  header wchar.h;
 }
 check_function _wunlink {
-  header windows.h;
+  header io.h;
 }
 
 mkcdebug printvar release;

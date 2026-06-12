@@ -120,8 +120,12 @@ mkc_list_set (mkc_list_t *list, void *data, size_t sz, mkc_listidx_t *loc)
   dataloc = list->sz;
   list->itemsz = sz;
 
-  if (list->idxsz > 0) {
-    rc = mkc_list_binary_search (list, data, &newloc);
+  if (*loc != MKC_LIST_NOTFOUND) {
+    newloc = *loc;
+  } else {
+    if (list->idxsz > 0) {
+      rc = mkc_list_binary_search (list, data, &newloc);
+    }
   }
 
   if (rc == MKC_LIST_FOUND) {
@@ -217,26 +221,25 @@ mkc_list_pop (mkc_list_t *list, mkc_listidx_t lidx)
 }
 
 mkc_listidx_t
-mkc_list_find (mkc_list_t *list, void *data)
+mkc_list_find (mkc_list_t *list, void *data, mkc_listidx_t *loc)
 {
   int32_t         rc = -1;
-  mkc_listidx_t   loc = MKC_LIST_NOTFOUND;
 
   if (list == NULL) {
-    return loc;
+    return *loc;
   }
 
   if (list->type == MKC_LIST_UNSORTED) {
     *(list->mkcerr) = MKC_ERR_SEARCH_UNSORTED_LIST;
     fprintf (stderr, "ERROR: searching an unsorted list\n");
-    return loc;
+    return *loc;
   }
 
-  rc = mkc_list_binary_search (list, data, &loc);
+  rc = mkc_list_binary_search (list, data, loc);
   if (rc == MKC_LIST_FOUND) {
     /* return the data index */
-    loc = list->idxsort [loc];
-    return loc;
+    *loc = list->idxsort [*loc];
+    return *loc;
   }
 
   return rc;

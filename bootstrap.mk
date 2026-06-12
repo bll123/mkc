@@ -106,7 +106,16 @@ mkc_check.o: mkc_profile.h mkc_list.h mkc_var.h mkc_pvar.h mkc_fileop.h
 mkc_check.o:  mkc_nodiscard.h mkc_os_process.h
 mkc_check.o: mkc_string.h
 mkc_env.o:  mkc_env.h mkc_string.h mkc_nodiscard.h
-mkc_fileop.o: mkc_def.h mkc_fileop.h mkc_nodiscard.h mkc_string.h
+mkc_fileop.o:  mkc_def.h mkc_fileop.h mkc_nodiscard.h
+mkc_fileop.o: mkc_string.h
+mkc_grammar.o: mkc_grammar.h  
+mkc_grammar.o: mkc_ast.h mkc_def.h 
+mkc_grammar.o:  mkc_log.h mkc_var.h mkc_list.h
+mkc_grammar.o: mkc_parse_util.h
+mkc_lex.o:   mkc_grammar.h
+mkc_lex.o:  mkc_ast.h mkc_def.h
+mkc_lex.o:   mkc_log.h mkc_var.h
+mkc_lex.o: mkc_list.h mkc_parse_util.h 
 mkc_list.o:   mkc_def.h
 mkc_list.o:   mkc_list.h
 mkc_log.o:   mkc_def.h
@@ -114,8 +123,8 @@ mkc_log.o:   mkc_fileop.h
 mkc_log.o:  mkc_nodiscard.h mkc_log.h
 mkc_main.o:  mkc_ast.h mkc_def.h 
 mkc_main.o:  mkc_log.h mkc_var.h mkc_list.h mkc_fileop.h
-mkc_main.o:  mkc_nodiscard.h mkc_profile.h mkc_util.h
-mkc_main.o: mkc_string.h
+mkc_main.o:  mkc_nodiscard.h mkc_grammar.h
+mkc_main.o: mkc_parse_util.h mkc_lex.h mkc_profile.h mkc_util.h mkc_string.h
 mkc_os_process.o:  mkc_os_process.h mkc_util.h
 mkc_os_win_process.o:  mkc_def.h 
 mkc_os_win_process.o:  mkc_os_process.h mkc_string.h

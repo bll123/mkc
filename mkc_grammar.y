@@ -404,7 +404,8 @@ range[v]:
 whilestmt[v]:
     T_STMT_WHILE T_LEFT_PAREN expr[a] T_RIGHT_PAREN stmtblock[b]
     {
-      $v = NULL;
+      $v = mkc_ast_mk_while (ast, $a, $b,
+          yylloc.first_line, yylloc.first_column);
     }
   ;
 

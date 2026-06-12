@@ -33,7 +33,11 @@
       _statement-list_
     }
 
-#### while statement (not yet implemented)
+#### while statement
+
+    while (_expr_) {
+      _statement-list_
+    }
 
 #### foreach statement (not yet implemented)
 

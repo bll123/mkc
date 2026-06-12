@@ -45,7 +45,6 @@ typedef struct mkc_value_t {
     int32_t     ival;
   };
   mkc_var_type_t  vtype;
-  mkc_varidx_t    vidx;
 } mkc_value_t;
 
 mkc_varlist_t *mkc_varlist_init (mkc_log_t *log, mkc_error_t *mkcerr);

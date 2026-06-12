@@ -63,6 +63,7 @@ typedef enum {
   MKC_T_STMT_PRINT,
   MKC_T_STMT_PROFILE,
   MKC_T_STMT_SET,
+  MKC_T_STMT_WHILE,
   MKC_T_VAL_BASIC_STRING,
   MKC_T_VAL_CONSTANT,
   MKC_T_VAL_ENV_VARIABLE,
@@ -93,6 +94,7 @@ mkc_astnode_t * mkc_ast_mk_if (mkc_astmain_t *astmain, mkc_astnode_t *expr, mkc_
 mkc_astnode_t * mkc_ast_mk_elseif (mkc_astmain_t *astmain, mkc_astnode_t *expr, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_foreach (mkc_astmain_t *astmain, mkc_astnode_t *nm, mkc_astnode_t *list, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_foreach_range (mkc_astmain_t *astmain, mkc_astnode_t *nm, mkc_astnode_t *range, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
+mkc_astnode_t * mkc_ast_mk_while (mkc_astmain_t *astmain, mkc_astnode_t *expr, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_function (mkc_astmain_t *astmain, mkc_astnode_t *nm, mkc_astnode_t *arglist, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
 
 mkc_astnode_t * mkc_ast_mk_set (mkc_astmain_t *astmain, mkc_astnode_t *nm, mkc_astnode_t *expr, int32_t lineno, int colno);
