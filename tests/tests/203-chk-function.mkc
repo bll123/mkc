@@ -6,8 +6,15 @@ check_function fstat {
   header sys/stat.h;
 }
 
-check_function MAX {
-  header sys/param.h;
+if (MKC_SYS_WINDOWS) {
+  check_function max {
+    name _function_max;
+  }
+} else {
+  check_function MAX {
+    header sys/param.h;
+    name _function_max;
+  }
 }
 
 if (${_function_malloc} == 1) {
@@ -22,8 +29,8 @@ if (${_function_fstat} == 1) {
   print '  fail fstat';
 }
 
-if (${_function_MAX} == 1) {
+if (${_function_max} == 1) {
   print '  ok';
 } else {
-  print '  fail MAX';
+  print '  fail max';
 }

@@ -141,6 +141,7 @@ mkc_process_init (mkc_profile_t *profiles, mkc_log_t *log, mkc_error_t *mkcerr)
     mkc_pvar_set_integer (process->pvar, sysidnames [i], false);
   }
 
+  mkc_pvar_set_integer (process->pvar, "MKC_I_WHILE_LIMIT", 10000);
   mkc_pvar_set_str (process->pvar, liblocname, "");
 
   mkc_pvar_profile_set (process->pvar, MKC_PROF_GLOBAL_NAME, MKC_PROF_COMPILER_GENERAL);
@@ -832,6 +833,24 @@ mkc_process_local_set (mkc_process_t *process, const char *nm,
   mkc_pvar_set_str (process->pvar, nm, sval);
   opidx = mkc_profile_pop (process->profiles);
   mkc_pvar_profile_set_idx (process->pvar, opidx);
+}
+
+int32_t
+mkc_process_get_while_limit (mkc_process_t *process)
+{
+  int32_t     limit = 10000;
+  mkc_value_t *value;
+
+  if (process == NULL) {
+    return limit;
+  }
+
+  value = mkc_pvar_get_by_profile (process->pvar, "MKC_I_WHILE_LIMIT");
+  if (value != NULL) {
+    limit = mkc_process_value_get_integer (process, value);
+  }
+
+  return limit;
 }
 
 /* internal routines */

@@ -13,7 +13,18 @@ test -d ${odir} || mkdir -p ${odir}
 test -d ${MKCTMP} || mkdir -p ${MKCTMP}
 test -f ${LOG} && rm -f ${LOG}
 
-for tnm in ${tdir}/*.mkc; do
+pattern="*.mkc"
+while test $# -gt 0; do
+  case $1 in
+    [0-9][0-9]*)
+      val=$1
+      pattern="${val}*.mkc"
+      shift
+      ;;
+  esac
+done
+
+for tnm in ${tdir}/${pattern}; do
   echo "== $tnm"
   echo "== $tnm" >> ${LOG}
   bnm=$(basename $tnm | sed 's,\.mkc$,,')

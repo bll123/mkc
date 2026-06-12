@@ -1,7 +1,60 @@
 
+# ordinary while loop
 set count 0;
 while (${count} < 5) {
   print "  ok ${count}";
   set count ${count} + 1;
 }
-print "  ok fin";
+print "  while fin";
+
+# continue statement
+set count 0;
+while (${count} < 5) {
+  if (${count} == 3) {
+    set count ${count} + 1;
+    continue;
+  }
+  print "  ok ${count}";
+  set count ${count} + 1;
+}
+print "  while-continue fin";
+
+# break statement
+set count 0;
+while (${count} < 5) {
+  if (${count} == 3) {
+    break;
+  }
+  print "  ok ${count}";
+  set count ${count} + 1;
+}
+print "  while-break fin";
+
+# nested while
+set i 0;
+while (${i} < 3) {
+  print "  outer ${i}";
+  set j 0;
+  while (${j} < 3) {
+    print "  inner ${j}";
+    set j ${j} + 1;
+  }
+  set i ${i} + 1;
+}
+print "  nested fin";
+
+# nested while with break in inner loop
+set i 0;
+while (${i} < 3) {
+  print "  outer ${i}";
+  set j 0;
+  while (${j} < 3) {
+    if (${j} == 1) {
+      break;
+    }
+    print "  inner ${j}";
+    set j ${j} + 1;
+  }
+  set i ${i} + 1;
+}
+print "  nested inner-break fin";

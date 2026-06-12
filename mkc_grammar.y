@@ -138,10 +138,10 @@
 %type <astnode> funcargs
 
 %type <astnode> stmtblock_or_semi stmtblock stmtlist stmt
-%type <astnode> stmt_any stmt_any_list attr loopcontrol
+%type <astnode> stmt_any stmt_any_list attr
 %type <astnode> directive
 %type <astnode> ifexpr ifstmt elseif elseclause
-%type <astnode> foreachstmt whilestmt function
+%type <astnode> foreachstmt whilestmt function loopcontrol
 %type <astnode> printstmt setstmt
 %type <astnode> checkcommand compflag linkflag chksize chktype chkstructmember
 %type <astnode> chkfunction
@@ -248,13 +248,15 @@ attr[v]:
   ;
 
 loopcontrol[v]:
-    T_LOOP_BREAK
+    T_LOOP_BREAK T_SEMICOLON
     {
-      $v = NULL;
+      $v = mkc_ast_mk_loop_control (ast, MKC_T_LOOP_BREAK,
+          yylloc.first_line, yylloc.first_column);
     }
-  | T_LOOP_CONTINUE
+  | T_LOOP_CONTINUE T_SEMICOLON
     {
-      $v = NULL;
+      $v = mkc_ast_mk_loop_control (ast, MKC_T_LOOP_CONTINUE,
+          yylloc.first_line, yylloc.first_column);
     }
   ;
 

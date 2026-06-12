@@ -46,6 +46,7 @@ int32_t mkc_process_chk_function (mkc_process_t *process, mkc_value_t *valfuncnm
 
 void mkc_process_local_set (mkc_process_t *process, const char *nm, const char *sval, mkc_profidx_t pidx);
 bool mkc_process_profile_is_current (mkc_process_t *process, mkc_value_t *valnm);
+int32_t mkc_process_get_while_limit (mkc_process_t *process);
 
 #if defined (__cplusplus) || defined (c_plusplus)
 }
