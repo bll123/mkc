@@ -1,0 +1,17 @@
+[Wiki Home](Home)
+<br>[Syntax](Syntax)
+<br>[Checks](SyntaxCheck)
+
+### Check Type
+
+    check_type <type-name>;
+    check_type <type-name> { <attribute-statements> }
+
+Checks if _type-name_ exists.
+
+Generated Name: Prefix __\_type\___
+<br>Example: _type_uid_t
+
+[Wiki Home](Home)
+<br>[Syntax](Syntax)
+<br>[Checks](SyntaxCheck)

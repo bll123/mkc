@@ -1,0 +1,3 @@
+profile global c;
+check_link_flag    '-fPIC';
+mkcdebug printvar test;

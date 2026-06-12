@@ -1,0 +1,52 @@
+/*
+ * Copyright 2026 Brad Lanam Pleasant Hill CA
+ */
+
+#pragma once
+
+#include <stdint.h>
+
+#include "mkc_def.h"
+#include "mkc_list.h"
+#include "mkc_log.h"
+#include "mkc_profile.h"
+#include "mkc_var.h"
+
+#if defined (__cplusplus) || defined (c_plusplus)
+extern "C" {
+#endif
+
+typedef struct mkc_process_t mkc_process_t;
+
+mkc_process_t *mkc_process_init (mkc_profile_t *profiles, mkc_log_t *log, mkc_error_t *mkcerr);
+void mkc_process_free (mkc_process_t *process);
+void mkc_process_set_compiler (mkc_process_t *process, const char *compiler, const char *sfx);
+
+int32_t mkc_process_condition (mkc_process_t *process, mkc_value_t *value);
+int32_t mkc_process_num_op (mkc_process_t *process, int type, mkc_value_t *vala, mkc_value_t *valb);
+int32_t mkc_process_str_op (mkc_process_t *process, int type, mkc_value_t *stra, mkc_value_t *strb);
+int32_t mkc_process_unary_op (mkc_process_t *process, int type, mkc_value_t *vala);
+
+void mkc_process_stmt_print (mkc_process_t *process, mkc_value_t *value, int depth);
+void mkc_process_stmt_profile (mkc_process_t *process, mkc_value_t *valnm, mkc_value_t *valcomp);
+int mkc_process_stmt_debug (mkc_process_t *process, mkc_value_t *value, mkc_value_t *subvalue);
+void mkc_process_stmt_set (mkc_process_t *process, mkc_value_t *valnm, mkc_value_t *value);
+
+void mkc_process_attr_name (mkc_process_t *process, mkc_value_t *valnm);
+void mkc_process_attr_header (mkc_process_t *process, mkc_value_t *value);
+
+mkc_value_t * mkc_process_get_value (mkc_process_t *process, const char *nm);
+
+int32_t mkc_process_chk_compiler_flag (mkc_process_t *process, mkc_value_t *valflag, int addchk);
+int32_t mkc_process_chk_link_flag (mkc_process_t *process, mkc_value_t *valflag, int addchk);
+int32_t mkc_process_chk_size (mkc_process_t *process, mkc_value_t *valtype);
+int32_t mkc_process_chk_type (mkc_process_t *process, mkc_value_t *valtype);
+int32_t mkc_process_chk_struct_member (mkc_process_t *process, mkc_value_t *valstructnm, mkc_value_t *valmembernm);
+int32_t mkc_process_chk_function (mkc_process_t *process, mkc_value_t *valfuncnm);
+
+void mkc_process_local_set (mkc_process_t *process, const char *nm, const char *sval, mkc_profidx_t pidx);
+bool mkc_process_profile_is_current (mkc_process_t *process, mkc_value_t *valnm);
+
+#if defined (__cplusplus) || defined (c_plusplus)
+}
+#endif

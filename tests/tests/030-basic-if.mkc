@@ -1,0 +1,258 @@
+# basic
+print '  if/true (1)';
+if (1) {
+  print '     ok';
+}
+
+print '  if/false (0)';
+if (0) {
+  print '     fail-if-a';
+}
+
+# if-else
+print '  if,else/true (1)';
+if (1) {
+  print '     ok';
+} else {
+  print '     fail-else-a';
+}
+
+print '  if,else/false (1)';
+if (0) {
+  print '     fail-if-a';
+} else {
+  print '     ok';
+}
+
+# if-elseif
+print '  if,elseif/false,true (1)';
+if (0) {
+  print '     fail-if-a';
+} else if (1) {
+  print '     ok';
+}
+
+print '  if,elseif/false,false (0)';
+if (0) {
+  print '     fail-if-a';
+} else if (0) {
+  print '     fail-elseif-a';
+}
+
+print '  if,elseif/true,false (1)';
+if (1) {
+  print '     ok';
+} else if (0) {
+  print '     fail-elseif-a';
+}
+
+# if-elseif-else
+print '  if,elseif,else/false,true (1)';
+if (0) {
+  print '     fail-if-a';
+} else if (1) {
+  print '     ok';
+} else {
+  print '     fail-else-a';
+}
+
+print '  if,elseif,else/true,true (1)';
+if (1) {
+  print '     ok';
+} else if (1) {
+  print '     fail-elseif-a';
+} else {
+  print '     fail-else-a';
+}
+
+print '  if,elseif,else/false,false (1)';
+if (0) {
+  print '     fail-if-a';
+} else if (0) {
+  print '     fail-elseif-a';
+} else {
+  print '     ok';
+}
+
+print '  if,elseif,else/true,false (1)';
+if (1) {
+  print '     ok';
+} else if (0) {
+  print '     fail-elseif-a';
+} else {
+  print '     fail-else-a';
+}
+
+# if-elseif-elseif-else
+print '  if,elseif,elseif,else/false,false,false (1)';
+if (0) {
+  print '     fail-if';
+} else if (0) {
+  print '     fail-elseif-a';
+} else if (0) {
+  print '     fail-elseif-b';
+} else {
+  print '     ok';
+}
+
+print '  if,elseif,elseif,else/false,false,true (1)';
+if (0) {
+  print '     fail-if';
+} else if (0) {
+  print '     fail-elseif-a';
+} else if (1) {
+  print '     ok';
+} else {
+  print '     fail-else';
+}
+
+print '  if,elseif,elseif,else/false,true,false (1)';
+if (0) {
+  print '     fail-if';
+} else if (1) {
+  print '     ok';
+} else if (0) {
+  print '     fail-elseif-b';
+} else {
+  print '     fail-else';
+}
+
+print '  if,elseif,elseif,else/true,false,false (1)';
+if (1) {
+  print '     ok';
+} else if (0) {
+  print '     fail-elseif-a';
+} else if (0) {
+  print '     fail-elseif-b';
+} else {
+  print '     fail-else';
+}
+
+print '  if,elseif,elseif,else/false,true,true (1)';
+if (0) {
+  print '     fail-if-a';
+} else if (1) {
+  print '     ok';
+} else if (1) {
+  print '     fail-elseif-b';
+} else {
+  print '     fail-else';
+}
+
+print '  if,elseif,elseif,else/true,false,true (1)';
+if (1) {
+  print '     ok';
+} else if (0) {
+  print '     fail-elseif-a';
+} else if (1) {
+  print '     fail-elseif-b';
+} else {
+  print '     fail-else';
+}
+
+print '  if,elseif,elseif,else/true,true,false (1)';
+if (1) {
+  print '     ok';
+} else if (1) {
+  print '     fail-elseif-a';
+} else if (0) {
+  print '     fail-elseif-b';
+} else {
+  print '     fail-else';
+}
+
+print '  if,elseif,elseif,else/true,true,true (1)';
+if (1) {
+  print '     ok';
+} else if (1) {
+  print '     fail-elseif-a';
+} else if (1) {
+  print '     fail-elseif-b';
+} else {
+  print '     fail-else';
+}
+
+# nested if statements
+print '  nested:if,else{if,else}/true,false (1)';
+if (1) {
+  print '     ok';
+} else {
+  print '     fail-else';
+  if (0) {
+    print '     fail-else/if-1';
+  } else {
+    print '     fail-else/else-1';
+  }
+}
+
+print '  nested-1:/false,false,false (2)';
+if (0) {
+  print '     fail-if';
+  if (0) {
+    print '     fail-if/if-1-a';
+  } else {
+    print '     fail-if/else-1-a';
+  }
+} else {
+  print '     ok';
+  if (0) {
+    print '     fail-else/if-1-b';
+  } else {
+    print '     ok';
+  }
+}
+
+print '  nested-2/false,false,false,false,false (3)';
+if (0) {
+  print '     fail-if';
+  if (0) {
+    print '     fail-if/if-1-a';
+  } else {
+    print '     fail-if/else-1-a';
+    if (0) {
+      print '     fail-if/if-1-a/if-2-a';
+    } else {
+      print '     fail-if/else-1-a/else-2-a';
+    }
+  }
+} else {
+  print '     ok';
+  if (0) {
+    print '     fail-else/if-1-b';
+  } else {
+    print '     ok';
+    if (0) {
+      print '     fail-else/else-1-b/if-2-b';
+    } else {
+      print '     ok';
+    }
+  }
+}
+
+print '  nested-2/true,false,true,false,false (3)';
+if (1) {
+  print '     ok';
+  if (0) {
+    print '     fail-if/if-1-a';
+  } else {
+    print '     ok';
+    if (1) {
+      print '     ok';
+    } else {
+      print '     fail-if/else-1-a/else-2-a';
+    }
+  }
+} else {
+  print '     fail-else';
+  if (0) {
+    print '     fail-else/if-1-b';
+  } else {
+    print '     fail-else/else-1-b';
+    if (0) {
+      print '     fail-else/else-1-b/if-2-b';
+    } else {
+      print '     fail-else/else-1-b/else-2-b';
+    }
+  }
+}
+

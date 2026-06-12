@@ -1,0 +1,44 @@
+[Wiki Home](Home)
+<br>[Syntax](Syntax)
+
+### Syntax: Variables
+
+##### Integers
+
+    set ival 555;
+
+##### Single Quoted
+
+No escapes are implemented.
+
+    set junk 'string value';
+
+##### Double Quoted
+
+    set junk "my stuff";
+
+##### Values
+
+Variable values are enclosed with ${...}
+
+    set aaa 123;
+    set bbb ${aaa};
+
+##### Environment variables
+
+    set home $ENV{HOME};
+
+##### Embedded values.
+
+Double quoted strings may contain embedded values.
+At this time, the only escape that is implemented is \".
+
+    set j "string value";
+    set k "c-compiler: ${CC}";
+    set l "home: $ENV{HOME}";
+    set a 1;
+    set b1 c;
+    set m "b${a}: ${b${a}}";
+
+[Wiki Home](Home)
+<br>[Syntax](Syntax)

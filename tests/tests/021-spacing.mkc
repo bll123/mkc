@@ -1,0 +1,12 @@
+# test various spacing and comment combinations
+# test statement block
+
+print "mkc-a";
+  print   "mkc-b" ;
+print "mkc-c";
+  print "mkc-d";  # space-before + following comment
+print "mkc-e" ;  # after comment, no space-before + following comment
+# comment + space before statement
+  print "mkc-f";
+# comment before statement
+print "mkc-g";

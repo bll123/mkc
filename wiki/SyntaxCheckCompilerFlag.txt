@@ -1,0 +1,38 @@
+[Wiki Home](Home)
+<br>[Syntax](Syntax)
+<br>[Checks](SyntaxCheck)
+
+[TOC]
+
+### Check Compile Flag
+
+    check_compile_flag '-Wmissing-prototypes';
+    check_compile_flag '-Wno-missing-prototypes' {
+      negate;
+    }
+
+Checks to see if a compiler flag is valid, and if so, adds it to
+CFLAGS for the current profile.
+
+Because _gcc_ will not create a warning or error when a compiler flag
+is prefixed with '-Wno-', it is necessary to check the compiler flag
+without the '-Wno-' prefix.  To do this, append a statement block to
+the check, and add the _negate;_ statement.
+
+But be aware that some warning flags such as
+'-Wno-poison-system-directories' for MacOS/clang do not have an
+opposite and cannot be tested with the negate attribute.
+
+Generated Name: Prefix: __cf\___
+<br>The leading '-' or '-W' is removed from the name.
+<br>Example: cf\_missing\_prototypes
+
+##### Adding a Compiler Flag
+
+    add_compile_flag '-DNO_DEPRECATED';
+
+Adds a compiler flag without any check.
+
+[Wiki Home](Home)
+<br>[Syntax](Syntax)
+<br>[Checks](SyntaxCheck)

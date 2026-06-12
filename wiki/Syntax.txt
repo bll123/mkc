@@ -1,0 +1,49 @@
+[Wiki Home](Home)
+
+[TOC]
+
+### Syntax
+
+##### Comments
+
+    // comments may start with //
+    # or with #
+
+##### Definitions
+
+__target__: An executable or library or other target that will be
+built or processed.
+
+__profile__: A profile is a namespace for variables and attributes.
+_mkc_ defines the __internal__ and __global__ profiles.
+
+A user profile can have any name.  The usual names might be
+__release__ and __debug__.
+
+Every target has its own profile with its own attributes and variables.
+
+A profile may have an associated compiler.
+<br>References: [Syntax: Profile](SyntaxProfile.txt)
+
+##### Statements
+
+  * [Profile Statement](SyntaxProfile)
+  * [Set Statement](SyntaxSet)
+  * [Values and Variables](SyntaxVariable)
+      * [Internal Variables](SyntaxInternal)
+  * [Print](SyntaxPrint)
+  * [Control Statements](SyntaxControl)
+  * [Expressions](SyntaxExpression)
+  * [Directives](SyntaxDirective)
+  * [Check Statements](SyntaxCheck)
+      * [Check Compiler Flag](SyntaxCheckCompilerFlag)
+      * [Check Link Flag](SyntaxCheckLinkFlag)
+      * [Check Size](SyntaxCheckSize)
+      * [Check Type](SyntaxCheckType)
+      * [Check Struct Member](SyntaxCheckStructMember)
+      * [Check Function](SyntaxCheckFunction)
+  * Attributes
+      * [Name](SyntaxName)
+      * [Header](SyntaxHeader)
+
+[Wiki Home](Home)

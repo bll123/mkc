@@ -1,0 +1,4 @@
+set aaa 1;
+set bbb 2;
+
+set a ${${aaa${bbb}};

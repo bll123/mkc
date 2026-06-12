@@ -1,0 +1,60 @@
+[Wiki Home](Home)
+<br>[Syntax](Syntax)
+
+[TOC]
+
+### Syntax: Checks
+
+##### Setting Required Headers for a Check
+
+The headers for a check may set by appending a statement block, and
+using the [header](SyntaxHeader) attribute.
+
+    check_size int64_t {
+      header stdint.h;
+    }
+
+##### Generated Names
+
+_mkc_ automatically generates names for each check. Each check has an
+associated prefix.  The name of the check will replace characters that
+are not alphabetic or digits with an underscore.
+
+##### Changing the Name of a Check
+
+_mkc_ automatically generates names for each check. To change the name
+of a check, append a statement block and use the [name](SyntaxName)
+statement.
+
+    check_size int64_t {
+      header stdint.h;
+      name HAVE_INT64;
+    }
+
+##### Setting Required Flags for a Check
+
+Not yet implemented.
+
+    check_size int64_t {
+      cflags '-DANSI';
+    }
+
+##### Setting Required Libraries for a Check
+
+Not yet implemented.
+
+    check_size int64_t {
+      ldflags '-lintl';
+    }
+
+##### Checks
+
+* [Check/Add Compiler Flag](SyntaxCheckCompilerFlag)
+* [Check/Add Link Flag](SyntaxCheckLinkFlag)
+* [Check Size](SyntaxCheckSize)
+* [Check Type](SyntaxCheckType)
+* [Check Struct Member](SyntaxCheckStructMember)
+* [Check Function](SyntaxCheckFunction)
+
+[Wiki Home](Home)
+<br>[Syntax](Syntax)

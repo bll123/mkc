@@ -1,0 +1,13 @@
+no-sub
+aaa: 1
+aaa: 1 /1
+1 aaa /1
+aaa: 1 bbb: 2 /1,2
+aaa1: aaa /aaa
+aaa2: bbb /bbb
+aaa: 12 /12
+1
+2
+aaa
+aaa1
+aaa

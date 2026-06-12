@@ -1,0 +1,5 @@
+== global 0
+== global 1
+  cf_unreachable_code -Wunreachable-code
+== global 2
+== global 3

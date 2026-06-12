@@ -1,0 +1,26 @@
+[Wiki Home](Home)
+<br>[Syntax](Syntax)
+<br>[Checks](SyntaxCheck)
+
+[TOC]
+
+### Check Link Flag
+
+    check_link_flag '-fsanitize=address';
+
+Checks to see if a link flag is valid, and if so, adds it to
+LDFLAGS for the current profile.
+
+Generated Name: Prefix: __lf\___
+<br>Any leading '-' or '-W' is removed from the name.
+<br>Example: _lf_fsanitize_address
+
+##### Adding a Link Flag
+
+    add_link_flag '-DNO_DEPRECATED';
+
+Adds a link flag without any check.
+
+[Wiki Home](Home)
+<br>[Syntax](Syntax)
+<br>[Checks](SyntaxCheck)

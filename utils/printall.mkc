@@ -1,0 +1,2 @@
+mkcdebug printvar internal;
+mkcdebug printvar global;

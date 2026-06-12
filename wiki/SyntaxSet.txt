@@ -1,0 +1,19 @@
+[Wiki Home](Home)
+<br>[Syntax](Syntax)
+
+### Syntax: set
+
+Variable names may contain any valid UTF-8 character.
+
+Variable names may not contain spaces or hyphens.
+I would like hyphens, but I need to re-check and see if
+it messes up the grammar.
+
+    set variable_name _value_;
+
+_value_ may be an integer, quoted string, single quoted string,
+a variable, or an expression.
+<br>See [Syntax: Variables](SyntaxVariable)
+
+[Wiki Home](Home)
+<br>[Syntax](Syntax)

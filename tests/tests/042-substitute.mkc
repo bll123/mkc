@@ -1,0 +1,23 @@
+set aaa 1;
+set bbb 2;
+set ccc 3;
+set aaa1 'aaa';
+set aaa2 'bbb';
+set aaa3 'ccc';
+
+# string substitution
+print "no-sub";
+print "aaa: ${aaa}";
+print "aaa: ${aaa} /1";
+print "${aaa} aaa /1";
+print "aaa: ${aaa} bbb: ${bbb} /1,2";
+print "aaa1: ${aaa1} /aaa";
+print "aaa2: ${aaa${bbb}} /bbb";
+print "aaa: ${aaa}${bbb} /12";
+
+# variable substitution
+print ${aaa};
+print ${bbb};
+print ${aaa1};
+print "${aaa1}${aaa}";
+print ${${aaa1}${aaa}};

@@ -1,0 +1,29 @@
+profile global c;
+
+check_function malloc;
+
+check_function fstat {
+  header sys/stat.h;
+}
+
+check_function MAX {
+  header sys/param.h;
+}
+
+if (${_function_malloc} == 1) {
+  print '  ok';
+} else {
+  print '  fail malloc';
+}
+
+if (${_function_fstat} == 1) {
+  print '  ok';
+} else {
+  print '  fail fstat';
+}
+
+if (${_function_MAX} == 1) {
+  print '  ok';
+} else {
+  print '  fail MAX';
+}

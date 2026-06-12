@@ -1,0 +1,16 @@
+  ok eq
+  ok eq
+  ok ne
+  ok ne
+  ok lt
+  ok lt
+  ok lt
+  ok le
+  ok le
+  ok le
+  ok gt
+  ok gt
+  ok gt
+  ok ge
+  ok ge
+  ok ge

@@ -1,0 +1,5 @@
+== global 0
+== global 1
+  lf_fPIC -fPIC
+== global 2
+== global 3

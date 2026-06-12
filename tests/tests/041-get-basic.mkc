@@ -1,0 +1,43 @@
+set fff "111";
+set ddd '222';
+set iii '333';
+set aaa '444';
+set ggg 555;
+set bbb 7;
+set hhh 'abc';
+set ccc 'def';
+set ccc 'ghi';
+set jjj '';
+
+if (${aaa} eq '444') {
+  print '  ok aaa';
+}
+if (${bbb} == 7) {
+  print '  ok bbb';
+}
+if (${ccc} eq 'ghi') {
+  print '  ok ccc';
+}
+if (${ddd} eq '222') {
+  print '  ok ddd';
+}
+if (${fff} eq "111") {
+  print '  ok fff';
+}
+if (${ggg} == 555) {
+  print '  ok ggg-n';
+}
+if (${hhh} eq 'abc') {
+  print '  ok hhh';
+}
+if (${iii} eq '333') {
+  print '  ok iii';
+}
+if (${jjj} eq '') {
+  print '  ok jjj';
+}
+
+set a ${aaa};
+if (${a} eq ${aaa}) {
+  print '  ok variable';
+}

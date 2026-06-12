@@ -1,0 +1,12 @@
+[Wiki Home](Home)
+<br>[Syntax](Syntax)
+
+### Syntax: print
+
+    print _value_;
+
+_value_ may be an integer, quoted string, single quoted string,
+environment variable or a variable;
+
+[Wiki Home](Home)
+<br>[Syntax](Syntax)

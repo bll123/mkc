@@ -1,0 +1,75 @@
+[Wiki Home](Home)
+
+### Status
+
+##### 2026-6-9 pre-alpha
+
+Basic syntax is working.  I believe I have figured a decent
+syntax to handle the profiles/targets and their attributes.
+
+Current problems:
+
+Need to figure out how I am going to handle compiler/link
+flags.  These may exist in multiple profiles.
+
+##### Goals
+
+* Goals
+    * Straightforward, understandable algol-like syntax.
+      Both _cmake_ and _mkconfig_ have weird syntax.
+      Use a grammar so that the syntax is regular and extendable.
+    * UTF-8 support.
+    * Cross platform support.
+    * Be able to associate checks with particular profiles/targets (complete).
+    * Modern language support.
+      Despite wanting to use _mkc_ for _di_ on legacy systems, I think
+      it is better to just skip that and assume some modernity.
+* Phase 1
+    * Check for compiler flags. (partial)
+    * Check for link flags. (partial)
+    * Check for headers.
+      Mostly not needed for modern systems.
+    * Check for library functions.
+    * Check for defines.
+    * Check for types. (complete)
+    * Check for structure members.
+    * Check size of types. (complete)
+    * Be able to name the checks. (complete)
+    * Configure a file.
+    * Very simple file support (variable=something).
+      This is also useful for pkg-config files.
+    * Test this with the
+      [_libmp4tag_](https://sourceforge.net/projects/libmp4tag/)
+      package.
+    * Test with _mkc_.
+* Phase 2
+    * Package support (via pkg-config files or .cmake files).
+    * Test with _di_.
+      _di_ checks a __lot__ of stuff.  Many checks will be missing.
+      Start adding these checks in.
+    * Test with _mkc_.
+* Phase 3
+    * Variable cache. The usual invalidation problem.
+* Phase 4
+    * Build executables.
+    * Build shared libraries.
+    * Test with _libmp4tag_.
+    * Test with _di_.
+    * Test with _mkc_.
+    * At this point, an alpha release could be made.
+* Phase 5
+    * Generate Makefiles
+      This will be difficult.
+    * Installation process.
+    * Test with _libmp4tag_.
+    * Test with _di_.
+    * Test with _mkc_.
+    * alpha release.
+* Phase 6
+    * Be able to include other _mkc_ configuration files.
+    * Test with _BallroomDJ 4_.
+    * Test with _libmp4tag_.
+    * Test with _mkc_.
+    * beta release.
+
+[Wiki Home](Home)

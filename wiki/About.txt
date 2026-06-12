@@ -1,0 +1,30 @@
+[Wiki Home](Home)
+
+### About
+
+I wrote [_mkconfig_](https://sourceforge.net/projects/mkconfig/)
+many years ago (see:
+[di:&nbsp;wiki:&nbsp;History](https://sourceforge.net/p/diskinfo-di/wiki/History/)).
+_mkconfig_ is a configuration tool written in portable shell script.
+It doesn't have any _Makefile_ generation capabilities.
+
+While writing
+[BallroomDJ&nbsp;4](https://sourceforge.net/projects/ballroomdj4/), I
+tried to update _mkconfig_ to handle some paths with spaces in them,
+and failed. I switched to using _cmake_ for my projects.
+
+In February 2026, the new release of _cmake-4_ under _Msys2_ on
+Windows no longer built _Ballroomdj&nbsp;4_ properly.  I submitted a
+ticket for one problem. Apparently fatal errors are not fatal (though
+they get logged), and _cmake_ was doing very strange things
+afterwards.
+
+There is another issue in _cmake_ that is causing my build on Windows
+to fail (I don't recall what).  I have never bothered to try and debug
+the problem. I downloaded _cmake-3_ for Windows and am currently using
+it for the build.  _cmake-4_ on MacOS appears to work ok.
+
+Not being happy with regression errors in _cmake_, I decided to create
+a new configuration tool, __mkc__.
+
+[Wiki Home](Home)

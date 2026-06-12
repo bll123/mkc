@@ -1,0 +1,24 @@
+== profiles
+  global 0
+  global 1
+  global 2
+  global 3
+  internal 0
+  release 0
+  release 1
+  release 2
+== global 0
+  d g-general
+  f g-general
+== global 1
+  c g-c
+  e g-c
+== global 2
+  b g-cpp
+  f g-cpp
+== global 3
+== release 0
+== release 1
+  i r-c
+== release 2
+  h r-cpp

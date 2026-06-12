@@ -1,0 +1,10 @@
+profile global c;
+check_struct_member 'struct stat' st_mode {
+  header sys/stat.h;
+}
+
+if (${_member_struct_stat_st_mode} == 1) {
+  print '  ok';
+} else {
+  print '  fail struct stat.st_mode';
+}

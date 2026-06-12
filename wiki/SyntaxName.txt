@@ -1,0 +1,15 @@
+[Wiki Home](Home)
+<br>[Syntax](Syntax)
+
+### Syntax: Name
+
+    name <variable-name>;
+
+The name statement is an attribute for a [check](SyntaxCheck)
+statement.
+
+The name statement replaces the generated name of the check with
+_variable&8209;name_.
+
+[Wiki Home](Home)
+<br>[Syntax](Syntax)

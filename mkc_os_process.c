@@ -1,0 +1,279 @@
+/*
+ * Copyright 2021-2026 Brad Lanam Pleasant Hill CA
+ *  (from ballroomdj4)
+ */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
+#include <errno.h>
+#include <time.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <locale.h>
+#include <stdarg.h>
+#if __has_include (<fcntl.h>)
+# include <fcntl.h>
+#endif
+#if __has_include (<sys/wait.h>)
+# include <sys/wait.h>
+#endif
+
+#include "mkc_os_process.h"
+#include "mkc_util.h"
+
+#define OSPROCESS_DEBUG 0
+
+enum {
+  OSPROCESS_RUN_DATA_SZ = 4096,
+  OSPROCESS_RUN_ARGV_SZ = 30,
+};
+
+#if defined (WIFEXITED)
+
+static int mkc_os_process_wait (int wstatus);
+
+#endif
+
+/* identical on linux and mac os */
+/* most anything not windows */
+#if _lib_fork || (MKC_BOOTSTRAP && ! _WIN32)
+
+/* handles redirection to a file */
+pid_t
+mkc_os_process_start (const char *targv[], int flags, char *outfname)
+{
+  pid_t       pid;
+  pid_t       tpid;
+  int         rc;
+
+# if OSPROCESS_DEBUG
+    {
+      int   k = 0;
+      fprintf (stderr, "== start: ");
+      while (targv [k] != NULL) {
+        fprintf (stderr, "%s ", targv [k]);
+        ++k;
+      }
+      fprintf (stderr, "\n");
+    }
+#endif
+
+  tpid = fork ();
+  if (tpid < 0) {
+    fprintf (stderr, "ERR: fork: %d %s\n", errno, strerror (errno));
+    return tpid;
+  }
+
+  if (tpid == 0) {
+    /* child */
+    if ((flags & OS_PROC_DETACH) == OS_PROC_DETACH) {
+      setsid ();
+    }
+
+    if (outfname != NULL) {
+      int fd = open (outfname, O_CREAT | O_WRONLY | O_TRUNC, S_IRWXU | S_IRWXG);
+      if (fd < 0) {
+        outfname = NULL;
+      } else {
+        dup2 (fd, STDOUT_FILENO);
+        if ((flags & OS_PROC_NOSTDERR) != OS_PROC_NOSTDERR) {
+          dup2 (fd, STDERR_FILENO);
+        }
+        close (fd);
+      }
+    }
+
+    rc = execvp (targv [0], (char * const *) targv);
+    if (rc < 0) {
+      fprintf (stderr, "ERR: unable to execute %s %d %s\n", targv [0], errno, strerror (errno));
+      exit (1);
+    }
+
+    exit (0);
+  }
+
+  pid = tpid;
+  if ((flags & OS_PROC_WAIT) == OS_PROC_WAIT) {
+    int   rc, wstatus;
+
+    if (waitpid (pid, &wstatus, 0) < 0) {
+      rc = 0;
+      // fprintf (stderr, "waitpid: errno %d %s\n", errno, strerror (errno));
+    } else {
+      rc = mkc_os_process_wait (wstatus);
+    }
+    return rc;
+  }
+
+  return pid;
+}
+
+#endif /* if lib_fork */
+
+/* identical on linux and mac os */
+/* most anything not windows */
+#if _lib_fork || (MKC_BOOTSTRAP && ! _WIN32)
+
+/* creates a pipe for re-direction and grabs the output */
+int
+mkc_os_process_pipe (const char *targv[], int flags, char *rbuff, size_t sz, size_t *retsz)
+{
+  pid_t   pid;
+  int     rc = 0;
+  pid_t   tpid;
+  int     pipefd [2] = { -1, -1 };
+
+  flags |= OS_PROC_WAIT;      // required
+
+  if (rbuff != NULL) {
+    *rbuff = '\0';
+  }
+  if (retsz != NULL) {
+    *retsz = 0;
+  }
+
+  if (pipe (pipefd) < 0) {
+    return -1;
+  }
+
+# if 0
+    {
+      int   k = 0;
+      fprintf (stderr, "== pipe: ");
+      while (targv [k] != NULL) {
+        fprintf (stderr, "%s ", targv [k]);
+        ++k;
+      }
+      fprintf (stderr, "\n");
+    }
+#endif
+
+  /* this may be slower, but it works; speed is not a major issue */
+  tpid = fork ();
+  if (tpid < 0) {
+    fprintf (stderr, "ERR: %d %s\n", errno, strerror (errno));
+    return tpid;
+  }
+
+  if (tpid == 0) {
+    /* child */
+    /* close the pipe read side */
+    close (pipefd [0]);
+
+    /* send both stdout and stderr to the same fd */
+    dup2 (pipefd [1], STDOUT_FILENO);
+    if ((flags & OS_PROC_NOSTDERR) != OS_PROC_NOSTDERR) {
+      dup2 (pipefd [1], STDERR_FILENO);
+    }
+    close (pipefd [1]);
+
+    rc = execvp (targv [0], (char * const *) targv);
+    if (rc < 0) {
+      fprintf (stderr, "unable to execute %s %d %s\n", targv [0], errno, strerror (errno));
+      exit (1);
+    }
+
+    exit (0);
+  }
+
+  /* write end of pipe is not needed by parent */
+  close (pipefd [1]);
+
+  pid = tpid;
+
+  {
+    bool    wait = true;
+    int     wstatus;
+    ssize_t bytesread = 0;
+
+    if (rbuff != NULL) {
+      rbuff [sz - 1] = '\0';
+    }
+
+    wait = true;
+    while (wait) {
+      if (rbuff != NULL) {
+        size_t    rbytes;
+
+        rbytes = read (pipefd [0], rbuff + bytesread, sz - bytesread);
+        bytesread += rbytes;
+        if (bytesread < (ssize_t) sz) {
+          rbuff [bytesread] = '\0';
+        }
+        if (retsz != NULL) {
+          *retsz = bytesread;
+        }
+      }
+      if ((flags & OS_PROC_WAIT) == OS_PROC_WAIT) {
+        rc = waitpid (pid, &wstatus, WNOHANG);
+        if (rc < 0) {
+          rc = 0;
+          wait = false;
+          // fprintf (stderr, "waitpid: errno %d %s\n", errno, strerror (errno));
+        } else if (rc != 0) {
+          rc = mkc_os_process_wait (wstatus);
+          wait = false;
+        }
+        if (wait) {
+          mssleep (100);
+        }
+      }
+    }
+    close (pipefd [0]);
+  }
+
+  return rc;
+}
+
+#endif /* if lib_fork */
+
+/* valgrind complains about using an uninitialized variable, */
+/* but I cannot find any issue */
+char *
+mkc_os_process_run (const char *prog, ...)
+{
+  char        data [OSPROCESS_RUN_DATA_SZ] = { "" };
+  char        *ret;
+  char        *arg = NULL;
+  const char  *targv [OSPROCESS_RUN_ARGV_SZ];
+  int         targc = 0;
+  va_list     valist;
+
+  va_start (valist, prog);
+
+  *data = '\0';
+
+  targc = 0;
+  targv [targc++] = prog;
+  while (targc < (OSPROCESS_RUN_ARGV_SZ - 1) &&
+      (arg = va_arg (valist, char *)) != NULL) {
+    targv [targc++] = arg;
+  }
+  targv [targc++] = NULL;
+  va_end (valist);
+
+  mkc_os_process_pipe (targv, OS_PROC_WAIT | OS_PROC_DETACH,
+      data, OSPROCESS_RUN_DATA_SZ, NULL);
+  ret = strdup (data);
+  return ret;
+}
+
+#if defined (WIFEXITED)
+
+static int
+mkc_os_process_wait (int wstatus)
+{
+  int rc = 0;
+
+  if (WIFEXITED (wstatus)) {
+    rc = WEXITSTATUS (wstatus);
+  } else if (WIFSIGNALED (wstatus)) {
+    rc = WTERMSIG (wstatus);
+  }
+  return rc;
+}
+
+#endif

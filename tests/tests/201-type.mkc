@@ -1,0 +1,23 @@
+profile global c;
+check_type something_t;
+check_type int;
+check_type 'struct stat' {
+  header sys/stat.h;
+  name _have_stat;
+}
+
+if (${_type_something_t} == 0) {
+  print '  ok';
+} else {
+  print '  fail something';
+}
+if (${_type_int} == 1) {
+  print '  ok';
+} else {
+  print '  fail int';
+}
+if (${_have_stat} == 1 && ${_type_struct_stat} == 0) {
+  print '  ok';
+} else {
+  print '  fail struct stat';
+}

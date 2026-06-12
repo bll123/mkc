@@ -1,0 +1,52 @@
+# unary
+
+# !
+if (! 0) {
+  print '  ok !';
+} else {
+  print '  fail-a !';
+}
+if (! 1) {
+  print '  fail-a !';
+} else {
+  print '  ok !';
+}
+
+# -
+if (-0 == 0) {
+  print '  ok -';
+} else {
+  print '  fail-a -';
+}
+if (-1 == 0) {
+  print '  fail-b -';
+} else {
+  print '  ok -';
+}
+if (-1 == 1) {
+  print '  fail-c -';
+} else {
+  print '  ok -';
+}
+if (-1 == -1) {
+  print '  ok -';
+} else {
+  print '  fail-d -';
+}
+
+# +
+if (+0 == 0) {
+  print '  ok +';
+} else {
+  print '  fail-a +';
+}
+if (+1 == 0) {
+  print '  fail-b +';
+} else {
+  print '  ok +';
+}
+if (+1 == 1) {
+  print '  ok +';
+} else {
+  print '  fail-c +';
+}

@@ -1,0 +1,103 @@
+# numeric comparisons
+
+# eq
+if ('a' eq 'a') {
+  print '  ok eq';
+} else {
+  print '  fail-a eq';
+}
+
+if ('a' eq 'b') {
+  print '  fail-b eq';
+} else {
+  print '  ok eq';
+}
+
+# ne
+if ('a' ne 'a') {
+  print '  fail-a ne';
+} else {
+  print '  ok ne';
+}
+
+if ('a' ne 'b') {
+  print '  ok ne';
+} else {
+  print '  fail-b ne';
+}
+
+# lt
+if ('a' lt 'a') {
+  print '  fail-a lt';
+} else {
+  print '  ok lt';
+}
+
+if ('a' lt 'b') {
+  print '  ok lt';
+} else {
+  print '  fail-b lt';
+}
+
+if ('b' lt 'a') {
+  print '  fail-c lt';
+} else {
+  print '  ok lt';
+}
+
+# le
+if ('a' le 'a') {
+  print '  ok le';
+} else {
+  print '  fail-a le';
+}
+
+if ('a' le 'b') {
+  print '  ok le';
+} else {
+  print '  fail-b le';
+}
+
+if ('b' le 'a') {
+  print '  fail-c le';
+} else {
+  print '  ok le';
+}
+
+# gt
+if ('a' gt 'a') {
+  print '  fail-a gt';
+} else {
+  print '  ok gt';
+}
+
+if ('a' gt 'b') {
+  print '  fail-b gt';
+} else {
+  print '  ok gt';
+}
+
+if ('b' gt 'a') {
+  print '  ok gt';
+} else {
+  print '  fail-c gt';
+}
+
+# ge
+if ('a' ge 'a') {
+  print '  ok ge';
+} else {
+  print '  fail-a ge';
+}
+
+if ('a' ge 'b') {
+  print '  fail-b ge';
+} else {
+  print '  ok ge';
+}
+
+if ('b' ge 'a') {
+  print '  ok ge';
+} else {
+  print '  fail-c ge';
+}

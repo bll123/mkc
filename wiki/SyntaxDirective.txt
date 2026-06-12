@@ -1,0 +1,17 @@
+[Wiki Home](Home)
+<br>[Syntax](Syntax)
+
+### Syntax: Directives
+
+#### Internal Debugging
+
+    mkcdebug printvar <profile>;    # user defined profile
+    mkcdebug printvar global;
+    mkcdebug printvar internal;
+    mkcdebug printvar internalall;  # including variables used internally
+    mkcdebug printvar test;         # most global variables
+    mkcdebug printprof;             # prints profile names
+    mkcdebug vardebug;
+
+[Wiki Home](Home)
+<br>[Syntax](Syntax)

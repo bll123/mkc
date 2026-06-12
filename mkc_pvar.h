@@ -1,0 +1,52 @@
+/*
+ * Copyright 2026 Brad Lanam Pleasant Hill CA
+ */
+
+#pragma once
+
+#include <stdint.h>
+
+#include "mkc_def.h"
+#include "mkc_list.h"
+#include "mkc_log.h"
+#include "mkc_profile.h"
+#include "mkc_var.h"
+
+#if defined (__cplusplus) || defined (c_plusplus)
+extern "C" {
+#endif
+
+typedef struct mkc_pvar_t mkc_pvar_t;
+
+mkc_pvar_t *mkc_pvar_init (mkc_profile_t *profiles, mkc_log_t *log, mkc_error_t *mkcerr);
+void mkc_pvar_free (mkc_pvar_t *pvar);
+int mkc_pvar_profile_set (mkc_pvar_t *pvar, const char *pname, mkc_prof_comp_t compiler);
+int mkc_pvar_profile_set_idx (mkc_pvar_t *pvar, mkc_profidx_t pidx);
+
+const char *mkc_pvar_name_alloc (mkc_pvar_t *pvar, const char *vname);
+int mkc_pvar_set (mkc_pvar_t *pvar, const char *vname, mkc_value_t *value);
+int mkc_pvar_set_integer (mkc_pvar_t *pvar, const char *vname, int32_t ival);
+int mkc_pvar_set_str (mkc_pvar_t *pvar, const char *vname, const char *str);
+
+mkc_varidx_t mkc_pvar_get_prof_idx (mkc_pvar_t *pvar, const char *vname);
+
+void mkc_pvar_iter_start (mkc_pvar_t *pvar, mkc_varidx_t *iteridx);
+mkc_varidx_t mkc_pvar_iter_next (mkc_pvar_t *pvar, mkc_varidx_t *iteridx);
+
+mkc_value_t *mkc_pvar_get_by_profile (mkc_pvar_t *pvar, const char *nm);
+mkc_value_t *mkc_pvar_get_by_idx (mkc_pvar_t *pvar, mkc_varidx_t vidx);
+const char * mkc_pvar_get_name (mkc_pvar_t *pvar, mkc_varidx_t vidx);
+void mkc_pvar_get_env_str (mkc_pvar_t *pvar, const char *envstr, char *buff, size_t sz);
+int32_t mkc_pvar_get_variable_integer (mkc_pvar_t *pvar, mkc_value_t *value);
+void mkc_pvar_get_variable_str (mkc_pvar_t *pvar, mkc_value_t *value, char *buff, size_t sz);
+mkc_value_t * mkc_pvar_get_variable_value (mkc_pvar_t *pvar, const char *str);
+
+mkc_value_t *mkc_pvar_get_value (mkc_pvar_t *pvar, const char *vname);
+//mkc_value_t *mkc_pvar_get_value (mkc_pvar_t *pvar, mkc_varidx_t vidx);
+
+void mkc_pvar_debug (mkc_pvar_t *pvar);
+char * mkc_pvar_substitute (mkc_pvar_t *pvar, const char *vname, int depth);
+
+#if defined (__cplusplus) || defined (c_plusplus)
+}
+#endif

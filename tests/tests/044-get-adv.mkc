@@ -1,0 +1,30 @@
+set aaa 1;
+set bbb 2;
+set ccc 3;
+set aaa1 'aaa';
+set aaa2 'bbb';
+set aaa3 'ccc';
+
+# concatenation , quoted
+set a "${aaa}${bbb}";
+if (${a} eq '12') {
+  print '  ok cat';
+} else {
+  print "  fail-cat";
+}
+
+# nested
+set a ${${aaa1}2};
+if (${a} eq 'bbb') {
+  print '  ok nest-a';
+} else {
+  print "  fail-nest-a";
+}
+
+# nested
+set a ${aaa${ccc}};
+if (${a} eq 'ccc') {
+  print '  ok nest-b';
+} else {
+  print "  fail-nest-b";
+}

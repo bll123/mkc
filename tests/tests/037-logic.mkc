@@ -1,0 +1,106 @@
+# logical
+
+# &&
+if (0 && 0) {
+  print '  fail && /00';
+} else {
+  print '  ok && /00';
+}
+
+if (0 && 1) {
+  print '  fail && /01';
+} else {
+  print '  ok && /01';
+}
+
+if (1 && 0) {
+  print '  fail && /10';
+} else {
+  print '  ok && /10';
+}
+
+if (1 && 1) {
+  print '  ok && /11';
+} else {
+  print '  fail && /11';
+}
+
+# ||
+if (0 || 0) {
+  print '  fail || /00';
+} else {
+  print '  ok || /00';
+}
+
+if (0 || 1) {
+  print '  ok || /01';
+} else {
+  print '  fail || /01';
+}
+
+if (1 || 0) {
+  print '  ok || /10';
+} else {
+  print '  fail || /10';
+}
+
+if (1 || 1) {
+  print '  ok || /11';
+} else {
+  print '  fail || /11';
+}
+
+if ((0 && 0) || 1) {
+  print '  ok &&|| /001';
+} else {
+  print '  fail &&|| /001';
+}
+
+if ((0 && 1) || 0) {
+  print '  fail &&|| /010';
+} else {
+  print '  ok &&|| /010';
+}
+
+if ((1 && 1) || 0) {
+  print '  ok &&|| /110';
+} else {
+  print '  fail &&|| /110';
+}
+
+if ((1 && 0) || 1) {
+  print '  ok &&|| /101';
+} else {
+  print '  fail &&|| /101';
+}
+
+if (0 || (0 && 1)) {
+  print '  fail ||&& /001';
+} else {
+  print '  ok ||&& /001';
+}
+
+if (0 || (1 && 0)) {
+  print '  fail ||&& /010';
+} else {
+  print '  ok ||&& /010';
+}
+
+if (1 || (1 && 0)) {
+  print '  ok ||&& /110';
+} else {
+  print '  fail ||&& /110';
+}
+
+if (1 || (0 && 1)) {
+  print '  ok ||&& /101';
+} else {
+  print '  fail ||&& /101';
+}
+
+if (0 || (1 && 1)) {
+  print '  ok ||&& /011';
+} else {
+  print '  fail ||&& /011';
+}
+

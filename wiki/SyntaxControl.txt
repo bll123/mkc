@@ -1,0 +1,41 @@
+[Wiki Home](Home)
+<br>[Syntax](Syntax)
+
+[TOC]
+
+### Syntax: Control Statements
+
+#### if Statements
+
+    if (_expr_) {
+      _statement-list_
+    }
+
+    if (_expr_) {
+      _statement-list_
+    } else {
+      _statement-list_
+    }
+
+    if (_expr_) {
+      _statement-list_
+    } else if (_expr_) {
+      _statement-list_
+    }
+
+    if (_expr_) {
+      _statement-list_
+    } else if (_expr_) {
+      _statement-list_
+    } else if (_expr_) {
+      _statement-list_
+    } else {
+      _statement-list_
+    }
+
+#### while statement (not yet implemented)
+
+#### foreach statement (not yet implemented)
+
+[Wiki Home](Home)
+<br>[Syntax](Syntax)

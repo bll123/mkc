@@ -1,0 +1,16 @@
+[Wiki Home](Home)
+
+### Contributing to mkc development
+
+No LLM generated code allowed.
+
+Practice the three C's: Consideration, Cooperation, Conscientousness.
+
+Development Team (as of 2026-6):
+
+* Brad Lanam
+<br>Architect, Programmer, Tools,
+Testing, Quality&nbsp;Assurance, Documentation, Website&nbsp;Management,
+System&nbsp;Administration
+
+[Wiki Home](Home)

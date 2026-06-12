@@ -1,0 +1,25 @@
+profile global;
+
+# environment variables
+set a $ENV{PATH};
+if (${a} ne '' && ${a} ne '$ENV{PATH}') {
+  print '  ok env';
+} else {
+  print "  fail-env";
+}
+
+# environment variable embedded in quoted string
+set b "$ENV{PATH}";
+if (${b} ne '' && ${b} ne '$ENV{PATH}') {
+  print '  ok quoted';
+} else {
+  print "  fail-quoted";
+}
+
+# environment variable embedded in single quoted string
+set c '$ENV{PATH}';
+if (${c} eq '$ENV{PATH}') {
+  print '  ok single-quoted';
+} else {
+  print "  fail-single-quoted";
+}

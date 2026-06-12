@@ -1,0 +1,33 @@
+# basic tests putting variables into different profiles
+profile global {
+  set d "g-general";
+}
+profile global c {
+  set c "g-c";
+}
+profile release c {
+  set i "r-c";
+}
+profile global cpp {
+  set b "g-cpp";
+}
+profile global any {
+  set f "g-general";
+}
+profile global c {
+  set e "g-c";
+}
+profile global cpp {
+  set f "g-cpp";
+}
+profile release cpp {
+  set h "r-cpp";
+}
+profile debug cpp {
+  set i "d-cpp";
+}
+
+mkcdebug printprof;
+mkcdebug printvar test;
+mkcdebug printvar release;
+mkcdebug printvar debug;

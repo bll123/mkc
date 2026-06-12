@@ -1,0 +1,38 @@
+[Wiki Home](Home)
+<br>[Syntax](Syntax)
+
+### Syntax: profile
+
+The following patterns set the profile for the statements in
+_statement-list_.
+
+    profile <profile-name> { <statement-list> };
+    profile <profile-name> <compiler> { <statement-list> };
+
+_profile-name_ is usually a user-defined name.
+_mkc_ defined names are __internal__ and  __global__.
+
+_compiler_ is one of __c__, __c&plus;&plus;__, __objc__.
+
+
+The following patterns set the profile for all actions following the
+profile statement.  Be aware that this will override any profile set
+on the command line.  These patterns are used in debugging and
+testing.
+
+    profile <profile-name>;
+    profile <profile-name> <compiler>;
+
+When a variable is used, _mkc_ will check the profiles in the
+following order:
+
+* target / compiler
+* target
+* user-profile / compiler
+* user-profile
+* global / compiler
+* global
+* internal
+
+[Wiki Home](Home)
+<br>[Syntax](Syntax)

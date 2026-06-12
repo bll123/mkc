@@ -1,0 +1,14 @@
+== global 0
+  aaa 444
+  bbb 7
+  ccc ghi
+  ddd 222
+  fff 111
+  ggg 555
+  hhh abc
+  iii 333
+  v-1 a
+  v_2 b
+== global 1
+== global 2
+== global 3

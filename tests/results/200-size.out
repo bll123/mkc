@@ -1,0 +1,6 @@
+  ok int8_t
+  ok int16_t
+  ok int32_t
+  ok int64_t
+  ok struct stat
+  ok unknown_t

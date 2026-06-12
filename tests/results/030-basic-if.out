@@ -1,0 +1,49 @@
+  if/true (1)
+     ok
+  if/false (0)
+  if,else/true (1)
+     ok
+  if,else/false (1)
+     ok
+  if,elseif/false,true (1)
+     ok
+  if,elseif/false,false (0)
+  if,elseif/true,false (1)
+     ok
+  if,elseif,else/false,true (1)
+     ok
+  if,elseif,else/true,true (1)
+     ok
+  if,elseif,else/false,false (1)
+     ok
+  if,elseif,else/true,false (1)
+     ok
+  if,elseif,elseif,else/false,false,false (1)
+     ok
+  if,elseif,elseif,else/false,false,true (1)
+     ok
+  if,elseif,elseif,else/false,true,false (1)
+     ok
+  if,elseif,elseif,else/true,false,false (1)
+     ok
+  if,elseif,elseif,else/false,true,true (1)
+     ok
+  if,elseif,elseif,else/true,false,true (1)
+     ok
+  if,elseif,elseif,else/true,true,false (1)
+     ok
+  if,elseif,elseif,else/true,true,true (1)
+     ok
+  nested:if,else{if,else}/true,false (1)
+     ok
+  nested-1:/false,false,false (2)
+     ok
+     ok
+  nested-2/false,false,false,false,false (3)
+     ok
+     ok
+     ok
+  nested-2/true,false,true,false,false (3)
+     ok
+     ok
+     ok
