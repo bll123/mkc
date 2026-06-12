@@ -1,0 +1,5 @@
+
+# continue not in loop
+if (1 == 1) {
+  continue;
+}

@@ -3,7 +3,9 @@
 02x - print statement, quoted strings, more basic syntax
 03x - if statement, comparisons, unary operators, math operators
 04x - variables
-05x - profiles
-06x - foreach
-07x - while
+05x - control statements
+06x - profiles
 100 - compiler flag checks
+110 - link flag checks
+120 - more statement checks
+200 - check statements
