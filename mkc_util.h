@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <time.h>
+#include <sys/time.h>
 
 #if defined (__cplusplus) || defined (c_plusplus)
 extern "C" {

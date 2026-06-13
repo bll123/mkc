@@ -10,7 +10,7 @@
 #include <stdarg.h>
 #include <string.h>
 
-#include "mkc_def.h"
+#include "mkc_error.h"
 #include "mkc_fileop.h"
 #include "mkc_log.h"
 
@@ -21,6 +21,24 @@ typedef struct mkc_log_t {
   int32_t     logflag;
 } mkc_log_t;
 
+const char * const mkcerrormsg [] = {
+  [MKC_OK] = "success",
+  [MKC_ERR_COMPILER_FAILURE] = "compiler failure",
+  [MKC_ERR_FILE_NOT_FOUND] = "file not found",
+  [MKC_ERR_INVALID_ARGUMENT] = "invalid argument",
+  [MKC_ERR_INVALID_PROFILE] = "invalid profile",
+  [MKC_ERR_INVALID_VALUE] = "invalid value",
+  [MKC_ERR_MISMATCHED_ARGUMENT] = "mismatched argument",
+  [MKC_ERR_OUT_OF_MEMORY] = "out of memory",
+  [MKC_ERR_OUT_OF_RANGE] = "out of range",
+  [MKC_ERR_PARSE_FAILURE] = "parse failure",
+  [MKC_ERR_SEARCH_UNSORTED_LIST] = "searching an unsorted list",
+  [MKC_ERR_STMT_NOT_ALLOWED] = "statement not allowed",
+  [MKC_ERR_UNBALANCED_BRACES] = "unbalanced braces",
+  [MKC_ERR_UNHANDLED_VALUE] = "unhandled value",
+  [MKC_ERR_WHILE_LIMIT_EXCEEDED] = "while limit exceeded",
+};
+
 mkc_log_t *
 mkc_log_init (mkc_error_t *mkcerr)
 {
@@ -28,7 +46,7 @@ mkc_log_init (mkc_error_t *mkcerr)
 
   log = malloc (sizeof (mkc_log_t));
   if (log == NULL) {
-    *mkcerr = MKC_ERR_OUT_OF_MEMORY;
+    mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY);
     return NULL;
   }
 
@@ -46,19 +64,19 @@ mkc_log_open (mkc_log_t *log, const char *fname, int32_t logflag)
     return;
   }
   if (fname == NULL) {
-    *(log->mkcerr) = MKC_ERR_INVALID_ARGUMENT;
+    mkc_error_set (log->mkcerr, MKC_ERR_INVALID_ARGUMENT);
     return;
   }
 
   log->fname = strdup (fname);
   if (log->fname == NULL) {
-    *(log->mkcerr) = MKC_ERR_OUT_OF_MEMORY;
+    mkc_error_set (log->mkcerr, MKC_ERR_OUT_OF_MEMORY);
     return;
   }
 
   log->fh = mkc_fopen (fname, "w");
   if (log->fh == NULL) {
-    *(log->mkcerr) = MKC_ERR_FILE_NOT_FOUND;
+    mkc_error_set (log->mkcerr, MKC_ERR_FILE_NOT_FOUND);
   }
 
   log->logflag = logflag;
@@ -136,6 +154,7 @@ mkc_log_loc (mkc_log_t *log, int32_t logflag,
     int32_t lineno, int col, const char *fmt, ...)
 {
   va_list   vap;
+  char      tbuff [40];
 
   if (log == NULL) {
     return;
@@ -149,7 +168,8 @@ mkc_log_loc (mkc_log_t *log, int32_t logflag,
   }
 
   va_start (vap, fmt);
-  fprintf (log->fh, "%2" PRId32 ".%2d: ", lineno, col);
+  mkc_error_line_disp (tbuff, sizeof (tbuff), lineno, col);
+  fprintf (log->fh, "%s", tbuff);
   vfprintf (log->fh, fmt, vap);
   va_end (vap);
 }

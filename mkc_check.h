@@ -6,7 +6,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 
-#include "mkc_def.h"
+#include "mkc_error.h"
 #include "mkc_env.h"
 #include "mkc_log.h"
 #include "mkc_profile.h"

@@ -6,7 +6,7 @@
 
 #include <stdint.h>
 
-#include "mkc_def.h"
+#include "mkc_error.h"
 #include "mkc_list.h"
 #include "mkc_log.h"
 #include "mkc_profile.h"

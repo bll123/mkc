@@ -10,6 +10,7 @@
 #include <string.h>
 
 #include "mkc_def.h"
+#include "mkc_error.h"
 #include "mkc_list.h"
 #include "mkc_var.h"
 #include "mkc_string.h"
@@ -42,7 +43,7 @@ mkc_varlist_init (mkc_log_t *log, mkc_error_t *mkcerr)
 
   varlist = malloc (sizeof (mkc_varlist_t));
   if (varlist == NULL) {
-    *mkcerr = MKC_ERR_OUT_OF_MEMORY;
+    mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY);
     return NULL;
   }
 
@@ -93,7 +94,7 @@ mkc_var_name_alloc (mkc_varlist_t *varlist, const char *vname)
     varlist->names = realloc (varlist->names,
         sizeof (char *) * varlist->name_allocsz);
     if (varlist->names == NULL) {
-      *(varlist->mkcerr) = MKC_ERR_OUT_OF_MEMORY;
+      mkc_error_set (varlist->mkcerr, MKC_ERR_OUT_OF_MEMORY);
       return NULL;
     }
   }
@@ -101,7 +102,7 @@ mkc_var_name_alloc (mkc_varlist_t *varlist, const char *vname)
   idx = varlist->name_sz;
   varlist->names [idx] = strdup (vname);
   if (varlist->names [idx] == NULL) {
-    *(varlist->mkcerr) = MKC_ERR_OUT_OF_MEMORY;
+    mkc_error_set (varlist->mkcerr, MKC_ERR_OUT_OF_MEMORY);
     return NULL;
   }
   varlist->name_sz += 1;
@@ -122,7 +123,7 @@ mkc_var_set (mkc_varlist_t *varlist, const char *name, mkc_value_t *value)
   vidx = mkc_var_find (varlist, name, &loc);
   if (vidx == MKC_VAR_NOTFOUND) {
     var = mkc_var_create (varlist, name, value->vtype, &loc);
-    if (*(varlist->mkcerr) != MKC_OK) {
+    if (mkc_error_chk_err (varlist->mkcerr)) {
       return MKC_ERR_FAILURE;
     }
   } else {
@@ -336,7 +337,7 @@ mkc_var_create (mkc_varlist_t *varlist,
   mkc_var_t     tvar;
 
   if (name == NULL) {
-    *(varlist->mkcerr) = MKC_ERR_INVALID_ARGUMENT;
+    mkc_error_set (varlist->mkcerr, MKC_ERR_INVALID_ARGUMENT);
     return NULL;
   }
 
@@ -397,7 +398,7 @@ mkc_var_list_copy (mkc_varlist_t *varlist, mkc_list_t *list)
 
   nlist = mkc_list_init (MKC_LIST_UNSORTED, mkc_value_free,
       NULL, varlist->mkcerr);
-  if (*(varlist->mkcerr) != MKC_OK) {
+  if (mkc_error_chk_err (varlist->mkcerr)) {
     return NULL;
   }
 
@@ -405,7 +406,7 @@ mkc_var_list_copy (mkc_varlist_t *varlist, mkc_list_t *list)
   while ((lidx = mkc_list_iter_next (list, &iteridx)) != MKC_ITER_FINISH) {
     mkc_listidx_t   loc = MKC_LIST_NOTFOUND;
 
-    if (*(varlist->mkcerr) != MKC_OK) {
+    if (mkc_error_chk_err (varlist->mkcerr)) {
       break;
     }
 

@@ -35,16 +35,14 @@ for tnm in ${tdir}/${pattern}; do
       ;;
   esac
 
+  ./mkc --no-cache $tnm > ${odir}/$bnm.out 2>>${LOG}
+  rc=$?
   if [[ $expfail == T ]]; then
-    ./mkc $tnm > ${odir}/$bnm.out 2>>${LOG}
-    rc=$?
     if [[ $rc -eq 0 ]]; then
       echo "   fail: test: $tnm"
       continue
     fi
   else
-    ./mkc $tnm > ${odir}/$bnm.out 2>>${LOG}
-    rc=$?
     if [[ $rc -ne 0 ]]; then
       echo "   fail: test: $tnm"
       continue

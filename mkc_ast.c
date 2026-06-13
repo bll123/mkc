@@ -14,6 +14,7 @@
 #include "mkc_check.h"
 #include "mkc_context.h"
 #include "mkc_def.h"
+#include "mkc_error.h"
 #include "mkc_log.h"
 #include "mkc_list.h"
 #include "mkc_os_process.h"
@@ -308,7 +309,7 @@ mkc_ast_start (mkc_astmain_t *astmain)
   astmain->rdepth = 0;
   mkc_ast_process (astmain, astmain->stmtblock, &ifcond, &loopcond, 0);
   mkc_process_save_cache (astmain->process);
-  return *(astmain->mkcerr);
+  return mkc_error_value (astmain->mkcerr);
 }
 
 void
@@ -985,18 +986,21 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
     astmain->maxrdepth = astmain->rdepth;
   }
 
-  if (*(astmain->mkcerr) != MKC_OK) {
-    mkc_log (astmain->log, MKC_LOG_AST_PROCESS, "ast-proc: error: %d\n", *(astmain->mkcerr));
+  if (mkc_error_chk_err (astmain->mkcerr)) {
+    mkc_log (astmain->log, MKC_LOG_AST_PROCESS,
+        "ast-proc: error: %d\n", mkc_error_value (astmain->mkcerr), NULL);
     /* an error occurred, stop processing */
-    return *(astmain->mkcerr);
+    return mkc_error_value (astmain->mkcerr);
   }
 
   if (astnode == NULL) {
-    mkc_log (astmain->log, MKC_LOG_AST_PROCESS, "ast-proc: null\n");
+    mkc_log (astmain->log, MKC_LOG_AST_PROCESS, "ast-proc: null\n", NULL);
     astmain->value.ival = 0;
     astmain->value.vtype = MKC_VT_INTEGER;
     return astmain->value.ival;
   }
+
+  mkc_error_set_line_col (astmain->mkcerr, astnode->lineno, astnode->colno);
 
   mkc_log_loc (astmain->log, MKC_LOG_AST_PROCESS, astnode->lineno, astnode->colno,
       "%*sast-proc: %s\n", astmain->depth * 2, " ", typenames [astnode->asttype]);
@@ -1011,7 +1015,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       mkc_value_t   *value;
 
       value = mkc_ast_get_value (astmain, astnode);
-      if (*(astmain->mkcerr) != MKC_OK) {
+      if (mkc_error_chk_err (astmain->mkcerr)) {
         break;
       }
 
@@ -1036,7 +1040,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       while ((lidx = mkc_list_iter_next (astnode->stmtlist.stmtlist, &iteridx)) != MKC_ITER_FINISH) {
         mkc_astnode_t   **listnode;
 
-        if (*(astmain->mkcerr) != MKC_OK) {
+        if (mkc_error_chk_err (astmain->mkcerr)) {
           break;
         }
 
@@ -1051,7 +1055,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
           if ((*listnode)->asttype == MKC_T_LOOP_CONTINUE ||
               (*listnode)->asttype == MKC_T_LOOP_BREAK) {
             if (! mkc_context_check (astmain->context, MKC_CONTEXT_LOOP)) {
-              *(astmain->mkcerr) = MKC_ERR_STMT_NOT_ALLOWED;
+              mkc_error_set (astmain->mkcerr, MKC_ERR_STMT_NOT_ALLOWED);
               break;
             }
 
@@ -1074,7 +1078,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       mkc_value_t   *value;
 
       value = mkc_ast_get_value (astmain, astnode->printstmt.vala);
-      if (*(astmain->mkcerr) != MKC_OK) {
+      if (mkc_error_chk_err (astmain->mkcerr)) {
         break;
       }
       mkc_process_stmt_print (astmain->process, value, 0);
@@ -1086,12 +1090,12 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       mkc_value_t   *valb = NULL;
 
       vala = mkc_ast_get_value (astmain, astnode->debugstmt.dbga);
-      if (*(astmain->mkcerr) != MKC_OK) {
+      if (mkc_error_chk_err (astmain->mkcerr)) {
         break;
       }
       /* valb can be null */
       valb = mkc_ast_get_value (astmain, astnode->debugstmt.dbgb);
-      if (*(astmain->mkcerr) != MKC_OK) {
+      if (mkc_error_chk_err (astmain->mkcerr)) {
         break;
       }
       mkc_process_stmt_debug (astmain->process, vala, valb);
@@ -1143,12 +1147,12 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       mkc_profidx_t plocalidx;
 
       value = mkc_ast_get_value (astmain, astnode->foreachstmt.nm);
-      if (*(astmain->mkcerr) != MKC_OK) {
+      if (mkc_error_chk_err (astmain->mkcerr)) {
         break;
       }
 
       value = mkc_ast_get_value (astmain, astnode->foreachstmt.valuelist);
-      if (*(astmain->mkcerr) != MKC_OK) {
+      if (mkc_error_chk_err (astmain->mkcerr)) {
         break;
       }
 
@@ -1159,13 +1163,13 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
         mkc_astnode_t   *listnode;
         mkc_value_t *tval;
 
-        if (*(astmain->mkcerr) != MKC_OK) {
+        if (mkc_error_chk_err (astmain->mkcerr)) {
           break;
         }
 
         listnode = mkc_list_get_by_idx (tlist, lidx);
         tval = mkc_ast_get_value (astmain, listnode);
-        if (*(astmain->mkcerr) != MKC_OK) {
+        if (mkc_error_chk_err (astmain->mkcerr)) {
           break;
         }
         mkc_process_local_set (astmain->process, nm,
@@ -1197,7 +1201,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       }
       mkc_context_pop (astmain->context);
       if (count >= limit) {
-        *(astmain->mkcerr) = MKC_ERR_WHILE_LIMIT_EXCEEDED;
+        mkc_error_set (astmain->mkcerr, MKC_ERR_WHILE_LIMIT_EXCEEDED);
       }
       break;
     }
@@ -1206,7 +1210,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       mkc_value_t *valnm;
 
       valnm = mkc_ast_get_value (astmain, astnode->setstmt.nm);
-      if (*(astmain->mkcerr) != MKC_OK) {
+      if (mkc_error_chk_err (astmain->mkcerr)) {
         break;
       }
 
@@ -1221,12 +1225,12 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       mkc_value_t   *valcomp = NULL;
 
       valnm = mkc_ast_get_value (astmain, astnode->profilestmt.nm);
-      if (*(astmain->mkcerr) != MKC_OK) {
+      if (mkc_error_chk_err (astmain->mkcerr)) {
         break;
       }
       if (astnode->profilestmt.comp != NULL) {
         valcomp = mkc_ast_get_value (astmain, astnode->profilestmt.comp);
-        if (*(astmain->mkcerr) != MKC_OK) {
+        if (mkc_error_chk_err (astmain->mkcerr)) {
           break;
         }
       }
@@ -1253,12 +1257,12 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       mkc_value_t   *valnm;
 
       if (! mkc_context_check (astmain->context, MKC_CONTEXT_CHECK)) {
-        *(astmain->mkcerr) = MKC_ERR_STMT_NOT_ALLOWED;
+        mkc_error_set (astmain->mkcerr, MKC_ERR_STMT_NOT_ALLOWED);
         break;
       }
 
       valnm = mkc_ast_get_value (astmain, astnode->nameattr.nm);
-      if (*(astmain->mkcerr) != MKC_OK) {
+      if (mkc_error_chk_err (astmain->mkcerr)) {
         break;
       }
       mkc_process_attr_name (astmain->process, valnm);
@@ -1269,12 +1273,12 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       mkc_value_t   *val;
 
       if (! mkc_context_check (astmain->context, MKC_CONTEXT_CHECK)) {
-        *(astmain->mkcerr) = MKC_ERR_STMT_NOT_ALLOWED;
+        mkc_error_set (astmain->mkcerr, MKC_ERR_STMT_NOT_ALLOWED);
         break;
       }
 
       val = mkc_ast_get_value (astmain, astnode->hdrattr.hdrlist);
-      if (*(astmain->mkcerr) != MKC_OK) {
+      if (mkc_error_chk_err (astmain->mkcerr)) {
         break;
       }
       mkc_process_attr_header (astmain->process, val);
@@ -1285,12 +1289,12 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       mkc_value_t   *val;
 
       if (! mkc_context_check (astmain->context, MKC_CONTEXT_CHECK)) {
-        *(astmain->mkcerr) = MKC_ERR_STMT_NOT_ALLOWED;
+        mkc_error_set (astmain->mkcerr, MKC_ERR_STMT_NOT_ALLOWED);
         break;
       }
 
       val = mkc_ast_get_value (astmain, astnode->compflagattr.compflaglist);
-      if (*(astmain->mkcerr) != MKC_OK) {
+      if (mkc_error_chk_err (astmain->mkcerr)) {
         break;
       }
       mkc_process_attr_comp_flags (astmain->process, val);
@@ -1307,7 +1311,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       }
 
       val = mkc_ast_get_value (astmain, astnode->chkcompflag.vala);
-      if (*(astmain->mkcerr) != MKC_OK) {
+      if (mkc_error_chk_err (astmain->mkcerr)) {
         break;
       }
       astmain->value.ival = mkc_process_chk_compiler_flag (astmain->process,
@@ -1325,7 +1329,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
         mkc_context_pop (astmain->context);
       }
       val = mkc_ast_get_value (astmain, astnode->chklinkflag.vala);
-      if (*(astmain->mkcerr) != MKC_OK) {
+      if (mkc_error_chk_err (astmain->mkcerr)) {
         break;
       }
       astmain->value.ival = mkc_process_chk_link_flag (astmain->process,
@@ -1343,7 +1347,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
         mkc_context_pop (astmain->context);
       }
       val = mkc_ast_get_value (astmain, astnode->chksize.vala);
-      if (*(astmain->mkcerr) != MKC_OK) {
+      if (mkc_error_chk_err (astmain->mkcerr)) {
         break;
       }
       astmain->value.ival = mkc_process_chk_size (astmain->process, val);
@@ -1360,7 +1364,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
         mkc_context_pop (astmain->context);
       }
       val = mkc_ast_get_value (astmain, astnode->chktype.vala);
-      if (*(astmain->mkcerr) != MKC_OK) {
+      if (mkc_error_chk_err (astmain->mkcerr)) {
         break;
       }
       astmain->value.ival = mkc_process_chk_type (astmain->process, val);
@@ -1379,12 +1383,12 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       }
 
       vala = mkc_ast_get_value (astmain, astnode->chkstructmember.vala);
-      if (*(astmain->mkcerr) != MKC_OK) {
+      if (mkc_error_chk_err (astmain->mkcerr)) {
         break;
       }
 
       valb = mkc_ast_get_value (astmain, astnode->chkstructmember.valb);
-      if (*(astmain->mkcerr) != MKC_OK) {
+      if (mkc_error_chk_err (astmain->mkcerr)) {
         break;
       }
 
@@ -1404,7 +1408,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       }
 
       vala = mkc_ast_get_value (astmain, astnode->chkfunction.vala);
-      if (*(astmain->mkcerr) != MKC_OK) {
+      if (mkc_error_chk_err (astmain->mkcerr)) {
         break;
       }
 
@@ -1463,13 +1467,13 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       mkc_ast_process (astmain, astnode->op.valb, ifcond, loopcond, astmain->depth);
       memcpy (&valb, &astmain->value, sizeof (mkc_value_t));
 
-      if (*(astmain->mkcerr) != MKC_OK) {
+      if (mkc_error_chk_err (astmain->mkcerr)) {
         break;
       }
       astmain->value.ival = mkc_process_num_op (astmain->process,
           astnode->asttype, &vala, &valb);
       astmain->value.vtype = MKC_VT_INTEGER;
-      if (*(astmain->mkcerr) != MKC_OK) {
+      if (mkc_error_chk_err (astmain->mkcerr)) {
         break;
       }
       break;
@@ -1488,7 +1492,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       mkc_ast_process (astmain, astnode->op.valb, ifcond, loopcond, astmain->depth);
       memcpy (&strb, &astmain->value, sizeof (mkc_value_t));
 
-      if (*(astmain->mkcerr) != MKC_OK) {
+      if (mkc_error_chk_err (astmain->mkcerr)) {
         break;
       }
       astmain->value.ival = mkc_process_str_op (astmain->process,
@@ -1502,7 +1506,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
     case MKC_T_OP_UNARY_PLUS: {
       mkc_ast_process (astmain, astnode->unary_op.vala, ifcond, loopcond, depth);
       if (astmain->value.vtype != MKC_VT_INTEGER) {
-        *(astmain->mkcerr) = MKC_ERR_MISMATCHED_ARGUMENT;
+        mkc_error_set (astmain->mkcerr, MKC_ERR_MISMATCHED_ARGUMENT);
         break;
       }
       astmain->value.ival = mkc_process_unary_op (astmain->process, astnode->asttype, &astmain->value);
@@ -1511,7 +1515,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
     }
 
     default: {
-      *(astmain->mkcerr) = MKC_ERR_UNHANDLED_VALUE;
+      mkc_error_set (astmain->mkcerr, MKC_ERR_UNHANDLED_VALUE);
       fprintf (stderr, "unhandled value %s\n", typenames [astnode->asttype]);
       break;
     }
@@ -1520,8 +1524,8 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
   astmain->rdepth -= 1;
   if (astmain->rdepth == 0) {
     mkc_log (astmain->log, MKC_LOG_STATISTICS,
-        "-- max-recursion: %d\n", astmain->maxrdepth);
-    return *(astmain->mkcerr);
+        "-- max-recursion: %d\n", astmain->maxrdepth, NULL);
+    return mkc_error_value (astmain->mkcerr);
   }
 
   return astmain->value.ival;
@@ -1597,7 +1601,7 @@ mkc_ast_get_value (mkc_astmain_t *astmain, mkc_astnode_t *astnode)
   }
 
   if (astnode->asttype != MKC_T_VALUE) {
-    *(astmain->mkcerr) = MKC_ERR_PARSE_FAILURE;
+    mkc_error_set (astmain->mkcerr, MKC_ERR_PARSE_FAILURE);
     return NULL;
   }
   if (astnode->asttype == MKC_T_VALUE) {

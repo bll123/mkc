@@ -7,7 +7,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "mkc_def.h"
+#include "mkc_error.h"
 #include "mkc_list.h"
 
 #if defined (__cplusplus) || defined (c_plusplus)

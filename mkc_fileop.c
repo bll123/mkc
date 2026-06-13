@@ -24,6 +24,7 @@
 #endif
 
 #include "mkc_def.h"
+#include "mkc_error.h"
 #include "mkc_fileop.h"
 #include "mkc_nodiscard.h"
 #include "mkc_string.h"
@@ -131,35 +132,33 @@ mkc_file_size (const char *fname)
 
 MKC_NODISCARD
 char *
-mkc_read_file (const char *fn, size_t *sz, int *err)
+mkc_read_file (const char *fn, size_t *sz, mkc_error_t *mkcerr)
 {
   char    *fdata = NULL;
   int     rc = -1;
   FILE    *fh;
   ssize_t fsz;
 
-  *err = MKC_OK;
-
   *sz = 0;
   fsz = mkc_file_size (fn);
   if (fsz < 0) {
-    *err = MKC_ERR_FILE_NOT_FOUND;
+    mkc_error_set (mkcerr, MKC_ERR_FILE_NOT_FOUND);
     return NULL;
   }
 
   fdata = malloc (fsz + 1);
   if (fdata == NULL) {
-    *err = MKC_ERR_OUT_OF_MEMORY;
+    mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY);
     return NULL;
   }
 
   fh = mkc_fopen (fn, "rb");
   if (fh == NULL) {
-    *err = MKC_ERR_FILE_NOT_FOUND;
+    mkc_error_set (mkcerr, MKC_ERR_FILE_NOT_FOUND);
   } else {
     rc = fread (fdata, fsz, 1, fh);
     if (rc != 1) {
-      *err = MKC_ERR_FILE_READ_ERROR;
+      mkc_error_set (mkcerr, MKC_ERR_FILE_READ_ERROR);
     }
   }
   fclose (fh);
@@ -252,7 +251,7 @@ mkc_fseek (FILE *fh, int64_t offset, int whence)
 }
 
 int
-mkc_file_copy (const char *fname, const char *nfn)
+mkc_file_copy (const char *fname, const char *nfn, mkc_error_t *mkcerr)
 {
   int     rc = -1;
 
@@ -282,8 +281,8 @@ mkc_file_copy (const char *fname, const char *nfn)
   size_t  len;
   size_t  trc = 0;
 
-  data = mkc_read_file (fname, &len, &rc);
-  if (data != NULL && rc == 0) {
+  data = mkc_read_file (fname, &len, mkcerr);
+  if (data != NULL && mkc_error_chk_ok (mkcerr)) {
     fh = mkc_fopen (nfn, "w");
     if (fh != NULL) {
       trc = fwrite (data, len, 1, fh);

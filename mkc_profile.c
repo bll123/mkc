@@ -8,7 +8,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "mkc_def.h"
+#include "mkc_error.h"
 #include "mkc_list.h"
 #include "mkc_profile.h"
 #include "mkc_string.h"
@@ -64,7 +64,7 @@ mkc_profile_init (mkc_log_t *log, mkc_error_t *mkcerr, const char *dfltprof)
 
   profiles = malloc (sizeof (mkc_profile_t));
   if (profiles == NULL) {
-    *mkcerr = MKC_ERR_OUT_OF_MEMORY;
+    mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY);
     return NULL;
   }
 
@@ -75,7 +75,7 @@ mkc_profile_init (mkc_log_t *log, mkc_error_t *mkcerr, const char *dfltprof)
   profiles->log = log;
   profiles->dfltprof = strdup (dfltprof);
   if (profiles->dfltprof == NULL) {
-    *mkcerr = MKC_ERR_OUT_OF_MEMORY;
+    mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY);
     mkc_profile_free (profiles);
     return NULL;
   }
@@ -83,7 +83,7 @@ mkc_profile_init (mkc_log_t *log, mkc_error_t *mkcerr, const char *dfltprof)
   profiles->list = mkc_list_init (MKC_LIST_SORTED,
       mkc_profile_entry_free, mkc_profile_compare, mkcerr);
   if (profiles->list == NULL) {
-    *mkcerr = MKC_ERR_OUT_OF_MEMORY;
+    mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY);
     mkc_profile_free (profiles);
     return NULL;
   }
@@ -91,7 +91,7 @@ mkc_profile_init (mkc_log_t *log, mkc_error_t *mkcerr, const char *dfltprof)
   mkc_profile_create_id (profiles, MKC_PROF_INTERNAL_NAME,
       MKC_PROF_COMPILER_GENERAL, MKC_PROF_TYPE_INTERNAL);
   for (mkc_prof_comp_t i = 0; i < MKC_PROF_COMPILER_MAX; ++i) {
-    if (*(profiles->mkcerr) != MKC_OK) {
+    if (mkc_error_chk_err (profiles->mkcerr)) {
       break;
     }
     mkc_profile_create_id (profiles, MKC_PROF_GLOBAL_NAME,
@@ -102,7 +102,7 @@ mkc_profile_init (mkc_log_t *log, mkc_error_t *mkcerr, const char *dfltprof)
 
   pidx = mkc_profile_find_id (profiles, dfltprof, MKC_PROF_COMPILER_GENERAL);
   if (mkc_profile_get_type (profiles, pidx) != MKC_PROF_TYPE_USER) {
-    *mkcerr = MKC_ERR_INVALID_PROFILE;
+    mkc_error_set (mkcerr, MKC_ERR_INVALID_PROFILE);
     mkc_profile_free (profiles);
     return NULL;
   }
@@ -110,6 +110,8 @@ mkc_profile_init (mkc_log_t *log, mkc_error_t *mkcerr, const char *dfltprof)
     pidx = mkc_profile_create_id (profiles, dfltprof,
           MKC_PROF_COMPILER_GENERAL, MKC_PROF_TYPE_USER);
   }
+  mkc_message ("-- default profile: %s\n", dfltprof);
+  mkc_log (log, MKC_LOG_PROFILE, "== default profile: %s\n", dfltprof, NULL);
 
   profiles->active_idx = pidx;
   profiles->user_idx = pidx;
@@ -160,7 +162,7 @@ mkc_profile_local_create (mkc_profile_t *profiles)
   }
 
   if (profiles->stacksz >= MKC_PROF_STACK_MAX) {
-    *(profiles->mkcerr) = MKC_ERR_OUT_OF_RANGE;
+    mkc_error_set (profiles->mkcerr, MKC_ERR_OUT_OF_RANGE);
     return MKC_ERR_FAILURE;
   }
 
@@ -168,7 +170,7 @@ mkc_profile_local_create (mkc_profile_t *profiles)
 
   tentry.name = strdup (tbuff);
   if (tentry.name == NULL) {
-    *(profiles->mkcerr) = MKC_ERR_OUT_OF_MEMORY;
+    mkc_error_set (profiles->mkcerr, MKC_ERR_OUT_OF_MEMORY);
     return MKC_ERR_FAILURE;
   }
   tentry.compiler = MKC_PROF_COMPILER_GENERAL;
@@ -181,11 +183,12 @@ mkc_profile_local_create (mkc_profile_t *profiles)
   pentry = mkc_list_append (profiles->list, &tentry,
       sizeof (mkc_prof_entry_t), &loc);
   if (pentry == NULL) {
-    *(profiles->mkcerr) = MKC_ERR_OUT_OF_MEMORY;
+    mkc_error_set (profiles->mkcerr, MKC_ERR_OUT_OF_MEMORY);
     return MKC_ERR_FAILURE;
   }
 
-  mkc_log (profiles->log, MKC_LOG_PROFILE, "profile: create-local: %s (%d)\n", tbuff, loc);
+  mkc_log (profiles->log, MKC_LOG_PROFILE,
+      "profile: create-local: %s (%d)\n", tbuff, loc, NULL);
   profiles->localstack [profiles->localstacksz] = loc;
   profiles->localstacksz += 1;
   profiles->localidx = 0;
@@ -208,7 +211,8 @@ mkc_profile_local_pop (mkc_profile_t *profiles)
   stackidx = profiles->localstacksz;
   pentry = mkc_list_get_by_idx (profiles->list, profiles->localstack [stackidx]);
 
-  mkc_log (profiles->log, MKC_LOG_PROFILE, "profile: pop-local: %s (%d)\n", pentry->name, pentry->pidx);
+  mkc_log (profiles->log, MKC_LOG_PROFILE,
+      "profile: pop-local: %s (%d)\n", pentry->name, pentry->pidx, NULL);
 
   mkc_profile_entry_free (pentry);
 }
@@ -359,14 +363,15 @@ mkc_profile_push (mkc_profile_t *profiles)
   }
 
   if (profiles->stacksz >= MKC_PROF_STACK_MAX) {
-    *(profiles->mkcerr) = MKC_ERR_OUT_OF_RANGE;
+    mkc_error_set (profiles->mkcerr, MKC_ERR_OUT_OF_RANGE);
     return MKC_ERR_FAILURE;
   }
 
   profiles->stack [profiles->stacksz] = profiles->active_idx;
   profiles->stacksz += 1;
 
-  mkc_log (profiles->log, MKC_LOG_PROFILE, "profile: push (%d)\n", profiles->active_idx);
+  mkc_log (profiles->log, MKC_LOG_PROFILE,
+      "profile: push (%d)\n", profiles->active_idx, NULL);
 
   return profiles->active_idx;
 }
@@ -381,19 +386,21 @@ mkc_profile_pop (mkc_profile_t *profiles)
   }
 
   if (profiles->stacksz <= 0) {
-    *(profiles->mkcerr) = MKC_ERR_OUT_OF_RANGE;
+    mkc_error_set (profiles->mkcerr, MKC_ERR_OUT_OF_RANGE);
     return MKC_ERR_FAILURE;
   }
 
   profiles->stacksz -= 1;
   profiles->active_idx = profiles->stack [profiles->stacksz];
 
-  mkc_log (profiles->log, MKC_LOG_PROFILE, "profile: pop (%d)\n", profiles->active_idx);
+  mkc_log (profiles->log, MKC_LOG_PROFILE,
+      "profile: pop (%d)\n", profiles->active_idx, NULL);
 
   pentry = mkc_list_get_by_idx (profiles->list, profiles->active_idx);
   if (pentry->type == MKC_PROF_TYPE_USER) {
-    mkc_log (profiles->log, MKC_LOG_PROFILE, "profile: user: %s %s (%d)\n", pentry->name,
-        compnames [pentry->compiler], profiles->active_idx);
+    mkc_log (profiles->log, MKC_LOG_PROFILE,
+        "profile: user: %s %s (%d)\n", pentry->name,
+        compnames [pentry->compiler], profiles->active_idx, NULL);
     profiles->user_idx = profiles->active_idx;
   }
 
@@ -410,18 +417,21 @@ mkc_profile_set_active (mkc_profile_t *profiles, mkc_profidx_t pidx)
   }
 
   if (pidx < 0 || pidx >= mkc_list_size (profiles->list)) {
-    *(profiles->mkcerr) = MKC_ERR_OUT_OF_RANGE;
+    mkc_error_set (profiles->mkcerr, MKC_ERR_OUT_OF_RANGE);
     return;
   }
 
   profiles->active_idx = pidx;
   pentry = mkc_list_get_by_idx (profiles->list, pidx);
   if (pentry->type == MKC_PROF_TYPE_USER) {
-    mkc_log (profiles->log, MKC_LOG_PROFILE, "profile: user: %s %s (%d)\n", pentry->name, compnames [pentry->compiler], pidx);
+    mkc_log (profiles->log, MKC_LOG_PROFILE,
+        "profile: user: %s %s (%d)\n", pentry->name, compnames [pentry->compiler], pidx, NULL);
     profiles->user_idx = pidx;
   }
 
-  mkc_log (profiles->log, MKC_LOG_PROFILE, "profile: active: %s %s (%d)\n", pentry->name, compnames [pentry->compiler], pidx);
+  mkc_log (profiles->log, MKC_LOG_PROFILE,
+      "profile: active: %s %s (%d)\n",
+      pentry->name, compnames [pentry->compiler], pidx, NULL);
 }
 
 mkc_profidx_t
@@ -478,7 +488,7 @@ mkc_profile_next (mkc_profile_t *profiles, mkc_prof_comp_t origcompiler)
 
   pidx = MKC_PROF_NOT_FOUND;
   while (pidx == MKC_PROF_NOT_FOUND) {
-    if (*(profiles->mkcerr) != MKC_OK) {
+    if (mkc_error_chk_err (profiles->mkcerr)) {
       break;
     }
 
@@ -495,7 +505,7 @@ mkc_profile_next (mkc_profile_t *profiles, mkc_prof_comp_t origcompiler)
 
       switch (type) {
         case MKC_PROF_TYPE_INVALID: {
-          *(profiles->mkcerr) = MKC_ERR_INVALID_PROFILE;
+          mkc_error_set (profiles->mkcerr, MKC_ERR_INVALID_PROFILE);
           break;
         }
         case MKC_PROF_TYPE_LOCAL: {
@@ -684,7 +694,7 @@ mkc_profile_create_id (mkc_profile_t *profiles, const char *pname,
 
   tentry.name = strdup (pname);
   if (tentry.name == NULL) {
-    *(profiles->mkcerr) = MKC_ERR_OUT_OF_MEMORY;
+    mkc_error_set (profiles->mkcerr, MKC_ERR_OUT_OF_MEMORY);
     return MKC_ERR_FAILURE;
   }
   tentry.compiler = compiler;
@@ -701,7 +711,8 @@ mkc_profile_create_id (mkc_profile_t *profiles, const char *pname,
   }
   pentry->pidx = loc;
 
-  mkc_log (profiles->log, MKC_LOG_PROFILE, "profile: create: %s %s (%d)\n", pname, compnames [compiler], loc);
+  mkc_log (profiles->log, MKC_LOG_PROFILE,
+      "profile: create: %s %s (%d)\n", pname, compnames [compiler], loc, NULL);
 
   return loc;
 }

@@ -1,9 +1,13 @@
+/*
+ * Copyright 2026 Brad Lanam Pleasant Hill CA
+ */
+
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
 
 #include "mkc_context.h"
-#include "mkc_def.h"
+#include "mkc_error.h"
 
 enum {
   MKC_CONTEXT_STACK_MAX = 20,
@@ -22,7 +26,7 @@ mkc_context_init (mkc_error_t *mkcerr)
 
   context = malloc (sizeof (mkc_context_t));
   if (context == NULL) {
-    *mkcerr = MKC_ERR_OUT_OF_MEMORY;
+    mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY);
     return NULL;
   }
 
@@ -49,12 +53,12 @@ mkc_context_push (mkc_context_t *context, mkc_ctxt_val_t ctxtval,
     mkc_error_t *mkcerr)
 {
   if (context == NULL) {
-    *mkcerr = MKC_ERR_INVALID_ARGUMENT;
+    mkc_error_set (mkcerr, MKC_ERR_INVALID_ARGUMENT);
     return;
   }
 
   if (context->stacksz >= MKC_CONTEXT_STACK_MAX) {
-    *mkcerr = MKC_ERR_OUT_OF_RANGE;
+    mkc_error_set (mkcerr, MKC_ERR_OUT_OF_RANGE);
     return;
   }
 

@@ -11,6 +11,7 @@
 
 #include "mkc_def.h"
 #include "mkc_env.h"
+#include "mkc_error.h"
 #include "mkc_profile.h"
 #include "mkc_pvar.h"
 #include "mkc_string.h"
@@ -35,7 +36,7 @@ mkc_pvar_init (mkc_profile_t *profiles, mkc_log_t *log, mkc_error_t *mkcerr)
 
   pvar = malloc (sizeof (mkc_pvar_t));
   if (pvar == NULL) {
-    *mkcerr = MKC_ERR_OUT_OF_MEMORY;
+    mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY);
     return NULL;
   }
 
@@ -202,7 +203,7 @@ mkc_pvar_get_by_profile (mkc_pvar_t *pvar, const char *nm)
     return NULL;
   }
   if (nm == NULL) {
-    *(pvar->mkcerr) = MKC_ERR_INVALID_ARGUMENT;
+    mkc_error_set (pvar->mkcerr, MKC_ERR_INVALID_ARGUMENT);
     return NULL;
   }
 
@@ -354,7 +355,7 @@ mkc_pvar_get_variable_str (mkc_pvar_t *pvar, mkc_value_t *value,
     char    dbuff [MKC_PATH_MAX];
 
     mkc_log (pvar->log, MKC_LOG_PROCESS, "  pvar-v-get-str-var: %s\n",
-        mkc_value_to_str (tvalue, dbuff, sizeof (dbuff)));
+        mkc_value_to_str (tvalue, dbuff, sizeof (dbuff)), NULL);
   }
 }
 
@@ -453,7 +454,7 @@ mkc_pvar_substitute (mkc_pvar_t *pvar, const char *data, int depth)
       }
 
       if (brpl == NULL) {
-        *(pvar->mkcerr) = MKC_ERR_UNBALANCED_BRACES;
+        mkc_error_set (pvar->mkcerr, MKC_ERR_UNBALANCED_BRACES);
         fprintf (stderr, "ERROR: unbalanced braces '%s'\n", data);
         return NULL;
       }

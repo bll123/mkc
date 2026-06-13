@@ -4,10 +4,7 @@
 
 #pragma once
 
-#include <stdint.h>
-#include <stdbool.h>
-
-#include "mkc_def.h"
+#include "mkc_error.h"
 
 #if defined (__cplusplus) || defined (c_plusplus)
 extern "C" {

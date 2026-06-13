@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "mkc_def.h"
+#include "mkc_error.h"
 #include "mkc_log.h"
 #include "mkc_var.h"
 
