@@ -23,6 +23,7 @@ typedef struct mkc_pvar_t {
   mkc_log_t       * log;
   mkc_profidx_t   pidx;
   bool            debug;
+  bool            fromcache;
 } mkc_pvar_t;
 
 mkc_pvar_t *
@@ -74,13 +75,17 @@ mkc_pvar_profile_set (mkc_pvar_t *pvar, const char *pname,
 
   pidx = mkc_profile_find_id (pvar->profiles, pname, compiler);
   if (pidx != MKC_PROF_NOT_FOUND) {
+    mkc_varlist_t  *varlist;
+
     pvar->pidx = pidx;
     if (pvar->debug) {
       fprintf (stderr, "pvar: set profile: %" PRId32 ": %s %d\n",
           pidx, pname, compiler);
     }
     mkc_profile_set_active (pvar->profiles, pidx);
-    return pidx;
+    varlist = mkc_profile_get_varlist (pvar->profiles, pvar->pidx);
+    mkc_var_set_fromcache (varlist, pvar->fromcache);
+    return MKC_OK;
   }
 
   return MKC_PROF_NOT_FOUND;
@@ -94,11 +99,15 @@ mkc_pvar_profile_set_idx (mkc_pvar_t *pvar, mkc_profidx_t pidx)
   }
 
   if (pidx != MKC_PROF_NOT_FOUND) {
+    mkc_varlist_t  *varlist;
+
     if (pvar->debug) {
       fprintf (stderr, "pvar: set profile: %" PRId32 "\n", pidx);
     }
     pvar->pidx = pidx;
     mkc_profile_set_active (pvar->profiles, pidx);
+    varlist = mkc_profile_get_varlist (pvar->profiles, pvar->pidx);
+    mkc_var_set_fromcache (varlist, pvar->fromcache);
     return 0;
   }
 
@@ -108,14 +117,11 @@ mkc_pvar_profile_set_idx (mkc_pvar_t *pvar, mkc_profidx_t pidx)
 void
 mkc_pvar_set_fromcache (mkc_pvar_t *pvar, bool flag)
 {
-  mkc_varlist_t  *varlist;
-
   if (pvar == NULL) {
     return;
   }
 
-  varlist = mkc_profile_get_varlist (pvar->profiles, pvar->pidx);
-  mkc_var_set_fromcache (varlist, flag);
+  pvar->fromcache = flag;
 }
 
 const char *
@@ -368,7 +374,7 @@ mkc_pvar_get_variable_str (mkc_pvar_t *pvar, mkc_value_t *value,
     char    dbuff [MKC_PATH_MAX];
 
     mkc_log (pvar->log, MKC_LOG_PROCESS, "  pvar-v-get-str-var: %s\n",
-        mkc_value_to_str (tvalue, dbuff, sizeof (dbuff)), NULL);
+        mkc_value_to_str (tvalue, dbuff, sizeof (dbuff)));
   }
 }
 

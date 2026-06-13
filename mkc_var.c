@@ -142,8 +142,7 @@ mkc_var_set (mkc_varlist_t *varlist, const char *name, mkc_value_t *value)
     var = mkc_list_get_by_idx (varlist->list, vidx);
   }
 
-  /* propagate the from-cache flag */
-  var->fromcache = varlist->fromcache;
+  tvalue = &var->value;
 
   nvtype = value->vtype;
   if (value->vtype == MKC_VT_STATIC_STRING ||
@@ -153,10 +152,8 @@ mkc_var_set (mkc_varlist_t *varlist, const char *name, mkc_value_t *value)
     nvtype = MKC_VT_STRING;
   }
 
-  tvalue = &var->value;
-
   /* check to see if a variable from the cache has changed */
-  if (var->fromcache && ! varlist->fromcache) {
+  if (var->fromcache != varlist->fromcache) {
     if (tvalue->vtype == MKC_VT_STRING && nvtype == MKC_VT_STRING) {
       if (strcmp (tvalue->sval, value->sval) != 0) {
         rc = MKC_OK_CHANGE;
@@ -374,6 +371,7 @@ mkc_var_create (mkc_varlist_t *varlist,
   tvar.name = strdup (name);
   tvar.value.sval = NULL;
   tvar.value.vtype = MKC_VT_INVALID;
+  tvar.fromcache = varlist->fromcache;
 
   var = mkc_list_set (varlist->list, &tvar, sizeof (mkc_var_t), loc);
 

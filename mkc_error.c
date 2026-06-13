@@ -91,9 +91,9 @@ mkc_error_chk_err (mkc_error_t *mkcerr)
     return true;
   }
   if (mkcerr->err == MKC_OK || mkcerr->err == MKC_OK_CHANGE) {
-    return true;
+    return false;
   }
-  return false;
+  return true;
 }
 
 bool

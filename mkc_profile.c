@@ -111,7 +111,7 @@ mkc_profile_init (mkc_log_t *log, mkc_error_t *mkcerr, const char *dfltprof)
           MKC_PROF_COMPILER_GENERAL, MKC_PROF_TYPE_USER);
   }
   mkc_message ("-- default profile: %s\n", dfltprof);
-  mkc_log (log, MKC_LOG_PROFILE, "== default profile: %s\n", dfltprof, NULL);
+  mkc_log (log, MKC_LOG_PROFILE, "== default profile: %s\n", dfltprof);
 
   profiles->active_idx = pidx;
   profiles->user_idx = pidx;
@@ -215,7 +215,7 @@ mkc_profile_local_create (mkc_profile_t *profiles)
   }
 
   mkc_log (profiles->log, MKC_LOG_PROFILE,
-      "profile: create-local: %s (%d)\n", tbuff, loc, NULL);
+      "profile: create-local: %s (%d)\n", tbuff, loc);
   profiles->localstack [profiles->localstacksz] = loc;
   profiles->localstacksz += 1;
   profiles->localidx = 0;
@@ -239,7 +239,7 @@ mkc_profile_local_pop (mkc_profile_t *profiles)
   pentry = mkc_list_get_by_idx (profiles->list, profiles->localstack [stackidx]);
 
   mkc_log (profiles->log, MKC_LOG_PROFILE,
-      "profile: pop-local: %s (%d)\n", pentry->name, pentry->pidx, NULL);
+      "profile: pop-local: %s (%d)\n", pentry->name, pentry->pidx);
 
   mkc_profile_entry_free (pentry);
 }
@@ -398,7 +398,7 @@ mkc_profile_push (mkc_profile_t *profiles)
   profiles->stacksz += 1;
 
   mkc_log (profiles->log, MKC_LOG_PROFILE,
-      "profile: push (%d)\n", profiles->active_idx, NULL);
+      "profile: push (%d)\n", profiles->active_idx);
 
   return profiles->active_idx;
 }
@@ -421,13 +421,13 @@ mkc_profile_pop (mkc_profile_t *profiles)
   profiles->active_idx = profiles->stack [profiles->stacksz];
 
   mkc_log (profiles->log, MKC_LOG_PROFILE,
-      "profile: pop (%d)\n", profiles->active_idx, NULL);
+      "profile: pop (%d)\n", profiles->active_idx);
 
   pentry = mkc_list_get_by_idx (profiles->list, profiles->active_idx);
   if (pentry->type == MKC_PROF_TYPE_USER) {
     mkc_log (profiles->log, MKC_LOG_PROFILE,
         "profile: user: %s %s (%d)\n", pentry->name,
-        compnames [pentry->compiler], profiles->active_idx, NULL);
+        compnames [pentry->compiler], profiles->active_idx);
     profiles->user_idx = profiles->active_idx;
   }
 
@@ -452,13 +452,13 @@ mkc_profile_set_active (mkc_profile_t *profiles, mkc_profidx_t pidx)
   pentry = mkc_list_get_by_idx (profiles->list, pidx);
   if (pentry->type == MKC_PROF_TYPE_USER) {
     mkc_log (profiles->log, MKC_LOG_PROFILE,
-        "profile: user: %s %s (%d)\n", pentry->name, compnames [pentry->compiler], pidx, NULL);
+        "profile: user: %s %s (%d)\n", pentry->name, compnames [pentry->compiler], pidx);
     profiles->user_idx = pidx;
   }
 
   mkc_log (profiles->log, MKC_LOG_PROFILE,
       "profile: active: %s %s (%d)\n",
-      pentry->name, compnames [pentry->compiler], pidx, NULL);
+      pentry->name, compnames [pentry->compiler], pidx);
 }
 
 mkc_profidx_t
@@ -739,7 +739,7 @@ mkc_profile_create_id (mkc_profile_t *profiles, const char *pname,
   pentry->pidx = loc;
 
   mkc_log (profiles->log, MKC_LOG_PROFILE,
-      "profile: create: %s %s (%d)\n", pname, compnames [compiler], loc, NULL);
+      "profile: create: %s %s (%d)\n", pname, compnames [compiler], loc);
 
   return loc;
 }

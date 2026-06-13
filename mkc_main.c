@@ -137,7 +137,7 @@ main (int argc, char *argv [])
     cachefh = mkc_fopen ("mkc_files/cache.mkc", "r");
     if (cachefh != NULL) {
       mkc_message ("-- loading cache\n");
-      mkc_log (log, MKC_LOG_AST_PROCESS, "== loading cache\n", NULL);
+      mkc_log (log, MKC_LOG_AST_PROCESS, "== loading cache\n");
 
       mkc_ast_set_fromcache (astmain, true);
       mkc_parse (cachefh, scanner, astmain, log, dfltprof, mkcerr);
@@ -157,7 +157,6 @@ main (int argc, char *argv [])
     return rc;
   }
   yylex_destroy (scanner);
-  mkc_ast_free (astmain);
 
   if (fh != stdin) {
     fclose (fh);
@@ -166,17 +165,17 @@ main (int argc, char *argv [])
 
   mkc_message ("-- parse: %s\n", mkc_elapsed_disp (etm, tbuff, sizeof (tbuff)));
   mkc_log (log, MKC_LOG_STATISTICS,
-      "-- parse: %s\n", mkc_elapsed_disp (etm, tbuff, sizeof (tbuff)), NULL);
+      "-- parse: %s\n", mkc_elapsed_disp (etm, tbuff, sizeof (tbuff)));
   mstimestart (&proctm);
 
   etm = mstimeend (&proctm);
   mkc_elapsed_disp (etm, tbuff, sizeof (tbuff));
   mkc_message ("-- process: %s\n", tbuff);
-  mkc_log (log, MKC_LOG_STATISTICS, "-- process: %s\n", tbuff, NULL);
+  mkc_log (log, MKC_LOG_STATISTICS, "-- process: %s\n", tbuff);
   etm = mstimeend (&starttm);
   mkc_elapsed_disp (etm, tbuff, sizeof (tbuff));
   mkc_message ("-- total time: %s\n", tbuff);
-  mkc_log (log, MKC_LOG_STATISTICS, "-- total time: %s\n", tbuff, NULL);
+  mkc_log (log, MKC_LOG_STATISTICS, "-- total time: %s\n", tbuff);
 
   rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
   return rc;

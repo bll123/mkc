@@ -998,13 +998,13 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
 
   if (mkc_error_chk_err (astmain->mkcerr)) {
     mkc_log (astmain->log, MKC_LOG_AST_PROCESS,
-        "ast-proc: error: %d\n", mkc_error_value (astmain->mkcerr), NULL);
+        "ast-proc: error: %d\n", mkc_error_value (astmain->mkcerr));
     /* an error occurred, stop processing */
     return mkc_error_value (astmain->mkcerr);
   }
 
   if (astnode == NULL) {
-    mkc_log (astmain->log, MKC_LOG_AST_PROCESS, "ast-proc: null\n", NULL);
+    mkc_log (astmain->log, MKC_LOG_AST_PROCESS, "ast-proc: null\n");
     astmain->value.ival = 0;
     astmain->value.vtype = MKC_VT_INTEGER;
     return astmain->value.ival;
@@ -1534,7 +1534,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
   astmain->rdepth -= 1;
   if (astmain->rdepth == 0) {
     mkc_log (astmain->log, MKC_LOG_STATISTICS,
-        "-- max-recursion: %d\n", astmain->maxrdepth, NULL);
+        "-- max-recursion: %d\n", astmain->maxrdepth);
     return mkc_error_value (astmain->mkcerr);
   }
 
