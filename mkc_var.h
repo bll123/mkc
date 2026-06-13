@@ -49,6 +49,7 @@ typedef struct mkc_value_t {
 
 mkc_varlist_t *mkc_varlist_init (mkc_log_t *log, mkc_error_t *mkcerr);
 void mkc_varlist_free (mkc_varlist_t *varlist);
+void mkc_var_set_fromcache (mkc_varlist_t *varlist, bool flag);
 
 const char * mkc_var_name_alloc (mkc_varlist_t *varlist, const char *vname);
 int mkc_var_set (mkc_varlist_t *varlist, const char *vname, mkc_value_t *value);

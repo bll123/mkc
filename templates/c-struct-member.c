@@ -5,14 +5,14 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-${MKC_I_TEST_HEADER_LIST}
+${MKC_TV_TEST_HEADER_LIST}
 
 int
 main (void)
 {
-  ${MKC_I_TEST_STRUCT_NAME} a;
+  ${MKC_TV_TEST_STRUCT_NAME} a;
   size_t  b;
 
-  b = sizeof (a.${MKC_I_TEST_STRUCT_MEMBER});
+  b = sizeof (a.${MKC_TV_TEST_STRUCT_MEMBER});
   return 0;
 }

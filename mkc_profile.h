@@ -45,11 +45,14 @@ extern const char * const MKC_PROF_RELEASE_NAME;
 
 mkc_profile_t * mkc_profile_init (mkc_log_t *log, mkc_error_t *mkcerr, const char *dfltprof);
 void mkc_profile_free (mkc_profile_t *profiles);
+int mkc_profile_clear (mkc_profile_t *profiles, mkc_profidx_t pidx);
+
 mkc_profidx_t mkc_profile_find (mkc_profile_t *profiles, const char *pname, const char *compid);
 mkc_profidx_t mkc_profile_find_id (mkc_profile_t *profiles, const char *pname, mkc_prof_comp_t compiler);
 mkc_profidx_t mkc_profile_create (mkc_profile_t *profiles, const char *pname, const char *comptxt, mkc_prof_type_t);
 int mkc_profile_local_create (mkc_profile_t *profiles);
 void mkc_profile_local_pop (mkc_profile_t *profiles);
+
 mkc_varlist_t *mkc_profile_get_varlist (mkc_profile_t *profiles, mkc_profidx_t pidx);
 
 void mkc_profile_iter_start (mkc_profile_t *profiles, mkc_profidx_t *iteridx);

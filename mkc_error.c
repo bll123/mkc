@@ -14,6 +14,7 @@
 
 static const char * const mkcerrormsg [] = {
   [MKC_OK] = "success",
+  [MKC_OK_CHANGE] = "success, cache invalidated",
   [MKC_ERR_COMPILER_FAILURE] = "compiler failure",
   [MKC_ERR_FILE_NOT_FOUND] = "file not found",
   [MKC_ERR_INVALID_ARGUMENT] = "invalid argument",
@@ -31,7 +32,7 @@ static const char * const mkcerrormsg [] = {
 };
 
 typedef struct mkc_error_t {
-  mkc_error_type_t    err;
+  mkc_err_code_t    err;
   int32_t             lineno;
   int                 colno;
 } mkc_error_t;
@@ -63,7 +64,7 @@ mkc_error_free (mkc_error_t *mkcerr)
 }
 
 void
-mkc_error_set (mkc_error_t *mkcerr, mkc_error_type_t err)
+mkc_error_set (mkc_error_t *mkcerr, mkc_err_code_t err)
 {
   if (mkcerr == NULL) {
     return;
@@ -89,7 +90,7 @@ mkc_error_chk_err (mkc_error_t *mkcerr)
   if (mkcerr == NULL) {
     return true;
   }
-  if (mkcerr->err != MKC_OK) {
+  if (mkcerr->err == MKC_OK || mkcerr->err == MKC_OK_CHANGE) {
     return true;
   }
   return false;
@@ -101,7 +102,7 @@ mkc_error_chk_ok (mkc_error_t *mkcerr)
   if (mkcerr == NULL) {
     return false;
   }
-  if (mkcerr->err == MKC_OK) {
+  if (mkcerr->err == MKC_OK || mkcerr->err == MKC_OK_CHANGE) {
     return true;
   }
   return false;
@@ -134,7 +135,7 @@ mkc_error_line_disp (char *buff, size_t sz, int32_t lineno, int colno)
   return buff;
 }
 
-mkc_error_type_t
+mkc_err_code_t
 mkc_error_value (mkc_error_t *mkcerr)
 {
   if (mkcerr == NULL) {

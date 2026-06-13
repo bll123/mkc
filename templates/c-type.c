@@ -6,10 +6,10 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
-${MKC_I_TEST_HEADER_LIST}
+${MKC_TV_TEST_HEADER_LIST}
 
 struct mkcstruct {
-  ${MKC_I_TEST_TYPE} testmember;
+  ${MKC_TV_TEST_TYPE} testmember;
 };
 
 static struct mkcstruct v;

@@ -60,7 +60,7 @@ typedef enum {
   MKC_SYS_ID_NOTSET,
   MKC_SYS_ID_OPENBSD,
   MKC_SYS_ID_SOLARIS,
-  MKC_SYS_ID_SUBTYPE_MAX,
+  MKC_SYS_ID_MAX,
 } mkc_system_id_t;
 
 typedef enum {

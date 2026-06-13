@@ -17,7 +17,7 @@
 #include "mkc_os_process.h"
 #include "mkc_string.h"
 
-const char * const mkctestcompflags = "MKC_I_TEST_COMP_FLAGS";
+const char * const mkctestcompflags = "MKC_TV_TEST_COMP_FLAGS";
 
 static const char *MKC_INCLUDE_PATH = ".";
 
@@ -30,7 +30,7 @@ typedef struct mkc_check_t {
 
 static void mkc_check_file_sub_copy (mkc_check_t *check, char *tbuff, size_t sz, const char *fname, const char *sfx);
 static void mkc_check_log_command (mkc_check_t *check, const char *targv []);
-static void mkc_chk_env_var_set (mkc_check_t *check, const char *nm);
+static mkc_err_code_t mkc_chk_env_var_set (mkc_check_t *check, const char *nm);
 
 mkc_check_t *
 mkc_check_init (mkc_profile_t *profiles, mkc_pvar_t *pvar, mkc_log_t *log, mkc_error_t *mkcerr)
@@ -62,14 +62,24 @@ mkc_create_dirs (void)
   return 0;
 }
 
-void
+mkc_err_code_t
 mkc_chk_compiler_env (mkc_check_t *check)
 {
-  mkc_chk_env_var_set (check, "BISON");
-  mkc_chk_env_var_set (check, "CC");
-  mkc_chk_env_var_set (check, "CXX");
-  mkc_chk_env_var_set (check, "FLEX");
-  mkc_chk_env_var_set (check, "OBJC");
+  mkc_err_code_t    rc = MKC_OK;
+  mkc_err_code_t    trc;
+
+  trc = mkc_chk_env_var_set (check, "BISON");
+  if (trc == MKC_OK_CHANGE) { rc = trc; }
+  trc = mkc_chk_env_var_set (check, "CC");
+  if (trc == MKC_OK_CHANGE) { rc = trc; }
+  trc = mkc_chk_env_var_set (check, "CXX");
+  if (trc == MKC_OK_CHANGE) { rc = trc; }
+  trc = mkc_chk_env_var_set (check, "FLEX");
+  if (trc == MKC_OK_CHANGE) { rc = trc; }
+  trc = mkc_chk_env_var_set (check, "OBJC");
+  if (trc == MKC_OK_CHANGE) { rc = trc; }
+
+  return rc;
 }
 
 int
@@ -288,7 +298,7 @@ mkc_chk_size (mkc_check_t *check,
   mkc_pvar_profile_set (check->pvar,
       MKC_PROF_INTERNAL_NAME, MKC_PROF_COMPILER_GENERAL);
 
-  mkc_pvar_set_str (check->pvar, "MKC_I_TEST_SIZE", type);
+  mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_SIZE", type);
   pidx = mkc_profile_pop (check->profiles);
   mkc_pvar_profile_set_idx (check->pvar, pidx);
 
@@ -313,7 +323,7 @@ mkc_chk_type (mkc_check_t *check,
   mkc_pvar_profile_set (check->pvar,
       MKC_PROF_INTERNAL_NAME, MKC_PROF_COMPILER_GENERAL);
 
-  mkc_pvar_set_str (check->pvar, "MKC_I_TEST_TYPE", type);
+  mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_TYPE", type);
   pidx = mkc_profile_pop (check->profiles);
   mkc_pvar_profile_set_idx (check->pvar, pidx);
 
@@ -336,8 +346,8 @@ mkc_chk_struct_member (mkc_check_t *check,
   mkc_pvar_profile_set (check->pvar,
       MKC_PROF_INTERNAL_NAME, MKC_PROF_COMPILER_GENERAL);
 
-  mkc_pvar_set_str (check->pvar, "MKC_I_TEST_STRUCT_NAME", structname);
-  mkc_pvar_set_str (check->pvar, "MKC_I_TEST_STRUCT_MEMBER", membername);
+  mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_STRUCT_NAME", structname);
+  mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_STRUCT_MEMBER", membername);
   pidx = mkc_profile_pop (check->profiles);
   mkc_pvar_profile_set_idx (check->pvar, pidx);
 
@@ -359,7 +369,7 @@ mkc_chk_function (mkc_check_t *check, const char *compiler, const char *sfx,
   mkc_pvar_profile_set (check->pvar,
       MKC_PROF_INTERNAL_NAME, MKC_PROF_COMPILER_GENERAL);
 
-  mkc_pvar_set_str (check->pvar, "MKC_I_TEST_FUNCTION_NAME", funcname);
+  mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_FUNCTION_NAME", funcname);
   pidx = mkc_profile_pop (check->profiles);
   mkc_pvar_profile_set_idx (check->pvar, pidx);
 
@@ -593,14 +603,17 @@ mkc_check_log_command (mkc_check_t *check, const char *targv [])
   mkc_log (check->log, MKC_LOG_CHECK, "\n", NULL);
 }
 
-static void
+static mkc_err_code_t
 mkc_chk_env_var_set (mkc_check_t *check, const char *nm)
 {
-  char          tbuff [MKC_PATH_MAX];
+  char            tbuff [MKC_PATH_MAX];
+  mkc_err_code_t  rc = MKC_OK;
 
   *tbuff = '\0';
   mkc_env_get (nm, tbuff, sizeof (tbuff));
   if (*tbuff) {
-    mkc_pvar_set_str (check->pvar, nm, tbuff);
+    rc = mkc_pvar_set_str (check->pvar, nm, tbuff);
   }
+
+  return rc;
 }

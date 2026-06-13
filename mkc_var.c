@@ -18,6 +18,7 @@
 typedef struct mkc_var_t {
   char          * name;
   mkc_value_t   value;
+  bool          fromcache;
 } mkc_var_t;
 
 typedef struct mkc_varlist_t {
@@ -28,6 +29,7 @@ typedef struct mkc_varlist_t {
   int32_t       name_allocsz;
   int32_t       name_sz;
   bool          debug;
+  bool          fromcache;
 } mkc_varlist_t;
 
 static mkc_var_t *mkc_var_create (mkc_varlist_t *varlist, const char *vname, mkc_var_type_t type, mkc_listidx_t *loc);
@@ -80,6 +82,16 @@ mkc_varlist_free (mkc_varlist_t *varlist)
   free (varlist);
 }
 
+void
+mkc_var_set_fromcache (mkc_varlist_t *varlist, bool flag)
+{
+  if (varlist == NULL) {
+    return;
+  }
+
+  varlist->fromcache = flag;
+}
+
 const char *
 mkc_var_name_alloc (mkc_varlist_t *varlist, const char *vname)
 {
@@ -113,7 +125,7 @@ mkc_var_name_alloc (mkc_varlist_t *varlist, const char *vname)
 int
 mkc_var_set (mkc_varlist_t *varlist, const char *name, mkc_value_t *value)
 {
-  int             rc = MKC_OK;
+  mkc_err_code_t  rc = MKC_OK;
   mkc_var_t       *var;
   mkc_varidx_t    vidx;
   mkc_value_t     *tvalue;
@@ -130,13 +142,8 @@ mkc_var_set (mkc_varlist_t *varlist, const char *name, mkc_value_t *value)
     var = mkc_list_get_by_idx (varlist->list, vidx);
   }
 
-  tvalue = &var->value;
-  if (tvalue->vtype == MKC_VT_STRING && tvalue->sval != NULL) {
-    free (tvalue->sval);
-  }
-  if (tvalue->vtype == MKC_VT_LIST && tvalue->list != NULL) {
-    mkc_list_free (tvalue->list);
-  }
+  /* propagate the from-cache flag */
+  var->fromcache = varlist->fromcache;
 
   nvtype = value->vtype;
   if (value->vtype == MKC_VT_STATIC_STRING ||
@@ -144,6 +151,29 @@ mkc_var_set (mkc_varlist_t *varlist, const char *name, mkc_value_t *value)
       value->vtype == MKC_VT_ENV_VARIABLE ||
       value->vtype == MKC_VT_QUOTED_STRING) {
     nvtype = MKC_VT_STRING;
+  }
+
+  tvalue = &var->value;
+
+  /* check to see if a variable from the cache has changed */
+  if (var->fromcache && ! varlist->fromcache) {
+    if (tvalue->vtype == MKC_VT_STRING && nvtype == MKC_VT_STRING) {
+      if (strcmp (tvalue->sval, value->sval) != 0) {
+        rc = MKC_OK_CHANGE;
+      }
+    }
+    if (tvalue->vtype == MKC_VT_INTEGER && nvtype == MKC_VT_INTEGER) {
+      if (tvalue->ival != value->ival) {
+        rc = MKC_OK_CHANGE;
+      }
+    }
+  }
+
+  if (tvalue->vtype == MKC_VT_STRING && tvalue->sval != NULL) {
+    free (tvalue->sval);
+  }
+  if (tvalue->vtype == MKC_VT_LIST && tvalue->list != NULL) {
+    mkc_list_free (tvalue->list);
   }
 
   tvalue->vtype = nvtype;

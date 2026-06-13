@@ -7,13 +7,13 @@
 #include <inttypes.h>
 #include <stdbool.h>
 #include <stdlib.h>
-${MKC_I_TEST_HEADER_LIST}
+${MKC_TV_TEST_HEADER_LIST}
 
 int
 main (void)
 {
   size_t    sz;
 
-  sz = sizeof (${MKC_I_TEST_SIZE});
+  sz = sizeof (${MKC_TV_TEST_SIZE});
   return sz;
 }

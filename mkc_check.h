@@ -24,7 +24,7 @@ mkc_check_t *mkc_check_init (mkc_profile_t *profiles, mkc_pvar_t *pvar, mkc_log_
 void mkc_check_free (mkc_check_t *check);
 
 int mkc_create_dirs (void);
-void mkc_chk_compiler_env (mkc_check_t *check);
+mkc_err_code_t mkc_chk_compiler_env (mkc_check_t *check);
 int mkc_chk_compiler_works (mkc_check_t *check, const char *compiler, const char *sfx);
 int mkc_chk_which_compiler (mkc_check_t *check, const char *compiler, const char *sfx);
 const char * mkc_chk_guess_suffix (const char *ccstr);

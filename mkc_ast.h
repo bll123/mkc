@@ -123,6 +123,7 @@ mkc_astmain_t * mkc_ast_init (mkc_log_t *log, const char *dfltprof, mkc_error_t 
 void mkc_ast_set_main (mkc_astmain_t *, mkc_astnode_t *astnode);
 int32_t mkc_ast_start (mkc_astmain_t *);
 void mkc_ast_free (mkc_astmain_t *astmain);
+void mkc_ast_set_fromcache (mkc_astmain_t *astmain, bool flag);
 
 #if defined (__cplusplus) || defined (c_plusplus)
 }

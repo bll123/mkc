@@ -80,7 +80,7 @@ mkc_pvar_profile_set (mkc_pvar_t *pvar, const char *pname,
           pidx, pname, compiler);
     }
     mkc_profile_set_active (pvar->profiles, pidx);
-    return MKC_OK;
+    return pidx;
   }
 
   return MKC_PROF_NOT_FOUND;
@@ -103,6 +103,19 @@ mkc_pvar_profile_set_idx (mkc_pvar_t *pvar, mkc_profidx_t pidx)
   }
 
   return MKC_PROF_NOT_FOUND;
+}
+
+void
+mkc_pvar_set_fromcache (mkc_pvar_t *pvar, bool flag)
+{
+  mkc_varlist_t  *varlist;
+
+  if (pvar == NULL) {
+    return;
+  }
+
+  varlist = mkc_profile_get_varlist (pvar->profiles, pvar->pidx);
+  mkc_var_set_fromcache (varlist, flag);
 }
 
 const char *
@@ -383,7 +396,7 @@ mkc_pvar_debug (mkc_pvar_t *pvar)
 
 /* processes the internal substitutions */
 /* if the string is a variable, the final substitution is done */
-/* by the caller by calling mkc_pvar_get_str () */
+/* by the caller by calling mkc_pvar_get_by_profile () */
 char *
 mkc_pvar_substitute (mkc_pvar_t *pvar, const char *data, int depth)
 {

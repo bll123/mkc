@@ -1,0 +1,69 @@
+[Wiki Home](Home)
+
+[TOC]
+
+### Internal Variables
+
+##### System Type (boolean)
+
+The system type may be used to check for major differences between
+system types.
+
+* MKC_SYS_AIX
+* MKC_SYS_ANDROID
+* MKC_SYS_BSD
+* MKC_SYS_IOS
+* MKC_SYS_LINUX
+* MKC_SYS_MACOS
+* MKC_SYS_SOLARIS
+* MKC_SYS_UNKNOWN
+* MKC_SYS_WINDOWS
+
+##### System Identification (boolean)
+
+* MKC_SYS_ID_CYGWIN
+* MKC_SYS_ID_DRAGONFLYBSD
+* MKC_SYS_ID_FREEBSD
+* MKC_SYS_ID_MSYS2
+* MKC_SYS_ID_NETBSD
+* MKC_SYS_ID_NOTSET
+* MKC_SYS_ID_OPENBSD
+* MKC_SYS_ID_SOLARIS
+
+##### Linux: Library Prefix (boolean)
+
+If true, the Linux system uses /usr/lib64.
+If false, the Linux system uses /usr/lib.
+
+* MKC_LIB_LOC_LIB64
+
+##### Compilers (string)
+
+The compiler to use.  These are set to defaults as shown below, and are
+replaced with the enviroment variable of the same name.
+
+* BISON (bison)
+* CC (cc)
+* CXX (c++)
+* FLEX (flex)
+* OBJC (objc)
+
+##### Compiler Identification (boolean)
+
+The compiler identification.
+
+* MKC_COMP_ID_CLANG
+* MKC_COMP_ID_GCC
+* MKC_COMP_ID_ICC
+* MKC_COMP_ID_MSC
+* MKC_COMP_ID_SOLARIS
+* MKC_COMP_ID_UNKNOWN
+* MKC_COMP_ID_XLC
+
+##### Other (string)
+
+* MKC_EXECUTABLE_EXTENSION
+* MKC_OBJECT_EXTENSION
+* MKC_SHARED_LIBRARY_EXTENSION
+
+[Wiki Home](Home)

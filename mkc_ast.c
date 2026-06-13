@@ -335,6 +335,16 @@ mkc_ast_free (mkc_astmain_t *astmain)
 }
 
 void
+mkc_ast_set_fromcache (mkc_astmain_t *astmain, bool flag)
+{
+  if (astmain == NULL) {
+    return;
+  }
+
+  mkc_process_set_fromcache (astmain->process, flag);
+}
+
+void
 mkc_ast_set_main (mkc_astmain_t *astmain, mkc_astnode_t *stmtblock)
 {
   astmain->stmtblock = stmtblock;

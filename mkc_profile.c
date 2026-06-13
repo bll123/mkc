@@ -133,6 +133,33 @@ mkc_profile_free (mkc_profile_t *profiles)
 }
 
 int
+mkc_profile_clear (mkc_profile_t *profiles, mkc_profidx_t pidx)
+{
+  mkc_prof_entry_t    *pentry;
+
+  if (profiles == NULL) {
+    return MKC_ERR_FAILURE;
+  }
+
+  if (pidx < 0 || pidx >= mkc_list_size (profiles->list)) {
+    mkc_error_set (profiles->mkcerr, MKC_ERR_OUT_OF_RANGE);
+    return MKC_ERR_FAILURE;
+  }
+
+  pentry = mkc_list_get_by_idx (profiles->list, pidx);
+
+  if (pentry->varlist != NULL) {
+    mkc_varlist_free (pentry->varlist);
+  }
+  pentry->varlist = mkc_varlist_init (profiles->log, profiles->mkcerr);
+  if (pentry->varlist == NULL) {
+    return MKC_ERR_FAILURE;
+  }
+
+  return MKC_OK;
+}
+
+int
 mkc_profile_create (mkc_profile_t *profiles, const char *pname,
     const char *comptxt, mkc_prof_type_t type)
 {

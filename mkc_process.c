@@ -42,6 +42,7 @@ typedef struct mkc_process_t {
   mkc_header_t          headertype;
   bool                  variadicmacro;
   bool                  negate;
+  bool                  cacheloaded;
 } mkc_process_t;
 
 static const char *sysnames [MKC_SYS_MAX] = {
@@ -55,7 +56,7 @@ static const char *sysnames [MKC_SYS_MAX] = {
   [MKC_SYS_WINDOWS] = "MKC_SYS_WINDOWS",
 };
 
-static const char *sysidnames [MKC_SYS_ID_SUBTYPE_MAX] = {
+static const char *sysidnames [MKC_SYS_ID_MAX] = {
   [MKC_SYS_ID_CYGWIN] = "MKC_SYS_ID_CYGWIN",
   [MKC_SYS_ID_DRAGONFLYBSD] = "MKC_SYS_ID_DRAGONFLYBSD",
   [MKC_SYS_ID_FREEBSD] = "MKC_SYS_ID_FREEBSD",
@@ -84,7 +85,13 @@ static const char * const liblocname = "MKC_LIB_LOC_LIB64";
 static const char * const shlibext = "MKC_SHARED_LIBRARY_EXTENSION";
 static const char * const objext = "MKC_OBJECT_EXTENSION";
 static const char * const exeext = "MKC_EXECUTABLE_EXTENSION";
-static const char * const mkctesthdrlist = "MKC_I_TEST_HEADER_LIST";
+static const char * const mkctesthdrlist = "MKC_TV_TEST_HEADER_LIST";
+static const char * const mkcwhilelimit = "MKC_TV_WHILE_LIMIT";
+static const char * const mkctempvarpfx = "MKC_TV_";
+static size_t mkctvpfxlen = 0;
+static const char * const mkcisystype = "MKC_I_SYSTYPE";
+static const char * const mkcisysid = "MKC_I_SYSID";
+static const char * const mkcicompid= "MKC_I_COMPID";
 
 static void mkc_process_var_print (mkc_process_t *process, const char *pname);
 static void mkc_process_prof_print (mkc_process_t *process);
@@ -92,14 +99,16 @@ const char * mkc_process_create_name (mkc_process_t *process, char *buff, size_t
 static int mkc_process_int_checks (mkc_process_t *process);
 static int32_t mkc_process_value_get_integer (mkc_process_t *process, mkc_value_t *value);
 static void mkc_process_value_get_str (mkc_process_t *process, mkc_value_t *value, char *buff, size_t sz);
+static void mkc_process_set_defaults (mkc_process_t *process);
 
 mkc_process_t *
 mkc_process_init (mkc_profile_t *profiles, mkc_log_t *log, mkc_error_t *mkcerr)
 {
-  mkc_process_t   *process;
-  mkc_profidx_t   pidx;
-  int             rc;
+  mkc_process_t     *process;
+  mkc_profidx_t     pidx;
+  int               rc;
 
+  mkctvpfxlen = strlen (mkctempvarpfx);
   process = malloc (sizeof (mkc_process_t));
 
   process->profiles = profiles;
@@ -108,6 +117,7 @@ mkc_process_init (mkc_profile_t *profiles, mkc_log_t *log, mkc_error_t *mkcerr)
   process->pvar = NULL;
   process->currentname = NULL;
   process->negate = false;
+  process->cacheloaded = false;
   process->mkcerr = mkcerr;
   process->log = log;
 
@@ -132,43 +142,30 @@ mkc_process_init (mkc_profile_t *profiles, mkc_log_t *log, mkc_error_t *mkcerr)
 
   mkc_profile_push (process->profiles);
 
-  /* create internal constants */
-  mkc_pvar_profile_set (process->pvar,
-      MKC_PROF_INTERNAL_NAME, MKC_PROF_COMPILER_GENERAL);
-
-  for (mkc_system_type_t i = 0; i < MKC_SYS_MAX; ++i) {
-    mkc_pvar_set_integer (process->pvar, sysnames [i], false);
+  if (process->cacheloaded == false) {
+    mkc_process_set_defaults (process);
   }
-  for (mkc_system_id_t i = 0; i < MKC_SYS_ID_SUBTYPE_MAX; ++i) {
-    mkc_pvar_set_integer (process->pvar, sysidnames [i], false);
-  }
-
-  mkc_pvar_set_integer (process->pvar, "MKC_I_WHILE_LIMIT", 10000);
-  mkc_pvar_set_str (process->pvar, liblocname, "");
-
-  mkc_pvar_profile_set (process->pvar, MKC_PROF_GLOBAL_NAME, MKC_PROF_COMPILER_GENERAL);
-  mkc_pvar_set_str (process->pvar, "BISON", "bison");
-  mkc_pvar_set_str (process->pvar, "CC", "cc");
-  mkc_pvar_set_str (process->pvar, "CXX", "c++");
-  mkc_pvar_set_str (process->pvar, "FLEX", "flex");
-  mkc_pvar_set_str (process->pvar, "OBJC", "objc");
-
-  mkc_pvar_profile_set (process->pvar, MKC_PROF_INTERNAL_NAME, MKC_PROF_COMPILER_GENERAL);
-  for (mkc_compiler_id_t i = 0; i < MKC_COMP_ID_MAX; ++i) {
-    if (mkc_error_chk_err (process->mkcerr)) {
-      break;
-    }
-    mkc_pvar_set_integer (process->pvar, compidnames [i], false);
-  }
-
-  mkc_pvar_profile_set (process->pvar, MKC_PROF_GLOBAL_NAME, MKC_PROF_COMPILER_C);
-
-  mkc_pvar_set_integer (process->pvar, "_header_modern", process->headertype);
 
   rc = mkc_process_int_checks (process);
   if (rc < 0) {
     mkc_process_free (process);
     return NULL;
+  }
+  if (rc == MKC_OK_CHANGE) {
+    mkc_profidx_t   piter;
+    mkc_profidx_t   tpidx;
+
+    /* something changed that requires cache invalidation */
+    mkc_profile_iter_start (profiles, &piter);
+    while ((tpidx = mkc_profile_iter_next (profiles, &piter)) != MKC_ITER_FINISH) {
+      if (mkc_pvar_profile_set_idx (process->pvar, tpidx) == MKC_PROF_NOT_FOUND) {
+        continue;
+      }
+      mkc_profile_clear (process->profiles, tpidx);
+    }
+
+    mkc_process_set_defaults (process);
+    rc = mkc_process_int_checks (process);
   }
 
   pidx = mkc_profile_pop (process->profiles);
@@ -203,6 +200,17 @@ mkc_process_set_compiler (mkc_process_t *process,
 
   process->compiler = compiler;
   process->sfx = sfx;
+}
+
+void
+mkc_process_set_fromcache (mkc_process_t *process, bool flag)
+{
+  if (process == NULL) {
+    return;
+  }
+
+  process->cacheloaded = true;
+  mkc_pvar_set_fromcache (process->pvar, flag);
 }
 
 int32_t
@@ -905,7 +913,7 @@ mkc_process_get_while_limit (mkc_process_t *process)
     return limit;
   }
 
-  value = mkc_pvar_get_by_profile (process->pvar, "MKC_I_WHILE_LIMIT");
+  value = mkc_pvar_get_by_profile (process->pvar, mkcwhilelimit);
   if (value != NULL) {
     limit = mkc_process_value_get_integer (process, value);
   }
@@ -960,7 +968,7 @@ mkc_process_save_cache (mkc_process_t *process)
       nm = mkc_pvar_get_name (pvar, vidx);
 
       /* temporary variables do not need to be cached */
-      if (strncmp (nm, "MKC_I_", 6) == 0) {
+      if (strncmp (nm, mkctempvarpfx, mkctvpfxlen) == 0) {
         continue;
       }
 
@@ -1074,7 +1082,7 @@ mkc_process_var_print (mkc_process_t *process, const char *pname)
       if (ininternal) {
         /* the variables that are used internally are */
         /* generally not interesting */
-        if (strncmp (nm, "MKC_I_", 6) == 0) {
+        if (strncmp (nm, mkctempvarpfx, mkctvpfxlen) == 0) {
           continue;
         }
       }
@@ -1247,20 +1255,27 @@ mkc_process_create_name (mkc_process_t *process, char *buff, size_t sz,
 static int
 mkc_process_int_checks (mkc_process_t *process)
 {
-  int             rc;
-  const char      *testcc;
-  mkc_compiler_t  tcompiler;
-  mkc_profidx_t   pidx;
-  mkc_value_t     *value;
-  mstime_t        starttm;
+  int                 rc;
+  const char          *testcc;
+  mkc_compiler_t      tcompiler;
+  mkc_profidx_t       pidx;
+  mkc_value_t         *value;
+  mstime_t            starttm;
+  mkc_compiler_id_t   tcompid;
+  mkc_system_type_t   tsystype;
+  mkc_system_id_t     tsysid;
 
   mstimestart (&starttm);
   mkc_create_dirs ();
 
   mkc_profile_push (process->profiles);
   mkc_log (process->log, MKC_LOG_CHECK, "== internal checks\n", NULL);
-  mkc_pvar_profile_set (process->pvar, MKC_PROF_GLOBAL_NAME, MKC_PROF_COMPILER_GENERAL);
-  mkc_chk_compiler_env (process->check);
+
+  pidx = mkc_pvar_profile_set (process->pvar, MKC_PROF_GLOBAL_NAME, MKC_PROF_COMPILER_GENERAL);
+  rc = mkc_chk_compiler_env (process->check);
+  if (rc == MKC_OK_CHANGE) {
+    return MKC_OK_CHANGE;
+  }
 
   value = mkc_pvar_get_value (process->pvar, "CC");
   process->testcc = value->sval;
@@ -1289,6 +1304,12 @@ mkc_process_int_checks (mkc_process_t *process)
     process->compid = rc;
   }
 
+  value = mkc_pvar_get_value (process->pvar, mkcicompid);
+  tcompid = mkc_process_value_get_integer (process, value);
+  if (process->compid != tcompid) {
+    return MKC_OK_CHANGE;
+  }
+
   mkc_pvar_profile_set (process->pvar, MKC_PROF_GLOBAL_NAME, MKC_PROF_COMPILER_C);
 
   rc = mkc_chk_header_modern (process->check, testcc, process->testsfx);
@@ -1302,6 +1323,12 @@ mkc_process_int_checks (mkc_process_t *process)
   rc = mkc_chk_system_type (process->check, testcc, process->testsfx);
   if (rc >= 0) {
     process->systype = rc;
+  }
+
+  value = mkc_pvar_get_value (process->pvar, mkcisystype);
+  tsystype = mkc_process_value_get_integer (process, value);
+  if (process->systype != tsystype) {
+    return MKC_OK_CHANGE;
   }
 
   /* object, executable extension */
@@ -1344,6 +1371,12 @@ mkc_process_int_checks (mkc_process_t *process)
     process->sysid = rc;
   }
 
+  value = mkc_pvar_get_value (process->pvar, mkcisysid);
+  tsysid = mkc_process_value_get_integer (process, value);
+  if (process->sysid != tsysid) {
+    return MKC_OK_CHANGE;
+  }
+
   mkc_pvar_profile_set (process->pvar, MKC_PROF_GLOBAL_NAME, MKC_PROF_COMPILER_C);
 
   rc = mkc_chk_variadic_macro (process->check, testcc, process->testsfx);
@@ -1361,6 +1394,7 @@ mkc_process_int_checks (mkc_process_t *process)
     }
   }
 
+  mkc_pvar_set_integer (process->pvar, mkcisystype, process->systype);
   for (mkc_system_type_t i = 0; i < MKC_SYS_MAX; ++i) {
     if (process->systype == i) {
       mkc_pvar_set_integer (process->pvar, sysnames [i], true);
@@ -1368,13 +1402,15 @@ mkc_process_int_checks (mkc_process_t *process)
     }
   }
 
-  for (mkc_system_id_t i = 0; i < MKC_SYS_ID_SUBTYPE_MAX; ++i) {
+  mkc_pvar_set_integer (process->pvar, mkcisysid, process->sysid);
+  for (mkc_system_id_t i = 0; i < MKC_SYS_ID_MAX; ++i) {
     if (process->sysid == i) {
       mkc_pvar_set_integer (process->pvar, sysidnames [i], true);
       break;
     }
   }
 
+  mkc_pvar_set_integer (process->pvar, mkcicompid, process->compid);
   for (mkc_compiler_id_t i = 0; i < MKC_COMP_ID_MAX; ++i) {
     if (process->compid == i) {
       mkc_pvar_set_integer (process->pvar, compidnames [i], true);
@@ -1382,9 +1418,7 @@ mkc_process_int_checks (mkc_process_t *process)
     }
   }
 
-  if (process->libloc == MKC_LIB_LOC_LIB64) {
-    mkc_pvar_set_integer (process->pvar, liblocname, false);
-  }
+  mkc_pvar_set_integer (process->pvar, liblocname, process->libloc);
 
   pidx = mkc_profile_pop (process->profiles);
   mkc_pvar_profile_set_idx (process->pvar, pidx);
@@ -1400,7 +1434,7 @@ mkc_process_int_checks (mkc_process_t *process)
         "-- mkc internal setup: %s\n", tbuff, NULL);
   }
 
-  return 0;
+  return MKC_OK;
 }
 
 static int32_t
@@ -1410,34 +1444,30 @@ mkc_process_value_get_integer (mkc_process_t *process, mkc_value_t *value)
 
   if (value->vtype == MKC_VT_INVALID) {
     mkc_error_set (process->mkcerr, MKC_ERR_INVALID_VALUE);
-  }
-  if (value->vtype == MKC_VT_INTEGER) {
+  } else if (value->vtype == MKC_VT_INTEGER) {
     ival = value->ival;
-  }
+  } else if (value->vtype == MKC_VT_STATIC_STRING) {
 // ### conversion from string to integer is not necessary
 //  these could be removed, and just generate an error.
-  if (value->vtype == MKC_VT_STATIC_STRING) {
     ival = atol (value->sval);
-  }
-  if (value->vtype == MKC_VT_QUOTED_STRING) {
+  } else if (value->vtype == MKC_VT_QUOTED_STRING) {
     char    *tbuff;
 
     tbuff = mkc_pvar_substitute (process->pvar, value->sval, 0);
     ival = atol (tbuff);
     free (tbuff);
-  }
-  if (value->vtype == MKC_VT_LIST) {
+  } else if (value->vtype == MKC_VT_LIST) {
     mkc_error_set (process->mkcerr, MKC_ERR_MISMATCHED_ARGUMENT);
     return 0;
-  }
-  if (value->vtype == MKC_VT_ENV_VARIABLE) {
+  } else if (value->vtype == MKC_VT_ENV_VARIABLE) {
     char    tbuff [MKC_PATH_MAX];
 
     mkc_pvar_get_env_str (process->pvar, value->sval, tbuff, sizeof (tbuff));
     ival = atol (tbuff);
-  }
-  if (value->vtype == MKC_VT_VARIABLE) {
+  } else if (value->vtype == MKC_VT_VARIABLE) {
     ival = mkc_pvar_get_variable_integer (process->pvar, value);
+  } else {
+    mkc_error_set (process->mkcerr, MKC_ERR_UNHANDLED_VALUE);
   }
 
   mkc_log (process->log, MKC_LOG_PROCESS, "  p-v-get-int: %d\n", ival, NULL);
@@ -1452,30 +1482,62 @@ mkc_process_value_get_str (mkc_process_t *process,
 
   if (value->vtype == MKC_VT_INVALID) {
     mkc_error_set (process->mkcerr, MKC_ERR_INVALID_VALUE);
-  }
-  if (value->vtype == MKC_VT_INTEGER) {
+  } else if (value->vtype == MKC_VT_INTEGER) {
     snprintf (buff, sz, "%d", value->ival);
-  }
-  if (value->vtype == MKC_VT_STATIC_STRING) {
+  } else if (value->vtype == MKC_VT_STATIC_STRING) {
     stpecpy (buff, buff + sz, value->sval);
-  }
-  if (value->vtype == MKC_VT_QUOTED_STRING) {
+  } else if (value->vtype == MKC_VT_QUOTED_STRING) {
     char    *tbuff;
 
     tbuff = mkc_pvar_substitute (process->pvar, value->sval, 0);
     stpecpy (buff, buff + sz, tbuff);
     free (tbuff);
-  }
-  if (value->vtype == MKC_VT_LIST) {
+  } else if (value->vtype == MKC_VT_LIST) {
     mkc_error_set (process->mkcerr, MKC_ERR_MISMATCHED_ARGUMENT);
-  }
-  if (value->vtype == MKC_VT_ENV_VARIABLE) {
+  } else if (value->vtype == MKC_VT_ENV_VARIABLE) {
     mkc_pvar_get_env_str (process->pvar, value->sval, buff, sz);
-  }
-  if (value->vtype == MKC_VT_VARIABLE) {
+  } else if (value->vtype == MKC_VT_VARIABLE) {
     mkc_pvar_get_variable_str (process->pvar, value, buff, sz);
+  } else {
+    mkc_error_set (process->mkcerr, MKC_ERR_UNHANDLED_VALUE);
   }
 
   mkc_log (process->log, MKC_LOG_PROCESS, "  p-v-get-str: %s\n", buff, NULL);
 }
 
+static void
+mkc_process_set_defaults (mkc_process_t *process)
+{
+  /* create internal constants */
+  mkc_pvar_profile_set (process->pvar,
+      MKC_PROF_INTERNAL_NAME, MKC_PROF_COMPILER_GENERAL);
+
+  for (mkc_system_type_t i = 0; i < MKC_SYS_MAX; ++i) {
+    mkc_pvar_set_integer (process->pvar, sysnames [i], false);
+  }
+  for (mkc_system_id_t i = 0; i < MKC_SYS_ID_MAX; ++i) {
+    mkc_pvar_set_integer (process->pvar, sysidnames [i], false);
+  }
+
+  mkc_pvar_set_integer (process->pvar, mkcwhilelimit, 10000);
+  mkc_pvar_set_str (process->pvar, liblocname, "");
+
+  mkc_pvar_profile_set (process->pvar, MKC_PROF_GLOBAL_NAME, MKC_PROF_COMPILER_GENERAL);
+  mkc_pvar_set_str (process->pvar, "BISON", "bison");
+  mkc_pvar_set_str (process->pvar, "CC", "cc");
+  mkc_pvar_set_str (process->pvar, "CXX", "c++");
+  mkc_pvar_set_str (process->pvar, "FLEX", "flex");
+  mkc_pvar_set_str (process->pvar, "OBJC", "objc");
+
+  mkc_pvar_profile_set (process->pvar, MKC_PROF_INTERNAL_NAME, MKC_PROF_COMPILER_GENERAL);
+  for (mkc_compiler_id_t i = 0; i < MKC_COMP_ID_MAX; ++i) {
+    if (mkc_error_chk_err (process->mkcerr)) {
+      break;
+    }
+    mkc_pvar_set_integer (process->pvar, compidnames [i], false);
+  }
+
+  mkc_pvar_profile_set (process->pvar, MKC_PROF_GLOBAL_NAME, MKC_PROF_COMPILER_C);
+
+  mkc_pvar_set_integer (process->pvar, "_header_modern", process->headertype);
+}

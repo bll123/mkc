@@ -33,6 +33,7 @@ typedef struct {
 
 static void cleanargs (argcopy_t *argcopy);
 static int mkc_parse (FILE *fh, yyscan_t scanner, mkc_astmain_t *astmain, mkc_log_t *log, const char *dfltprof, mkc_error_t *mkcerr);
+mkc_err_code_t mkc_cleanup (mkc_astmain_t *astmain, argcopy_t *argcopy, mkc_log_t *log, mkc_error_t *error);
 
 int
 main (int argc, char *argv [])
@@ -49,7 +50,7 @@ main (int argc, char *argv [])
   const char      * dfltprof = MKC_PROF_RELEASE_NAME;
   mkc_astmain_t   * astmain = NULL;
   yyscan_t        scanner;
-  mkc_error_t     *mkcerr;
+  mkc_error_t     * mkcerr = NULL;
   mkc_log_t       * log = NULL;
   mstime_t        starttm;
   mstime_t        proctm;
@@ -115,23 +116,15 @@ main (int argc, char *argv [])
     fh = mkc_fopen (argv [fnidx], "r");
     if (fh == NULL) {
       fprintf (stderr, "%s: %s\n", argv [fnidx], strerror (errno));
-      mkc_log_free (log);
-      cleanargs (&argcopy);
       mkc_error_set (mkcerr, MKC_ERR_FILE_NOT_FOUND);
-      mkc_error_print (mkcerr);
-      rc = mkc_error_value (mkcerr);
-      mkc_error_free (mkcerr);
+      rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
       return rc;
     }
   }
 
   astmain = mkc_ast_init (log, dfltprof, mkcerr);
   if (mkc_error_chk_err (mkcerr)) {
-    mkc_log_free (log);
-    cleanargs (&argcopy);
-    mkc_error_print (mkcerr);
-    rc = mkc_error_value (mkcerr);
-    mkc_error_free (mkcerr);
+    rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
     return rc;
   }
 
@@ -145,15 +138,14 @@ main (int argc, char *argv [])
     if (cachefh != NULL) {
       mkc_message ("-- loading cache\n");
       mkc_log (log, MKC_LOG_AST_PROCESS, "== loading cache\n", NULL);
+
+      mkc_ast_set_fromcache (astmain, true);
       mkc_parse (cachefh, scanner, astmain, log, dfltprof, mkcerr);
       fclose (cachefh);
+      mkc_ast_set_fromcache (astmain, false);
+
       if (mkc_error_chk_err (mkcerr)) {
-        mkc_ast_free (astmain);
-        mkc_log_free (log);
-        cleanargs (&argcopy);
-        mkc_error_print (mkcerr);
-        rc = mkc_error_value (mkcerr);
-        mkc_error_free (mkcerr);
+        rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
         return rc;
       }
     }
@@ -161,12 +153,7 @@ main (int argc, char *argv [])
 
   mkc_parse (fh, scanner, astmain, log, dfltprof, mkcerr);
   if (mkc_error_chk_err (mkcerr)) {
-    mkc_ast_free (astmain);
-    mkc_log_free (log);
-    cleanargs (&argcopy);
-    mkc_error_print (mkcerr);
-    rc = mkc_error_value (mkcerr);
-    mkc_error_free (mkcerr);
+    rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
     return rc;
   }
   yylex_destroy (scanner);
@@ -176,6 +163,7 @@ main (int argc, char *argv [])
     fclose (fh);
   }
   etm = mstimeend (&starttm);
+
   mkc_message ("-- parse: %s\n", mkc_elapsed_disp (etm, tbuff, sizeof (tbuff)));
   mkc_log (log, MKC_LOG_STATISTICS,
       "-- parse: %s\n", mkc_elapsed_disp (etm, tbuff, sizeof (tbuff)), NULL);
@@ -190,12 +178,7 @@ main (int argc, char *argv [])
   mkc_message ("-- total time: %s\n", tbuff);
   mkc_log (log, MKC_LOG_STATISTICS, "-- total time: %s\n", tbuff, NULL);
 
-  cleanargs (&argcopy);
-  mkc_log_free (log);
-
-  mkc_error_print (mkcerr);
-  rc = mkc_error_value (mkcerr);
-  mkc_error_free (mkcerr);
+  rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
   return rc;
 }
 
@@ -234,6 +217,22 @@ mkc_parse (FILE *fh, yyscan_t scanner, mkc_astmain_t *astmain,
   }
 
   yy_delete_buffer (state, scanner);
+
+  return rc;
+}
+
+mkc_err_code_t
+mkc_cleanup (mkc_astmain_t *astmain, argcopy_t *argcopy,
+    mkc_log_t *log, mkc_error_t *mkcerr)
+{
+  mkc_err_code_t  rc;
+
+  mkc_ast_free (astmain);
+  cleanargs (argcopy);
+  mkc_log_free (log);
+  mkc_error_print (mkcerr);
+  rc = mkc_error_value (mkcerr);
+  mkc_error_free (mkcerr);
 
   return rc;
 }

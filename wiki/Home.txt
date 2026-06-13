@@ -3,6 +3,7 @@
 <div markdown style="float: left; margin-right: 20px;">
 
 [Syntax](Syntax)
+<br>[Internal Variables](InternalVariables)
 
 </div>
 

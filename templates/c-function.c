@@ -6,17 +6,17 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
-${MKC_I_TEST_HEADER_LIST}
+${MKC_TV_TEST_HEADER_LIST}
 
 int
 main (void)
 {
-#if defined (${MKC_I_TEST_FUNCTION_NAME})
+#if defined (${MKC_TV_TEST_FUNCTION_NAME})
   return 0;
 #else
   void    *f = NULL;
 
-  f = &${MKC_I_TEST_FUNCTION_NAME};
+  f = &${MKC_TV_TEST_FUNCTION_NAME};
   return 0;
 #endif
 }
