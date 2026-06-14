@@ -1,5 +1,5 @@
 profile global c;
-check_compile_flag    '-Werror' {
+check-compile-flag    '-Werror' {
   name HAVE_CF_ERROR;
 }
 if (${HAVE_CF_ERROR} ne '') {

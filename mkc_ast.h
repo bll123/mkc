@@ -18,6 +18,7 @@ extern "C" {
 typedef enum {
   MKC_T_ATTR_COMP_FLAGS,
   MKC_T_ATTR_HEADER,
+  MKC_T_ATTR_LINK_FLAGS,
   MKC_T_ATTR_NAME,
   MKC_T_ATTR_NEGATE,
   MKC_T_ATTR_SOURCE,
@@ -118,6 +119,7 @@ mkc_astnode_t * mkc_ast_mk_attr_name (mkc_astmain_t *astmain, mkc_astnode_t *nm,
 mkc_astnode_t * mkc_ast_mk_attr_negate (mkc_astmain_t *astmain, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_attr_header (mkc_astmain_t *astmain, mkc_astnode_t *hdrlist, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_attr_compflags (mkc_astmain_t *astmain, mkc_astnode_t *compflaglist, int32_t lineno, int colno);
+mkc_astnode_t * mkc_ast_mk_attr_linkflags (mkc_astmain_t *astmain, mkc_astnode_t *linkflaglist, int32_t lineno, int colno);
 
 mkc_astmain_t * mkc_ast_init (mkc_log_t *log, const char *dfltprof, mkc_error_t *mkcerr);
 void mkc_ast_set_main (mkc_astmain_t *, mkc_astnode_t *astnode);

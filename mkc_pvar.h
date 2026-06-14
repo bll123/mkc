@@ -46,6 +46,8 @@ mkc_value_t *mkc_pvar_get_value (mkc_pvar_t *pvar, const char *vname);
 //mkc_value_t *mkc_pvar_get_value (mkc_pvar_t *pvar, mkc_varidx_t vidx);
 
 void mkc_pvar_debug (mkc_pvar_t *pvar);
+int32_t mkc_pvar_value_get_integer (mkc_pvar_t *pvar, mkc_value_t *value);
+void mkc_pvar_value_get_str (mkc_pvar_t *pvar, mkc_value_t *value, char *buff, size_t sz);
 char * mkc_pvar_substitute (mkc_pvar_t *pvar, const char *vname, int depth);
 
 #if defined (__cplusplus) || defined (c_plusplus)

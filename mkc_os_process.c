@@ -139,7 +139,7 @@ mkc_os_process_pipe (const char *targv[], int flags, char *rbuff, size_t sz, siz
     return -1;
   }
 
-# if 0
+#if 0
     {
       int   k = 0;
       fprintf (stderr, "== pipe: ");

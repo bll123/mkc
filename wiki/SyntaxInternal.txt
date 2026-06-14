@@ -39,11 +39,11 @@
 ##### System Information
 
     MKC_EXECUTABLE_EXTENSION      (string)
-    MKC_LIB_LOC_LIB64             (Linux only, string)
+    MKC_LIB_LOC_LIB64             (Linux only, boolean)  # subject to change
     MKC_OBJECT_EXTENSION          (string)
     MKC_SHARED_LIBRARY_EXTENSION  (string)
 
-##### Compilers
+##### Compilers (string, from environment if present)
 
     BISON bison
     CC cc

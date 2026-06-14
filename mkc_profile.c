@@ -189,7 +189,7 @@ mkc_profile_local_create (mkc_profile_t *profiles)
   }
 
   if (profiles->stacksz >= MKC_PROF_STACK_MAX) {
-    mkc_error_set (profiles->mkcerr, MKC_ERR_OUT_OF_RANGE);
+    mkc_error_set (profiles->mkcerr, MKC_ERR_EXCEEDS_STACK_SIZE);
     return MKC_ERR_FAILURE;
   }
 
@@ -390,7 +390,7 @@ mkc_profile_push (mkc_profile_t *profiles)
   }
 
   if (profiles->stacksz >= MKC_PROF_STACK_MAX) {
-    mkc_error_set (profiles->mkcerr, MKC_ERR_OUT_OF_RANGE);
+    mkc_error_set (profiles->mkcerr, MKC_ERR_EXCEEDS_STACK_SIZE);
     return MKC_ERR_FAILURE;
   }
 

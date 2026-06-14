@@ -17,20 +17,30 @@
 #include "mkc_os_process.h"
 #include "mkc_string.h"
 
-const char * const mkctestcompflags = "MKC_TV_TEST_COMP_FLAGS";
-
 static const char *MKC_INCLUDE_PATH = ".";
+
+enum {
+  MKC_CHK_FLAG_MAX = 30,
+  MKC_CHK_ARG_MAX = 100,
+};
 
 typedef struct mkc_check_t {
   mkc_profile_t   * profiles;
   mkc_pvar_t      * pvar;
   mkc_error_t     * mkcerr;
   mkc_log_t       * log;
+  char            * cf [MKC_CHK_FLAG_MAX];
+  char            * lf [MKC_CHK_FLAG_MAX];
+  const char      * targv [MKC_CHK_ARG_MAX];
+  int             cfcount;
+  int             lfcount;
+  int             targc;
 } mkc_check_t;
 
 static void mkc_check_file_sub_copy (mkc_check_t *check, char *tbuff, size_t sz, const char *fname, const char *sfx);
-static void mkc_check_log_command (mkc_check_t *check, const char *targv []);
+static void mkc_check_log_command (mkc_check_t *check, const char *tag);
 static mkc_err_code_t mkc_chk_env_var_set (mkc_check_t *check, const char *nm);
+static void mkc_check_append_arg (mkc_check_t *check, const char *arg);
 
 mkc_check_t *
 mkc_check_init (mkc_profile_t *profiles, mkc_pvar_t *pvar, mkc_log_t *log, mkc_error_t *mkcerr)
@@ -42,6 +52,10 @@ mkc_check_init (mkc_profile_t *profiles, mkc_pvar_t *pvar, mkc_log_t *log, mkc_e
   check->pvar = pvar;
   check->mkcerr = mkcerr;
   check->log = log;
+  check->cfcount = 0;
+  check->lfcount = 0;
+  check->targc = 0;
+  mkc_chk_reset (check);
 
   return check;
 }
@@ -87,18 +101,74 @@ mkc_chk_compiler_works (mkc_check_t *check,
     const char *compiler, const char *sfx)
 {
   int         rc;
-  const char  *flags [2];
 
   /* clang prints the deprecated error when compiling C with */
   /* c++ or objective-c */
   /* 2026-5-29 when this is run, the compiler is not yet known */
-  flags [0] = "-Wno-deprecated";
-  flags [1] = NULL;
+  mkc_chk_append_comp_flag (check, "-Wno-deprecated");
 
   mkc_log (check->log, MKC_LOG_CHECK, "  == chk: compiler-works\n");
-  rc = mkc_compile_only (check, compiler, sfx,
-      "int-main", NULL, flags);
+  rc = mkc_compile_only (check, compiler, sfx, "int-main", NULL);
+  mkc_chk_reset (check);
   return rc;
+}
+
+void
+mkc_chk_reset (mkc_check_t *check)
+{
+  if (check == NULL) {
+    return;
+  }
+
+  for (int i = 0; i < check->cfcount; ++i) {
+    if (check->cf [i] != NULL) {
+      free (check->cf [i]);
+    }
+  }
+  for (int i = 0; i < check->lfcount; ++i) {
+    if (check->lf [i] != NULL) {
+      free (check->lf [i]);
+    }
+  }
+
+  check->cf [0] = NULL;
+  check->lf [0] = NULL;
+  check->targv [0] = NULL;
+  check->cfcount = 0;
+  check->lfcount = 0;
+  check->targc = 0;
+}
+
+void
+mkc_chk_append_comp_flag (mkc_check_t *check, const char *flag)
+{
+  if (check == NULL || flag == NULL) {
+    return;
+  }
+
+  if (check->cfcount >= MKC_CHK_FLAG_MAX) {
+    mkc_error_set (check->mkcerr, MKC_ERR_EXCEEDS_STACK_SIZE);
+    return;
+  }
+
+  check->cf [check->cfcount] = strdup (flag);
+  check->cfcount += 1;
+}
+
+void
+mkc_chk_append_link_flag (mkc_check_t *check, const char *flag)
+{
+  if (check == NULL || flag == NULL) {
+    return;
+  }
+
+  if (check->lfcount >= MKC_CHK_FLAG_MAX) {
+    mkc_error_set (check->mkcerr, MKC_ERR_EXCEEDS_STACK_SIZE);
+    return;
+  }
+
+  check->lf [check->lfcount] = strdup (flag);
+  check->lfcount += 1;
 }
 
 int
@@ -108,8 +178,8 @@ mkc_chk_header_modern (mkc_check_t *check,
   int         rc;
 
   mkc_log (check->log, MKC_LOG_CHECK, "  == chk: header-modern\n");
-  rc = mkc_compile_only (check, compiler, sfx,
-        "int-header-modern", MKC_INCLUDE_PATH, NULL);
+  rc = mkc_compile_only (check, compiler, sfx, "int-header-modern", NULL);
+  mkc_chk_reset (check);
   return rc;
 }
 
@@ -121,7 +191,8 @@ mkc_chk_system_type (mkc_check_t *check,
 
   mkc_log (check->log, MKC_LOG_CHECK, "  == chk: system-type\n");
   rc = mkc_compile_run (check, compiler, sfx,
-      "int-system", MKC_INCLUDE_PATH, NULL, NULL, 0);
+      "int-system", MKC_INCLUDE_PATH, NULL, 0);
+  mkc_chk_reset (check);
   return rc;
 }
 
@@ -133,7 +204,8 @@ mkc_chk_system_id (mkc_check_t *check,
 
   mkc_log (check->log, MKC_LOG_CHECK, "  == chk: system-id\n");
   rc = mkc_compile_run (check, compiler, sfx,
-      "int-sysid", MKC_INCLUDE_PATH, NULL, NULL, 0);
+      "int-sysid", MKC_INCLUDE_PATH, NULL, 0);
+  mkc_chk_reset (check);
   return rc;
 }
 
@@ -144,8 +216,8 @@ mkc_chk_variadic_macro (mkc_check_t *check,
   int         rc;
 
   mkc_log (check->log, MKC_LOG_CHECK, "  == chk: variadic-macro\n");
-  rc = mkc_compile_only (check, compiler, sfx,
-        "int-variadic-macro", NULL, NULL);
+  rc = mkc_compile_only (check, compiler, sfx, "int-variadic-macro", NULL);
+  mkc_chk_reset (check);
   return rc;
 }
 
@@ -161,7 +233,8 @@ mkc_chk_library_location (mkc_check_t *check,
 
   mkc_log (check->log, MKC_LOG_CHECK, "  == chk: lib-location\n");
   rc = mkc_compile_run (check, compiler, sfx,
-      "int-libloc", MKC_INCLUDE_PATH, NULL, NULL, 0);
+      "int-libloc", MKC_INCLUDE_PATH, NULL, 0);
+  mkc_chk_reset (check);
   return rc;
 }
 
@@ -173,7 +246,8 @@ mkc_chk_which_compiler (mkc_check_t *check,
 
   mkc_log (check->log, MKC_LOG_CHECK, "  == chk: which-compiler\n");
   rc = mkc_compile_run (check, compiler, sfx,
-      "int-compiler", MKC_INCLUDE_PATH, NULL, NULL, 0);
+      "int-compiler", MKC_INCLUDE_PATH, NULL, 0);
+  mkc_chk_reset (check);
   return rc;
 }
 
@@ -220,7 +294,8 @@ mkc_chk_compiler_id (mkc_check_t *check,
 
   mkc_log (check->log, MKC_LOG_CHECK, "  == chk: compiler-id\n");
   rc = mkc_compile_run (check, compiler, sfx,
-      "int-compid", MKC_INCLUDE_PATH, NULL, NULL, 0);
+      "int-compid", MKC_INCLUDE_PATH, NULL, 0);
+  mkc_chk_reset (check);
   return rc;
 }
 
@@ -230,7 +305,6 @@ mkc_chk_compiler_flag (mkc_check_t *check,
     const char *flag, int negate)
 {
   int               rc;
-  const char        *flags [2];
   char              tbuff [100];
   char              rbuff [400];
   static const char *negprefix = "-Wno-";
@@ -247,17 +321,15 @@ mkc_chk_compiler_flag (mkc_check_t *check,
     }
   }
 
-  flags [0] = tbuff;
-  flags [1] = NULL;
-
-  rc = mkc_compile_link (check, compiler, sfx,
-      "int-main", NULL, flags, rbuff, sizeof (rbuff));
+  mkc_chk_append_comp_flag (check, tbuff);
+  rc = mkc_compile_only (check, compiler, sfx, "int-main", NULL);
   if (rc == 0) {
     /* clang does not return an error code on a unknown warning */
     if (strstr (rbuff, "warning") != NULL) {
       rc = 1;
     }
   }
+  mkc_chk_reset (check);
   return rc;
 }
 
@@ -267,21 +339,19 @@ mkc_chk_link_flag (mkc_check_t *check,
     const char *flag)
 {
   int               rc;
-  const char        *flags [2];
   char              rbuff [400];
 
-  flags [0] = flag;
-  flags [1] = NULL;
-
+  mkc_chk_append_link_flag (check, flag);
   mkc_log (check->log, MKC_LOG_CHECK, "== chk: link-flag: %s\n", flag);
   rc = mkc_compile_link (check, compiler, sfx,
-      "int-main", NULL, flags, rbuff, sizeof (rbuff));
+      "int-main", NULL, rbuff, sizeof (rbuff));
   if (rc == 0) {
     /* clang does not return an error code on a unknown warning */
     if (strstr (rbuff, "warning") != NULL) {
       rc = 1;
     }
   }
+  mkc_chk_reset (check);
   return rc;
 }
 
@@ -303,10 +373,11 @@ mkc_chk_size (mkc_check_t *check,
   mkc_pvar_profile_set_idx (check->pvar, pidx);
 
   rc = mkc_compile_run (check, compiler, sfx,
-        "c-size", NULL, NULL, NULL, 0);
+        "c-size", NULL, NULL, 0);
   if (rc < 0) {
     rc = 0;
   }
+  mkc_chk_reset (check);
   return rc;
 }
 
@@ -327,8 +398,8 @@ mkc_chk_type (mkc_check_t *check,
   pidx = mkc_profile_pop (check->profiles);
   mkc_pvar_profile_set_idx (check->pvar, pidx);
 
-  rc = mkc_compile_only (check, compiler, sfx,
-        "c-type", NULL, NULL);
+  rc = mkc_compile_only (check, compiler, sfx, "c-type", NULL);
+  mkc_chk_reset (check);
   return rc;
 }
 
@@ -351,8 +422,8 @@ mkc_chk_struct_member (mkc_check_t *check,
   pidx = mkc_profile_pop (check->profiles);
   mkc_pvar_profile_set_idx (check->pvar, pidx);
 
-  rc = mkc_compile_only (check, compiler, sfx,
-        "c-struct-member", NULL, NULL);
+  rc = mkc_compile_only (check, compiler, sfx, "c-struct-member", NULL);
+  mkc_chk_reset (check);
   return rc;
 }
 
@@ -373,8 +444,9 @@ mkc_chk_function (mkc_check_t *check, const char *compiler, const char *sfx,
   pidx = mkc_profile_pop (check->profiles);
   mkc_pvar_profile_set_idx (check->pvar, pidx);
 
-  rc = mkc_compile_only (check, compiler, sfx,
-        "c-function", NULL, NULL);
+  rc = mkc_compile_link (check, compiler, sfx,
+        "c-function", NULL, NULL, 0);
+  mkc_chk_reset (check);
   return rc;
 }
 
@@ -382,11 +454,8 @@ mkc_chk_function (mkc_check_t *check, const char *compiler, const char *sfx,
 int
 mkc_compile_only (mkc_check_t *check,
     const char *compiler, const char *sfx,
-    const char *fname,
-    const char *incpath, const char *flags [])
+    const char *fname, const char *incpath)
 {
-  const char  *targv [30];
-  int         targc = 0;
   int         rc;
   char        tbuff [MKC_PATH_MAX];
   char        *rbuff;
@@ -395,26 +464,25 @@ mkc_compile_only (mkc_check_t *check,
 
   mkc_check_file_sub_copy (check, tbuff, sizeof (tbuff), fname, sfx);
 
-  targv [targc++] = compiler;
-  if (flags != NULL) {
-    int         fcount = 0;
-
-    while (flags [fcount] != NULL) {
-      targv [targc++] = flags [fcount];
-      ++fcount;
-    }
+  check->targc = 0;
+  mkc_check_append_arg (check, compiler);
+  for (int i = 0; i < check->cfcount; ++i) {
+    mkc_check_append_arg (check, check->cf [i]);
   }
   if (incpath != NULL) {
-    targv [targc++] = "-I";
-    targv [targc++] = incpath;
+    mkc_check_append_arg (check, "-I");
+    mkc_check_append_arg (check, incpath);
   }
-  targv [targc++] = "-c";
-  targv [targc++] = "-o";
-  targv [targc++] = "mkc_files/tmp/mkctest.o";
-  targv [targc++] = tbuff;
-  targv [targc++] = NULL;
+  mkc_check_append_arg (check, "-c");
+  mkc_check_append_arg (check, "-o");
+  mkc_check_append_arg (check, "mkc_files/tmp/mkctest.o");
+  mkc_check_append_arg (check, tbuff);
+  mkc_check_append_arg (check, NULL);
+  if (mkc_error_chk_err (check->mkcerr)) {
+    return MKC_ERR_FAILURE;
+  }
 
-  mkc_check_log_command (check, targv);
+  mkc_check_log_command (check, "comp-only");
 
   rbuff = malloc (rsz);
   if (rbuff == NULL) {
@@ -422,7 +490,7 @@ mkc_compile_only (mkc_check_t *check,
     return MKC_ERR_FAILURE;
   }
 
-  rc = mkc_os_process_pipe (targv,
+  rc = mkc_os_process_pipe (check->targv,
       OS_PROC_WAIT | OS_PROC_NOWINDOW, rbuff, rsz, &retsz);
 
   if (retsz > 0) {
@@ -445,37 +513,35 @@ mkc_compile_only (mkc_check_t *check,
 int
 mkc_compile_link (mkc_check_t *check,
     const char *compiler, const char *sfx,
-    const char *fname, const char *incpath, const char *flags [],
+    const char *fname, const char *incpath,
     char *rbuff, size_t rsz)
 {
-  const char  *targv [30];
-  int         targc = 0;
   int         rc;
-  char        tbuff [MKC_PATH_MAX];
   size_t      retsz;
   bool        rallocated = false;
 
-  mkc_check_file_sub_copy (check, tbuff, sizeof (tbuff), fname, sfx);
-
-  targv [targc++] = compiler;
-  if (flags != NULL) {
-    int         fcount = 0;
-
-    while (flags [fcount] != NULL) {
-      targv [targc++] = flags [fcount];
-      ++fcount;
-    }
+  rc = mkc_compile_only (check, compiler, sfx, fname, incpath);
+  if (rc > 0) {
+    rc = - rc;
   }
-  if (incpath != NULL) {
-    targv [targc++] = "-I";
-    targv [targc++] = incpath;
+  if (rc != 0) {
+    return rc;
   }
-  targv [targc++] = "-o";
-  targv [targc++] = "mkc_files/tmp/mkctest.exe";
-  targv [targc++] = tbuff;
-  targv [targc++] = NULL;
 
-  mkc_check_log_command (check, targv);
+  check->targc = 0;
+  mkc_check_append_arg (check, compiler);
+  mkc_check_append_arg (check, "-o");
+  mkc_check_append_arg (check, "mkc_files/tmp/mkctest.exe");
+  mkc_check_append_arg (check, "mkc_files/tmp/mkctest.o");
+  for (int i = 0; i < check->lfcount; ++i) {
+    mkc_check_append_arg (check, check->lf [i]);
+  }
+  mkc_check_append_arg (check, NULL);
+  if (mkc_error_chk_err (check->mkcerr)) {
+    return MKC_ERR_FAILURE;
+  }
+
+  mkc_check_log_command (check, "link");
 
   if (rbuff == NULL) {
     rsz = 4000;
@@ -487,12 +553,12 @@ mkc_compile_link (mkc_check_t *check,
     rallocated = true;
   }
 
-  rc = mkc_os_process_pipe (targv,
+  rc = mkc_os_process_pipe (check->targv,
       OS_PROC_WAIT | OS_PROC_NOWINDOW, rbuff, rsz, &retsz);
 
   mkc_log (check->log, MKC_LOG_CHECK, "  rc: %d\n", rc);
   if (retsz > 0) {
-    mkc_log (check->log, MKC_LOG_CHECK, "--- compile log\n");
+    mkc_log (check->log, MKC_LOG_CHECK, "--- link log\n");
     mkc_log (check->log, MKC_LOG_CHECK, "%s\n", rbuff);
     mkc_log (check->log, MKC_LOG_CHECK, "---\n");
   }
@@ -512,27 +578,28 @@ mkc_compile_link (mkc_check_t *check,
 int
 mkc_compile_run (mkc_check_t *check,
     const char *compiler, const char *sfx,
-    const char *fname, const char *incpath, const char *flags [],
+    const char *fname, const char *incpath,
     char *rbuff, size_t rsz)
 {
-  const char  *targv [10];
-  int         targc = 0;
   int         rc;
   bool        rallocated = false;
   size_t      retsz;
 
   rc = mkc_compile_link (check, compiler, sfx,
-      fname, incpath, flags, NULL, 0);
+      fname, incpath, NULL, 0);
 
   if (rc != 0) {
     return rc;
   }
 
-  targc = 0;
-  targv [targc++] = "mkc_files/tmp/mkctest.exe";
-  targv [targc++] = NULL;
+  check->targc = 0;
+  mkc_check_append_arg (check, "mkc_files/tmp/mkctest.exe");
+  mkc_check_append_arg (check, NULL);
+  if (mkc_error_chk_err (check->mkcerr)) {
+    return MKC_ERR_FAILURE;
+  }
 
-  mkc_check_log_command (check, targv);
+  mkc_check_log_command (check, "run");
 
   if (rbuff == NULL) {
     rsz = 4000;
@@ -544,7 +611,7 @@ mkc_compile_run (mkc_check_t *check,
     rallocated = true;
   }
 
-  rc = mkc_os_process_pipe (targv,
+  rc = mkc_os_process_pipe (check->targv,
       OS_PROC_WAIT | OS_PROC_NOWINDOW, rbuff, rsz, &retsz);
 
   mkc_log (check->log, MKC_LOG_CHECK, "  run: rc: %d\n", rc);
@@ -590,17 +657,23 @@ mkc_check_file_sub_copy (mkc_check_t *check,
 }
 
 static void
-mkc_check_log_command (mkc_check_t *check, const char *targv [])
+mkc_check_log_command (mkc_check_t *check, const char *tag)
 {
   int   targc;
 
   targc = 0;
   mkc_log (check->log, MKC_LOG_CHECK, "cmd: ");
-  while (targv [targc] != NULL) {
-    mkc_log (check->log, MKC_LOG_CHECK, "%s ", targv [targc]);
+  while (check->targv [targc] != NULL) {
+    mkc_log (check->log, MKC_LOG_CHECK, "%s ", check->targv [targc]);
     ++targc;
   }
   mkc_log (check->log, MKC_LOG_CHECK, "\n");
+  if (targc == 0) {
+    mkc_log (check->log, MKC_LOG_CHECK, "invalid count %d\n", targc);
+  }
+  if (targc + 1 != check->targc) {
+    mkc_log (check->log, MKC_LOG_CHECK, "mismatch count %d %d\n", targc + 1, check->targc);
+  }
 }
 
 static mkc_err_code_t
@@ -616,4 +689,20 @@ mkc_chk_env_var_set (mkc_check_t *check, const char *nm)
   }
 
   return rc;
+}
+
+static void
+mkc_check_append_arg (mkc_check_t *check, const char *arg)
+{
+  if (check == NULL) {
+    return;
+  }
+
+  if (check->targc >= MKC_CHK_ARG_MAX) {
+    mkc_error_set (check->mkcerr, MKC_ERR_EXCEEDS_STACK_SIZE);
+    return;
+  }
+
+  check->targv [check->targc] = arg;
+  check->targc += 1;
 }

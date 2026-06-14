@@ -99,8 +99,6 @@ static void mkc_process_var_print (mkc_process_t *process, const char *pname);
 static void mkc_process_prof_print (mkc_process_t *process);
 const char * mkc_process_create_name (mkc_process_t *process, char *buff, size_t sz, const char *tag, ...);
 static int mkc_process_int_checks (mkc_process_t *process);
-static int32_t mkc_process_value_get_integer (mkc_process_t *process, mkc_value_t *value);
-static void mkc_process_value_get_str (mkc_process_t *process, mkc_value_t *value, char *buff, size_t sz);
 static void mkc_process_set_defaults (mkc_process_t *process);
 
 mkc_process_t *
@@ -230,7 +228,7 @@ mkc_process_condition (mkc_process_t *process, mkc_value_t *value)
     return 0;
   }
 
-  rval = mkc_process_value_get_integer (process, value);
+  rval = mkc_pvar_value_get_integer (process->pvar, value);
   return rval;
 }
 
@@ -250,8 +248,8 @@ mkc_process_num_op (mkc_process_t *process, int type,
       mkc_value_to_str (vala, tbuff, sizeof (tbuff)));
   mkc_log (process->log, MKC_LOG_PROCESS, "  p-num-op-b: %s\n",
       mkc_value_to_str (valb, tbuff, sizeof (tbuff)));
-  ivala = mkc_process_value_get_integer (process, vala);
-  ivalb = mkc_process_value_get_integer (process, valb);
+  ivala = mkc_pvar_value_get_integer (process->pvar, vala);
+  ivalb = mkc_pvar_value_get_integer (process->pvar, valb);
   mkc_log (process->log, MKC_LOG_PROCESS,
       "  p-num-op: %d %d\n", ivala, ivalb);
 
@@ -334,8 +332,8 @@ mkc_process_str_op (mkc_process_t *process, int type,
       mkc_value_to_str (vala, stra, sizeof (stra)));
   mkc_log (process->log, MKC_LOG_PROCESS, "  p-str-op-b: %s\n",
       mkc_value_to_str (valb, strb, sizeof (strb)));
-  mkc_process_value_get_str (process, vala, stra, sizeof (stra));
-  mkc_process_value_get_str (process, valb, strb, sizeof (strb));
+  mkc_pvar_value_get_str (process->pvar, vala, stra, sizeof (stra));
+  mkc_pvar_value_get_str (process->pvar, valb, strb, sizeof (strb));
   mkc_log (process->log, MKC_LOG_PROCESS, "  p-str-op: |%s|%s|\n",
       stra, strb);
 
@@ -384,7 +382,7 @@ mkc_process_unary_op (mkc_process_t *process, int type, mkc_value_t *vala)
     return 0;
   }
 
-  ivala = mkc_process_value_get_integer (process, vala);
+  ivala = mkc_pvar_value_get_integer (process->pvar, vala);
 
   switch (type) {
     case MKC_T_OP_NOT: {
@@ -422,7 +420,7 @@ mkc_process_stmt_print (mkc_process_t *process, mkc_value_t *value, int depth)
     return;
   }
 
-  mkc_process_value_get_str (process, value, tbuff, sizeof (tbuff));
+  mkc_pvar_value_get_str (process->pvar, value, tbuff, sizeof (tbuff));
   fprintf (stdout, "%s", tbuff);
 
   if (depth == 0) {
@@ -441,7 +439,7 @@ mkc_process_profile_is_current (mkc_process_t *process, mkc_value_t *valnm)
     return false;
   }
 
-  mkc_process_value_get_str (process, valnm, nm, sizeof (nm));
+  mkc_pvar_value_get_str (process->pvar, valnm, nm, sizeof (nm));
 
   rc = mkc_profile_is_current (process->profiles, nm);
   return rc;
@@ -455,11 +453,11 @@ mkc_process_stmt_profile (mkc_process_t *process,
   char              comp [MKC_VNAME_MAX];
   mkc_profidx_t     pidx;
 
-  mkc_process_value_get_str (process, valnm, nm, sizeof (nm));
+  mkc_pvar_value_get_str (process->pvar, valnm, nm, sizeof (nm));
 
   *comp = '\0';
   if (valcomp != NULL) {
-    mkc_process_value_get_str (process, valcomp, comp, sizeof (comp));
+    mkc_pvar_value_get_str (process->pvar, valcomp, comp, sizeof (comp));
   }
 
   pidx = mkc_profile_find (process->profiles, nm, comp);
@@ -478,7 +476,7 @@ mkc_process_stmt_debug (mkc_process_t *process,
   char    tbuff [MKC_VNAME_MAX];
 
 
-  mkc_process_value_get_str (process, value, tbuff, sizeof (tbuff));
+  mkc_pvar_value_get_str (process->pvar, value, tbuff, sizeof (tbuff));
 
   if (strcmp (tbuff, "null") == 0) {
     /* do nothing */ ;
@@ -490,7 +488,7 @@ mkc_process_stmt_debug (mkc_process_t *process,
     mkc_process_prof_print (process);
   }
   if (strcmp (tbuff, "printvar") == 0) {
-    mkc_process_value_get_str (process, subvalue, tbuff, sizeof (tbuff));
+    mkc_pvar_value_get_str (process->pvar, subvalue, tbuff, sizeof (tbuff));
     mkc_process_var_print (process, tbuff);
   }
 
@@ -515,7 +513,7 @@ mkc_process_stmt_set (mkc_process_t *process,
     return;
   }
 
-  mkc_process_value_get_str (process, valnm, nm, sizeof (nm));
+  mkc_pvar_value_get_str (process->pvar, valnm, nm, sizeof (nm));
 
   if (*nm == '\0') {
     mkc_error_set (process->mkcerr, MKC_ERR_INVALID_ARGUMENT);
@@ -525,7 +523,7 @@ mkc_process_stmt_set (mkc_process_t *process,
   if (value->vtype == MKC_VT_ENV_VARIABLE ||
       value->vtype == MKC_VT_QUOTED_STRING) {
     /* need to get the actual value */
-    mkc_process_value_get_str (process, value, buff, sizeof (buff));
+    mkc_pvar_value_get_str (process->pvar, value, buff, sizeof (buff));
     tvalue.sval = buff;
     tvalue.vtype = MKC_VT_STRING;
     value = &tvalue;
@@ -557,7 +555,7 @@ mkc_process_attr_name (mkc_process_t *process, mkc_value_t *valnm)
     return;
   }
 
-  mkc_process_value_get_str (process, valnm, nm, sizeof (nm));
+  mkc_pvar_value_get_str (process->pvar, valnm, nm, sizeof (nm));
   if (process->currentname != NULL) {
     free (process->currentname);
   }
@@ -626,9 +624,6 @@ mkc_process_attr_comp_flags (mkc_process_t *process, mkc_value_t *value)
 {
   mkc_listidx_t   iteridx;
   mkc_listidx_t   lidx;
-  char            * flags = NULL;
-  size_t          flaglen = 1;
-  mkc_profidx_t   pidx;
 
   if (process == NULL) {
     return;
@@ -638,27 +633,42 @@ mkc_process_attr_comp_flags (mkc_process_t *process, mkc_value_t *value)
   while ((lidx = mkc_list_iter_next (value->list, &iteridx)) != MKC_ITER_FINISH) {
     char        tbuff [MKC_VNAME_MAX];
     mkc_value_t *lvalue;
-    size_t      tlen;
 
     if (mkc_error_chk_err (process->mkcerr)) {
       break;
     }
 
     lvalue = mkc_list_get_by_idx (value->list, lidx);
-    snprintf (tbuff, sizeof (tbuff), "%s ", lvalue->sval);
-    tlen = strlen (tbuff);
-    flaglen += tlen;
-    flags = realloc (flags, flaglen);
-    stpecpy (flags + flaglen - tlen - 1, flags + flaglen, tbuff);
+    mkc_pvar_value_get_str (process->pvar, lvalue, tbuff, sizeof (tbuff));
+    mkc_chk_append_comp_flag (process->check, tbuff);
   }
 
-  mkc_profile_push (process->profiles);
-  mkc_pvar_profile_set (process->pvar, MKC_PROF_INTERNAL_NAME,
-      MKC_PROF_COMPILER_GENERAL);
-  mkc_pvar_set_str (process->pvar, mkctestcompflags, flags);
-  pidx = mkc_profile_pop (process->profiles);
-  mkc_pvar_profile_set_idx (process->pvar, pidx);
-  mkc_pvar_set_fromcache (process->pvar, process->fromcache);
+  return;
+}
+
+void
+mkc_process_attr_link_flags (mkc_process_t *process, mkc_value_t *value)
+{
+  mkc_listidx_t   iteridx;
+  mkc_listidx_t   lidx;
+
+  if (process == NULL) {
+    return;
+  }
+
+  mkc_list_iter_start (value->list, &iteridx);
+  while ((lidx = mkc_list_iter_next (value->list, &iteridx)) != MKC_ITER_FINISH) {
+    char        tbuff [MKC_VNAME_MAX];
+    mkc_value_t *lvalue;
+
+    if (mkc_error_chk_err (process->mkcerr)) {
+      break;
+    }
+
+    lvalue = mkc_list_get_by_idx (value->list, lidx);
+    mkc_pvar_value_get_str (process->pvar, lvalue, tbuff, sizeof (tbuff));
+    mkc_chk_append_link_flag (process->check, tbuff);
+  }
 
   return;
 }
@@ -686,7 +696,7 @@ mkc_process_chk_compiler_flag (mkc_process_t *process,
   }
 
   mkc_process_set_compiler (process, process->testcc, process->testsfx);
-  mkc_process_value_get_str (process, valflag, flag, sizeof (flag));
+  mkc_pvar_value_get_str (process->pvar, valflag, flag, sizeof (flag));
   mkc_process_create_name (process, tnm, sizeof (tnm), "cf_", flag, NULL);
 
   pvar = process->pvar;
@@ -735,7 +745,7 @@ mkc_process_chk_link_flag (mkc_process_t *process,
 
   pvar = process->pvar;
   mkc_process_set_compiler (process, process->testcc, process->testsfx);
-  mkc_process_value_get_str (process, valflag, flag, sizeof (flag));
+  mkc_pvar_value_get_str (process->pvar, valflag, flag, sizeof (flag));
   mkc_process_create_name (process, tnm, sizeof (tnm), "lf_", flag, NULL);
 
   if (addchk == MKC_CHK) {
@@ -780,7 +790,7 @@ mkc_process_chk_size (mkc_process_t *process, mkc_value_t *valtype)
   pvar = process->pvar;
 // ### for the time being, need to figure this out...
   mkc_process_set_compiler (process, process->testcc, process->testsfx);
-  mkc_process_value_get_str (process, valtype, type, sizeof (type));
+  mkc_pvar_value_get_str (process->pvar, valtype, type, sizeof (type));
   mkc_process_create_name (process, tnm, sizeof (tnm), "_size_", type, NULL);
 
   rc = mkc_chk_size (process->check,
@@ -811,7 +821,7 @@ mkc_process_chk_type (mkc_process_t *process, mkc_value_t *valtype)
   pvar = process->pvar;
 // ### for the time being, need to figure this out...
   mkc_process_set_compiler (process, process->testcc, process->testsfx);
-  mkc_process_value_get_str (process, valtype, type, sizeof (type));
+  mkc_pvar_value_get_str (process->pvar, valtype, type, sizeof (type));
   mkc_process_create_name (process, tnm, sizeof (tnm), "_type_", type, NULL);
 
   rc = mkc_chk_type (process->check,
@@ -846,8 +856,8 @@ mkc_process_chk_struct_member (mkc_process_t *process,
   pvar = process->pvar;
 // ### for the time being, need to figure this out...
   mkc_process_set_compiler (process, process->testcc, process->testsfx);
-  mkc_process_value_get_str (process, valstructnm, structname, sizeof (structname));
-  mkc_process_value_get_str (process, valmembernm, membername, sizeof (membername));
+  mkc_pvar_value_get_str (process->pvar, valstructnm, structname, sizeof (structname));
+  mkc_pvar_value_get_str (process->pvar, valmembernm, membername, sizeof (membername));
   mkc_process_create_name (process, tnm, sizeof (tnm),
       "_member_", structname, membername, NULL);
 
@@ -880,7 +890,7 @@ mkc_process_chk_function (mkc_process_t *process, mkc_value_t *valfuncnm)
   pvar = process->pvar;
 // ### for the time being, need to figure this out...
   mkc_process_set_compiler (process, process->testcc, process->testsfx);
-  mkc_process_value_get_str (process, valfuncnm, funcname, sizeof (funcname));
+  mkc_pvar_value_get_str (process->pvar, valfuncnm, funcname, sizeof (funcname));
   mkc_process_create_name (process, tnm, sizeof (tnm),
       "_function_", funcname, NULL);
 
@@ -933,7 +943,7 @@ mkc_process_get_while_limit (mkc_process_t *process)
 
   value = mkc_pvar_get_by_profile (process->pvar, mkcwhilelimit);
   if (value != NULL) {
-    limit = mkc_process_value_get_integer (process, value);
+    limit = mkc_pvar_value_get_integer (process->pvar, value);
   }
 
   return limit;
@@ -1326,7 +1336,7 @@ mkc_process_int_checks (mkc_process_t *process)
   if (value != NULL) {
     mkc_compiler_id_t   tcompid;
 
-    tcompid = mkc_process_value_get_integer (process, value);
+    tcompid = mkc_pvar_value_get_integer (process->pvar, value);
     if (process->compid != tcompid) {
       return MKC_OK_CHANGE;
     }
@@ -1351,7 +1361,7 @@ mkc_process_int_checks (mkc_process_t *process)
   if (value != NULL) {
     mkc_system_type_t   tsystype;
 
-    tsystype = mkc_process_value_get_integer (process, value);
+    tsystype = mkc_pvar_value_get_integer (process->pvar, value);
     if (process->systype != tsystype) {
       return MKC_OK_CHANGE;
     }
@@ -1401,7 +1411,7 @@ mkc_process_int_checks (mkc_process_t *process)
   if (value != NULL) {
     mkc_system_id_t     tsysid;
 
-    tsysid = mkc_process_value_get_integer (process, value);
+    tsysid = mkc_pvar_value_get_integer (process->pvar, value);
     if (process->sysid != tsysid) {
       return MKC_OK_CHANGE;
     }
@@ -1466,74 +1476,6 @@ mkc_process_int_checks (mkc_process_t *process)
   }
 
   return MKC_OK;
-}
-
-static int32_t
-mkc_process_value_get_integer (mkc_process_t *process, mkc_value_t *value)
-{
-  int32_t     ival = 0;
-
-  if (value->vtype == MKC_VT_INVALID) {
-    mkc_error_set (process->mkcerr, MKC_ERR_INVALID_VALUE);
-  } else if (value->vtype == MKC_VT_INTEGER) {
-    ival = value->ival;
-  } else if (value->vtype == MKC_VT_STATIC_STRING) {
-// ### conversion from string to integer is not necessary
-//  these could be removed, and just generate an error.
-    ival = atol (value->sval);
-  } else if (value->vtype == MKC_VT_QUOTED_STRING) {
-    char    *tbuff;
-
-    tbuff = mkc_pvar_substitute (process->pvar, value->sval, 0);
-    ival = atol (tbuff);
-    free (tbuff);
-  } else if (value->vtype == MKC_VT_LIST) {
-    mkc_error_set (process->mkcerr, MKC_ERR_MISMATCHED_ARGUMENT);
-    return 0;
-  } else if (value->vtype == MKC_VT_ENV_VARIABLE) {
-    char    tbuff [MKC_PATH_MAX];
-
-    mkc_pvar_get_env_str (process->pvar, value->sval, tbuff, sizeof (tbuff));
-    ival = atol (tbuff);
-  } else if (value->vtype == MKC_VT_VARIABLE) {
-    ival = mkc_pvar_get_variable_integer (process->pvar, value);
-  } else {
-    mkc_error_set (process->mkcerr, MKC_ERR_UNHANDLED_VALUE);
-  }
-
-  mkc_log (process->log, MKC_LOG_PROCESS, "  p-v-get-int: %d\n", ival);
-  return ival;
-}
-
-static void
-mkc_process_value_get_str (mkc_process_t *process,
-    mkc_value_t *value, char *buff, size_t sz)
-{
-  *buff = '\0';
-
-  if (value->vtype == MKC_VT_INVALID) {
-    mkc_error_set (process->mkcerr, MKC_ERR_INVALID_VALUE);
-  } else if (value->vtype == MKC_VT_INTEGER) {
-    snprintf (buff, sz, "%d", value->ival);
-  } else if (value->vtype == MKC_VT_STATIC_STRING) {
-    stpecpy (buff, buff + sz, value->sval);
-  } else if (value->vtype == MKC_VT_QUOTED_STRING) {
-    char    *tbuff;
-
-    tbuff = mkc_pvar_substitute (process->pvar, value->sval, 0);
-    stpecpy (buff, buff + sz, tbuff);
-    free (tbuff);
-  } else if (value->vtype == MKC_VT_LIST) {
-    mkc_error_set (process->mkcerr, MKC_ERR_MISMATCHED_ARGUMENT);
-  } else if (value->vtype == MKC_VT_ENV_VARIABLE) {
-    mkc_pvar_get_env_str (process->pvar, value->sval, buff, sz);
-  } else if (value->vtype == MKC_VT_VARIABLE) {
-    mkc_pvar_get_variable_str (process->pvar, value, buff, sz);
-  } else {
-    mkc_error_set (process->mkcerr, MKC_ERR_UNHANDLED_VALUE);
-  }
-
-  mkc_log (process->log, MKC_LOG_PROCESS, "  p-v-get-str: %s\n", buff);
 }
 
 static void

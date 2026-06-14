@@ -134,19 +134,20 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 "mkcdebug"  { return T_STMT_DEBUG; }
 "mkcoption" { return T_STMT_OPTION; }
 
-"check_compile_flag"        { return T_CHK_COMP_FLAG; }
-"check_const"               { return T_CHK_CONST; }
-"check_function"            { return T_CHK_FUNCTION; }
-"check_header"              { return T_CHK_HEADER; }
-"check_link_flag"           { return T_CHK_LINK_FLAG; }
-"check_size"                { return T_CHK_SIZE; }
-"check_struct_member"       { return T_CHK_STRUCT_MEMBER; }
-"check_type"                { return T_CHK_TYPE; }
+"check-compile-flag"        { return T_CHK_COMP_FLAG; }
+"check-const"               { return T_CHK_CONST; }
+"check-function"            { return T_CHK_FUNCTION; }
+"check-header"              { return T_CHK_HEADER; }
+"check-link-flag"           { return T_CHK_LINK_FLAG; }
+"check-size"                { return T_CHK_SIZE; }
+"check-struct-member"       { return T_CHK_STRUCT_MEMBER; }
+"check-type"                { return T_CHK_TYPE; }
 
-"add_compile_flag"          { return T_ADD_COMP_FLAG; }
-"add_link_flag"             { return T_ADD_LINK_FLAG; }
+"add-compile-flag"          { return T_ADD_COMP_FLAG; }
+"add-link-flag"             { return T_ADD_LINK_FLAG; }
 
-"compflags"                 { return T_ATTR_COMP_FLAGS; }
+"compiler-flags"            { return T_ATTR_COMP_FLAGS; }
+"link-flags"                { return T_ATTR_LINK_FLAGS; }
 "header"                    { return T_ATTR_HEADER; }
 "name"                      { return T_ATTR_NAME; }
 "source"                    { return T_ATTR_SOURCE; }

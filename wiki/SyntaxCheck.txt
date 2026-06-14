@@ -10,7 +10,7 @@
 The headers for a check may set by appending a statement block, and
 using the [header](SyntaxHeader) attribute.
 
-    check_size int64_t {
+    check-size int64_t {
       header stdint.h;
     }
 
@@ -33,18 +33,14 @@ statement.
 
 ##### Setting Required Flags for a Check
 
-Not yet implemented.
-
     check_size int64_t {
-      cflags '-DANSI';
+      compiler-flags '-DANSI';
     }
 
 ##### Setting Required Libraries for a Check
 
-Not yet implemented.
-
     check_size int64_t {
-      ldflags '-lintl';
+      link-flags '-lintl';
     }
 
 ##### Checks

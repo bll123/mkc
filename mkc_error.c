@@ -16,6 +16,8 @@ static const char * const mkcerrormsg [] = {
   [MKC_OK] = "success",
   [MKC_OK_CHANGE] = "success, cache invalidated",
   [MKC_ERR_COMPILER_FAILURE] = "compiler failure",
+  /* exceeds the set size of internal stacks */
+  [MKC_ERR_EXCEEDS_STACK_SIZE] = "exceeds stack size",
   [MKC_ERR_FILE_NOT_FOUND] = "file not found",
   [MKC_ERR_INVALID_ARGUMENT] = "invalid argument",
   [MKC_ERR_INVALID_PROFILE] = "invalid profile",
@@ -27,6 +29,7 @@ static const char * const mkcerrormsg [] = {
   [MKC_ERR_SEARCH_UNSORTED_LIST] = "searching an unsorted list",
   [MKC_ERR_STMT_NOT_ALLOWED] = "statement not allowed",
   [MKC_ERR_UNBALANCED_BRACES] = "unbalanced braces",
+  /* unhandled-value is a serious internal error */
   [MKC_ERR_UNHANDLED_VALUE] = "unhandled value",
   [MKC_ERR_WHILE_LIMIT_EXCEEDED] = "while limit exceeded",
 };

@@ -26,6 +26,7 @@
 static const char *typenames [MKC_T_MAX] = {
   [MKC_T_ATTR_COMP_FLAGS] = "attr_comp_flags",
   [MKC_T_ATTR_HEADER] = "attr_header",
+  [MKC_T_ATTR_LINK_FLAGS] = "attr_link_flags",
   [MKC_T_ATTR_NAME] = "attr_name",
   [MKC_T_ATTR_NEGATE] = "attr_negate",
   [MKC_T_ATTR_SOURCE] = "attr_source",
@@ -199,9 +200,14 @@ typedef struct mkc_ast_attr_compflag_t {
   mkc_astnode_t     *compflaglist;
 } mkc_ast_attr_compflag_t;
 
+typedef struct mkc_ast_attr_linkflag_t {
+  mkc_astnode_t     *linkflaglist;
+} mkc_ast_attr_linkflag_t;
+
 typedef struct mkc_astnode_t {
   union {
     mkc_ast_attr_compflag_t     compflagattr;
+    mkc_ast_attr_linkflag_t     linkflagattr;
     mkc_ast_attr_header_t       hdrattr;
     mkc_ast_attr_name_t         nameattr;
     mkc_ast_chk_comp_flag_t     chkcompflag;
@@ -961,6 +967,25 @@ mkc_ast_mk_attr_compflags (mkc_astmain_t *astmain,
 }
 
 mkc_astnode_t *
+mkc_ast_mk_attr_linkflags (mkc_astmain_t *astmain,
+    mkc_astnode_t *linkflaglist,
+    int32_t lineno, int colno)
+{
+  mkc_astnode_t   *astnode;
+
+  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
+      "ast-mk: attr-link-flags\n");
+
+  astnode = mkc_astnode_init (astmain, MKC_T_ATTR_LINK_FLAGS, lineno, colno);
+  if (astnode == NULL) {
+    return NULL;
+  }
+
+  astnode->linkflagattr.linkflaglist = linkflaglist;
+  return astnode;
+}
+
+mkc_astnode_t *
 mkc_ast_mk_main (mkc_astmain_t *astmain,
     mkc_astnode_t *stmtblock,
     int32_t lineno, int colno)
@@ -1308,6 +1333,22 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
         break;
       }
       mkc_process_attr_comp_flags (astmain->process, val);
+      break;
+    }
+
+    case MKC_T_ATTR_LINK_FLAGS: {
+      mkc_value_t   *val;
+
+      if (! mkc_context_check (astmain->context, MKC_CONTEXT_CHECK)) {
+        mkc_error_set (astmain->mkcerr, MKC_ERR_STMT_NOT_ALLOWED);
+        break;
+      }
+
+      val = mkc_ast_get_value (astmain, astnode->linkflagattr.linkflaglist);
+      if (mkc_error_chk_err (astmain->mkcerr)) {
+        break;
+      }
+      mkc_process_attr_link_flags (astmain->process, val);
       break;
     }
 

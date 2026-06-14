@@ -108,20 +108,21 @@
 %token T_STMT_PRINT           "print"
 %token T_STMT_PROFILE         "profile"
 
-%token T_CHK_COMP_FLAG        "check_compile_flag"
-%token T_CHK_CONST            "check_const"
-%token T_CHK_FUNCTION         "check_function"
-%token T_CHK_HEADER           "check_header"
-%token T_CHK_LINK_FLAG        "check_link_flag"
-%token T_CHK_SIZE             "check_size"
-%token T_CHK_STRUCT_MEMBER    "check_struct_member"
-%token T_CHK_TYPE             "check_type"
+%token T_CHK_COMP_FLAG        "check-compile-flag"
+%token T_CHK_CONST            "check-const"
+%token T_CHK_FUNCTION         "check-function"
+%token T_CHK_HEADER           "check-header"
+%token T_CHK_LINK_FLAG        "check-link-flag"
+%token T_CHK_SIZE             "check-size"
+%token T_CHK_STRUCT_MEMBER    "check-struct-member"
+%token T_CHK_TYPE             "check-type"
 
-%token T_ADD_COMP_FLAG        "add_compile_flag"
-%token T_ADD_LINK_FLAG        "add_link_flag"
+%token T_ADD_COMP_FLAG        "add-compile-flag"
+%token T_ADD_LINK_FLAG        "add-link-flag"
 
 // attributes
-%token T_ATTR_COMP_FLAGS      "compflags"
+%token T_ATTR_COMP_FLAGS      "compiler-flags"
+%token T_ATTR_LINK_FLAGS      "link-flags"
 %token T_ATTR_HEADER          "header"
 %token T_ATTR_SOURCE          "source"
 %token T_ATTR_NAME            "name"
@@ -139,14 +140,19 @@
 %type <astnode> funcargs
 
 %type <astnode> stmtblock_or_semi stmtblock stmtlist stmt
-%type <astnode> stmt_any stmt_any_list attr
 %type <astnode> directive
+// program control
 %type <astnode> ifexpr ifstmt elseif elseclause
 %type <astnode> foreachstmt whilestmt function loopcontrol
+// commands
 %type <astnode> printstmt setstmt
-%type <astnode> checkcommand compflag linkflag chksize chktype chkstructmember
+// checks
+%type <astnode> checkcommand chkcompflag chklinkflag
+%type <astnode> chksize chktype chkstructmember
 %type <astnode> chkfunction
-%type <astnode> name source header compflags negate
+// attributes
+%type <astnode> attr
+%type <astnode> attrname source header compilerflags linkflags negate
 
 // precedence rules: the lowest precedence comes first
 %left T_OP_OR
@@ -212,13 +218,6 @@ stmt[v]:
     {
       $v = $a;
     }
-  ;
-
-stmt_any[v]:
-    stmt[a]
-    {
-      $v = $a;
-    }
   | attr[a]
     {
       $v = $a;
@@ -230,11 +229,15 @@ stmt_any[v]:
   ;
 
 attr[v]:
-    name[a]
+    attrname[a]
     {
       $v = $a;
     }
-  | compflags[a]
+  | compilerflags[a]
+    {
+      $v = $a;
+    }
+  | linkflags[a]
     {
       $v = $a;
     }
@@ -266,11 +269,11 @@ loopcontrol[v]:
   ;
 
 checkcommand[v]:
-    compflag[a]
+    chkcompflag[a]
     {
       $v = $a;
     }
-  | linkflag[a]
+  | chklinkflag[a]
     {
       $v = $a;
     }
@@ -294,7 +297,7 @@ checkcommand[v]:
 
 /* a statement-block may contain either statements or attribute statements */
 stmtblock[v]:
-    T_LEFT_BRACE stmt_any_list[a] T_RIGHT_BRACE
+    T_LEFT_BRACE stmtlist[a] T_RIGHT_BRACE
     {
       $v = $a;
     }
@@ -319,17 +322,6 @@ stmtlist[v]:
   | stmtlist[a] stmt[b]
     {
       $v = mkc_ast_mk_stmtlist (ast, $a, $b, yylloc.first_line, yylloc.first_column);
-    }
-  ;
-
-stmt_any_list[v]:
-    stmt_any[a]
-    {
-      $v = mkc_ast_mk_stmtlist (ast, NULL, $a, yylloc.first_line, yylloc.first_column);
-    }
-  | stmt_any_list[l] stmt_any[a]
-    {
-      $v = mkc_ast_mk_stmtlist (ast, $l, $a, yylloc.first_line, yylloc.first_column);
     }
   ;
 
@@ -491,7 +483,7 @@ configurestmt:
     T_STMT_CONFIGURE pathname[a] pathname[b] T_SEMICOLON
   ;
 
-compflag[v]:
+chkcompflag[v]:
     T_ADD_COMP_FLAG varvalue[a] stmtblock_or_semi[b]
     {
       $v = mkc_ast_mk_chk_comp_flag (ast, $a, $b, MKC_ADD, MKC_AS_IS,
@@ -504,7 +496,7 @@ compflag[v]:
     }
   ;
 
-linkflag[v]:
+chklinkflag[v]:
     T_ADD_LINK_FLAG varvalue[a] stmtblock_or_semi[b]
     {
       $v = mkc_ast_mk_chk_link_flag (ast, $a, $b, MKC_ADD,
@@ -550,7 +542,7 @@ chkfunction[v]:
   ;
 
 /* a name is the user requested name that overrides the generated name */
-name[v]:
+attrname[v]:
     T_ATTR_NAME varname[a] T_SEMICOLON
     {
       $v = mkc_ast_mk_attr_name (ast, $a,
@@ -579,18 +571,39 @@ source[v]:
 header[v]:
     T_ATTR_HEADER pathlist[l] T_SEMICOLON
     {
-      $v = NULL;
       $v = mkc_ast_mk_attr_header (ast, $l,
           yylloc.first_line, yylloc.first_column);
     }
   ;
 
-/* a list of compile files */
-compflags[v]:
-    T_ATTR_COMP_FLAGS valuelist[l] T_SEMICOLON
+/* a list of compiler flags */
+compilerflags[v]:
+    T_ATTR_COMP_FLAGS varvalue[a] T_SEMICOLON
     {
-      $v = NULL;
+      $a = mkc_ast_mk_value_list (ast, NULL, $a,
+          yylloc.first_line, yylloc.first_column);
+      $v = mkc_ast_mk_attr_compflags (ast, $a,
+          yylloc.first_line, yylloc.first_column);
+    }
+  | T_ATTR_COMP_FLAGS valuelist[l] T_SEMICOLON
+    {
       $v = mkc_ast_mk_attr_compflags (ast, $l,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+/* a list of link flags */
+linkflags[v]:
+    T_ATTR_LINK_FLAGS varvalue[a] T_SEMICOLON
+    {
+      $a = mkc_ast_mk_value_list (ast, NULL, $a,
+          yylloc.first_line, yylloc.first_column);
+      $v = mkc_ast_mk_attr_linkflags (ast, $a,
+          yylloc.first_line, yylloc.first_column);
+    }
+  | T_ATTR_LINK_FLAGS valuelist[l] T_SEMICOLON
+    {
+      $v = mkc_ast_mk_attr_linkflags (ast, $l,
           yylloc.first_line, yylloc.first_column);
     }
   ;

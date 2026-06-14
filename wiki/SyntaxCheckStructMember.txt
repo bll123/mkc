@@ -4,8 +4,8 @@
 
 ### Check Struct Member
 
-    check_struct_member <struct-name> <member-name>;
-    check_struct_member <struct-name> <member-name> { <attribute-statements> }
+    check-struct-member <struct-name> <member-name>;
+    check-struct-member <struct-name> <member-name> { <attribute-statements> }
 
 Checks to see if _member-name_ exists in _struct-name_.
 

@@ -36,6 +36,7 @@ void mkc_process_stmt_set (mkc_process_t *process, mkc_value_t *valnm, mkc_value
 void mkc_process_attr_name (mkc_process_t *process, mkc_value_t *valnm);
 void mkc_process_attr_header (mkc_process_t *process, mkc_value_t *value);
 void mkc_process_attr_comp_flags (mkc_process_t *process, mkc_value_t *value);
+void mkc_process_attr_link_flags (mkc_process_t *process, mkc_value_t *value);
 
 mkc_value_t * mkc_process_get_value (mkc_process_t *process, const char *nm);
 

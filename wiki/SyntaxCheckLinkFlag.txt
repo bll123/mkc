@@ -6,7 +6,7 @@
 
 ### Check Link Flag
 
-    check_link_flag '-fsanitize=address';
+    check-link-flag '-fsanitize=address';
 
 Checks to see if a link flag is valid, and if so, adds it to
 LDFLAGS for the current profile.
@@ -17,7 +17,7 @@ Generated Name: Prefix: __lf\___
 
 ##### Adding a Link Flag
 
-    add_link_flag '-DNO_DEPRECATED';
+    add-link-flag '-DNO_DEPRECATED';
 
 Adds a link flag without any check.
 

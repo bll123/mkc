@@ -1,5 +1,5 @@
-/* this is a compilation test */
-/* if the compilation fails, the function does not exist */
+/* this is a compile and link test */
+/* if the compile or link fails, the function does not exist */
 
 /* include the headers that declare most of the standard functions */
 #include <stdio.h>

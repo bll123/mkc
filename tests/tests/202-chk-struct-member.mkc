@@ -1,5 +1,5 @@
 profile global c;
-check_struct_member 'struct stat' st_mode {
+check-struct-member 'struct stat' st_mode {
   header sys/stat.h;
 }
 

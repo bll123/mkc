@@ -4,8 +4,8 @@
 
 ### Check Size
 
-    check_size <type-name>;
-    check_size <type-name> { <attribute-statements> }
+    check-size <type-name>;
+    check-size <type-name> { <attribute-statements> }
 
 Checks the size of _type-name_.  The check-name will be set to the
 size of the type or zero if the type does not exist.

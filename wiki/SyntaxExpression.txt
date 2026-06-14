@@ -12,7 +12,6 @@ Binary Operations on Integers
 
     plus - * / % && || == != < <= > >=
 
-
 Binary Operations on Strings
 
     eq ne lt le gt ge
