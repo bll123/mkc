@@ -18,9 +18,12 @@ extern "C" {
 typedef enum {
   MKC_T_ATTR_COMP_FLAGS,
   MKC_T_ATTR_HEADER,
+  MKC_T_ATTR_INPUT,
   MKC_T_ATTR_LINK_FLAGS,
+  MKC_T_ATTR_METHOD,
   MKC_T_ATTR_NAME,
   MKC_T_ATTR_NEGATE,
+  MKC_T_ATTR_OUTPUT,
   MKC_T_ATTR_SOURCE,
   MKC_T_CHK_COMP_FLAG,
   MKC_T_CHK_FUNCTION,
@@ -57,6 +60,7 @@ typedef enum {
   MKC_T_OP_UNARY_MINUS,
   MKC_T_OP_UNARY_PLUS,
   MKC_T_STMTLIST,
+  MKC_T_STMT_CONFIGURE,
   MKC_T_STMT_DEBUG,
   MKC_T_STMT_ELSEIF,
   MKC_T_STMT_FOREACH,
@@ -105,6 +109,7 @@ mkc_astnode_t * mkc_ast_mk_set_value (mkc_astmain_t *astmain, mkc_astnode_t *nm,
 mkc_astnode_t * mkc_ast_mk_profile (mkc_astmain_t *astmain, mkc_astnode_t *nm, mkc_astnode_t *valb, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_print (mkc_astmain_t *astmain, mkc_astnode_t *vala, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_debug (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *valb, int32_t lineno, int colno);
+mkc_astnode_t * mkc_ast_mk_configure (mkc_astmain_t *astmain, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
 
 /* checks */
 mkc_astnode_t * mkc_ast_mk_chk_comp_flag (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *stmtblock, int addflag, int negate, int32_t lineno, int colno);
@@ -120,6 +125,9 @@ mkc_astnode_t * mkc_ast_mk_attr_negate (mkc_astmain_t *astmain, int32_t lineno, 
 mkc_astnode_t * mkc_ast_mk_attr_header (mkc_astmain_t *astmain, mkc_astnode_t *hdrlist, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_attr_compflags (mkc_astmain_t *astmain, mkc_astnode_t *compflaglist, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_attr_linkflags (mkc_astmain_t *astmain, mkc_astnode_t *linkflaglist, int32_t lineno, int colno);
+mkc_astnode_t * mkc_ast_mk_attr_method (mkc_astmain_t *astmain, mkc_astnode_t *method, int32_t lineno, int colno);
+mkc_astnode_t * mkc_ast_mk_attr_input (mkc_astmain_t *astmain, mkc_astnode_t *name, int32_t lineno, int colno);
+mkc_astnode_t * mkc_ast_mk_attr_output (mkc_astmain_t *astmain, mkc_astnode_t *name, int32_t lineno, int colno);
 
 mkc_astmain_t * mkc_ast_init (mkc_log_t *log, const char *dfltprof, mkc_error_t *mkcerr);
 void mkc_ast_set_main (mkc_astmain_t *, mkc_astnode_t *astnode);

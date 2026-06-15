@@ -33,6 +33,9 @@ typedef struct mkc_process_t {
   const char            * testcc;
   const char            * testsfx;
   char                  * currentname;
+  char                  * method;
+  char                  * input;
+  char                  * output;
   mkc_error_t           * mkcerr;
   mkc_log_t             * log;
   mkc_system_type_t     systype;
@@ -118,6 +121,9 @@ mkc_process_init (mkc_profile_t *profiles, mkc_log_t *log, mkc_error_t *mkcerr)
   process->check = NULL;
   process->pvar = NULL;
   process->currentname = NULL;
+  process->method = NULL;
+  process->input = NULL;
+  process->output = NULL;
   process->negate = false;
   process->cacheloaded = false;
   process->cacheinvalidated = false;
@@ -172,6 +178,18 @@ mkc_process_free (mkc_process_t *process)
   }
   if (process->check != NULL) {
     mkc_check_free (process->check);
+  }
+  if (process->currentname != NULL) {
+    free (process->currentname);
+  }
+  if (process->method != NULL) {
+    free (process->method);
+  }
+  if (process->input != NULL) {
+    free (process->input);
+  }
+  if (process->output != NULL) {
+    free (process->output);
   }
   free (process);
 }
@@ -477,7 +495,6 @@ mkc_process_stmt_debug (mkc_process_t *process,
 {
   char    tbuff [MKC_VNAME_MAX];
 
-
   mkc_pvar_value_get_str (process->pvar, value, tbuff, sizeof (tbuff));
 
   if (strcmp (tbuff, "null") == 0) {
@@ -495,6 +512,12 @@ mkc_process_stmt_debug (mkc_process_t *process,
   }
 
   return false;
+}
+
+void
+mkc_process_stmt_configure (mkc_process_t *process)
+{
+  return;
 }
 
 void
@@ -673,6 +696,63 @@ mkc_process_attr_link_flags (mkc_process_t *process, mkc_value_t *value)
   }
 
   return;
+}
+
+void
+mkc_process_attr_method (mkc_process_t *process, mkc_value_t *method)
+{
+  char    nm [MKC_VNAME_MAX];
+
+  if (process == NULL) {
+    return;
+  }
+
+  mkc_pvar_value_get_str (process->pvar, method, nm, sizeof (nm));
+  if (process->method != NULL) {
+    free (process->method);
+  }
+  process->method = strdup (nm);
+  if (process->method == NULL) {
+    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY);
+  }
+}
+
+void
+mkc_process_attr_input (mkc_process_t *process, mkc_value_t *name)
+{
+  char    nm [MKC_VNAME_MAX];
+
+  if (process == NULL) {
+    return;
+  }
+
+  mkc_pvar_value_get_str (process->pvar, name, nm, sizeof (nm));
+  if (process->input != NULL) {
+    free (process->input);
+  }
+  process->input = strdup (nm);
+  if (process->input == NULL) {
+    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY);
+  }
+}
+
+void
+mkc_process_attr_output (mkc_process_t *process, mkc_value_t *name)
+{
+  char    nm [MKC_VNAME_MAX];
+
+  if (process == NULL) {
+    return;
+  }
+
+  mkc_pvar_value_get_str (process->pvar, name, nm, sizeof (nm));
+  if (process->output != NULL) {
+    free (process->output);
+  }
+  process->output = strdup (nm);
+  if (process->output == NULL) {
+    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY);
+  }
 }
 
 mkc_value_t *

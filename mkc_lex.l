@@ -147,11 +147,14 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 "add_link_flag"             { return T_ADD_LINK_FLAG; }
 
 "compiler_flags"            { return T_ATTR_COMP_FLAGS; }
-"link_flags"                { return T_ATTR_LINK_FLAGS; }
 "header"                    { return T_ATTR_HEADER; }
+"input"                     { return T_ATTR_INPUT; }
+"link_flags"                { return T_ATTR_LINK_FLAGS; }
+"method"                    { return T_ATTR_METHOD; }
 "name"                      { return T_ATTR_NAME; }
-"source"                    { return T_ATTR_SOURCE; }
 "negate"                    { return T_ATTR_NEGATE; }
+"output"                    { return T_ATTR_OUTPUT; }
+"source"                    { return T_ATTR_SOURCE; }
 
 ({DIGIT}+)          {
     yylval->sval = mkc_parse_set_str (yytext);

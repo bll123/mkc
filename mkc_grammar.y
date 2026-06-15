@@ -122,11 +122,14 @@
 
 // attributes
 %token T_ATTR_COMP_FLAGS      "compiler_flags"
-%token T_ATTR_LINK_FLAGS      "link_flags"
 %token T_ATTR_HEADER          "header"
-%token T_ATTR_SOURCE          "source"
+%token T_ATTR_INPUT           "input"
+%token T_ATTR_LINK_FLAGS      "link_flags"
+%token T_ATTR_METHOD          "method"
 %token T_ATTR_NAME            "name"
 %token T_ATTR_NEGATE          "negate"
+%token T_ATTR_OUTPUT          "output"
+%token T_ATTR_SOURCE          "source"
 
 %type <astnode> expr
 %type <astnode> integer stringvalue basicvalue
@@ -145,14 +148,14 @@
 %type <astnode> ifexpr ifstmt elseif elseclause
 %type <astnode> foreachstmt whilestmt function loopcontrol
 // commands
-%type <astnode> printstmt setstmt
+%type <astnode> printstmt setstmt configurestmt
 // checks
 %type <astnode> checkcommand chkcompflag chklinkflag
 %type <astnode> chksize chktype chkstructmember
 %type <astnode> chkfunction
 // attributes
-%type <astnode> attr
-%type <astnode> attrname source header compilerflags linkflags negate
+%type <astnode> attr attrname source header compilerflags linkflags negate
+%type <astnode> method input output
 
 // precedence rules: the lowest precedence comes first
 %left T_OP_OR
@@ -250,6 +253,18 @@ attr[v]:
       $v = $a;
     }
   | negate[a]
+    {
+      $v = NULL;
+    }
+  | method[a]
+    {
+      $v = NULL;
+    }
+  | input[a]
+    {
+      $v = NULL;
+    }
+  | output[a]
     {
       $v = NULL;
     }
@@ -479,8 +494,12 @@ setstmt[v]:
     }
   ;
 
-configurestmt:
-    T_STMT_CONFIGURE pathname[a] pathname[b] T_SEMICOLON
+configurestmt[v]:
+    T_STMT_CONFIGURE stmtblock[a]
+    {
+      $v = mkc_ast_mk_configure (ast, $a,
+          yylloc.first_line, yylloc.first_column);
+    }
   ;
 
 chkcompflag[v]:
@@ -555,6 +574,31 @@ negate[v]:
     T_ATTR_NEGATE T_SEMICOLON
     {
       $v = mkc_ast_mk_attr_negate (ast,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+/* method for configure/install/etc. */
+method[v]:
+    T_ATTR_METHOD varvalue[a] T_SEMICOLON
+    {
+      $v = mkc_ast_mk_attr_method (ast, $a,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+input[v]:
+    T_ATTR_INPUT varvalue[a] T_SEMICOLON
+    {
+      $v = mkc_ast_mk_attr_input (ast, $a,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+output[v]:
+    T_ATTR_OUTPUT varvalue[a] T_SEMICOLON
+    {
+      $v = mkc_ast_mk_attr_output (ast, $a,
           yylloc.first_line, yylloc.first_column);
     }
   ;
