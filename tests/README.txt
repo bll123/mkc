@@ -9,3 +9,4 @@
 110 - link flag checks
 120 - more statement checks
 200 - check statements
+300 - configure

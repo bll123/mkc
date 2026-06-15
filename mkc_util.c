@@ -65,3 +65,12 @@ mstimeend (mstime_t *mstm)
 
   return m;
 }
+
+void
+datafree (void *data)
+{
+  if (data == NULL) {
+    return;
+  }
+  free (data);
+}

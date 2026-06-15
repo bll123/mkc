@@ -130,9 +130,11 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 "set"       { return T_STMT_SET; }
 "while"     { return T_STMT_WHILE; }
 
-"configure" { return T_STMT_CONFIGURE; }
-"mkcdebug"  { return T_STMT_DEBUG; }
-"mkcoption" { return T_STMT_OPTION; }
+"configure"   { return T_STMT_CONFIGURE; }
+"load_cache"  { return T_STMT_LOADCACHE; }
+"mkcdebug"    { return T_STMT_DEBUG; }
+"option"      { return T_STMT_OPTION; }
+"project"     { return T_STMT_PROJECT; }
 
 "check_compile_flag"        { return T_CHK_COMP_FLAG; }
 "check_const"               { return T_CHK_CONST; }
@@ -146,6 +148,7 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 "add_compile_flag"          { return T_ADD_COMP_FLAG; }
 "add_link_flag"             { return T_ADD_LINK_FLAG; }
 
+"compiler"                  { return T_ATTR_COMPILER; }
 "compiler_flags"            { return T_ATTR_COMP_FLAGS; }
 "header"                    { return T_ATTR_HEADER; }
 "input"                     { return T_ATTR_INPUT; }

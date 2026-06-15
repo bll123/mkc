@@ -1,0 +1,23 @@
+[Wiki Home](Home)
+<br>[Syntax](Syntax)
+
+### Syntax: project
+
+    project { <attribute-list> };
+
+##### Allowed Attributes
+
+The _project_ statement allows the following attribute statements:
+
+* name (required)
+* compiler
+
+##### Examples
+
+    project {
+      name mkc;
+      compiler c;
+    }
+
+[Wiki Home](Home)
+<br>[Syntax](Syntax)

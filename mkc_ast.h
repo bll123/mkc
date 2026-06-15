@@ -16,6 +16,7 @@ extern "C" {
 #endif
 
 typedef enum {
+  MKC_T_ATTR_COMPILER,
   MKC_T_ATTR_COMP_FLAGS,
   MKC_T_ATTR_HEADER,
   MKC_T_ATTR_INPUT,
@@ -66,8 +67,10 @@ typedef enum {
   MKC_T_STMT_FOREACH,
   MKC_T_STMT_FUNCTION,
   MKC_T_STMT_IF,
+  MKC_T_STMT_LOADCACHE,
   MKC_T_STMT_PRINT,
   MKC_T_STMT_PROFILE,
+  MKC_T_STMT_PROJECT,
   MKC_T_STMT_SET,
   MKC_T_STMT_WHILE,
   MKC_T_VAL_BASIC_STRING,
@@ -110,6 +113,8 @@ mkc_astnode_t * mkc_ast_mk_profile (mkc_astmain_t *astmain, mkc_astnode_t *nm, m
 mkc_astnode_t * mkc_ast_mk_print (mkc_astmain_t *astmain, mkc_astnode_t *vala, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_debug (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *valb, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_configure (mkc_astmain_t *astmain, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
+mkc_astnode_t * mkc_ast_mk_project (mkc_astmain_t *astmain, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
+mkc_astnode_t * mkc_ast_mk_loadcache (mkc_astmain_t *astmain, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
 
 /* checks */
 mkc_astnode_t * mkc_ast_mk_chk_comp_flag (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *stmtblock, int addflag, int negate, int32_t lineno, int colno);
@@ -128,12 +133,12 @@ mkc_astnode_t * mkc_ast_mk_attr_linkflags (mkc_astmain_t *astmain, mkc_astnode_t
 mkc_astnode_t * mkc_ast_mk_attr_method (mkc_astmain_t *astmain, mkc_astnode_t *method, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_attr_input (mkc_astmain_t *astmain, mkc_astnode_t *name, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_attr_output (mkc_astmain_t *astmain, mkc_astnode_t *name, int32_t lineno, int colno);
+mkc_astnode_t * mkc_ast_mk_attr_compiler (mkc_astmain_t *astmain, mkc_astnode_t *name, int32_t lineno, int colno);
 
 mkc_astmain_t * mkc_ast_init (mkc_log_t *log, const char *dfltprof, mkc_error_t *mkcerr);
 void mkc_ast_set_main (mkc_astmain_t *, mkc_astnode_t *astnode);
 int32_t mkc_ast_start (mkc_astmain_t *);
 void mkc_ast_free (mkc_astmain_t *astmain);
-void mkc_ast_set_fromcache (mkc_astmain_t *astmain, bool flag);
 
 #if defined (__cplusplus) || defined (c_plusplus)
 }

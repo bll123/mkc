@@ -57,7 +57,9 @@ main (int argc, char *argv [])
   time_t          etm;
   char            tbuff [40];
   bool            loadcache = true;
-  int             rc;
+  int             rc = 0;
+  time_t          cachetm;
+  time_t          mkctm;
 
   static struct option mkc_options [] = {
     { "no-cache",       no_argument,        NULL,   1, },
@@ -110,12 +112,17 @@ main (int argc, char *argv [])
 //  mkc_log_open (log, "mkc_files/log-mkc.txt", MKC_LOG_NORMAL);
   mkc_log_open (log, "mkc_files/log-mkc.txt", MKC_LOG_ALL);
 
-  fh = stdin;
   fnidx = optind;
+  if (fnidx >= argc) {
+    fprintf (stderr, "no file specified.\n");
+    rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
+    return rc;
+  }
+
   if (fnidx < argc) {
-    fh = mkc_fopen (argv [fnidx], "r");
+    fh = mkc_fopen (argcopy.utf8argv [fnidx], "r");
     if (fh == NULL) {
-      fprintf (stderr, "%s: %s\n", argv [fnidx], strerror (errno));
+      fprintf (stderr, "%s: %s\n", argcopy.utf8argv [fnidx], strerror (errno));
       mkc_error_set (mkcerr, MKC_ERR_FILE_NOT_FOUND);
       rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
       return rc;
@@ -131,6 +138,14 @@ main (int argc, char *argv [])
   mstimestart (&starttm);
   yylex_init (&scanner);
 
+  cachetm = mkc_file_modtime ("mkc_files/cache.mkc");
+  mkctm = mkc_file_modtime (argcopy.utf8argv [fnidx]);
+  if (mkctm >= cachetm) {
+    loadcache = false;
+    mkc_message ("-- cache out of date\n");
+    mkc_log (log, MKC_LOG_AST_PROCESS, "-- cache out of date\n");
+  }
+
   if (loadcache) {
     FILE    *cachefh;
 
@@ -139,34 +154,40 @@ main (int argc, char *argv [])
       mkc_message ("-- loading cache\n");
       mkc_log (log, MKC_LOG_AST_PROCESS, "== loading cache\n");
 
-      mkc_ast_set_fromcache (astmain, true);
-      mkc_parse (cachefh, scanner, astmain, log, dfltprof, mkcerr);
+      rc = mkc_parse (cachefh, scanner, astmain, log, dfltprof, mkcerr);
       fclose (cachefh);
-      mkc_ast_set_fromcache (astmain, false);
 
       if (mkc_error_chk_err (mkcerr)) {
         rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
         return rc;
       }
+      mkc_log (log, MKC_LOG_AST_PROCESS, "cache load complete\n");
     }
   }
 
-  mkc_parse (fh, scanner, astmain, log, dfltprof, mkcerr);
+  rc = mkc_parse (fh, scanner, astmain, log, dfltprof, mkcerr);
   if (mkc_error_chk_err (mkcerr)) {
     rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
     return rc;
   }
+
+  etm = mstimeend (&starttm);
+  mkc_elapsed_disp (etm, tbuff, sizeof (tbuff));
+  mkc_message ("-- parse: %s\n", tbuff);
+  mkc_log (log, MKC_LOG_STATISTICS, "-- parse: %s\n", tbuff);
+  mstimestart (&proctm);
+
+  if (rc == 0) {
+    rc = mkc_ast_start (astmain);
+  } else {
+    mkc_error_set (mkcerr, MKC_ERR_PARSE_FAILURE);
+  }
+
   yylex_destroy (scanner);
 
   if (fh != stdin) {
     fclose (fh);
   }
-  etm = mstimeend (&starttm);
-
-  mkc_message ("-- parse: %s\n", mkc_elapsed_disp (etm, tbuff, sizeof (tbuff)));
-  mkc_log (log, MKC_LOG_STATISTICS,
-      "-- parse: %s\n", mkc_elapsed_disp (etm, tbuff, sizeof (tbuff)));
-  mstimestart (&proctm);
 
   etm = mstimeend (&proctm);
   mkc_elapsed_disp (etm, tbuff, sizeof (tbuff));
@@ -202,18 +223,12 @@ mkc_parse (FILE *fh, yyscan_t scanner, mkc_astmain_t *astmain,
     mkc_log_t *log, const char *dfltprof,
     mkc_error_t *mkcerr)
 {
-  int                 rc;
+  int                 rc = 0;
   YY_BUFFER_STATE     state;
 
   state = yy_create_buffer (fh, YY_BUF_SIZE, scanner);
   yy_switch_to_buffer (state, scanner);
   rc = yyparse (scanner, astmain);
-
-  if (rc == 0) {
-    rc = mkc_ast_start (astmain);
-  } else {
-    mkc_error_set (mkcerr, MKC_ERR_PARSE_FAILURE);
-  }
 
   yy_delete_buffer (state, scanner);
 

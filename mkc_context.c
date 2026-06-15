@@ -2,6 +2,7 @@
  * Copyright 2026 Brad Lanam Pleasant Hill CA
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -85,11 +86,14 @@ mkc_context_pop (mkc_context_t *context)
 bool
 mkc_context_check (mkc_context_t *context, mkc_ctxt_val_t ctxtval)
 {
+  mkc_ctxt_val_t    ctxt;
+
   if (context == NULL) {
     return false;
   }
 
-  if (ctxtval == context->val [context->idx]) {
+  ctxt = context->val [context->idx];
+  if ((ctxtval & ctxt) == ctxt) {
     return true;
   }
 

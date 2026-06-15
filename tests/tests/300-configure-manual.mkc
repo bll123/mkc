@@ -1,0 +1,22 @@
+profile global c {
+  check_function malloc;
+  check_function fstat {
+    header sys/stat.h;
+  }
+  check_function sqrt {
+    header math.h;
+    link_flags '-lm';
+  }
+  check_function other;
+}
+
+configure {
+  method manual;
+  input 'tests/data/300-configure-manual.h';
+  output 'tests/tmp/300-configure-manual.h';
+}
+
+mkcdebug printvar global;
+mkcdebug printvar release;
+mkcdebug printprof;
+

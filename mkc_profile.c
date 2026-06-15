@@ -38,6 +38,7 @@ typedef struct mkc_profile_t {
   mkc_error_t       * mkcerr;
   mkc_log_t         * log;
   char              * dfltprof;
+  mkc_prof_comp_t   dfltcompiler;
   mkc_profidx_t     localstack [MKC_PROF_STACK_MAX];
   mkc_profidx_t     stack [MKC_PROF_STACK_MAX];
   mkc_profidx_t     active_idx;
@@ -79,6 +80,7 @@ mkc_profile_init (mkc_log_t *log, mkc_error_t *mkcerr, const char *dfltprof)
     mkc_profile_free (profiles);
     return NULL;
   }
+  profiles->dfltcompiler = MKC_PROF_COMPILER_C;
 
   profiles->list = mkc_list_init (MKC_LIST_SORTED,
       mkc_profile_entry_free, mkc_profile_compare, mkcerr);
@@ -97,10 +99,12 @@ mkc_profile_init (mkc_log_t *log, mkc_error_t *mkcerr, const char *dfltprof)
     mkc_profile_create_id (profiles, MKC_PROF_GLOBAL_NAME,
         i, MKC_PROF_TYPE_GLOBAL);
   }
-  pidx = mkc_profile_create_id (profiles, MKC_PROF_RELEASE_NAME,
+  mkc_profile_create_id (profiles, MKC_PROF_RELEASE_NAME,
       MKC_PROF_COMPILER_GENERAL, MKC_PROF_TYPE_USER);
+  pidx = mkc_profile_create_id (profiles, MKC_PROF_RELEASE_NAME,
+      profiles->dfltcompiler, MKC_PROF_TYPE_USER);
 
-  pidx = mkc_profile_find_id (profiles, dfltprof, MKC_PROF_COMPILER_GENERAL);
+  pidx = mkc_profile_find_id (profiles, dfltprof, profiles->dfltcompiler);
   if (mkc_profile_get_type (profiles, pidx) != MKC_PROF_TYPE_USER) {
     mkc_error_set (mkcerr, MKC_ERR_INVALID_PROFILE);
     mkc_profile_free (profiles);
@@ -108,10 +112,12 @@ mkc_profile_init (mkc_log_t *log, mkc_error_t *mkcerr, const char *dfltprof)
   }
   if (pidx == MKC_PROF_NOT_FOUND) {
     pidx = mkc_profile_create_id (profiles, dfltprof,
-          MKC_PROF_COMPILER_GENERAL, MKC_PROF_TYPE_USER);
+          profiles->dfltcompiler, MKC_PROF_TYPE_USER);
   }
-  mkc_message ("-- default profile: %s\n", dfltprof);
-  mkc_log (log, MKC_LOG_PROFILE, "== default profile: %s\n", dfltprof);
+  mkc_message ("-- default profile: %s %s\n", dfltprof,
+      compnames [profiles->dfltcompiler]);
+  mkc_log (log, MKC_LOG_PROFILE, "== default profile: %s %s\n", dfltprof,
+      compnames [profiles->dfltcompiler]);
 
   profiles->active_idx = pidx;
   profiles->user_idx = pidx;

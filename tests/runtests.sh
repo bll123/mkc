@@ -1,6 +1,7 @@
 #!/bin/bash
 
 tdir=tests/tests
+ddir=tests/data
 rdir=tests/results
 odir=tests/tmp
 LANG=C
@@ -49,9 +50,18 @@ for tnm in ${tdir}/${pattern}; do
     fi
   fi
 
-  if [[ -f ${rdir}/$bnm.out ]]; then
+  diff=F
+  if [[ -f ${ddir}/$bnm.h ]]; then
+    diff=T
+    diff -q -w ${rdir}/$bnm.h ${odir}/$bnm.h >>${LOG} 2>&1
+    rc=$?
+  elif [[ -f ${rdir}/$bnm.out ]]; then
+    diff=T
     diff -q -w ${rdir}/$bnm.out ${odir}/$bnm.out >>${LOG} 2>&1
     rc=$?
+  fi
+
+  if [[ $diff == T ]]; then
     if [[ $rc -ne 0 ]]; then
       echo "   fail: diff: $tnm"
     else

@@ -101,6 +101,8 @@
 // directives
 %token T_STMT_CONFIGURE       "configure"
 %token T_STMT_DEBUG           "mkcdebug"
+%token T_STMT_LOADCACHE       "load_cache"
+%token T_STMT_PROJECT         "project"
 
 // commands
 %token T_STMT_FUNCTION        "function"
@@ -121,6 +123,7 @@
 %token T_ADD_LINK_FLAG        "add_link_flag"
 
 // attributes
+%token T_ATTR_COMPILER        "compiler"
 %token T_ATTR_COMP_FLAGS      "compiler_flags"
 %token T_ATTR_HEADER          "header"
 %token T_ATTR_INPUT           "input"
@@ -148,14 +151,14 @@
 %type <astnode> ifexpr ifstmt elseif elseclause
 %type <astnode> foreachstmt whilestmt function loopcontrol
 // commands
-%type <astnode> printstmt setstmt configurestmt
+%type <astnode> printstmt setstmt configurestmt projectstmt loadcachestmt
 // checks
 %type <astnode> checkcommand chkcompflag chklinkflag
 %type <astnode> chksize chktype chkstructmember
 %type <astnode> chkfunction
 // attributes
 %type <astnode> attr attrname source header compilerflags linkflags negate
-%type <astnode> method input output
+%type <astnode> method input output compiler
 
 // precedence rules: the lowest precedence comes first
 %left T_OP_OR
@@ -213,9 +216,17 @@ stmt[v]:
     {
       $v = $a;
     }
-  | configurestmt
+  | configurestmt[a]
     {
-      $v = NULL;
+      $v = $a;
+    }
+  | projectstmt[a]
+    {
+      $v = $a;
+    }
+  | loadcachestmt[a]
+    {
+      $v = $a;
     }
   | checkcommand[a]
     {
@@ -258,15 +269,19 @@ attr[v]:
     }
   | method[a]
     {
-      $v = NULL;
+      $v = $a;
     }
   | input[a]
     {
-      $v = NULL;
+      $v = $a;
     }
   | output[a]
     {
-      $v = NULL;
+      $v = $a;
+    }
+  | compiler[a]
+    {
+      $v = $a;
     }
   ;
 
@@ -502,6 +517,22 @@ configurestmt[v]:
     }
   ;
 
+projectstmt[v]:
+    T_STMT_PROJECT stmtblock[a]
+    {
+      $v = mkc_ast_mk_project (ast, $a,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+loadcachestmt[v]:
+    T_STMT_LOADCACHE stmtblock[a]
+    {
+      $v = mkc_ast_mk_loadcache (ast, $a,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
 chkcompflag[v]:
     T_ADD_COMP_FLAG varvalue[a] stmtblock_or_semi[b]
     {
@@ -599,6 +630,14 @@ output[v]:
     T_ATTR_OUTPUT varvalue[a] T_SEMICOLON
     {
       $v = mkc_ast_mk_attr_output (ast, $a,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+compiler[v]:
+    T_ATTR_COMPILER varvalue[a] T_SEMICOLON
+    {
+      $v = mkc_ast_mk_attr_compiler (ast, $a,
           yylloc.first_line, yylloc.first_column);
     }
   ;

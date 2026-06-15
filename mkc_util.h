@@ -20,6 +20,7 @@ typedef struct mstime_t {
 void mssleep (uint32_t ms);
 void mstimestart (mstime_t *mstm);
 time_t mstimeend (mstime_t *mstm);
+void datafree (void *data);
 
 #if defined (__cplusplus) || defined (c_plusplus)
 }

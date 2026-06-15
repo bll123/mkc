@@ -32,6 +32,7 @@ typedef struct mkc_process_t {
   const char            * sfx;
   const char            * testcc;
   const char            * testsfx;
+  char                  * projectname;
   char                  * currentname;
   char                  * method;
   char                  * input;
@@ -105,6 +106,8 @@ static void mkc_process_prof_print (mkc_process_t *process);
 const char * mkc_process_create_name (mkc_process_t *process, char *buff, size_t sz, const char *tag, ...);
 static int mkc_process_int_checks (mkc_process_t *process);
 static void mkc_process_set_defaults (mkc_process_t *process);
+void mkc_process_configure_manual (mkc_process_t *process);
+bool mkc_process_chk_cache (mkc_process_t *process, const char *disp, const char *nm);
 
 mkc_process_t *
 mkc_process_init (mkc_profile_t *profiles, mkc_log_t *log, mkc_error_t *mkcerr)
@@ -120,6 +123,7 @@ mkc_process_init (mkc_profile_t *profiles, mkc_log_t *log, mkc_error_t *mkcerr)
   process->compiler = NULL;
   process->check = NULL;
   process->pvar = NULL;
+  process->projectname = NULL;
   process->currentname = NULL;
   process->method = NULL;
   process->input = NULL;
@@ -161,7 +165,6 @@ mkc_process_init (mkc_profile_t *profiles, mkc_log_t *log, mkc_error_t *mkcerr)
 
   pidx = mkc_profile_pop (process->profiles);
   mkc_pvar_profile_set_idx (process->pvar, pidx);
-  mkc_pvar_set_fromcache (process->pvar, process->fromcache);
 
   return process;
 }
@@ -179,18 +182,11 @@ mkc_process_free (mkc_process_t *process)
   if (process->check != NULL) {
     mkc_check_free (process->check);
   }
-  if (process->currentname != NULL) {
-    free (process->currentname);
-  }
-  if (process->method != NULL) {
-    free (process->method);
-  }
-  if (process->input != NULL) {
-    free (process->input);
-  }
-  if (process->output != NULL) {
-    free (process->output);
-  }
+  datafree (process->projectname);
+  datafree (process->currentname);
+  datafree (process->method);
+  datafree (process->input);
+  datafree (process->output);
   free (process);
 }
 
@@ -206,6 +202,7 @@ mkc_process_set_compiler (mkc_process_t *process,
   process->sfx = sfx;
 }
 
+#if 0
 void
 mkc_process_set_fromcache (mkc_process_t *process, bool flag)
 {
@@ -213,24 +210,6 @@ mkc_process_set_fromcache (mkc_process_t *process, bool flag)
     return;
   }
 
-  if (! flag && process->cacheloaded && process->cacheinvalidated) {
-    mkc_profidx_t   piter;
-    mkc_profidx_t   tpidx;
-
-    /* something changed that requires cache invalidation */
-    mkc_profile_iter_start (process->profiles, &piter);
-    while ((tpidx = mkc_profile_iter_next (process->profiles, &piter)) != MKC_ITER_FINISH) {
-      if (mkc_pvar_profile_set_idx (process->pvar, tpidx) == MKC_PROF_NOT_FOUND) {
-        continue;
-      }
-      mkc_profile_clear (process->profiles, tpidx);
-    }
-
-    mkc_message ("-- cache invalidated\n");
-    mkc_log (process->log, MKC_LOG_GENERAL, "-- cache invalidated\n");
-    mkc_process_set_defaults (process);
-    mkc_process_int_checks (process);
-  }
 
   if (flag) {
     process->cacheloaded = true;
@@ -238,6 +217,7 @@ mkc_process_set_fromcache (mkc_process_t *process, bool flag)
   process->fromcache = flag;
   mkc_pvar_set_fromcache (process->pvar, flag);
 }
+#endif
 
 int32_t
 mkc_process_condition (mkc_process_t *process, mkc_value_t *value)
@@ -486,7 +466,6 @@ mkc_process_stmt_profile (mkc_process_t *process,
   }
 
   mkc_pvar_profile_set_idx (process->pvar, pidx);
-  mkc_pvar_set_fromcache (process->pvar, process->fromcache);
 }
 
 int
@@ -517,10 +496,84 @@ mkc_process_stmt_debug (mkc_process_t *process,
 void
 mkc_process_stmt_configure (mkc_process_t *process)
 {
+  if (process->method == NULL) {
+fprintf (stderr, "p: conf: null method\n");
+    mkc_error_set (process->mkcerr, MKC_ERR_PROC_NO_METHOD);
+    return;
+  }
+
+fprintf (stderr, "p: conf: method: %s\n", process->method);
+  if (strcmp (process->method, "auto-define") == 0) {
+  } else if (strcmp (process->method, "auto") == 0) {
+  } else if (strcmp (process->method, "manual") == 0) {
+    if (process->input == NULL) {
+      mkc_error_set (process->mkcerr, MKC_ERR_PROC_NO_INPUT);
+      return;
+    }
+    if (process->output == NULL) {
+      mkc_error_set (process->mkcerr, MKC_ERR_PROC_NO_OUTPUT);
+      return;
+    }
+    mkc_process_configure_manual (process);
+  } else {
+    mkc_error_set (process->mkcerr, MKC_ERR_PROC_NO_METHOD);
+    return;
+  }
+
   return;
 }
 
 void
+mkc_process_stmt_project (mkc_process_t *process)
+{
+  if (process->currentname == NULL) {
+    mkc_error_set (process->mkcerr, MKC_ERR_PROC_NO_NAME);
+    return;
+  }
+
+  process->projectname = strdup (process->currentname);
+
+  return;
+}
+
+void
+mkc_process_stmt_loadcache (mkc_process_t *process, bool fromcache)
+{
+  if (process->currentname == NULL) {
+    mkc_error_set (process->mkcerr, MKC_ERR_PROC_NO_NAME);
+    return;
+  }
+
+  if (fromcache) {
+    process->cacheloaded = true;
+  }
+
+  process->fromcache = fromcache;
+  mkc_pvar_set_fromcache (process->pvar, fromcache);
+
+  if (! fromcache && process->cacheloaded && process->cacheinvalidated) {
+    mkc_profidx_t   piter;
+    mkc_profidx_t   tpidx;
+
+    /* something changed that requires cache invalidation */
+    mkc_profile_iter_start (process->profiles, &piter);
+    while ((tpidx = mkc_profile_iter_next (process->profiles, &piter)) != MKC_ITER_FINISH) {
+      if (mkc_pvar_profile_set_idx (process->pvar, tpidx) == MKC_PROF_NOT_FOUND) {
+        continue;
+      }
+      mkc_profile_clear (process->profiles, tpidx);
+    }
+
+    mkc_message ("-- cache invalidated\n");
+    mkc_log (process->log, MKC_LOG_GENERAL, "-- cache invalidated\n");
+    mkc_process_set_defaults (process);
+    mkc_process_int_checks (process);
+  }
+
+  return;
+}
+
+int
 mkc_process_stmt_set (mkc_process_t *process,
     mkc_value_t *valnm, mkc_value_t *value)
 {
@@ -531,18 +584,18 @@ mkc_process_stmt_set (mkc_process_t *process,
   mkc_err_code_t    trc;
 
   if (process == NULL) {
-    return;
+    return MKC_OK;
   }
   if (valnm == NULL) {
     mkc_error_set (process->mkcerr, MKC_ERR_INVALID_ARGUMENT);
-    return;
+    return MKC_OK;
   }
 
   mkc_pvar_value_get_str (process->pvar, valnm, nm, sizeof (nm));
 
   if (*nm == '\0') {
     mkc_error_set (process->mkcerr, MKC_ERR_INVALID_ARGUMENT);
-    return;
+    return MKC_OK;
   }
 
   if (value->vtype == MKC_VT_ENV_VARIABLE ||
@@ -569,6 +622,8 @@ mkc_process_stmt_set (mkc_process_t *process,
   if (trc == MKC_OK_CHANGE) {
     process->cacheinvalidated = true;
   }
+
+  return trc;
 }
 
 void
@@ -581,9 +636,7 @@ mkc_process_attr_name (mkc_process_t *process, mkc_value_t *valnm)
   }
 
   mkc_pvar_value_get_str (process->pvar, valnm, nm, sizeof (nm));
-  if (process->currentname != NULL) {
-    free (process->currentname);
-  }
+  datafree (process->currentname);
   process->currentname = strdup (nm);
   if (process->currentname == NULL) {
     mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY);
@@ -634,12 +687,10 @@ mkc_process_attr_header (mkc_process_t *process, mkc_value_t *value)
   mkc_profile_push (process->profiles);
   mkc_pvar_profile_set (process->pvar, MKC_PROF_INTERNAL_NAME,
       MKC_PROF_COMPILER_GENERAL);
-  mkc_pvar_set_fromcache (process->pvar, process->fromcache);
   mkc_pvar_set_str (process->pvar, mkctesthdrlist, hdrtxt);
 
   pidx = mkc_profile_pop (process->profiles);
   mkc_pvar_profile_set_idx (process->pvar, pidx);
-  mkc_pvar_set_fromcache (process->pvar, process->fromcache);
 
   return;
 }
@@ -708,9 +759,8 @@ mkc_process_attr_method (mkc_process_t *process, mkc_value_t *method)
   }
 
   mkc_pvar_value_get_str (process->pvar, method, nm, sizeof (nm));
-  if (process->method != NULL) {
-    free (process->method);
-  }
+fprintf (stderr, "p:a: method: %s\n", nm);
+  datafree (process->method);
   process->method = strdup (nm);
   if (process->method == NULL) {
     mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY);
@@ -727,9 +777,8 @@ mkc_process_attr_input (mkc_process_t *process, mkc_value_t *name)
   }
 
   mkc_pvar_value_get_str (process->pvar, name, nm, sizeof (nm));
-  if (process->input != NULL) {
-    free (process->input);
-  }
+fprintf (stderr, "p:a: input: %s\n", nm);
+  datafree (process->input);
   process->input = strdup (nm);
   if (process->input == NULL) {
     mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY);
@@ -746,13 +795,24 @@ mkc_process_attr_output (mkc_process_t *process, mkc_value_t *name)
   }
 
   mkc_pvar_value_get_str (process->pvar, name, nm, sizeof (nm));
-  if (process->output != NULL) {
-    free (process->output);
-  }
+fprintf (stderr, "p:a: output: %s\n", nm);
+  datafree (process->output);
   process->output = strdup (nm);
   if (process->output == NULL) {
     mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY);
   }
+}
+
+void
+mkc_process_attr_compiler (mkc_process_t *process, mkc_value_t *name)
+{
+  char    nm [MKC_VNAME_MAX];
+
+  if (process == NULL) {
+    return;
+  }
+
+  mkc_pvar_value_get_str (process->pvar, name, nm, sizeof (nm));
 }
 
 mkc_value_t *
@@ -783,8 +843,7 @@ mkc_process_chk_compiler_flag (mkc_process_t *process,
 
   pvar = process->pvar;
 
-  if (mkc_pvar_is_defined (pvar, tnm)) {
-    mkc_message ("-- cached: %s\n", flag);
+  if (mkc_process_chk_cache (process, flag, tnm)) {
     return rc;
   }
 
@@ -835,8 +894,7 @@ mkc_process_chk_link_flag (mkc_process_t *process,
   mkc_pvar_value_get_str (process->pvar, valflag, flag, sizeof (flag));
   mkc_process_create_name (process, tnm, sizeof (tnm), "lf_", flag, NULL);
 
-  if (mkc_pvar_is_defined (pvar, tnm)) {
-    mkc_message ("-- cached: %s\n", flag);
+  if (mkc_process_chk_cache (process, flag, tnm)) {
     return rc;
   }
 
@@ -885,8 +943,7 @@ mkc_process_chk_size (mkc_process_t *process, mkc_value_t *valtype)
   mkc_pvar_value_get_str (process->pvar, valtype, type, sizeof (type));
   mkc_process_create_name (process, tnm, sizeof (tnm), "_size_", type, NULL);
 
-  if (mkc_pvar_is_defined (pvar, tnm)) {
-    mkc_message ("-- cached: %s\n", type);
+  if (mkc_process_chk_cache (process, type, tnm)) {
     return rc;
   }
 
@@ -921,8 +978,7 @@ mkc_process_chk_type (mkc_process_t *process, mkc_value_t *valtype)
   mkc_pvar_value_get_str (process->pvar, valtype, type, sizeof (type));
   mkc_process_create_name (process, tnm, sizeof (tnm), "_type_", type, NULL);
 
-  if (mkc_pvar_is_defined (pvar, tnm)) {
-    mkc_message ("-- cached: %s\n", type);
+  if (mkc_process_chk_cache (process, type, tnm)) {
     return rc;
   }
 
@@ -949,6 +1005,7 @@ mkc_process_chk_struct_member (mkc_process_t *process,
   char        membername [MKC_VNAME_MAX];
   mkc_pvar_t  *pvar;
   const char  *tmp;
+  char        tmpdisp [MKC_VNAME_MAX * 2];
 
   if (process == NULL) {
     return MKC_ERR_FAILURE;
@@ -962,8 +1019,8 @@ mkc_process_chk_struct_member (mkc_process_t *process,
   mkc_process_create_name (process, tnm, sizeof (tnm),
       "_member_", structname, membername, NULL);
 
-  if (mkc_pvar_is_defined (pvar, tnm)) {
-    mkc_message ("-- cached: %s.%s\n", structname, membername);
+  snprintf (tmpdisp, sizeof (tmpdisp), "%s.%s", structname, membername);
+  if (mkc_process_chk_cache (process, tmpdisp, tnm)) {
     return rc;
   }
 
@@ -1000,8 +1057,7 @@ mkc_process_chk_function (mkc_process_t *process, mkc_value_t *valfuncnm)
   mkc_process_create_name (process, tnm, sizeof (tnm),
       "_function_", funcname, NULL);
 
-  if (mkc_pvar_is_defined (pvar, tnm)) {
-    mkc_message ("-- cached: %s\n", funcname);
+  if (mkc_process_chk_cache (process, funcname, tnm)) {
     return rc;
   }
 
@@ -1039,7 +1095,6 @@ mkc_process_local_set (mkc_process_t *process, const char *nm,
   mkc_pvar_set_str (process->pvar, nm, sval);
   opidx = mkc_profile_pop (process->profiles);
   mkc_pvar_profile_set_idx (process->pvar, opidx);
-  mkc_pvar_set_fromcache (process->pvar, process->fromcache);
 }
 
 int32_t
@@ -1067,12 +1122,15 @@ mkc_process_save_cache (mkc_process_t *process)
   mkc_profile_t   *profiles;
   mkc_profidx_t   pidx;
   FILE            *fh;
+  int             tcount = 0;
 
   fh = mkc_fopen ("mkc_files/cache.mkc", "w");
   if (fh == NULL) {
     return;
   }
   mkc_profile_push (process->profiles);
+
+  fprintf (fh, "load_cache {\n");
 
   profiles = process->profiles;
   mkc_profile_iter_start (profiles, &piter);
@@ -1090,7 +1148,7 @@ mkc_process_save_cache (mkc_process_t *process)
 
     nm = mkc_profile_get_name (profiles, pidx);
     compname = mkc_profile_get_comp_name (profiles, pidx);
-    fprintf (fh, "profile %s %s {\n", nm, compname);
+    fprintf (fh, "  profile %s %s {\n", nm, compname);
 
     pvar = process->pvar;
     mkc_profile_push (process->profiles);
@@ -1120,7 +1178,7 @@ mkc_process_save_cache (mkc_process_t *process)
 
         list = value->list;
         mkc_list_iter_start (list, &iteridx);
-        fprintf (fh, "  set %s [ ", nm);
+        fprintf (fh, "    set %s [ ", nm);
         while ((lidx = mkc_list_iter_next (list, &iteridx)) != MKC_ITER_FINISH) {
           mkc_value_t   *tvalue;
 
@@ -1142,36 +1200,41 @@ mkc_process_save_cache (mkc_process_t *process)
         }
         fprintf (fh, "];\n");
         ++count;
+        ++tcount;
       }
       if (value->vtype == MKC_VT_STRING) {
         const char  *val;
 
         val = value->sval;
-        fprintf (fh, "  set %s '%s';\n", nm, val);
+        fprintf (fh, "    set %s '%s';\n", nm, val);
         ++count;
+        ++tcount;
       }
       if (value->vtype == MKC_VT_INTEGER) {
         int32_t     ival;
 
         ival = value->ival;
-        fprintf (fh, "  set %s %d;\n", nm, ival);
+        fprintf (fh, "    set %s %d;\n", nm, ival);
         ++count;
+        ++tcount;
       }
     }
 
     pidx = mkc_profile_pop (process->profiles);
     mkc_pvar_profile_set_idx (process->pvar, pidx);
-    mkc_pvar_set_fromcache (process->pvar, process->fromcache);
 
     if (count == 0) {
-      fprintf (fh, "  ;\n");
+      fprintf (fh, "    ;\n");
     }
-    fprintf (fh, "}\n");
+    fprintf (fh, "  }\n");
   }
 
+  if (tcount == 0) {
+    fprintf (fh, "  ;\n");
+  }
+  fprintf (fh, "}\n");
   pidx = mkc_profile_pop (process->profiles);
   mkc_pvar_profile_set_idx (process->pvar, pidx);
-  mkc_pvar_set_fromcache (process->pvar, process->fromcache);
 
   fclose (fh);
 }
@@ -1286,7 +1349,6 @@ mkc_process_var_print (mkc_process_t *process, const char *pname)
 
   pidx = mkc_profile_pop (process->profiles);
   mkc_pvar_profile_set_idx (process->pvar, pidx);
-  mkc_pvar_set_fromcache (process->pvar, process->fromcache);
 }
 
 static void
@@ -1549,7 +1611,6 @@ mkc_process_int_checks (mkc_process_t *process)
 
   pidx = mkc_profile_pop (process->profiles);
   mkc_pvar_profile_set_idx (process->pvar, pidx);
-  mkc_pvar_set_fromcache (process->pvar, process->fromcache);
 
   {
     char    tbuff [40];
@@ -1600,4 +1661,47 @@ mkc_process_set_defaults (mkc_process_t *process)
   mkc_pvar_profile_set (process->pvar, MKC_PROF_GLOBAL_NAME, MKC_PROF_COMPILER_C);
 
   mkc_pvar_set_integer (process->pvar, mkcihdrmodern, process->headertype);
+}
+
+void
+mkc_process_configure_manual (mkc_process_t *process)
+{
+  char    *data;
+  char    *ndata;
+  size_t  fsz;
+  FILE    *fh;
+
+  data = mkc_read_file (process->input, &fsz, process->mkcerr);
+  if (mkc_error_chk_err (process->mkcerr)) {
+    return;
+  }
+  ndata = mkc_pvar_substitute (process->pvar, data, 0);
+  free (data);
+  fh = mkc_fopen (process->output, "wb");
+  fwrite (ndata, strlen (ndata), 1, fh);
+  fclose (fh);
+  free (ndata);
+}
+
+bool
+mkc_process_chk_cache (mkc_process_t *process,
+    const char *disp, const char *nm)
+{
+  bool    rc = false;
+
+  if (mkc_pvar_is_defined (process->pvar, nm)) {
+    mkc_value_t   *value;
+    char          tbuff [MKC_PATH_MAX];
+
+    value = mkc_pvar_get_value (process->pvar, nm);
+    mkc_pvar_value_get_str (process->pvar, value, tbuff, sizeof (tbuff));
+// ### to-do
+// question: if the check failed, it should be re-checked
+// and not fetched from the cache.
+// at the moment, there's no way to do this for strings
+    mkc_message ("-- cached: %s (%s)\n", disp, tbuff);
+    rc = true;
+  }
+
+  return rc;
 }

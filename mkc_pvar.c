@@ -108,7 +108,7 @@ mkc_pvar_profile_set_idx (mkc_pvar_t *pvar, mkc_profidx_t pidx)
     mkc_profile_set_active (pvar->profiles, pidx);
     varlist = mkc_profile_get_varlist (pvar->profiles, pvar->pidx);
     mkc_var_set_fromcache (varlist, pvar->fromcache);
-    return 0;
+    return MKC_OK;
   }
 
   return MKC_PROF_NOT_FOUND;
@@ -589,8 +589,7 @@ mkc_pvar_substitute (mkc_pvar_t *pvar, const char *data, int depth)
     buff = realloc (buff, blen);
     if (tlen > 0) {
       bp = buff + blen - tlen - 1;
-//fprintf (stderr, "%*schk-src-a: '%s'\n", depth * 2, "", srcp);
-//fprintf (stderr, "%*schk-src-a: %zd\n", depth * 2, "", tlen);
+//fprintf (stderr, "%*schk-src-a: '%s' (%zd)\n", depth * 2, "", srcp, tlen);
       memcpy (bp, srcp, tlen);
       srcp += tlen;
     }
@@ -622,6 +621,7 @@ mkc_pvar_substitute (mkc_pvar_t *pvar, const char *data, int depth)
         mkc_value_t   *value;
 
         value = mkc_pvar_get_by_profile (pvar, tstr);
+//fprintf (stderr, "%*svalue-null %d\n", depth * 2, "", value == NULL ? 1 : 0);
         if (value != NULL && value->vtype == MKC_VT_INTEGER) {
           snprintf (tbuff, sizeof (tbuff), "%d", value->ival);
           tval = tbuff;
@@ -631,6 +631,7 @@ mkc_pvar_substitute (mkc_pvar_t *pvar, const char *data, int depth)
         }
       }
       free (tstr);
+//fprintf (stderr, "%*stval: %s\n", depth * 2, "", tbuff);
 
       if (tval != NULL) {
         tlen = strlen (tval);
@@ -660,4 +661,3 @@ mkc_pvar_substitute (mkc_pvar_t *pvar, const char *data, int depth)
 //fprintf (stderr, "%*sbuff-fin: '%s'\n", depth * 2, "", buff);
   return buff;
 }
-

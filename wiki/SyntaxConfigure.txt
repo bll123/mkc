@@ -1,0 +1,17 @@
+[Wiki Home](Home)
+<br>[Syntax](Syntax)
+
+### Syntax: project
+
+    configure { <attribute-list> };
+
+##### Allowed Attributes
+
+The _configure_ statement allows the following attribute statements:
+
+* method (required)
+* input (required for manual method)
+* output (required)
+
+[Wiki Home](Home)
+<br>[Syntax](Syntax)

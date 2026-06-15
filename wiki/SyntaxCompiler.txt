@@ -1,0 +1,17 @@
+[Wiki Home](Home)
+<br>[Syntax](Syntax)
+
+### Syntax: compiler (attribute)
+
+    compiler <compiler-name>;
+
+The _compiler_ statement is an attribute for a [project](SyntaxProject)
+statement.
+
+The default compiler will be set to _compiler-name_.
+
+As of 2026-6-15, the compiler names that are recognized are 'c', 'c++'
+and 'objc'.
+
+[Wiki Home](Home)
+<br>[Syntax](Syntax)

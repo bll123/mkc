@@ -3,13 +3,16 @@
 
 ### Syntax: Name (attribute)
 
-    name <variable-name>;
+    name <new-name>;
 
-The name statement is an attribute for a [check](SyntaxCheck)
-statement.
+The name statement is an attribute for [check](SyntaxCheck)
+statements and for [project](SyntaxProject) statements.
 
-The name statement replaces the generated name of the check with
-_variable&8209;name_.
+For [check](SyntaxCheck) statements, the _name_ statement replaces the
+generated name of the check with _new-name_.
+
+For [project](SyntaxProject) statements, the _name_ statement sets the
+name of the project.
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

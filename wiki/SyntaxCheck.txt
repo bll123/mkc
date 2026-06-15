@@ -5,6 +5,15 @@
 
 ### Syntax: Checks
 
+##### Allowed Attributes
+
+Check statements allow the following attribute statements:
+
+* header
+* name
+* compiler_flags
+* link_flags
+
 ##### Setting Required Headers for a Check
 
 The headers for a check may set by appending a statement block, and
