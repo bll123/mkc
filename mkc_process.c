@@ -497,12 +497,10 @@ void
 mkc_process_stmt_configure (mkc_process_t *process)
 {
   if (process->method == NULL) {
-fprintf (stderr, "p: conf: null method\n");
     mkc_error_set (process->mkcerr, MKC_ERR_PROC_NO_METHOD);
     return;
   }
 
-fprintf (stderr, "p: conf: method: %s\n", process->method);
   if (strcmp (process->method, "auto-define") == 0) {
   } else if (strcmp (process->method, "auto") == 0) {
   } else if (strcmp (process->method, "manual") == 0) {
@@ -539,11 +537,6 @@ mkc_process_stmt_project (mkc_process_t *process)
 void
 mkc_process_stmt_loadcache (mkc_process_t *process, bool fromcache)
 {
-  if (process->currentname == NULL) {
-    mkc_error_set (process->mkcerr, MKC_ERR_PROC_NO_NAME);
-    return;
-  }
-
   if (fromcache) {
     process->cacheloaded = true;
   }
@@ -759,7 +752,6 @@ mkc_process_attr_method (mkc_process_t *process, mkc_value_t *method)
   }
 
   mkc_pvar_value_get_str (process->pvar, method, nm, sizeof (nm));
-fprintf (stderr, "p:a: method: %s\n", nm);
   datafree (process->method);
   process->method = strdup (nm);
   if (process->method == NULL) {
@@ -777,7 +769,6 @@ mkc_process_attr_input (mkc_process_t *process, mkc_value_t *name)
   }
 
   mkc_pvar_value_get_str (process->pvar, name, nm, sizeof (nm));
-fprintf (stderr, "p:a: input: %s\n", nm);
   datafree (process->input);
   process->input = strdup (nm);
   if (process->input == NULL) {
@@ -795,7 +786,6 @@ mkc_process_attr_output (mkc_process_t *process, mkc_value_t *name)
   }
 
   mkc_pvar_value_get_str (process->pvar, name, nm, sizeof (nm));
-fprintf (stderr, "p:a: output: %s\n", nm);
   datafree (process->output);
   process->output = strdup (nm);
   if (process->output == NULL) {
@@ -1699,7 +1689,7 @@ mkc_process_chk_cache (mkc_process_t *process,
 // question: if the check failed, it should be re-checked
 // and not fetched from the cache.
 // at the moment, there's no way to do this for strings
-    mkc_message ("-- cached: %s (%s)\n", disp, tbuff);
+    mkc_message ("-- cached: %s\n", disp);
     rc = true;
   }
 

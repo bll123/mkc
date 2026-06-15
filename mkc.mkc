@@ -1,6 +1,9 @@
 
 // ### get the version from the version.txt file
-// project mkc;
+project {
+  name mkc;
+  compiler c;
+}
 
 check_compile_flag '-pedantic';
 check_compile_flag '-pedantic-errors';
@@ -95,8 +98,8 @@ check_function _wunlink {
   header io.h;
 }
 
-mkcdebug printvar release;
-mkcdebug printvar debug;
-mkcdebug printvar sanitize;
-mkcdebug printvar global;
-mkcdebug printvar internal;
+#mkcdebug printvar release;
+#mkcdebug printvar debug;
+#mkcdebug printvar sanitize;
+#mkcdebug printvar global;
+#mkcdebug printvar internal;

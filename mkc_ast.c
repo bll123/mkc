@@ -106,11 +106,11 @@ typedef struct mkc_ast_unary_op_t {
 } mkc_ast_unary_op_t;
 
 typedef struct mkc_ast_list_t {
-  mkc_list_t      *list;
+  mkc_list_t          *list;
 } mkc_ast_list_t;
 
 typedef struct mkc_ast_stmtlist_t {
-  mkc_list_t      *stmtlist;
+  mkc_list_t          *stmtlist;
 } mkc_ast_stmtlist_t;
 
 typedef struct mkc_ast_main_t {
@@ -280,7 +280,10 @@ typedef struct mkc_astnode_t {
 } mkc_astnode_t;
 
 typedef struct mkc_astmain_t {
-  mkc_astnode_t         * stmtblock;
+  /* there may be multiple files that need to be processed */
+  /* e.g. cache + project.mkc, etc. */
+  /* use a list of the main astnodes */
+  mkc_list_t            * mainlist;
   mkc_value_t           value;
   mkc_profile_t         * profiles;
   mkc_process_t         * process;
@@ -338,12 +341,12 @@ mkc_ast_init (mkc_log_t *log, const char *dfltprof, mkc_error_t *mkcerr)
 
   astmain->mkcerr = mkcerr;
   astmain->log = log;
-  astmain->stmtblock = NULL;
   astmain->value.sval = NULL;
   astmain->value.vtype = MKC_VT_INVALID;
   astmain->depth = 0;
   astmain->rdepth = 0;
   astmain->maxrdepth = 0;
+  astmain->mainlist = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, astmain->mkcerr);
 
   return astmain;
 }
@@ -351,11 +354,28 @@ mkc_ast_init (mkc_log_t *log, const char *dfltprof, mkc_error_t *mkcerr)
 int32_t
 mkc_ast_start (mkc_astmain_t *astmain)
 {
-  int32_t     ifcond = 0;
-  int32_t     loopcond = true;
+  int32_t         ifcond = false;
+  int32_t         loopcond = true;
+  mkc_listidx_t   iteridx;
+  mkc_listidx_t   lidx;
 
   astmain->rdepth = 0;
-  mkc_ast_process (astmain, astmain->stmtblock, &ifcond, &loopcond, 0);
+
+  mkc_list_iter_start (astmain->mainlist, &iteridx);
+  while ((lidx = mkc_list_iter_next (astmain->mainlist, &iteridx)) != MKC_ITER_FINISH) {
+    mkc_astnode_t   **listnode;
+
+    if (mkc_error_chk_err (astmain->mkcerr)) {
+      break;
+    }
+
+    listnode = mkc_list_get_by_idx (astmain->mainlist, lidx);
+    if (listnode != NULL) {
+      ifcond = false;
+      loopcond = true;
+      mkc_ast_process (astmain, *listnode, &ifcond, &loopcond, 0);
+    }
+  }
   mkc_process_save_cache (astmain->process);
   return mkc_error_value (astmain->mkcerr);
 }
@@ -367,6 +387,7 @@ mkc_ast_free (mkc_astmain_t *astmain)
     return;
   }
 
+  mkc_list_free (astmain->mainlist);
   if (astmain->nodelist != NULL) {
     for (int32_t i = 0; i < astmain->sz; ++i) {
       mkc_astnode_free (astmain, astmain->nodelist [i]);
@@ -385,7 +406,11 @@ mkc_ast_free (mkc_astmain_t *astmain)
 void
 mkc_ast_set_main (mkc_astmain_t *astmain, mkc_astnode_t *stmtblock)
 {
-  astmain->stmtblock = stmtblock;
+  mkc_list_t    *tlist;
+  mkc_listidx_t loc;
+
+  tlist = astmain->mainlist;
+  mkc_list_set (tlist, &stmtblock, sizeof (mkc_astnode_t *), &loc);
 }
 
 /* for basic values, numbers, strings, variables */
@@ -1245,7 +1270,8 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
           break;
         }
 
-        if (mkc_context_check (astmain->context, MKC_CONTEXT_LOOP)) {
+        if (mkc_context_check (astmain->context,
+              MKC_CONTEXT_LOOP | MKC_CONTEXT_CACHE)) {
           if (*loopcond == false) {
             break;
           }
@@ -1329,7 +1355,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       mkc_process_stmt_loadcache (astmain->process, true);
       if (astnode->loadcachestmt.stmtblock != NULL) {
         mkc_context_push (astmain->context, MKC_CONTEXT_CACHE, astmain->mkcerr);
-        mkc_ast_process (astmain, astnode->confstmt.stmtblock, ifcond, &rval, depth + 1);
+        mkc_ast_process (astmain, astnode->loadcachestmt.stmtblock, ifcond, &rval, depth + 1);
         mkc_context_pop (astmain->context);
       }
       mkc_process_stmt_loadcache (astmain->process, false);

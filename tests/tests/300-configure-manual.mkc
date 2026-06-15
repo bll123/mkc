@@ -15,8 +15,3 @@ configure {
   input 'tests/data/300-configure-manual.h';
   output 'tests/tmp/300-configure-manual.h';
 }
-
-mkcdebug printvar global;
-mkcdebug printvar release;
-mkcdebug printprof;
-

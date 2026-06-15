@@ -14,29 +14,43 @@ test -d ${odir} || mkdir -p ${odir}
 test -d ${MKCTMP} || mkdir -p ${MKCTMP}
 test -f ${LOG} && rm -f ${LOG}
 
-pattern="*.mkc"
+pattern="*.[sm]*"
 while test $# -gt 0; do
   case $1 in
     [0-9][0-9]*)
       val=$1
-      pattern="${val}*.mkc"
+      pattern="${val}*.[sm]*"
       shift
       ;;
   esac
 done
 
 for tnm in ${tdir}/${pattern}; do
+  case ${tnm} in
+    *~)
+      continue
+      ;;
+    *.mkc)
+      prog=./mkc
+      args=--no-cache
+      ;;
+    *.sh)
+      prog=bash
+      args=""
+      ;;
+  esac
+
   echo "== $tnm"
   echo "== $tnm" >> ${LOG}
   bnm=$(basename $tnm | sed 's,\.mkc$,,')
   expfail=F
   case $tnm in
-    *error.mkc)
+    *-error.*)
       expfail=T
       ;;
   esac
 
-  ./mkc --no-cache $tnm > ${odir}/$bnm.out 2>>${LOG}
+  ${prog} ${args} $tnm > ${odir}/$bnm.out 2>>${LOG}
   rc=$?
   if [[ $expfail == T ]]; then
     if [[ $rc -eq 0 ]]; then

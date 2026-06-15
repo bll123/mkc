@@ -152,7 +152,7 @@ main (int argc, char *argv [])
     cachefh = mkc_fopen ("mkc_files/cache.mkc", "r");
     if (cachefh != NULL) {
       mkc_message ("-- loading cache\n");
-      mkc_log (log, MKC_LOG_AST_PROCESS, "== loading cache\n");
+      mkc_log (log, MKC_LOG_AST_PROCESS, "-- loading cache\n");
 
       rc = mkc_parse (cachefh, scanner, astmain, log, dfltprof, mkcerr);
       fclose (cachefh);
