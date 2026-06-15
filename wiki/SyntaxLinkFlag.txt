@@ -3,9 +3,9 @@
 
 ### Syntax: Link Flags (attribute)
 
-    link-flags '-flag' ['-flag' ...];
+    link_flags '-flag' ['-flag' ...];
 
-The link-flags statement is an attribute for a [check](SyntaxCheck)
+The link\_flags statement is an attribute for a [check](SyntaxCheck)
 statement.
 
 The flags specified will be added to the check.

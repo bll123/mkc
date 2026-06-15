@@ -6,7 +6,7 @@
 
 ### Check Link Flag
 
-    check-link-flag '-fsanitize=address';
+    check_link_flag '-fsanitize=address';
 
 Checks to see if a link flag is valid, and if so, adds it to
 LDFLAGS for the current profile.

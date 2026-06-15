@@ -429,8 +429,13 @@ mkc_pvar_value_get_integer (mkc_pvar_t *pvar, mkc_value_t *value)
     ival = atol (tbuff);
   } else if (value->vtype == MKC_VT_VARIABLE) {
     ival = mkc_pvar_get_variable_integer (pvar, value);
+  } else if (value->vtype == MKC_VT_STRING) {
+// ### conversion from string to integer is not necessary
+//  these could be removed, and just generate an error.
+    ival = atol (value->sval);
   } else {
     mkc_error_set (pvar->mkcerr, MKC_ERR_UNHANDLED_VALUE);
+    fprintf (stderr, "ERR: unhandled value: %d\n", value->vtype);
   }
 
   mkc_log (pvar->log, MKC_LOG_PROCESS, "  pv-get-int: %d\n", ival);
@@ -447,6 +452,8 @@ mkc_pvar_value_get_str (mkc_pvar_t *pvar,
     mkc_error_set (pvar->mkcerr, MKC_ERR_INVALID_VALUE);
   } else if (value->vtype == MKC_VT_INTEGER) {
     snprintf (buff, sz, "%d", value->ival);
+  } else if (value->vtype == MKC_VT_STRING) {
+    stpecpy (buff, buff + sz, value->sval);
   } else if (value->vtype == MKC_VT_STATIC_STRING) {
     stpecpy (buff, buff + sz, value->sval);
   } else if (value->vtype == MKC_VT_QUOTED_STRING) {
@@ -463,9 +470,28 @@ mkc_pvar_value_get_str (mkc_pvar_t *pvar,
     mkc_pvar_get_variable_str (pvar, value, buff, sz);
   } else {
     mkc_error_set (pvar->mkcerr, MKC_ERR_UNHANDLED_VALUE);
+    fprintf (stderr, "ERR: unhandled value: %d\n", value->vtype);
   }
 
   mkc_log (pvar->log, MKC_LOG_PROCESS, "  pv-get-str: %s\n", buff);
+}
+
+bool
+mkc_pvar_is_defined (mkc_pvar_t *pvar, const char *vname)
+{
+  mkc_varlist_t   *varlist;
+  bool            rc = false;
+
+  if (pvar == NULL) {
+    return rc;
+  }
+
+  varlist = mkc_profile_get_varlist (pvar->profiles, pvar->pidx);
+  if (varlist == NULL) {
+    return rc;
+  }
+  rc = mkc_var_is_defined (varlist, vname);
+  return rc;
 }
 
 /* processes the internal substitutions */

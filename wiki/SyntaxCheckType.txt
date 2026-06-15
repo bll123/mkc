@@ -4,8 +4,8 @@
 
 ### Check Type
 
-    check-type <type-name>;
-    check-type <type-name> { <attribute-statements> }
+    check_type <type-name>;
+    check_type <type-name> { <attribute-statements> }
 
 Checks if _type-name_ exists.
 

@@ -3,9 +3,9 @@
 
 ### Syntax: Compiler Flags (attribute)
 
-    compiler-flags '-flag' ['-flag' ...];
+    compiler_flags '-flag' ['-flag' ...];
 
-The compiler-flags statement is an attribute for a [check](SyntaxCheck)
+The compiler\_flags statement is an attribute for a [check](SyntaxCheck)
 statement.
 
 The flags specified will be added to the check.

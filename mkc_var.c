@@ -271,6 +271,21 @@ mkc_var_get_name (mkc_varlist_t *varlist, mkc_varidx_t vidx)
   return nm;
 }
 
+bool
+mkc_var_is_defined (mkc_varlist_t *varlist, const char *vname)
+{
+  mkc_varidx_t    vidx;
+  mkc_listidx_t   loc = MKC_LIST_NOTFOUND;
+  bool            rc = false;
+
+  vidx = mkc_var_find (varlist, vname, &loc);
+  if (vidx != MKC_VAR_NOTFOUND) {
+    rc = true;
+  }
+
+  return rc;
+}
+
 void
 mkc_value_free (void *tvalue)
 {

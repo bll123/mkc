@@ -93,7 +93,9 @@ static const char * const mkctempvarpfx = "MKC_TV_";
 static size_t mkctvpfxlen = 0;
 static const char * const mkcisystype = "MKC_I_SYSTYPE";
 static const char * const mkcisysid = "MKC_I_SYSID";
-static const char * const mkcicompid= "MKC_I_COMPID";
+static const char * const mkcicompid = "MKC_I_COMPID";
+static const char * const mkcihdrmodern = "MKC_I_HEADER_MODERN";
+static const char * const mkcivarmacro = "MKC_I_VARIADIC_MACRO";
 
 static void mkc_process_var_print (mkc_process_t *process, const char *pname);
 static void mkc_process_prof_print (mkc_process_t *process);
@@ -686,7 +688,7 @@ int32_t
 mkc_process_chk_compiler_flag (mkc_process_t *process,
     mkc_value_t *valflag, int addchk)
 {
-  int         rc = 0;
+  int         rc = MKC_OK;
   char        tnm [MKC_VNAME_MAX];
   char        flag [MKC_VNAME_MAX];
   mkc_pvar_t  *pvar;
@@ -700,6 +702,11 @@ mkc_process_chk_compiler_flag (mkc_process_t *process,
   mkc_process_create_name (process, tnm, sizeof (tnm), "cf_", flag, NULL);
 
   pvar = process->pvar;
+
+  if (mkc_pvar_is_defined (pvar, tnm)) {
+    mkc_message ("-- cached: %s\n", flag);
+    return rc;
+  }
 
   if (addchk == MKC_CHK) {
     rc = mkc_chk_compiler_flag (process->check,
@@ -734,7 +741,7 @@ int32_t
 mkc_process_chk_link_flag (mkc_process_t *process,
     mkc_value_t *valflag, int addchk)
 {
-  int         rc = 0;
+  int         rc = MKC_OK;
   char        tnm [MKC_VNAME_MAX];
   char        flag [MKC_VNAME_MAX];
   mkc_pvar_t  *pvar;
@@ -747,6 +754,11 @@ mkc_process_chk_link_flag (mkc_process_t *process,
   mkc_process_set_compiler (process, process->testcc, process->testsfx);
   mkc_pvar_value_get_str (process->pvar, valflag, flag, sizeof (flag));
   mkc_process_create_name (process, tnm, sizeof (tnm), "lf_", flag, NULL);
+
+  if (mkc_pvar_is_defined (pvar, tnm)) {
+    mkc_message ("-- cached: %s\n", flag);
+    return rc;
+  }
 
   if (addchk == MKC_CHK) {
     rc = mkc_chk_link_flag (process->check,
@@ -777,7 +789,7 @@ mkc_process_chk_link_flag (mkc_process_t *process,
 int32_t
 mkc_process_chk_size (mkc_process_t *process, mkc_value_t *valtype)
 {
-  int         rc;
+  int         rc = MKC_OK;
   char        tnm [MKC_VNAME_MAX];
   char        type [MKC_VNAME_MAX];
   mkc_pvar_t  *pvar;
@@ -792,6 +804,11 @@ mkc_process_chk_size (mkc_process_t *process, mkc_value_t *valtype)
   mkc_process_set_compiler (process, process->testcc, process->testsfx);
   mkc_pvar_value_get_str (process->pvar, valtype, type, sizeof (type));
   mkc_process_create_name (process, tnm, sizeof (tnm), "_size_", type, NULL);
+
+  if (mkc_pvar_is_defined (pvar, tnm)) {
+    mkc_message ("-- cached: %s\n", type);
+    return rc;
+  }
 
   rc = mkc_chk_size (process->check,
       process->compiler, process->sfx, type);
@@ -808,7 +825,7 @@ mkc_process_chk_size (mkc_process_t *process, mkc_value_t *valtype)
 int32_t
 mkc_process_chk_type (mkc_process_t *process, mkc_value_t *valtype)
 {
-  int         rc;
+  int         rc = MKC_OK;
   char        tnm [MKC_VNAME_MAX];
   char        type [MKC_VNAME_MAX];
   mkc_pvar_t  *pvar;
@@ -823,6 +840,11 @@ mkc_process_chk_type (mkc_process_t *process, mkc_value_t *valtype)
   mkc_process_set_compiler (process, process->testcc, process->testsfx);
   mkc_pvar_value_get_str (process->pvar, valtype, type, sizeof (type));
   mkc_process_create_name (process, tnm, sizeof (tnm), "_type_", type, NULL);
+
+  if (mkc_pvar_is_defined (pvar, tnm)) {
+    mkc_message ("-- cached: %s\n", type);
+    return rc;
+  }
 
   rc = mkc_chk_type (process->check,
       process->compiler, process->sfx, type);
@@ -841,7 +863,7 @@ int32_t
 mkc_process_chk_struct_member (mkc_process_t *process,
     mkc_value_t *valstructnm, mkc_value_t *valmembernm)
 {
-  int         rc;
+  int         rc = MKC_OK;
   char        tnm [MKC_VNAME_MAX];
   char        structname [MKC_VNAME_MAX];
   char        membername [MKC_VNAME_MAX];
@@ -852,7 +874,6 @@ mkc_process_chk_struct_member (mkc_process_t *process,
     return MKC_ERR_FAILURE;
   }
 
-
   pvar = process->pvar;
 // ### for the time being, need to figure this out...
   mkc_process_set_compiler (process, process->testcc, process->testsfx);
@@ -860,6 +881,11 @@ mkc_process_chk_struct_member (mkc_process_t *process,
   mkc_pvar_value_get_str (process->pvar, valmembernm, membername, sizeof (membername));
   mkc_process_create_name (process, tnm, sizeof (tnm),
       "_member_", structname, membername, NULL);
+
+  if (mkc_pvar_is_defined (pvar, tnm)) {
+    mkc_message ("-- cached: %s.%s\n", structname, membername);
+    return rc;
+  }
 
   rc = mkc_chk_struct_member (process->check,
       process->compiler, process->sfx, structname, membername);
@@ -877,7 +903,7 @@ mkc_process_chk_struct_member (mkc_process_t *process,
 int32_t
 mkc_process_chk_function (mkc_process_t *process, mkc_value_t *valfuncnm)
 {
-  int         rc;
+  int         rc = MKC_OK;
   char        tnm [MKC_VNAME_MAX];
   char        funcname [MKC_VNAME_MAX];
   mkc_pvar_t  *pvar;
@@ -893,6 +919,11 @@ mkc_process_chk_function (mkc_process_t *process, mkc_value_t *valfuncnm)
   mkc_pvar_value_get_str (process->pvar, valfuncnm, funcname, sizeof (funcname));
   mkc_process_create_name (process, tnm, sizeof (tnm),
       "_function_", funcname, NULL);
+
+  if (mkc_pvar_is_defined (pvar, tnm)) {
+    mkc_message ("-- cached: %s\n", funcname);
+    return rc;
+  }
 
   rc = mkc_chk_function (process->check,
       process->compiler, process->sfx, funcname);
@@ -1123,8 +1154,8 @@ mkc_process_var_print (mkc_process_t *process, const char *pname)
             strcmp (nm, "OBJC") == 0 ||
             strcmp (nm, "BISON") == 0 ||
             strcmp (nm, "FLEX") == 0 ||
-            strcmp (nm, "_header_modern") == 0 ||
-            strcmp (nm, "_has_variadic_macro") == 0) {
+            strcmp (nm, mkcihdrmodern) == 0 ||
+            strcmp (nm, mkcivarmacro) == 0) {
           continue;
         }
       }
@@ -1331,14 +1362,13 @@ mkc_process_int_checks (mkc_process_t *process)
   if (rc >= 0) {
     process->compid = rc;
   }
+  mkc_log (process->log, MKC_LOG_GENERAL, "%s: %d\n", mkcicompid, process->compid);
 
-  value = mkc_pvar_get_value (process->pvar, mkcicompid);
-  if (value != NULL) {
-    mkc_compiler_id_t   tcompid;
-
-    tcompid = mkc_pvar_value_get_integer (process->pvar, value);
-    if (process->compid != tcompid) {
-      return MKC_OK_CHANGE;
+  mkc_pvar_set_integer (process->pvar, mkcicompid, process->compid);
+  for (mkc_compiler_id_t i = 0; i < MKC_COMP_ID_MAX; ++i) {
+    if (process->compid == i) {
+      mkc_pvar_set_integer (process->pvar, compidnames [i], true);
+      break;
     }
   }
 
@@ -1348,7 +1378,8 @@ mkc_process_int_checks (mkc_process_t *process)
   if (rc != 0) {
     process->headertype = MKC_HEADER_LEGACY;
   }
-  mkc_pvar_set_integer (process->pvar, "_header_modern", process->headertype);
+  mkc_log (process->log, MKC_LOG_GENERAL, "%s: %d\n", mkcihdrmodern, process->headertype);
+  mkc_pvar_set_integer (process->pvar, mkcihdrmodern, process->headertype);
 
   mkc_pvar_profile_set (process->pvar, MKC_PROF_INTERNAL_NAME, MKC_PROF_COMPILER_GENERAL);
 
@@ -1356,14 +1387,13 @@ mkc_process_int_checks (mkc_process_t *process)
   if (rc >= 0) {
     process->systype = rc;
   }
+  mkc_log (process->log, MKC_LOG_GENERAL, "%s: %d\n", mkcisystype, process->systype);
 
-  value = mkc_pvar_get_value (process->pvar, mkcisystype);
-  if (value != NULL) {
-    mkc_system_type_t   tsystype;
-
-    tsystype = mkc_pvar_value_get_integer (process->pvar, value);
-    if (process->systype != tsystype) {
-      return MKC_OK_CHANGE;
+  mkc_pvar_set_integer (process->pvar, mkcisystype, process->systype);
+  for (mkc_system_type_t i = 0; i < MKC_SYS_MAX; ++i) {
+    if (process->systype == i) {
+      mkc_pvar_set_integer (process->pvar, sysnames [i], true);
+      break;
     }
   }
 
@@ -1406,41 +1436,7 @@ mkc_process_int_checks (mkc_process_t *process)
   if (rc >= 0) {
     process->sysid = rc;
   }
-
-  value = mkc_pvar_get_value (process->pvar, mkcisysid);
-  if (value != NULL) {
-    mkc_system_id_t     tsysid;
-
-    tsysid = mkc_pvar_value_get_integer (process->pvar, value);
-    if (process->sysid != tsysid) {
-      return MKC_OK_CHANGE;
-    }
-  }
-
-  mkc_pvar_profile_set (process->pvar, MKC_PROF_GLOBAL_NAME, MKC_PROF_COMPILER_C);
-
-  rc = mkc_chk_variadic_macro (process->check, testcc, process->testsfx);
-  if (rc != 0) {
-    process->variadicmacro = MKC_NO_VARIADIC_MACRO;
-  }
-  mkc_pvar_set_integer (process->pvar, "_has_variadic_macro", process->variadicmacro);
-
-  mkc_pvar_profile_set (process->pvar, MKC_PROF_INTERNAL_NAME, MKC_PROF_COMPILER_GENERAL);
-
-  if (process->systype == MKC_SYS_LINUX) {
-    rc = mkc_chk_library_location (process->check, testcc, process->testsfx);
-    if (rc >= 0) {
-      process->libloc = rc;
-    }
-  }
-
-  mkc_pvar_set_integer (process->pvar, mkcisystype, process->systype);
-  for (mkc_system_type_t i = 0; i < MKC_SYS_MAX; ++i) {
-    if (process->systype == i) {
-      mkc_pvar_set_integer (process->pvar, sysnames [i], true);
-      break;
-    }
-  }
+  mkc_log (process->log, MKC_LOG_GENERAL, "%s: %d\n", mkcisysid, process->sysid);
 
   mkc_pvar_set_integer (process->pvar, mkcisysid, process->sysid);
   for (mkc_system_id_t i = 0; i < MKC_SYS_ID_MAX; ++i) {
@@ -1450,13 +1446,24 @@ mkc_process_int_checks (mkc_process_t *process)
     }
   }
 
-  mkc_pvar_set_integer (process->pvar, mkcicompid, process->compid);
-  for (mkc_compiler_id_t i = 0; i < MKC_COMP_ID_MAX; ++i) {
-    if (process->compid == i) {
-      mkc_pvar_set_integer (process->pvar, compidnames [i], true);
-      break;
+  mkc_pvar_profile_set (process->pvar, MKC_PROF_GLOBAL_NAME, MKC_PROF_COMPILER_C);
+
+  rc = mkc_chk_variadic_macro (process->check, testcc, process->testsfx);
+  if (rc != 0) {
+    process->variadicmacro = MKC_NO_VARIADIC_MACRO;
+  }
+  mkc_log (process->log, MKC_LOG_GENERAL, "%s: %d\n", mkcivarmacro, process->variadicmacro);
+  mkc_pvar_set_integer (process->pvar, mkcivarmacro, process->variadicmacro);
+
+  mkc_pvar_profile_set (process->pvar, MKC_PROF_INTERNAL_NAME, MKC_PROF_COMPILER_GENERAL);
+
+  if (process->systype == MKC_SYS_LINUX) {
+    rc = mkc_chk_library_location (process->check, testcc, process->testsfx);
+    if (rc >= 0) {
+      process->libloc = rc;
     }
   }
+  mkc_log (process->log, MKC_LOG_GENERAL, "%s: %d\n", liblocname, process->libloc);
 
   mkc_pvar_set_integer (process->pvar, liblocname, process->libloc);
 

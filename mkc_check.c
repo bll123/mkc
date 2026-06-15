@@ -50,18 +50,21 @@ mkc_check_init (mkc_profile_t *profiles, mkc_pvar_t *pvar, mkc_log_t *log, mkc_e
   check->pvar = pvar;
   check->mkcerr = mkcerr;
   check->log = log;
+  check->cf = NULL;
   check->cfcount = 0;
   check->cfallocsz = 10;
   check->cf = malloc (check->cfallocsz * sizeof (char *));
   if (check->cf == NULL) {
     mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY);
   }
+  check->lf = NULL;
   check->lfcount = 0;
   check->lfallocsz = 10;
   check->lf = malloc (check->lfallocsz * sizeof (char *));
   if (check->lf == NULL) {
     mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY);
   }
+  check->targv = NULL;
   check->targc = 0;
   check->targvallocsz = 10;
   check->targv = malloc (check->targvallocsz * sizeof (const char *));
@@ -78,6 +81,27 @@ mkc_check_free (mkc_check_t *check)
 {
   if (check == NULL) {
     return;
+  }
+
+  for (int i = 0; i < check->cfcount; ++i) {
+    if (check->cf [i] != NULL) {
+      free (check->cf [i]);
+    }
+  }
+  for (int i = 0; i < check->lfcount; ++i) {
+    if (check->lf [i] != NULL) {
+      free (check->lf [i]);
+    }
+  }
+
+  if (check->cf != NULL) {
+    free (check->cf);
+  }
+  if (check->lf != NULL) {
+    free (check->lf);
+  }
+  if (check->targv != NULL) {
+    free (check->targv);
   }
 
   free (check);

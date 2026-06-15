@@ -5,9 +5,7 @@
 
 Variable names may contain any valid UTF-8 character.
 
-Variable names may not contain spaces or hyphens.
-I would like hyphens, but I need to re-check and see if
-it messes up the grammar.
+Variable names may not contain spaces.
 
     set variable_name _value_;
 

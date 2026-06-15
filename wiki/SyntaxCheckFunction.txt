@@ -4,8 +4,8 @@
 
 ### Check Function
 
-    check-function <function-name>;
-    check-function <function-name> { <attribute-statements> }
+    check_function <function-name>;
+    check_function <function-name> { <attribute-statements> }
 
 Checks if _function-name_ exists.  The function is determined to exist
 if there is a macro defined with that name, or if the function is
