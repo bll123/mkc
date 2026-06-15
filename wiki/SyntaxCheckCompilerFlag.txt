@@ -7,9 +7,7 @@
 ### Check Compile Flag
 
     check-compile-flag '-Wmissing-prototypes';
-    check-compile-flag '-Wno-missing-prototypes' {
-      negate;
-    }
+    check-compile-flag '-Wno-missing-prototypes' { negate; }
 
 Checks to see if a compiler flag is valid, and if so, adds it to
 CFLAGS for the current profile.

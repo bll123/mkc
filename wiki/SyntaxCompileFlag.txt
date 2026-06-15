@@ -1,0 +1,14 @@
+[Wiki Home](Home)
+<br>[Syntax](Syntax)
+
+### Syntax: Compiler Flags (attribute)
+
+    compiler-flags '-flag' ['-flag' ...];
+
+The compiler-flags statement is an attribute for a [check](SyntaxCheck)
+statement.
+
+The flags specified will be added to the check.
+
+[Wiki Home](Home)
+<br>[Syntax](Syntax)

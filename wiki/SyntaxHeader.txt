@@ -1,9 +1,9 @@
 [Wiki Home](Home)
 <br>[Syntax](Syntax)
 
-### Syntax: Header
+### Syntax: Header (attribute)
 
-    header <header-name> \[<header-name> ...\];
+    header <header-name> [<header-name> ...];
 
 The header statement is an attribute for a [check](SyntaxCheck)
 statement.

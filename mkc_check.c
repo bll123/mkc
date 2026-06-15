@@ -19,22 +19,20 @@
 
 static const char *MKC_INCLUDE_PATH = ".";
 
-enum {
-  MKC_CHK_FLAG_MAX = 30,
-  MKC_CHK_ARG_MAX = 100,
-};
-
 typedef struct mkc_check_t {
   mkc_profile_t   * profiles;
   mkc_pvar_t      * pvar;
   mkc_error_t     * mkcerr;
   mkc_log_t       * log;
-  char            * cf [MKC_CHK_FLAG_MAX];
-  char            * lf [MKC_CHK_FLAG_MAX];
-  const char      * targv [MKC_CHK_ARG_MAX];
+  char            ** cf;
+  char            ** lf;
+  const char      ** targv;
   int             cfcount;
+  int             cfallocsz;
   int             lfcount;
+  int             lfallocsz;
   int             targc;
+  int             targvallocsz;
 } mkc_check_t;
 
 static void mkc_check_file_sub_copy (mkc_check_t *check, char *tbuff, size_t sz, const char *fname, const char *sfx);
@@ -53,8 +51,23 @@ mkc_check_init (mkc_profile_t *profiles, mkc_pvar_t *pvar, mkc_log_t *log, mkc_e
   check->mkcerr = mkcerr;
   check->log = log;
   check->cfcount = 0;
+  check->cfallocsz = 10;
+  check->cf = malloc (check->cfallocsz * sizeof (char *));
+  if (check->cf == NULL) {
+    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY);
+  }
   check->lfcount = 0;
+  check->lfallocsz = 10;
+  check->lf = malloc (check->lfallocsz * sizeof (char *));
+  if (check->lf == NULL) {
+    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY);
+  }
   check->targc = 0;
+  check->targvallocsz = 10;
+  check->targv = malloc (check->targvallocsz * sizeof (const char *));
+  if (check->targv == NULL) {
+    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY);
+  }
   mkc_chk_reset (check);
 
   return check;
@@ -146,9 +159,13 @@ mkc_chk_append_comp_flag (mkc_check_t *check, const char *flag)
     return;
   }
 
-  if (check->cfcount >= MKC_CHK_FLAG_MAX) {
-    mkc_error_set (check->mkcerr, MKC_ERR_EXCEEDS_STACK_SIZE);
-    return;
+  if (check->cfcount >= check->cfallocsz) {
+    check->cfallocsz += 10;
+    check->cf = realloc (check->cf, check->cfallocsz * sizeof (char *));
+    if (check->cf == NULL) {
+      mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY);
+      return;
+    }
   }
 
   check->cf [check->cfcount] = strdup (flag);
@@ -162,9 +179,13 @@ mkc_chk_append_link_flag (mkc_check_t *check, const char *flag)
     return;
   }
 
-  if (check->lfcount >= MKC_CHK_FLAG_MAX) {
-    mkc_error_set (check->mkcerr, MKC_ERR_EXCEEDS_STACK_SIZE);
-    return;
+  if (check->lfcount >= check->lfallocsz) {
+    check->lfallocsz += 10;
+    check->lf = realloc (check->lf, check->lfallocsz * sizeof (char *));
+    if (check->lf == NULL) {
+      mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY);
+      return;
+    }
   }
 
   check->lf [check->lfcount] = strdup (flag);
@@ -698,9 +719,14 @@ mkc_check_append_arg (mkc_check_t *check, const char *arg)
     return;
   }
 
-  if (check->targc >= MKC_CHK_ARG_MAX) {
-    mkc_error_set (check->mkcerr, MKC_ERR_EXCEEDS_STACK_SIZE);
-    return;
+  if (check->targc >= check->targvallocsz) {
+    check->targvallocsz += 10;
+    check->targv = realloc (check->targv,
+        check->targvallocsz * sizeof (const char *));
+    if (check->targv == NULL) {
+      mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY);
+      return;
+    }
   }
 
   check->targv [check->targc] = arg;

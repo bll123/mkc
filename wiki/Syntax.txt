@@ -30,7 +30,6 @@ A profile may have an associated compiler.
   * [Profile Statement](SyntaxProfile)
   * [Set Statement](SyntaxSet)
   * [Values and Variables](SyntaxVariable)
-      * [Internal Variables](SyntaxInternal)
   * [Print](SyntaxPrint)
   * [Control Statements](SyntaxControl)
   * [Expressions](SyntaxExpression)
@@ -45,5 +44,7 @@ A profile may have an associated compiler.
   * Attributes
       * [Name](SyntaxName)
       * [Header](SyntaxHeader)
+      * [Compiler Flags](SyntaxCompileFlag)
+      * [Link Flags](SyntaxLinkFlag)
 
 [Wiki Home](Home)

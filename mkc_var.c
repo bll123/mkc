@@ -153,7 +153,8 @@ mkc_var_set (mkc_varlist_t *varlist, const char *name, mkc_value_t *value)
   }
 
   /* check to see if a variable from the cache has changed */
-  if (var->fromcache != varlist->fromcache) {
+  /* only do this if the cache is currently loading */
+  if (varlist->fromcache && var->fromcache != varlist->fromcache) {
     if (tvalue->vtype == MKC_VT_STRING && nvtype == MKC_VT_STRING) {
       if (strcmp (tvalue->sval, value->sval) != 0) {
         rc = MKC_OK_CHANGE;

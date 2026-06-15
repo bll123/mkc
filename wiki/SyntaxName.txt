@@ -1,7 +1,7 @@
 [Wiki Home](Home)
 <br>[Syntax](Syntax)
 
-### Syntax: Name
+### Syntax: Name (attribute)
 
     name <variable-name>;
 
