@@ -1,7 +1,7 @@
 profile global c;
-check-type something_t;
-check-type int;
-check-type 'struct stat' {
+check_type something_t;
+check_type int;
+check_type 'struct stat' {
   header sys/stat.h;
   name _have_stat;
 }

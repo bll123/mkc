@@ -1519,5 +1519,5 @@ mkc_process_set_defaults (mkc_process_t *process)
 
   mkc_pvar_profile_set (process->pvar, MKC_PROF_GLOBAL_NAME, MKC_PROF_COMPILER_C);
 
-  mkc_pvar_set_integer (process->pvar, "_header_modern", process->headertype);
+  mkc_pvar_set_integer (process->pvar, mkcihdrmodern, process->headertype);
 }

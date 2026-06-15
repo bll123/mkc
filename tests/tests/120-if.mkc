@@ -17,10 +17,10 @@ print '  if,elseif,else/true,true (1)';
 set a true;
 if (${a}) {
   print '  ok';
-  add-compile-flag '-DTEST';
+  add_compile_flag '-DTEST';
 } else if (true) {
   print '  fail-a';
-  add-compile-flag '-DTEST';
+  add_compile_flag '-DTEST';
 } else {
   print '  fail-b';
 }
@@ -29,10 +29,10 @@ print '  if,elseif,else/false,true (1)';
 set a true;
 if (false) {
   print '  fail-a';
-  add-compile-flag '-DTEST';
+  add_compile_flag '-DTEST';
 } else if (${a}) {
   print '  ok';
-  add-compile-flag '-DTEST';
+  add_compile_flag '-DTEST';
 } else {
   print '  fail-b';
 }
@@ -41,13 +41,13 @@ print '  if,elseif,elseif,else/false,true,true (1)';
 set a true;
 if (false) {
   print '  fail-a';
-  add-compile-flag '-DTEST';
+  add_compile_flag '-DTEST';
 } else if (${a}) {
   print '  ok';
-  add-compile-flag '-DTEST';
+  add_compile_flag '-DTEST';
 } else if (${a}) {
   print '  fail-b';
-  add-compile-flag '-DTEST';
+  add_compile_flag '-DTEST';
 } else {
   print '  fail-c';
 }
@@ -56,22 +56,22 @@ print '  if,elseif{if,elseif,else},elseif,else/false,true,{true,true},true (2)';
 set a true;
 if (false) {
   print '  fail-a';
-  add-compile-flag '-DTEST';
+  add_compile_flag '-DTEST';
 } else if (${a}) {
   print '  ok';
-  add-compile-flag '-DTEST';
+  add_compile_flag '-DTEST';
   if (${a}) {
     print '  ok';
-    add-compile-flag '-DTEST';
+    add_compile_flag '-DTEST';
   } else if (true) {
     print '  fail-b';
-    add-compile-flag '-DTEST';
+    add_compile_flag '-DTEST';
   } else {
     print '  fail-c';
   }
 } else if (${a}) {
   print '  fail-d';
-  add-compile-flag '-DTEST';
+  add_compile_flag '-DTEST';
 } else {
   print '  fail-e';
 }

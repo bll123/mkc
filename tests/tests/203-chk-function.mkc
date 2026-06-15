@@ -1,27 +1,27 @@
 profile global c;
 
-check-function malloc;
+check_function malloc;
 
-check-function fstat {
+check_function fstat {
   header sys/stat.h;
 }
 
 # windows has 'max' defined, unix-like systems have 'MAX' in sys/param.h
 # these are both macros
 if (MKC_SYS_WINDOWS) {
-  check-function max {
+  check_function max {
     name _function_max;
   }
 } else {
-  check-function MAX {
+  check_function MAX {
     header sys/param.h;
     name _function_max;
   }
 }
 
-check-function sqrt {
+check_function sqrt {
   header math.h;
-  link-flags '-lm';
+  link_flags '-lm';
 }
 
 if (${_function_malloc} == 1) {
