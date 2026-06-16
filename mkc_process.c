@@ -1680,15 +1680,7 @@ mkc_process_chk_cache (mkc_process_t *process,
   bool    rc = false;
 
   if (mkc_pvar_is_defined (process->pvar, nm)) {
-    mkc_value_t   *value;
-    char          tbuff [MKC_PATH_MAX];
-
-    value = mkc_pvar_get_value (process->pvar, nm);
-    mkc_pvar_value_get_str (process->pvar, value, tbuff, sizeof (tbuff));
-// ### to-do
-// question: if the check failed, it should be re-checked
-// and not fetched from the cache.
-// at the moment, there's no way to do this for strings
+    /* another possibility is to not cache checks that failed */
     mkc_message ("-- cached: %s\n", disp);
     rc = true;
   }

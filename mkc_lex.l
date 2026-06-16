@@ -7,7 +7,6 @@
   #include <stdint.h>
 
   #include "mkc_grammar.h"
-  #include "mkc_parse_util.h"
 
 //  #pragma clang diagnostic push
 //  #pragma clang diagnostic ignored "-Wunused-but-set-variable"
@@ -160,36 +159,36 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 "source"                    { return T_ATTR_SOURCE; }
 
 ({DIGIT}+)          {
-    yylval->sval = mkc_parse_set_str (yytext);
+    yylval->sval = strdup (yytext);
     return T_VAL_INTEGER;
   }
 
 ({VAR_UG}({VAR_UG}|{TXT_PLUS_HYPHEN})*)     {
-    yylval->sval = mkc_parse_set_str (yytext);
+    yylval->sval = strdup (yytext);
     return T_ID_VAR_NAME;
   }
 
 ({FILENAME_UG}({FILENAME_UG}|{TXT_PLUS_HYPHEN})*)     {
-    yylval->sval = mkc_parse_set_str (yytext);
+    yylval->sval = strdup (yytext);
     return T_ID_FILE_NAME;
   }
 
 ({PATH_UG}({PATH_UG}|{TXT_PLUS_HYPHEN})*)     {
-    yylval->sval = mkc_parse_set_str (yytext);
+    yylval->sval = strdup (yytext);
     return T_ID_PATH_NAME;
   }
 
 {DOUBLE_QUOTE}(({CHAR_T_OP_NOT_DOUBLE_QUOTE}|\\{DOUBLE_QUOTE})*){DOUBLE_QUOTE} {
     yytext [yyleng - 1] = '\0';
     yyleng -= 2;
-    yylval->sval = mkc_parse_set_str (yytext + 1);
+    yylval->sval = strdup (yytext + 1);
     return T_VAL_QUOTED_STRING;
   }
 
 {SINGLE_QUOTE}({CHAR_T_OP_NOT_SINGLE_QUOTE}*){SINGLE_QUOTE} {
     yytext [yyleng - 1] = '\0';
     yyleng -= 2;
-    yylval->sval = mkc_parse_set_str (yytext + 1);
+    yylval->sval = strdup (yytext + 1);
     return T_VAL_STATIC_STRING;
   }
 
@@ -198,7 +197,7 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 "${"({VAR_INNER_UG})+"}"  {
     yytext [yyleng - 1] = '\0';
     yyleng -= 3;
-    yylval->sval = mkc_parse_set_str (yytext + 2);
+    yylval->sval = strdup (yytext + 2);
     return T_VARIABLE;
   }
 
@@ -206,7 +205,7 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
     /* is this definition correct? what characters are valid for env names? */
     yytext [yyleng - 1] = '\0';
     yyleng -= 6;
-    yylval->sval = mkc_parse_set_str (yytext + 5);
+    yylval->sval = strdup (yytext + 5);
     return T_VAL_ENV_VARIABLE;
   }
 

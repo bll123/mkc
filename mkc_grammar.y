@@ -21,7 +21,6 @@
   #include "mkc_ast.h"
   #include "mkc_def.h"
   #include "mkc_list.h"
-  #include "mkc_parse_util.h"
   #include "mkc_var.h"
 
   typedef void *yyscan_t;

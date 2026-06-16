@@ -58,7 +58,7 @@ OBJECTS = mkc_main.o \
 	mkc_process.o \
 	mkc_pvar.o mkc_profile.o mkc_var.o mkc_list.c \
 	mkc_context.o \
-	mkc_parse_util.o mkc_os_process.o $(OBJOSWIN) \
+	mkc_os_process.o $(OBJOSWIN) \
 	mkc_log.o mkc_string.o mkc_fileop.o \
 	mkc_error.o mkc_env.o mkc_util.o
 
@@ -90,7 +90,6 @@ mkc_log.o: mkc_log.c
 mkc_main.o: mkc_main.c mkc_grammar.h mkc_lex.h
 mkc_os_process.o: mkc_os_process.c
 mkc_os_win_process.o: mkc_os_winprocess.c
-mkc_parse_util.o: mkc_parse_util.c
 mkc_process.o: mkc_process.c
 mkc_profile.o: mkc_profile.c
 mkc_pvar.o: mkc_pvar.c
@@ -104,13 +103,12 @@ mkc_ast.o:   mkc_ast.h mkc_error.h
 mkc_ast.o: mkc_log.h  mkc_var.h mkc_list.h mkc_check.h
 mkc_ast.o: mkc_env.h mkc_profile.h mkc_pvar.h mkc_context.h mkc_def.h
 mkc_ast.o:   mkc_os_process.h
-mkc_ast.o: mkc_parse_util.h mkc_process.h mkc_string.h mkc_nodiscard.h
+mkc_ast.o: mkc_process.h mkc_string.h mkc_nodiscard.h
 mkc_check.o: mkc_check.h mkc_error.h  mkc_env.h
 mkc_check.o: mkc_log.h  mkc_profile.h mkc_list.h mkc_var.h
 mkc_check.o: mkc_pvar.h mkc_def.h  
 mkc_check.o: mkc_fileop.h mkc_nodiscard.h mkc_os_process.h mkc_string.h
-mkc_context.o:   mkc_context.h
-mkc_context.o: mkc_error.h
+mkc_context.o:  mkc_context.h mkc_error.h
 mkc_env.o:  mkc_env.h mkc_string.h mkc_nodiscard.h
 mkc_error.o:   mkc_error.h
 mkc_fileop.o:  mkc_def.h mkc_error.h mkc_fileop.h
@@ -118,11 +116,9 @@ mkc_fileop.o: mkc_nodiscard.h mkc_string.h
 mkc_grammar.o: mkc_grammar.h  
 mkc_grammar.o: mkc_ast.h mkc_error.h mkc_log.h  mkc_var.h
 mkc_grammar.o: mkc_list.h mkc_def.h 
-mkc_grammar.o:  mkc_parse_util.h
 mkc_lex.o:   mkc_grammar.h
 mkc_lex.o:  mkc_ast.h mkc_error.h mkc_log.h
 mkc_lex.o:  mkc_var.h mkc_list.h mkc_def.h
-mkc_lex.o:   mkc_parse_util.h
 mkc_list.o:   mkc_error.h
 mkc_list.o: mkc_list.h
 mkc_log.o:   mkc_error.h
@@ -130,13 +126,12 @@ mkc_log.o: mkc_fileop.h  mkc_nodiscard.h mkc_log.h
 mkc_main.o:  mkc_ast.h mkc_error.h mkc_log.h
 mkc_main.o:  mkc_var.h mkc_list.h mkc_fileop.h
 mkc_main.o: mkc_nodiscard.h mkc_grammar.h mkc_def.h 
-mkc_main.o:  mkc_parse_util.h mkc_lex.h mkc_profile.h
-mkc_main.o: mkc_util.h mkc_string.h
+mkc_main.o:  mkc_lex.h mkc_profile.h mkc_util.h
+mkc_main.o: mkc_string.h
 mkc_os_process.o:  mkc_os_process.h mkc_util.h
 mkc_os_win_process.o:  mkc_def.h 
 mkc_os_win_process.o:  mkc_os_process.h mkc_string.h
 mkc_os_win_process.o: mkc_nodiscard.h mkc_util.h
-mkc_parse_util.o:  mkc_parse_util.h
 mkc_process.o:  mkc_ast.h mkc_error.h mkc_log.h
 mkc_process.o:  mkc_var.h mkc_list.h mkc_check.h mkc_env.h
 mkc_process.o: mkc_profile.h mkc_pvar.h mkc_def.h 

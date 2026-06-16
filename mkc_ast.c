@@ -18,7 +18,6 @@
 #include "mkc_log.h"
 #include "mkc_list.h"
 #include "mkc_os_process.h"
-#include "mkc_parse_util.h"
 #include "mkc_process.h"
 #include "mkc_string.h"
 #include "mkc_var.h"
