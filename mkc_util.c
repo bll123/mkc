@@ -2,6 +2,10 @@
  * Copyright 2026 Brad Lanam Pleasant Hill CA
  */
 
+#if ! MKC_BOOTSTRAP
+# include "mkc_config.h"
+#endif
+
 #include <stdio.h>
 #include <stddef.h>
 #include <stdlib.h>

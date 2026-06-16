@@ -3,6 +3,10 @@
  *  (from ballroomdj4)
  */
 
+#if ! MKC_BOOTSTRAP
+# include "mkc_config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>

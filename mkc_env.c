@@ -2,6 +2,11 @@
  * Copyright 2021-2026 Brad Lanam Pleasant Hill CA
  *  (from ballroomdj4)
  */
+
+#if ! MKC_BOOTSTRAP
+# include "mkc_config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
