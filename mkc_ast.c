@@ -1504,13 +1504,9 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       if (astnode->profilestmt.stmtblock == NULL) {
         mkc_process_stmt_profile (astmain->process, valnm, valcomp);
       } else {
-        mkc_profidx_t   pidx;
-
-        mkc_profile_push (astmain->profiles);
         mkc_process_stmt_profile (astmain->process, valnm, valcomp);
         mkc_ast_process (astmain, astnode->profilestmt.stmtblock, ifcond, loopcond, depth + 1);
-        pidx = mkc_profile_pop (astmain->profiles);
-        mkc_profile_set_active (astmain->profiles, pidx);
+        mkc_process_stmt_profile_post (astmain->process);
       }
       break;
     }

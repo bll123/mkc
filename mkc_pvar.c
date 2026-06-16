@@ -62,7 +62,7 @@ mkc_pvar_free (mkc_pvar_t *pvar)
 
 int
 mkc_pvar_profile_set (mkc_pvar_t *pvar, const char *pname,
-    mkc_prof_comp_t compiler)
+    mkc_compiler_t compiler)
 {
   mkc_profidx_t   pidx;
 
@@ -78,10 +78,6 @@ mkc_pvar_profile_set (mkc_pvar_t *pvar, const char *pname,
     mkc_varlist_t  *varlist;
 
     pvar->pidx = pidx;
-    if (pvar->debug) {
-      fprintf (stderr, "pvar: set profile: %" PRId32 ": %s %d\n",
-          pidx, pname, compiler);
-    }
     mkc_profile_set_active (pvar->profiles, pidx);
     varlist = mkc_profile_get_varlist (pvar->profiles, pvar->pidx);
     mkc_var_set_fromcache (varlist, pvar->fromcache);
@@ -101,9 +97,6 @@ mkc_pvar_profile_set_idx (mkc_pvar_t *pvar, mkc_profidx_t pidx)
   if (pidx != MKC_PROF_NOT_FOUND) {
     mkc_varlist_t  *varlist;
 
-    if (pvar->debug) {
-      fprintf (stderr, "pvar: set profile: %" PRId32 "\n", pidx);
-    }
     pvar->pidx = pidx;
     mkc_profile_set_active (pvar->profiles, pidx);
     varlist = mkc_profile_get_varlist (pvar->profiles, pvar->pidx);
@@ -214,7 +207,7 @@ mkc_value_t *
 mkc_pvar_get_by_profile (mkc_pvar_t *pvar, const char *nm)
 {
   mkc_profidx_t   pidx;
-  mkc_prof_comp_t origcompiler;
+  mkc_compiler_t origcompiler;
   bool            done = false;
   mkc_value_t     *value = NULL;
 

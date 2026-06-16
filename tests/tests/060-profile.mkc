@@ -11,7 +11,7 @@ profile release c {
 profile global cpp {
   set b "g-cpp";
 }
-profile global any {
+profile global {
   set f "g-general";
 }
 profile global c {

@@ -1,24 +1,25 @@
 == profiles
-  global 0
-  global 1
-  global 2
-  global 3
-  internal 0
-  release 0
-  release 1
-  release 2
-== global 0
-  d g-general
-  f g-general
-== global 1
+  global bison
+  global c
+  global c++
+  global flex
+  global general
+  global objc
+  global unknown
+  internal general
+  release c
+  release c++
+  release general
+== global c
   c g-c
   e g-c
-== global 2
+== global c++
   b g-cpp
   f g-cpp
-== global 3
-== release 0
-== release 1
+== global general
+  d g-general
+  f g-general
+== release c
   i r-c
-== release 2
+== release c++
   h r-cpp

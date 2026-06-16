@@ -6,6 +6,7 @@
 
 #include <stdint.h>
 
+#include "mkc_compiler.h"
 #include "mkc_error.h"
 #include "mkc_list.h"
 #include "mkc_log.h"
@@ -27,14 +28,6 @@ typedef enum {
   MKC_PROF_TYPE_INVALID,
 } mkc_prof_type_t;
 
-typedef enum {
-  MKC_PROF_COMPILER_GENERAL,
-  MKC_PROF_COMPILER_C,
-  MKC_PROF_COMPILER_CXX,
-  MKC_PROF_COMPILER_OBJC,
-  MKC_PROF_COMPILER_MAX,
-} mkc_prof_comp_t;
-
 enum {
   MKC_PROF_NOT_FOUND = -2,
 };
@@ -48,7 +41,7 @@ void mkc_profile_free (mkc_profile_t *profiles);
 int mkc_profile_clear (mkc_profile_t *profiles, mkc_profidx_t pidx);
 
 mkc_profidx_t mkc_profile_find (mkc_profile_t *profiles, const char *pname, const char *compid);
-mkc_profidx_t mkc_profile_find_id (mkc_profile_t *profiles, const char *pname, mkc_prof_comp_t compiler);
+mkc_profidx_t mkc_profile_find_id (mkc_profile_t *profiles, const char *pname, mkc_compiler_t compiler);
 mkc_profidx_t mkc_profile_create (mkc_profile_t *profiles, const char *pname, const char *comptxt, mkc_prof_type_t);
 int mkc_profile_local_create (mkc_profile_t *profiles);
 void mkc_profile_local_pop (mkc_profile_t *profiles);
@@ -59,7 +52,7 @@ void mkc_profile_iter_start (mkc_profile_t *profiles, mkc_profidx_t *iteridx);
 mkc_profidx_t mkc_profile_iter_next (mkc_profile_t *profiles, mkc_profidx_t *iteridx);
 
 const char * mkc_profile_get_name (mkc_profile_t *profiles, mkc_profidx_t pidx);
-mkc_prof_comp_t mkc_profile_get_compiler (mkc_profile_t *profiles, mkc_profidx_t pidx);
+mkc_compiler_t mkc_profile_get_compiler (mkc_profile_t *profiles, mkc_profidx_t pidx);
 const char * mkc_profile_get_comp_name (mkc_profile_t *profiles, mkc_profidx_t pidx);
 mkc_prof_type_t mkc_profile_get_type (mkc_profile_t *profiles, mkc_profidx_t pidx);
 
@@ -70,7 +63,7 @@ void mkc_profile_set_active (mkc_profile_t *profiles, mkc_profidx_t pidx);
 mkc_profidx_t mkc_profile_get_active (mkc_profile_t *profiles);
 
 void mkc_profile_local_reset (mkc_profile_t *profiles);
-mkc_profidx_t mkc_profile_next (mkc_profile_t *profiles, mkc_prof_comp_t origcompiler);
+mkc_profidx_t mkc_profile_next (mkc_profile_t *profiles, mkc_compiler_t origcompiler);
 const char * mkc_profile_curr_disp (mkc_profile_t *profiles, char *buff, size_t sz);
 
 bool mkc_profile_is_current (mkc_profile_t *profiles, const char *name);

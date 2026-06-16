@@ -59,6 +59,7 @@ OBJECTS = mkc_main.o \
 	mkc_pvar.o mkc_profile.o mkc_var.o mkc_list.c \
 	mkc_context.o \
 	mkc_os_process.o $(OBJOSWIN) \
+	mkc_compiler.o \
 	mkc_log.o mkc_string.o mkc_fileop.o \
 	mkc_error.o mkc_env.o mkc_util.o
 
@@ -80,6 +81,7 @@ mkc_lex.h mkc_lex.c: mkc_lex.l
 
 mkc_ast.o: mkc_ast.c
 mkc_check.o: mkc_check.c
+mkc_compiler.o: mkc_compiler.c
 mkc_context.o: mkc_check.c
 mkc_env.o: mkc_env.c
 mkc_fileop.o: mkc_fileop.c

@@ -9,6 +9,7 @@
 #include <string.h>
 
 #include "mkc_check.h"
+#include "mkc_compiler.h"
 #include "mkc_def.h"
 #include "mkc_error.h"
 #include "mkc_fileop.h"
@@ -314,15 +315,15 @@ mkc_chk_compiler_suffix (int compiler)
   const char  *sfx = ".c";
 
   switch (compiler) {
-    case MKC_COMP_C: {
+    case MKC_COMPILER_C: {
       sfx = ".c";
       break;
     }
-    case MKC_COMP_CXX: {
+    case MKC_COMPILER_CXX: {
       sfx = ".cpp";
       break;
     }
-    case MKC_COMP_OBJC: {
+    case MKC_COMPILER_OBJC: {
       sfx = ".m";
       break;
     }
@@ -411,7 +412,7 @@ mkc_chk_size (mkc_check_t *check,
   mkc_log (check->log, MKC_LOG_CHECK, "== chk: size: %s\n", type);
   mkc_profile_push (check->profiles);
   mkc_pvar_profile_set (check->pvar,
-      MKC_PROF_INTERNAL_NAME, MKC_PROF_COMPILER_GENERAL);
+      MKC_PROF_INTERNAL_NAME, MKC_COMPILER_GENERAL);
 
   mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_SIZE", type);
   pidx = mkc_profile_pop (check->profiles);
@@ -437,7 +438,7 @@ mkc_chk_type (mkc_check_t *check,
   mkc_log (check->log, MKC_LOG_CHECK, "== chk: type: %s\n", type);
   mkc_profile_push (check->profiles);
   mkc_pvar_profile_set (check->pvar,
-      MKC_PROF_INTERNAL_NAME, MKC_PROF_COMPILER_GENERAL);
+      MKC_PROF_INTERNAL_NAME, MKC_COMPILER_GENERAL);
 
   mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_TYPE", type);
   pidx = mkc_profile_pop (check->profiles);
@@ -460,7 +461,7 @@ mkc_chk_struct_member (mkc_check_t *check,
       "== chk: struct member: %s.%s\n", structname, membername);
   mkc_profile_push (check->profiles);
   mkc_pvar_profile_set (check->pvar,
-      MKC_PROF_INTERNAL_NAME, MKC_PROF_COMPILER_GENERAL);
+      MKC_PROF_INTERNAL_NAME, MKC_COMPILER_GENERAL);
 
   mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_STRUCT_NAME", structname);
   mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_STRUCT_MEMBER", membername);
@@ -483,7 +484,7 @@ mkc_chk_function (mkc_check_t *check, const char *compiler, const char *sfx,
       "== chk: function: %s\n", funcname);
   mkc_profile_push (check->profiles);
   mkc_pvar_profile_set (check->pvar,
-      MKC_PROF_INTERNAL_NAME, MKC_PROF_COMPILER_GENERAL);
+      MKC_PROF_INTERNAL_NAME, MKC_COMPILER_GENERAL);
 
   mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_FUNCTION_NAME", funcname);
   pidx = mkc_profile_pop (check->profiles);

@@ -29,6 +29,7 @@ int32_t mkc_process_unary_op (mkc_process_t *process, int type, mkc_value_t *val
 
 void mkc_process_stmt_print (mkc_process_t *process, mkc_value_t *value, int depth);
 void mkc_process_stmt_profile (mkc_process_t *process, mkc_value_t *valnm, mkc_value_t *valcomp);
+void mkc_process_stmt_profile_post (mkc_process_t *process);
 int mkc_process_stmt_debug (mkc_process_t *process, mkc_value_t *value, mkc_value_t *subvalue);
 int mkc_process_stmt_set (mkc_process_t *process, mkc_value_t *valnm, mkc_value_t *value);
 void mkc_process_stmt_configure (mkc_process_t *process);

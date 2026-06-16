@@ -6,6 +6,7 @@
 
 #include <stdint.h>
 
+#include "mkc_compiler.h"
 #include "mkc_error.h"
 #include "mkc_list.h"
 #include "mkc_log.h"
@@ -20,7 +21,7 @@ typedef struct mkc_pvar_t mkc_pvar_t;
 
 mkc_pvar_t *mkc_pvar_init (mkc_profile_t *profiles, mkc_log_t *log, mkc_error_t *mkcerr);
 void mkc_pvar_free (mkc_pvar_t *pvar);
-int mkc_pvar_profile_set (mkc_pvar_t *pvar, const char *pname, mkc_prof_comp_t compiler);
+int mkc_pvar_profile_set (mkc_pvar_t *pvar, const char *pname, mkc_compiler_t compiler);
 int mkc_pvar_profile_set_idx (mkc_pvar_t *pvar, mkc_profidx_t pidx);
 void mkc_pvar_set_fromcache (mkc_pvar_t *pvar, bool flag);
 
@@ -31,6 +32,7 @@ int mkc_pvar_set_str (mkc_pvar_t *pvar, const char *vname, const char *str);
 
 mkc_varidx_t mkc_pvar_get_prof_idx (mkc_pvar_t *pvar, const char *vname);
 
+int32_t mkc_pvar_count (mkc_pvar_t *pvar);
 void mkc_pvar_iter_start (mkc_pvar_t *pvar, mkc_varidx_t *iteridx);
 mkc_varidx_t mkc_pvar_iter_next (mkc_pvar_t *pvar, mkc_varidx_t *iteridx);
 

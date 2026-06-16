@@ -7,17 +7,15 @@
   ok 7
   ok 8
   ok 9
-== global 0
-  a 1
-  b 2
-== global 1
+== global c
   c 3
   d 4
-== global 2
-== global 3
-== release 0
-  e 5
-  f 6
-== release 1
+== global general
+  a 1
+  b 2
+== release c
   g 7
   h 8
+== release general
+  e 5
+  f 6

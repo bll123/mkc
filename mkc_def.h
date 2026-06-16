@@ -69,27 +69,6 @@ typedef enum {
   MKC_LIB_LOC_NOTSET,
 } mkc_lib_loc_t;
 
-/* the compiler */
-typedef enum {
-  MKC_COMP_BISON,
-  MKC_COMP_C,
-  MKC_COMP_CXX,
-  MKC_COMP_FLEX,
-  MKC_COMP_OBJC,
-  MKC_COMP_UNKNOWN,
-} mkc_compiler_t;
-
-typedef enum {
-  MKC_COMP_ID_CLANG,
-  MKC_COMP_ID_GCC,
-  MKC_COMP_ID_ICC,
-  MKC_COMP_ID_MSC,
-  MKC_COMP_ID_SOLARIS,
-  MKC_COMP_ID_UNKNOWN,
-  MKC_COMP_ID_XLC,
-  MKC_COMP_ID_MAX,
-} mkc_compiler_id_t;
-
 typedef enum {
   MKC_HEADER_LEGACY = false,
   MKC_HEADER_MODERN = true,
