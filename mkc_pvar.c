@@ -176,6 +176,21 @@ mkc_pvar_set_str (mkc_pvar_t *pvar, const char *vname, const char *str)
   return rc;
 }
 
+int32_t
+mkc_pvar_size (mkc_pvar_t *pvar)
+{
+  mkc_varlist_t   *varlist;
+  int32_t         sz;
+
+  if (pvar == NULL) {
+    return 0;
+  }
+
+  varlist = mkc_profile_get_varlist (pvar->profiles, pvar->pidx);
+  sz = mkc_var_size (varlist);
+  return sz;
+}
+
 void
 mkc_pvar_iter_start (mkc_pvar_t *pvar, mkc_varidx_t *iteridx)
 {
@@ -218,6 +233,7 @@ mkc_pvar_iter_next (mkc_pvar_t *pvar, mkc_varidx_t *iteridx)
 mkc_value_t *
 mkc_pvar_get_by_profile (mkc_pvar_t *pvar, const char *nm)
 {
+  mkc_profidx_t   opidx;
   mkc_profidx_t   pidx;
   mkc_compiler_t  origcompiler;
   bool            done = false;
@@ -231,7 +247,7 @@ mkc_pvar_get_by_profile (mkc_pvar_t *pvar, const char *nm)
     return NULL;
   }
 
-  mkc_profile_push (pvar->profiles);
+  opidx = mkc_profile_get_active (pvar->profiles);
   mkc_profile_local_reset (pvar->profiles);
 
   pidx = mkc_profile_get_active (pvar->profiles);
@@ -260,8 +276,7 @@ mkc_pvar_get_by_profile (mkc_pvar_t *pvar, const char *nm)
     mkc_pvar_profile_set_idx (pvar, pidx);
   }
 
-  pidx = mkc_profile_pop (pvar->profiles);
-  mkc_pvar_profile_set_idx (pvar, pidx);
+  mkc_pvar_profile_set_idx (pvar, opidx);
 
   return value;
 }

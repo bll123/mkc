@@ -7,6 +7,7 @@
 */
 
 %define api.pure full
+%define api.prefix {mkcyy}
 %define parse.error verbose
 %define parse.trace true
 %locations
@@ -23,15 +24,15 @@
   #include "mkc_list.h"
   #include "mkc_var.h"
 
-  typedef void *yyscan_t;
+  typedef void *mkcyyscan_t;
 
-  #define YYPARSE_PARAM yyscan_t scanner
-  #define YYLEX_PARAM scanner
+  #define MKCYYPARSE_PARAM mkcyyscan_t scanner
+  #define MKCYYLEX_PARAM scanner
 }
 
 %code {
-  int yylex (YYSTYPE* yylvalp, YYLTYPE* yyllocp, yyscan_t scanner);
-  void yyerror (YYLTYPE* yyllocp, yyscan_t unused, mkc_astmain_t *ast, const char* msg);
+  int mkcyylex (MKCYYSTYPE* mkcyylvalp, MKCYYLTYPE* mkcyyllocp, mkcyyscan_t scanner);
+  void mkcyyerror (MKCYYLTYPE* mkcyyllocp, mkcyyscan_t unused, mkc_astmain_t *ast, const char* msg);
 }
 
 %union {
@@ -934,9 +935,9 @@ integer[v]:
 %%
 
 void
-yyerror (YYLTYPE* yyllocp, yyscan_t unused,
+mkcyyerror (MKCYYLTYPE* mkcyyllocp, mkcyyscan_t unused,
     mkc_astmain_t *ast, const char* msg)
 {
   fprintf (stderr, "[%d:%d]: %s\n",
-      yyllocp->first_line, yyllocp->first_column, msg);
+      mkcyyllocp->first_line, mkcyyllocp->first_column, msg);
 }

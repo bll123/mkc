@@ -37,7 +37,7 @@ static const char * const compenv [MKC_COMPILER_MAX] = {
   [MKC_COMPILER_CXX] = "CXX",
   [MKC_COMPILER_FLEX] = "FLEX",
   [MKC_COMPILER_GENERAL] = "CC",
-  [MKC_COMPILER_OBJC] = "OBJC",
+  [MKC_COMPILER_OBJC] = "CC",
   [MKC_COMPILER_UNKNOWN] = "CC",
 };
 

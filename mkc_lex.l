@@ -10,7 +10,17 @@
 
 //  #pragma clang diagnostic push
 //  #pragma clang diagnostic ignored "-Wunused-but-set-variable"
+
+  /* no idea if this is the right way to work around this */
+  #define YYSTYPE MKCYYSTYPE
+  #define YYLTYPE MKCYYLTYPE
 }
+
+%option prefix="mkcyy"
+%option noinput nounput noyywrap nodefault
+%option reentrant bison-bridge bison-locations
+%option yylineno
+%option never-interactive
 
 %{
   #define YY_USER_ACTION \
@@ -20,13 +30,9 @@
         yylloc->last_column += yyleng; \
       else { \
         yylloc->last_line = yylineno; \
-        yylloc->last_column = yytext + yyleng - strrchr(yytext, '\n'); \
+        yylloc->last_column = yytext + yyleng - strrchr (yytext, '\n'); \
       }
 %}
-
-%option noinput nounput noyywrap nodefault
-%option yylineno
-%option reentrant bison-bridge bison-locations
 
 DIGIT           [0-9]
 

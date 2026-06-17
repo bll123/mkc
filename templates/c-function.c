@@ -14,9 +14,9 @@ main (void)
 #if defined (${MKC_TV_TEST_FUNCTION_NAME})
   return 0;
 #else
-  void    *f = NULL;
+  void    *f;
 
-  f = (void *) &(${MKC_TV_TEST_FUNCTION_NAME});
+  f = &(${MKC_TV_TEST_FUNCTION_NAME});
   return 0;
 #endif
 }

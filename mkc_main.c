@@ -36,7 +36,7 @@ typedef struct {
 } argcopy_t;
 
 static void cleanargs (argcopy_t *argcopy);
-static int mkc_parse (FILE *fh, yyscan_t scanner, mkc_astmain_t *astmain, mkc_log_t *log, const char *dfltprof, mkc_error_t *mkcerr);
+static int mkc_parse (FILE *fh, mkcyyscan_t scanner, mkc_astmain_t *astmain, mkc_log_t *log, const char *dfltprof, mkc_error_t *mkcerr);
 mkc_err_code_t mkc_cleanup (mkc_astmain_t *astmain, argcopy_t *argcopy, mkc_log_t *log, mkc_error_t *error);
 
 int
@@ -54,7 +54,7 @@ main (int argc, char *argv [])
   const char      * dfltprof = MKC_PROF_RELEASE_NAME;
   const char      * comparg = NULL;
   mkc_astmain_t   * astmain = NULL;
-  yyscan_t        scanner;
+  mkcyyscan_t     scanner;
   mkc_error_t     * mkcerr = NULL;
   mkc_log_t       * log = NULL;
   mstime_t        starttm;
@@ -106,7 +106,7 @@ main (int argc, char *argv [])
         break;
       }
       case 2: {
-        yydebug = 1;
+        mkcyydebug = 1;
         break;
       }
       case 3: {
@@ -149,7 +149,7 @@ main (int argc, char *argv [])
   }
 
   mstimestart (&starttm);
-  yylex_init (&scanner);
+  mkcyylex_init (&scanner);
 
   cachetm = mkc_file_modtime ("mkc_files/cache.mkc");
   mkctm = mkc_file_modtime (argcopy.utf8argv [fnidx]);
@@ -196,7 +196,7 @@ main (int argc, char *argv [])
     mkc_error_set (mkcerr, MKC_ERR_PARSE_FAILURE);
   }
 
-  yylex_destroy (scanner);
+  mkcyylex_destroy (scanner);
 
   if (fh != stdin) {
     fclose (fh);
@@ -232,18 +232,18 @@ cleanargs (argcopy_t *argcopy)
 }
 
 static int
-mkc_parse (FILE *fh, yyscan_t scanner, mkc_astmain_t *astmain,
+mkc_parse (FILE *fh, mkcyyscan_t scanner, mkc_astmain_t *astmain,
     mkc_log_t *log, const char *dfltprof,
     mkc_error_t *mkcerr)
 {
-  int                 rc = 0;
-  YY_BUFFER_STATE     state;
+  int               rc = 0;
+  YY_BUFFER_STATE   state;
 
-  state = yy_create_buffer (fh, YY_BUF_SIZE, scanner);
-  yy_switch_to_buffer (state, scanner);
-  rc = yyparse (scanner, astmain);
+  state = mkcyy_create_buffer (fh, YY_BUF_SIZE, scanner);
+  mkcyy_switch_to_buffer (state, scanner);
+  rc = mkcyyparse (scanner, astmain);
 
-  yy_delete_buffer (state, scanner);
+  mkcyy_delete_buffer (state, scanner);
 
   return rc;
 }

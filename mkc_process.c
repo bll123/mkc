@@ -516,6 +516,9 @@ mkc_process_stmt_project (mkc_process_t *process)
   datafree (process->projectname);
   process->projectname = strdup (process->currentname);
 
+  datafree (process->currentname);
+  process->currentname = NULL;
+
   return;
 }
 
@@ -1113,16 +1116,18 @@ mkc_process_save_cache (mkc_process_t *process)
       break;
     }
 
-    nm = mkc_profile_get_name (profiles, pidx);
-    compname = mkc_profile_get_comp_name (profiles, pidx);
-    fprintf (fh, "  profile %s %s {\n", nm, compname);
-
     pvar = process->pvar;
-    mkc_profile_push (process->profiles);
-
     if (mkc_pvar_profile_set_idx (process->pvar, pidx) == MKC_PROF_NOT_FOUND) {
       continue;
     }
+
+    if (mkc_pvar_size (process->pvar) == 0) {
+      continue;
+    }
+
+    nm = mkc_profile_get_name (profiles, pidx);
+    compname = mkc_profile_get_comp_name (profiles, pidx);
+    fprintf (fh, "  profile %s %s {\n", nm, compname);
 
     mkc_pvar_iter_start (pvar, &viter);
     while ((vidx = mkc_pvar_iter_next (pvar, &viter)) != MKC_ITER_FINISH) {
@@ -1186,9 +1191,6 @@ mkc_process_save_cache (mkc_process_t *process)
         ++tcount;
       }
     }
-
-    pidx = mkc_profile_pop (process->profiles);
-    mkc_pvar_profile_set_idx (process->pvar, pidx);
 
     if (count == 0) {
       fprintf (fh, "    ;\n");
@@ -1711,8 +1713,6 @@ mkc_process_configure_auto (mkc_process_t *process, bool defzero)
     fprintf (fh, "  profile %s %s {\n", nm, compname);
 
     pvar = process->pvar;
-    mkc_profile_push (process->profiles);
-
     if (mkc_pvar_profile_set_idx (process->pvar, pidx) == MKC_PROF_NOT_FOUND) {
       continue;
     }
@@ -1779,9 +1779,6 @@ mkc_process_configure_auto (mkc_process_t *process, bool defzero)
         ++tcount;
       }
     }
-
-    pidx = mkc_profile_pop (process->profiles);
-    mkc_pvar_profile_set_idx (process->pvar, pidx);
 
     if (count == 0) {
       fprintf (fh, "    ;\n");

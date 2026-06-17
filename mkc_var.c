@@ -188,6 +188,19 @@ mkc_var_set (mkc_varlist_t *varlist, const char *name, mkc_value_t *value)
   return rc;
 }
 
+int32_t
+mkc_var_size (mkc_varlist_t *varlist)
+{
+  int32_t     sz;
+
+  if (varlist == NULL) {
+    return 0;
+  }
+
+  sz = mkc_list_size (varlist->list);
+  return sz;
+}
+
 void
 mkc_var_iter_start (mkc_varlist_t *varlist, mkc_varidx_t *iteridx)
 {

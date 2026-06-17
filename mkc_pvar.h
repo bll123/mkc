@@ -32,7 +32,7 @@ int mkc_pvar_set_str (mkc_pvar_t *pvar, const char *vname, const char *str);
 
 mkc_varidx_t mkc_pvar_get_prof_idx (mkc_pvar_t *pvar, const char *vname);
 
-int32_t mkc_pvar_count (mkc_pvar_t *pvar);
+int32_t mkc_pvar_size (mkc_pvar_t *pvar);
 void mkc_pvar_iter_start (mkc_pvar_t *pvar, mkc_varidx_t *iteridx);
 mkc_varidx_t mkc_pvar_iter_next (mkc_pvar_t *pvar, mkc_varidx_t *iteridx);
 
