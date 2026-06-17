@@ -1,3 +1,2 @@
-== global c
+== release c
   lf_fPIC -fPIC
-== global general

@@ -1,5 +1,3 @@
-profile global c;
-
 check_function malloc;
 
 check_function fstat {

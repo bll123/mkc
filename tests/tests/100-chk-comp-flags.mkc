@@ -1,4 +1,3 @@
-profile global c;
 check_compile_flag    '-Wunreachable-code';
 check_compile_flag    '-Wsomething-bad';
 # clang will generate a warning for this, gcc does not.
@@ -6,4 +5,4 @@ check_compile_flag    '-Wsomething-bad';
 check_compile_flag    '-Wno-stuff-b' {
   negate;
 }
-mkcdebug printvar test;
+mkcdebug printvar release;

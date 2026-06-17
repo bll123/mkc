@@ -51,7 +51,7 @@ static int mkc_profile_compare (void *tentrya, void *tentryb);
 int mkc_profile_create_id (mkc_profile_t *profiles, const char *pname, mkc_compiler_t compiler, mkc_prof_type_t type);
 
 mkc_profile_t *
-mkc_profile_init (mkc_log_t *log, mkc_error_t *mkcerr, const char *dfltprof)
+mkc_profile_init (mkc_log_t *log, mkc_error_t *mkcerr, const char *dfltprof, const char *comparg)
 {
   mkc_profile_t   *profiles;
   mkc_profidx_t   pidx;
@@ -67,13 +67,23 @@ mkc_profile_init (mkc_log_t *log, mkc_error_t *mkcerr, const char *dfltprof)
   profiles->localstacksz = 0;
   profiles->mkcerr = mkcerr;
   profiles->log = log;
+  profiles->dfltcompiler = MKC_COMPILER_C;
+
   profiles->dfltprof = strdup (dfltprof);
   if (profiles->dfltprof == NULL) {
     mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY);
     mkc_profile_free (profiles);
     return NULL;
   }
-  profiles->dfltcompiler = MKC_COMPILER_C;
+
+  if (comparg != NULL) {
+    profiles->dfltcompiler = mkc_compiler_get (comparg);
+    if (profiles->dfltcompiler == MKC_COMPILER_UNKNOWN) {
+      mkc_error_set (mkcerr, MKC_ERR_INVALID_ARGUMENT);
+      mkc_profile_free (profiles);
+      return NULL;
+    }
+  }
 
   profiles->list = mkc_list_init (MKC_LIST_SORTED,
       mkc_profile_entry_free, mkc_profile_compare, mkcerr);
@@ -156,6 +166,27 @@ mkc_profile_clear (mkc_profile_t *profiles, mkc_profidx_t pidx)
   }
 
   return MKC_OK;
+}
+
+mkc_compiler_t
+mkc_profile_get_dflt_compiler (mkc_profile_t *profiles)
+{
+  if (profiles == NULL) {
+    return MKC_COMPILER_UNKNOWN;
+  }
+
+  return profiles->dfltcompiler;
+}
+
+void
+mkc_profile_set_dflt_compiler (mkc_profile_t *profiles,
+    mkc_compiler_t compiler)
+{
+  if (profiles == NULL) {
+    return;
+  }
+
+  profiles->dfltcompiler = compiler;
 }
 
 int

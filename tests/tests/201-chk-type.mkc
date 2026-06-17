@@ -1,4 +1,3 @@
-profile global c;
 check_type something_t;
 check_type int;
 check_type 'struct stat' {

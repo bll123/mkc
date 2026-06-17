@@ -1,3 +1,2 @@
-== global c
+== release c
   cf_unreachable_code -Wunreachable-code
-== global general

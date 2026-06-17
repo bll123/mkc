@@ -10,12 +10,18 @@
 == global c
   c 3
   d 4
+== global c++
+  j 10
+  k 11
 == global general
   a 1
   b 2
 == release c
   g 7
   h 8
+== release c++
+  l 12
+  m 13
 == release general
   e 5
   f 6

@@ -8,6 +8,10 @@ profile global c {
   set d 4;
   set c 3;
 }
+profile global c++ {
+  set k 11;
+  set j 10;
+}
 profile release {
   set f 6;
   set e 5;
@@ -15,6 +19,10 @@ profile release {
 profile release c {
   set h 8;
   set g 7;
+}
+profile release c++ {
+  set m 13;
+  set l 12;
 }
 profile internal {
   set i 9;
@@ -48,6 +56,18 @@ if (${h} == 8) {
 }
 if (${i} == 9) {
   print '  ok 9';
+}
+if (${j} == 10) {
+  print '  ok 10';
+}
+if (${k} == 10) {
+  print '  ok 11';
+}
+if (${l} == 12) {
+  print '  ok 12';
+}
+if (${m} == 13) {
+  print '  ok 13';
 }
 
 mkcdebug printvar test;

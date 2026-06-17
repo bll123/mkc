@@ -1,4 +1,3 @@
-profile global c;
 check_size int32_t {
   header stdint.h;
 }

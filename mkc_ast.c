@@ -306,7 +306,7 @@ static void mkc_astnode_free (mkc_astmain_t *astmain, mkc_astnode_t *astnode);
 static mkc_value_t *mkc_ast_get_value (mkc_astmain_t *astmain, mkc_astnode_t *astnode);
 
 mkc_astmain_t *
-mkc_ast_init (mkc_log_t *log, const char *dfltprof, mkc_error_t *mkcerr)
+mkc_ast_init (mkc_log_t *log, const char *dfltprof, const char *comparg, mkc_error_t *mkcerr)
 {
   mkc_astmain_t   *astmain;
 
@@ -316,7 +316,7 @@ mkc_ast_init (mkc_log_t *log, const char *dfltprof, mkc_error_t *mkcerr)
   }
   memset (astmain, 0, sizeof (mkc_astmain_t));
 
-  astmain->profiles = mkc_profile_init (log, mkcerr, dfltprof);
+  astmain->profiles = mkc_profile_init (log, mkcerr, dfltprof, comparg);
   if (astmain->profiles == NULL) {
     mkc_ast_free (astmain);
     return NULL;
@@ -1502,6 +1502,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       }
 
       if (astnode->profilestmt.stmtblock == NULL) {
+// ### this does a push with no pop...
         mkc_process_stmt_profile (astmain->process, valnm, valcomp);
       } else {
         mkc_process_stmt_profile (astmain->process, valnm, valcomp);

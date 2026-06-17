@@ -14,12 +14,12 @@
   c g-c
   e g-c
 == global c++
-  b g-cpp
-  f g-cpp
+  b g-c++
+  f g-c++
 == global general
   d g-general
   f g-general
 == release c
   i r-c
 == release c++
-  h r-cpp
+  h r-c++

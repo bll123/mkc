@@ -135,7 +135,7 @@ mkc_astnode_t * mkc_ast_mk_attr_input (mkc_astmain_t *astmain, mkc_astnode_t *na
 mkc_astnode_t * mkc_ast_mk_attr_output (mkc_astmain_t *astmain, mkc_astnode_t *name, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_attr_compiler (mkc_astmain_t *astmain, mkc_astnode_t *name, int32_t lineno, int colno);
 
-mkc_astmain_t * mkc_ast_init (mkc_log_t *log, const char *dfltprof, mkc_error_t *mkcerr);
+mkc_astmain_t * mkc_ast_init (mkc_log_t *log, const char *dfltprof, const char *comparg, mkc_error_t *mkcerr);
 void mkc_ast_set_main (mkc_astmain_t *, mkc_astnode_t *astnode);
 int32_t mkc_ast_start (mkc_astmain_t *);
 void mkc_ast_free (mkc_astmain_t *astmain);

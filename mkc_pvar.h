@@ -37,6 +37,7 @@ void mkc_pvar_iter_start (mkc_pvar_t *pvar, mkc_varidx_t *iteridx);
 mkc_varidx_t mkc_pvar_iter_next (mkc_pvar_t *pvar, mkc_varidx_t *iteridx);
 
 mkc_value_t *mkc_pvar_get_by_profile (mkc_pvar_t *pvar, const char *nm);
+mkc_value_t *mkc_pvar_get_by_profidx (mkc_pvar_t *pvar, const char *nm, mkc_profidx_t pidx);
 mkc_value_t *mkc_pvar_get_by_idx (mkc_pvar_t *pvar, mkc_varidx_t vidx);
 const char * mkc_pvar_get_name (mkc_pvar_t *pvar, mkc_varidx_t vidx);
 void mkc_pvar_get_env_str (mkc_pvar_t *pvar, const char *envstr, char *buff, size_t sz);

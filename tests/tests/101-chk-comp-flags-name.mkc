@@ -1,4 +1,3 @@
-profile global c;
 check_compile_flag    '-Werror' {
   name HAVE_CF_ERROR;
 }

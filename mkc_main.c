@@ -52,6 +52,7 @@ main (int argc, char *argv [])
   int             fnidx;
   FILE            * fh = NULL;
   const char      * dfltprof = MKC_PROF_RELEASE_NAME;
+  const char      * comparg = NULL;
   mkc_astmain_t   * astmain = NULL;
   yyscan_t        scanner;
   mkc_error_t     * mkcerr = NULL;
@@ -70,6 +71,7 @@ main (int argc, char *argv [])
     { "no-cache",       no_argument,        NULL,   1, },
     { "parsedebug",     no_argument,        NULL,   2 },
     { "profile",        required_argument,  NULL,   'p' },
+    { NULL,             no_argument,        NULL,   0 },
   };
 
   mkcerr = mkc_error_init ();
@@ -107,6 +109,12 @@ main (int argc, char *argv [])
         yydebug = 1;
         break;
       }
+      case 3: {
+        if (optarg != NULL) {
+          comparg = argcopy.utf8argv [optind - 1];
+        }
+        break;
+      }
       default: {
         break;
       }
@@ -134,7 +142,7 @@ main (int argc, char *argv [])
     }
   }
 
-  astmain = mkc_ast_init (log, dfltprof, mkcerr);
+  astmain = mkc_ast_init (log, dfltprof, comparg, mkcerr);
   if (mkc_error_chk_err (mkcerr)) {
     rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
     return rc;

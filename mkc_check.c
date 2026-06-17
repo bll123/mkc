@@ -29,6 +29,7 @@ typedef struct mkc_check_t {
   char            ** cf;
   char            ** lf;
   const char      ** targv;
+  mkc_profidx_t   pidx_global_general;
   int             cfcount;
   int             cfallocsz;
   int             lfcount;
@@ -45,7 +46,7 @@ const char * mkc_check_get_compstr (mkc_check_t *check, mkc_compiler_t compiler,
 
 mkc_check_t *
 mkc_check_init (mkc_profile_t *profiles, mkc_pvar_t *pvar,
-    mkc_log_t *log, mkc_error_t *mkcerr)
+    mkc_log_t *log, mkc_profidx_t pidx, mkc_error_t *mkcerr)
 {
   mkc_check_t   *check;
 
@@ -54,6 +55,8 @@ mkc_check_init (mkc_profile_t *profiles, mkc_pvar_t *pvar,
   check->pvar = pvar;
   check->mkcerr = mkcerr;
   check->log = log;
+  check->pidx_global_general = pidx;
+
   check->cf = NULL;
   check->cfcount = 0;
   check->cfallocsz = 10;
@@ -61,6 +64,7 @@ mkc_check_init (mkc_profile_t *profiles, mkc_pvar_t *pvar,
   if (check->cf == NULL) {
     mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY);
   }
+
   check->lf = NULL;
   check->lfcount = 0;
   check->lfallocsz = 10;
@@ -68,6 +72,7 @@ mkc_check_init (mkc_profile_t *profiles, mkc_pvar_t *pvar,
   if (check->lf == NULL) {
     mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY);
   }
+
   check->targv = NULL;
   check->targc = 0;
   check->targvallocsz = 10;
@@ -355,16 +360,17 @@ mkc_chk_size (mkc_check_t *check,
     const char *type)
 {
   int             rc;
-  mkc_profidx_t   pidx;
+  mkc_profidx_t   opidx;
 
   mkc_log (check->log, MKC_LOG_CHECK, "== chk: size: %s\n", type);
-  mkc_profile_push (check->profiles);
+  opidx = mkc_profile_get_active (check->profiles);
+
   mkc_pvar_profile_set (check->pvar,
       MKC_PROF_INTERNAL_NAME, MKC_COMPILER_GENERAL);
 
   mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_SIZE", type);
-  pidx = mkc_profile_pop (check->profiles);
-  mkc_pvar_profile_set_idx (check->pvar, pidx);
+
+  mkc_pvar_profile_set_idx (check->pvar, opidx);
 
   rc = mkc_compile_run (check, compiler,
         "c-size", NULL, NULL, 0);
@@ -381,16 +387,17 @@ mkc_chk_type (mkc_check_t *check,
     const char *type)
 {
   int             rc;
-  mkc_profidx_t   pidx;
+  mkc_profidx_t   opidx;
 
   mkc_log (check->log, MKC_LOG_CHECK, "== chk: type: %s\n", type);
-  mkc_profile_push (check->profiles);
+  opidx = mkc_profile_get_active (check->profiles);
+
   mkc_pvar_profile_set (check->pvar,
       MKC_PROF_INTERNAL_NAME, MKC_COMPILER_GENERAL);
 
   mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_TYPE", type);
-  pidx = mkc_profile_pop (check->profiles);
-  mkc_pvar_profile_set_idx (check->pvar, pidx);
+
+  mkc_pvar_profile_set_idx (check->pvar, opidx);
 
   rc = mkc_compile_only (check, compiler, "c-type", NULL);
   mkc_chk_reset (check);
@@ -403,18 +410,19 @@ mkc_chk_struct_member (mkc_check_t *check,
     const char *structname, const char *membername)
 {
   int             rc;
-  mkc_profidx_t   pidx;
+  mkc_profidx_t   opidx;
 
   mkc_log (check->log, MKC_LOG_CHECK,
       "== chk: struct member: %s.%s\n", structname, membername);
-  mkc_profile_push (check->profiles);
+  opidx = mkc_profile_get_active (check->profiles);
+
   mkc_pvar_profile_set (check->pvar,
       MKC_PROF_INTERNAL_NAME, MKC_COMPILER_GENERAL);
 
   mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_STRUCT_NAME", structname);
   mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_STRUCT_MEMBER", membername);
-  pidx = mkc_profile_pop (check->profiles);
-  mkc_pvar_profile_set_idx (check->pvar, pidx);
+
+  mkc_pvar_profile_set_idx (check->pvar, opidx);
 
   rc = mkc_compile_only (check, compiler, "c-struct-member", NULL);
   mkc_chk_reset (check);
@@ -426,17 +434,19 @@ mkc_chk_function (mkc_check_t *check, mkc_compiler_t compiler,
     const char *funcname)
 {
   int             rc;
-  mkc_profidx_t   pidx;
+  mkc_profidx_t   opidx;
 
   mkc_log (check->log, MKC_LOG_CHECK,
       "== chk: function: %s\n", funcname);
-  mkc_profile_push (check->profiles);
+
+  opidx = mkc_profile_get_active (check->profiles);
+
   mkc_pvar_profile_set (check->pvar,
       MKC_PROF_INTERNAL_NAME, MKC_COMPILER_GENERAL);
 
   mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_FUNCTION_NAME", funcname);
-  pidx = mkc_profile_pop (check->profiles);
-  mkc_pvar_profile_set_idx (check->pvar, pidx);
+
+  mkc_pvar_profile_set_idx (check->pvar, opidx);
 
   rc = mkc_compile_link (check, compiler, "c-function", NULL, NULL, 0);
   mkc_chk_reset (check);
@@ -717,7 +727,7 @@ mkc_check_get_compstr (mkc_check_t *check, mkc_compiler_t compiler,
   mkc_value_t   *value;
 
   envstr = mkc_compiler_get_env_name (compiler);
-  value = mkc_pvar_get_by_profile (check->pvar, envstr);
+  value = mkc_pvar_get_by_profidx (check->pvar, envstr, check->pidx_global_general);
   mkc_pvar_value_get_str (check->pvar, value, buff, sz);
   return buff;
 }

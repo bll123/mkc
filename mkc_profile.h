@@ -36,9 +36,11 @@ extern const char * const MKC_PROF_GLOBAL_NAME;
 extern const char * const MKC_PROF_INTERNAL_NAME;
 extern const char * const MKC_PROF_RELEASE_NAME;
 
-mkc_profile_t * mkc_profile_init (mkc_log_t *log, mkc_error_t *mkcerr, const char *dfltprof);
+mkc_profile_t * mkc_profile_init (mkc_log_t *log, mkc_error_t *mkcerr, const char *dfltprof, const char *comparg);
 void mkc_profile_free (mkc_profile_t *profiles);
 int mkc_profile_clear (mkc_profile_t *profiles, mkc_profidx_t pidx);
+mkc_compiler_t mkc_profile_get_dflt_compiler (mkc_profile_t *profiles);
+void mkc_profile_set_dflt_compiler (mkc_profile_t *profiles, mkc_compiler_t compiler);
 
 mkc_profidx_t mkc_profile_find (mkc_profile_t *profiles, const char *pname, const char *compid);
 mkc_profidx_t mkc_profile_find_id (mkc_profile_t *profiles, const char *pname, mkc_compiler_t compiler);

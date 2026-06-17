@@ -36,6 +36,7 @@ typedef struct mkc_process_t {
   mkc_error_t           * mkcerr;
   mkc_log_t             * log;
   mkc_compiler_t        dfltcompiler;
+  mkc_compiler_t        currcompiler;
   mkc_system_type_t     systype;
   mkc_system_id_t       sysid;
   mkc_compiler_id_t     compid;
@@ -117,7 +118,8 @@ mkc_process_init (mkc_profile_t *profiles, mkc_log_t *log, mkc_error_t *mkcerr)
   process = malloc (sizeof (mkc_process_t));
 
   process->profiles = profiles;
-  process->dfltcompiler = MKC_COMPILER_C;
+  process->dfltcompiler = mkc_profile_get_dflt_compiler (profiles);
+  process->currcompiler = process->dfltcompiler;
   process->check = NULL;
   process->pvar = NULL;
   process->projectname = NULL;
@@ -144,13 +146,15 @@ mkc_process_init (mkc_profile_t *profiles, mkc_log_t *log, mkc_error_t *mkcerr)
     return NULL;
   }
 
-  process->check = mkc_check_init (process->profiles, process->pvar, log, mkcerr);
+  pidx = mkc_profile_find_id (process->profiles,
+      MKC_PROF_GLOBAL_NAME, MKC_COMPILER_GENERAL);
+  process->check = mkc_check_init (process->profiles, process->pvar, log, pidx, mkcerr);
   if (process->check == NULL) {
     mkc_process_free (process);
     return NULL;
   }
 
-  mkc_profile_push (process->profiles);
+  pidx = mkc_profile_get_active (process->profiles);
 
   mkc_process_set_defaults (process);
   rc = mkc_process_int_checks (process);
@@ -159,7 +163,6 @@ mkc_process_init (mkc_profile_t *profiles, mkc_log_t *log, mkc_error_t *mkcerr)
     return NULL;
   }
 
-  pidx = mkc_profile_pop (process->profiles);
   mkc_pvar_profile_set_idx (process->pvar, pidx);
 
   return process;
@@ -434,6 +437,7 @@ mkc_process_stmt_profile (mkc_process_t *process,
   }
 
   mkc_pvar_profile_set_idx (process->pvar, pidx);
+  process->currcompiler = mkc_compiler_get (comp);
 }
 
 void
@@ -443,6 +447,7 @@ mkc_process_stmt_profile_post (mkc_process_t *process)
 
   pidx = mkc_profile_pop (process->profiles);
   mkc_profile_set_active (process->profiles, pidx);
+  process->currcompiler = process->dfltcompiler;
 }
 
 int
@@ -656,12 +661,12 @@ mkc_process_attr_header (mkc_process_t *process, mkc_value_t *value)
     stpecpy (hdrtxt + hdrtxtlen - tlen - 1, hdrtxt + hdrtxtlen, tbuff);
   }
 
-  mkc_profile_push (process->profiles);
+  pidx = mkc_profile_get_active (process->profiles);
+
   mkc_pvar_profile_set (process->pvar, MKC_PROF_INTERNAL_NAME,
       MKC_COMPILER_GENERAL);
   mkc_pvar_set_str (process->pvar, mkctesthdrlist, hdrtxt);
 
-  pidx = mkc_profile_pop (process->profiles);
   mkc_pvar_profile_set_idx (process->pvar, pidx);
 
   return;
@@ -783,6 +788,8 @@ mkc_process_attr_compiler (mkc_process_t *process, mkc_value_t *name)
 
   mkc_pvar_value_get_str (process->pvar, name, nm, sizeof (nm));
   process->dfltcompiler = mkc_compiler_get (nm);
+  mkc_profile_set_dflt_compiler (process->profiles, process->dfltcompiler);
+  process->currcompiler = process->dfltcompiler;
 }
 
 mkc_value_t *
@@ -818,7 +825,7 @@ mkc_process_chk_compiler_flag (mkc_process_t *process,
 
   if (addchk == MKC_CHK) {
     rc = mkc_chk_compiler_flag (process->check,
-        process->dfltcompiler, flag, process->negate);
+        process->currcompiler, flag, process->negate);
   }
   process->negate = false;
 
@@ -868,7 +875,7 @@ mkc_process_chk_link_flag (mkc_process_t *process,
 
   if (addchk == MKC_CHK) {
     rc = mkc_chk_link_flag (process->check,
-        process->dfltcompiler, flag);
+        process->currcompiler, flag);
   }
   if (rc == 0) {
     const char  *tmp;
@@ -914,7 +921,7 @@ mkc_process_chk_size (mkc_process_t *process, mkc_value_t *valtype)
   }
 
   rc = mkc_chk_size (process->check,
-      process->dfltcompiler, type);
+      process->currcompiler, type);
   tmp = mkc_pvar_name_alloc (pvar, tnm);
   mkc_pvar_set_integer (pvar, tmp, rc);
 
@@ -947,7 +954,7 @@ mkc_process_chk_type (mkc_process_t *process, mkc_value_t *valtype)
   }
 
   rc = mkc_chk_type (process->check,
-      process->dfltcompiler, type);
+      process->currcompiler, type);
   tmp = mkc_pvar_name_alloc (pvar, tnm);
   mkc_pvar_set_integer (pvar, tmp, rc == 0 ? true : false);
 
@@ -987,7 +994,7 @@ mkc_process_chk_struct_member (mkc_process_t *process,
   }
 
   rc = mkc_chk_struct_member (process->check,
-      process->dfltcompiler, structname, membername);
+      process->currcompiler, structname, membername);
   tmp = mkc_pvar_name_alloc (pvar, tnm);
   mkc_pvar_set_integer (pvar, tmp, rc == 0 ? true : false);
 
@@ -1022,7 +1029,7 @@ mkc_process_chk_function (mkc_process_t *process, mkc_value_t *valfuncnm)
   }
 
   rc = mkc_chk_function (process->check,
-      process->dfltcompiler, funcname);
+      process->currcompiler, funcname);
   tmp = mkc_pvar_name_alloc (pvar, tnm);
   mkc_pvar_set_integer (pvar, tmp, rc == 0 ? true : false);
 
@@ -1049,11 +1056,10 @@ mkc_process_local_set (mkc_process_t *process, const char *nm,
     return;
   }
 
-  mkc_profile_push (process->profiles);
+  opidx = mkc_profile_get_active (process->profiles);
   mkc_profile_local_reset (process->profiles);
   mkc_pvar_profile_set_idx (process->pvar, pidx);
   mkc_pvar_set_str (process->pvar, nm, sval);
-  opidx = mkc_profile_pop (process->profiles);
   mkc_pvar_profile_set_idx (process->pvar, opidx);
 }
 
@@ -1080,6 +1086,7 @@ mkc_process_save_cache (mkc_process_t *process)
 {
   mkc_profidx_t   piter;
   mkc_profile_t   *profiles;
+  mkc_profidx_t   opidx;
   mkc_profidx_t   pidx;
   FILE            *fh;
   int             tcount = 0;
@@ -1088,7 +1095,7 @@ mkc_process_save_cache (mkc_process_t *process)
   if (fh == NULL) {
     return;
   }
-  mkc_profile_push (process->profiles);
+  opidx = mkc_profile_get_active (process->profiles);
 
   fprintf (fh, "load_cache {\n");
 
@@ -1193,9 +1200,8 @@ mkc_process_save_cache (mkc_process_t *process)
     fprintf (fh, "  ;\n");
   }
   fprintf (fh, "}\n");
-  pidx = mkc_profile_pop (process->profiles);
-  mkc_pvar_profile_set_idx (process->pvar, pidx);
 
+  mkc_pvar_profile_set_idx (process->pvar, opidx);
   fclose (fh);
 }
 
@@ -1209,10 +1215,11 @@ mkc_process_var_print (mkc_process_t *process, const char *pname)
   mkc_pvar_t      *pvar;
   bool            intest = false;
   bool            ininternal = false;
-  mkc_profidx_t   pidx;
+  mkc_profidx_t   opidx;
 
   pvar = process->pvar;
-  mkc_profile_push (process->profiles);
+  opidx = mkc_profile_get_active (process->profiles);
+
   if (pname != NULL && strcmp (pname, "test") == 0) {
     pname = MKC_PROF_GLOBAL_NAME;
     intest = true;
@@ -1314,8 +1321,7 @@ mkc_process_var_print (mkc_process_t *process, const char *pname)
     }
   }
 
-  pidx = mkc_profile_pop (process->profiles);
-  mkc_pvar_profile_set_idx (process->pvar, pidx);
+  mkc_pvar_profile_set_idx (process->pvar, opidx);
 }
 
 static void
@@ -1427,7 +1433,7 @@ static int
 mkc_process_int_checks (mkc_process_t *process)
 {
   int                 rc;
-  mkc_profidx_t       pidx;
+  mkc_profidx_t       opidx;
   mstime_t            starttm;
   mkc_profidx_t       pidx_global_general;
   mkc_profidx_t       pidx_global_comp;
@@ -1436,7 +1442,7 @@ mkc_process_int_checks (mkc_process_t *process)
   mstimestart (&starttm);
   mkc_create_dirs ();
 
-  mkc_profile_push (process->profiles);
+  opidx = mkc_profile_get_active (process->profiles);
   mkc_log (process->log, MKC_LOG_CHECK, "== internal checks\n");
 
   /* environment variables : global/general */
@@ -1464,7 +1470,6 @@ mkc_process_int_checks (mkc_process_t *process)
 
   /* compiler id : internal/general */
 
-  mkc_pvar_profile_set_idx (process->pvar, pidx_global_general);
   rc = mkc_chk_compiler_id (process->check, process->dfltcompiler);
   if (rc >= 0) {
     process->compid = rc;
@@ -1483,7 +1488,6 @@ mkc_process_int_checks (mkc_process_t *process)
 
   /* modern header support : global/<compiler> */
 
-  mkc_pvar_profile_set_idx (process->pvar, pidx_global_general);
   rc = mkc_chk_header_modern (process->check, process->dfltcompiler);
   if (rc != 0) {
     process->headertype = MKC_HEADER_LEGACY;
@@ -1549,7 +1553,6 @@ mkc_process_int_checks (mkc_process_t *process)
 
   /* system id : internal/general */
 
-  mkc_pvar_profile_set_idx (process->pvar, pidx_global_general);
   rc = mkc_chk_system_id (process->check, process->dfltcompiler);
   if (rc >= 0) {
     process->sysid = rc;
@@ -1567,7 +1570,6 @@ mkc_process_int_checks (mkc_process_t *process)
 
   /* variadic macro support : global/<compiler> */
 
-  mkc_pvar_profile_set_idx (process->pvar, pidx_global_general);
   rc = mkc_chk_variadic_macro (process->check, process->dfltcompiler);
   if (rc != 0) {
     process->variadicmacro = MKC_NO_VARIADIC_MACRO;
@@ -1580,7 +1582,6 @@ mkc_process_int_checks (mkc_process_t *process)
   /* linux: library location : internal/general */
 
   if (process->systype == MKC_SYS_LINUX) {
-    mkc_pvar_profile_set_idx (process->pvar, pidx_global_general);
     rc = mkc_chk_library_location (process->check, process->dfltcompiler);
     if (rc >= 0) {
       process->libloc = rc;
@@ -1591,8 +1592,7 @@ mkc_process_int_checks (mkc_process_t *process)
   mkc_pvar_profile_set_idx (process->pvar, pidx_internal);
   mkc_pvar_set_integer (process->pvar, liblocname, process->libloc);
 
-  pidx = mkc_profile_pop (process->profiles);
-  mkc_pvar_profile_set_idx (process->pvar, pidx);
+  mkc_pvar_profile_set_idx (process->pvar, opidx);
 
   {
     char    tbuff [40];
@@ -1670,6 +1670,7 @@ mkc_process_configure_auto (mkc_process_t *process, bool defzero)
 {
   mkc_profidx_t   piter;
   mkc_profile_t   *profiles;
+  mkc_profidx_t   opidx;
   mkc_profidx_t   pidx;
   FILE            *fh;
   int             tcount = 0;
@@ -1686,7 +1687,7 @@ mkc_process_configure_auto (mkc_process_t *process, bool defzero)
     return;
   }
 
-  mkc_profile_push (process->profiles);
+  opidx = mkc_profile_get_active (process->profiles);
 
   fprintf (fh, "/* built by mkc */\n");
   fprintf (fh, "#pragma once\n");
@@ -1792,9 +1793,8 @@ mkc_process_configure_auto (mkc_process_t *process, bool defzero)
     fprintf (fh, "  ;\n");
   }
   fprintf (fh, "}\n");
-  pidx = mkc_profile_pop (process->profiles);
-  mkc_pvar_profile_set_idx (process->pvar, pidx);
 
+  mkc_pvar_profile_set_idx (process->pvar, opidx);
   fclose (fh);
 }
 

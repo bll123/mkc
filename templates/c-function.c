@@ -16,7 +16,7 @@ main (void)
 #else
   void    *f = NULL;
 
-  f = &${MKC_TV_TEST_FUNCTION_NAME};
+  f = (void *) &(${MKC_TV_TEST_FUNCTION_NAME});
   return 0;
 #endif
 }

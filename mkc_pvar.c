@@ -26,6 +26,8 @@ typedef struct mkc_pvar_t {
   bool            fromcache;
 } mkc_pvar_t;
 
+static mkc_value_t * mkc_pvar_get_value_by_profidx (mkc_pvar_t *pvar, const char *vname, mkc_profidx_t pidx);
+
 mkc_pvar_t *
 mkc_pvar_init (mkc_profile_t *profiles, mkc_log_t *log, mkc_error_t *mkcerr)
 {
@@ -203,11 +205,21 @@ mkc_pvar_iter_next (mkc_pvar_t *pvar, mkc_varidx_t *iteridx)
   return rc;
 }
 
+/* get-by-profile searches the profile hierarchy for the variable name */
+/* the search hierarchy: */
+/*    local-variables */
+/*    template              compiler */
+/*    template              general */
+/*    current-user-profile  compiler */
+/*    current-user-profile  general */
+/*    global                compiler */
+/*    global                general */
+/*    internal */
 mkc_value_t *
 mkc_pvar_get_by_profile (mkc_pvar_t *pvar, const char *nm)
 {
   mkc_profidx_t   pidx;
-  mkc_compiler_t origcompiler;
+  mkc_compiler_t  origcompiler;
   bool            done = false;
   mkc_value_t     *value = NULL;
 
@@ -251,6 +263,23 @@ mkc_pvar_get_by_profile (mkc_pvar_t *pvar, const char *nm)
   pidx = mkc_profile_pop (pvar->profiles);
   mkc_pvar_profile_set_idx (pvar, pidx);
 
+  return value;
+}
+
+mkc_value_t *
+mkc_pvar_get_by_profidx (mkc_pvar_t *pvar, const char *nm, mkc_profidx_t pidx)
+{
+  mkc_value_t       *value = NULL;
+
+  if (pvar == NULL) {
+    return NULL;
+  }
+  if (nm == NULL) {
+    mkc_error_set (pvar->mkcerr, MKC_ERR_INVALID_ARGUMENT);
+    return NULL;
+  }
+
+  value = mkc_pvar_get_value_by_profidx (pvar, nm, pidx);
   return value;
 }
 
@@ -654,3 +683,20 @@ mkc_pvar_substitute (mkc_pvar_t *pvar, const char *data, int depth)
 //fprintf (stderr, "%*sbuff-fin: '%s'\n", depth * 2, "", buff);
   return buff;
 }
+
+static mkc_value_t *
+mkc_pvar_get_value_by_profidx (mkc_pvar_t *pvar,
+    const char *vname, mkc_profidx_t pidx)
+{
+  mkc_varlist_t   *varlist;
+  mkc_value_t     *value;
+
+  if (pvar == NULL) {
+    return NULL;
+  }
+
+  varlist = mkc_profile_get_varlist (pvar->profiles, pidx);
+  value = mkc_var_get_value (varlist, vname);
+  return value;
+}
+

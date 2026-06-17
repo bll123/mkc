@@ -8,8 +8,8 @@ profile global c {
 profile release c {
   set i "r-c";
 }
-profile global cpp {
-  set b "g-cpp";
+profile global c++ {
+  set b "g-c++";
 }
 profile global {
   set f "g-general";
@@ -17,14 +17,14 @@ profile global {
 profile global c {
   set e "g-c";
 }
-profile global cpp {
-  set f "g-cpp";
+profile global c++ {
+  set f "g-c++";
 }
-profile release cpp {
-  set h "r-cpp";
+profile release c++ {
+  set h "r-c++";
 }
-profile debug cpp {
-  set i "d-cpp";
+profile debug c++ {
+  set i "d-c++";
 }
 
 mkcdebug printprof;
