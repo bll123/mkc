@@ -1710,12 +1710,17 @@ mkc_process_configure_auto (mkc_process_t *process, bool defzero)
 
     nm = mkc_profile_get_name (profiles, pidx);
     compname = mkc_profile_get_comp_name (profiles, pidx);
-    fprintf (fh, "  profile %s %s {\n", nm, compname);
 
     pvar = process->pvar;
     if (mkc_pvar_profile_set_idx (process->pvar, pidx) == MKC_PROF_NOT_FOUND) {
       continue;
     }
+
+    if (mkc_pvar_size (process->pvar) == 0) {
+      continue;
+    }
+
+    fprintf (fh, "  profile %s %s {\n", nm, compname);
 
     mkc_pvar_iter_start (pvar, &viter);
     while ((vidx = mkc_pvar_iter_next (pvar, &viter)) != MKC_ITER_FINISH) {
