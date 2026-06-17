@@ -20,7 +20,6 @@ typedef struct mkc_process_t mkc_process_t;
 
 mkc_process_t *mkc_process_init (mkc_profile_t *profiles, mkc_log_t *log, mkc_error_t *mkcerr);
 void mkc_process_free (mkc_process_t *process);
-void mkc_process_set_compiler (mkc_process_t *process, const char *compiler, const char *sfx);
 
 int32_t mkc_process_condition (mkc_process_t *process, mkc_value_t *value);
 int32_t mkc_process_num_op (mkc_process_t *process, int type, mkc_value_t *vala, mkc_value_t *valb);

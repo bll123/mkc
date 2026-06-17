@@ -33,6 +33,7 @@ typedef enum {
 
 const char * mkc_compiler_get_name (mkc_compiler_t comp);
 const char * mkc_compiler_get_suffix (mkc_compiler_t comp);
+const char * mkc_compiler_get_env_name (mkc_compiler_t comp);
 mkc_compiler_t mkc_compiler_get (const char *compiler);
 
 #if defined (__cplusplus) || defined (c_plusplus)

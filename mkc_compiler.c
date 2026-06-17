@@ -10,6 +10,7 @@
 
 #include "mkc_compiler.h"
 
+/* these are internal names, not the actual names of the compilers */
 static const char * const compnames [MKC_COMPILER_MAX] = {
   [MKC_COMPILER_BISON] = "bison",
   [MKC_COMPILER_C] = "c",
@@ -30,6 +31,16 @@ static const char * const compsuffix [MKC_COMPILER_MAX] = {
   [MKC_COMPILER_UNKNOWN] = ".c",
 };
 
+static const char * const compenv [MKC_COMPILER_MAX] = {
+  [MKC_COMPILER_BISON] = "BISON",
+  [MKC_COMPILER_C] = "CC",
+  [MKC_COMPILER_CXX] = "CXX",
+  [MKC_COMPILER_FLEX] = "FLEX",
+  [MKC_COMPILER_GENERAL] = "CC",
+  [MKC_COMPILER_OBJC] = "OBJC",
+  [MKC_COMPILER_UNKNOWN] = "CC",
+};
+
 const char *
 mkc_compiler_get_name (mkc_compiler_t comp)
 {
@@ -48,6 +59,16 @@ mkc_compiler_get_suffix (mkc_compiler_t comp)
   }
 
   return compsuffix [comp];
+}
+
+const char *
+mkc_compiler_get_env_name (mkc_compiler_t comp)
+{
+  if (comp < 0 || comp >= MKC_COMPILER_MAX) {
+    return NULL;
+  }
+
+  return compenv [comp];
 }
 
 mkc_compiler_t

@@ -1,6 +1,6 @@
 #include <stddef.h>
 
-#include "mkc_def.h"
+#include "mkc_compiler.h"
 
 int
 main (void)

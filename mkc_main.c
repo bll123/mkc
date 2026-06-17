@@ -66,6 +66,7 @@ main (int argc, char *argv [])
   time_t          mkctm;
 
   static struct option mkc_options [] = {
+    { "compiler",       required_argument,  NULL,   3, },
     { "no-cache",       no_argument,        NULL,   1, },
     { "parsedebug",     no_argument,        NULL,   2 },
     { "profile",        required_argument,  NULL,   'p' },
@@ -79,17 +80,17 @@ main (int argc, char *argv [])
   }
 #if _lib_GetCommandLineW || (MKC_BOOTSTRAP && _WIN32)
   wargv = CommandLineToArgvW (GetCommandLineW(), &targc);
-  for (int i = 0; i < argc; ++i) {
+  for (int i = 0; i < argcopy.nargc; ++i) {
     argcopy.utf8argv [i] = mkc_fromwide (wargv [i]);
   }
   LocalFree (wargv);
 #else
-  for (int i = 0; i < argc; ++i) {
+  for (int i = 0; i < argcopy.nargc; ++i) {
     argcopy.utf8argv [i] = strdup (argv [i]);
   }
 #endif
 
-  while ((c = getopt_long_only (argc, argcopy.utf8argv, "p:",
+  while ((c = getopt_long_only (argcopy.nargc, argcopy.utf8argv, "p:",
       mkc_options, &option_index)) != -1) {
     switch (c) {
       case 'p': {
@@ -117,13 +118,13 @@ main (int argc, char *argv [])
   mkc_log_open (log, "mkc_files/log-mkc.txt", MKC_LOG_ALL);
 
   fnidx = optind;
-  if (fnidx >= argc) {
+  if (fnidx >= argcopy.nargc) {
     fprintf (stderr, "no file specified.\n");
     rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
     return rc;
   }
 
-  if (fnidx < argc) {
+  if (fnidx < argcopy.nargc) {
     fh = mkc_fopen (argcopy.utf8argv [fnidx], "r");
     if (fh == NULL) {
       fprintf (stderr, "%s: %s\n", argcopy.utf8argv [fnidx], strerror (errno));

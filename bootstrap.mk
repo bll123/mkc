@@ -6,6 +6,8 @@ MAKEFLAGS += --no-print-directory
 MAKEFILE = bootstrap.mk
 
 CFLAGS = -g -ggdb3 -Og -Wall -Wextra -Wno-unused-parameter -DMKC_BOOTSTRAP=1
+LDFLAGS = -g -ggdb3 -Og -Wall -Wextra
+
 SANCFLAGS = -g -ggdb3 -Og -Wall -Wextra -DMKC_BOOTSTRAP=1 \
     -Wno-unused-parameter \
     -fsanitize=address,undefined \
@@ -14,12 +16,14 @@ SANCFLAGS = -g -ggdb3 -Og -Wall -Wextra -DMKC_BOOTSTRAP=1 \
     -fno-omit-frame-pointer \
     -fno-common \
     -fno-inline
-LDFLAGS = -g -ggdb3 -Og -Wall -Wextra
 SANLDFLAGS = -g \
     -fsanitize=address,undefined \
     -fsanitize-address-use-after-scope \
     -fsanitize-recover=address \
     -lrt
+
+CONFCFLAGS = -g -ggdb3 -Og -Wall -Wextra -Wno-unused-parameter
+CONFLDFLAGS = -g -ggdb3 -Og -Wall -Wextra
 
 WIN=F
 WINOBJ=mkc_os_win_process.o
