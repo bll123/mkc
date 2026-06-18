@@ -9,8 +9,10 @@
 #include <inttypes.h>
 #include <stdarg.h>
 #include <string.h>
+#include <errno.h>
 
 #include "mkc_error.h"
+#include "mkc_util.h"
 
 static const char * const mkcerrormsg [] = {
   [MKC_OK] = "success",
@@ -19,6 +21,8 @@ static const char * const mkcerrormsg [] = {
   /* exceeds the set size of internal stacks */
   [MKC_ERR_EXCEEDS_STACK_SIZE] = "exceeds stack size",
   [MKC_ERR_FILE_NOT_FOUND] = "file not found",
+  [MKC_ERR_FILE_READ_ERROR] = "file read error",
+  [MKC_ERR_FILE_WRITE_ERROR] = "file write error",
   [MKC_ERR_INVALID_ARGUMENT] = "invalid argument",
   [MKC_ERR_INVALID_PROFILE] = "invalid profile",
   [MKC_ERR_INVALID_VALUE] = "invalid value",
@@ -40,9 +44,11 @@ static const char * const mkcerrormsg [] = {
 };
 
 typedef struct mkc_error_t {
-  mkc_err_code_t    err;
-  int32_t             lineno;
-  int                 colno;
+  char            *str;
+  mkc_err_code_t  err;
+  int32_t         lineno;
+  int             colno;
+  int32_t         syserr;
 } mkc_error_t;
 
 mkc_error_t *
@@ -54,7 +60,9 @@ mkc_error_init (void)
   if (mkcerr == NULL) {
     return NULL;
   }
+  mkcerr->str = NULL;
   mkcerr->err = MKC_OK;
+  mkcerr->syserr = 0;
   mkcerr->lineno = 0;
   mkcerr->colno = 0;
 
@@ -68,17 +76,25 @@ mkc_error_free (mkc_error_t *mkcerr)
     return;
   }
 
+  datafree (mkcerr->str);
   free (mkcerr);
 }
 
 void
-mkc_error_set (mkc_error_t *mkcerr, mkc_err_code_t err)
+mkc_error_set (mkc_error_t *mkcerr, mkc_err_code_t err,
+    int syserr, const char *str)
 {
   if (mkcerr == NULL) {
     return;
   }
 
   mkcerr->err = err;
+  mkcerr->syserr = syserr;
+  datafree (mkcerr->str);
+  mkcerr->str = NULL;
+  if (str != NULL) {
+    mkcerr->str = strdup (str);
+  }
 }
 
 void
@@ -128,7 +144,15 @@ mkc_error_print (mkc_error_t *mkcerr)
     mkc_error_line_disp (tbuff, sizeof (tbuff), mkcerr->lineno, mkcerr->colno);
     fprintf (stderr, "%s", tbuff);
   }
-  fprintf (stderr, "error: %s\n", mkcerrormsg [mkcerr->err]);
+  fprintf (stderr, "error: %s", mkcerrormsg [mkcerr->err]);
+  if (mkcerr->syserr != 0) {
+    fprintf (stderr, "; %s", strerror (mkcerr->syserr));
+  }
+  if (mkcerr->str != NULL) {
+    fprintf (stderr, "; %s", mkcerr->str);
+  }
+
+  fprintf (stderr, "\n");
 }
 
 char *

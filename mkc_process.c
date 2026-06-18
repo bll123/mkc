@@ -11,6 +11,7 @@
 #include <stdarg.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <errno.h>
 
 #include "mkc_ast.h"
 #include "mkc_check.h"
@@ -262,7 +263,7 @@ mkc_process_num_op (mkc_process_t *process, int type,
     }
     case MKC_T_OP_DIVIDE: {
       if (ivalb == 0) {
-        mkc_error_set (process->mkcerr, MKC_ERR_DIVIDE_BY_ZERO);
+        mkc_error_set (process->mkcerr, MKC_ERR_DIVIDE_BY_ZERO, 0, NULL);
         break;
       }
       result = ivala / ivalb;
@@ -270,7 +271,7 @@ mkc_process_num_op (mkc_process_t *process, int type,
     }
     case MKC_T_OP_MODULO: {
       if (ivalb == 0) {
-        mkc_error_set (process->mkcerr, MKC_ERR_DIVIDE_BY_ZERO);
+        mkc_error_set (process->mkcerr, MKC_ERR_DIVIDE_BY_ZERO, 0, NULL);
         break;
       }
       result = ivala % ivalb;
@@ -278,7 +279,7 @@ mkc_process_num_op (mkc_process_t *process, int type,
     }
     default: {
       result = 0;
-      mkc_error_set (process->mkcerr, MKC_ERR_INVALID_OP);
+      mkc_error_set (process->mkcerr, MKC_ERR_INVALID_OP, 0, NULL);
       break;
     }
   }
@@ -334,7 +335,7 @@ mkc_process_str_op (mkc_process_t *process, int type,
     }
     default: {
       result = 0;
-      mkc_error_set (process->mkcerr, MKC_ERR_INVALID_OP);
+      mkc_error_set (process->mkcerr, MKC_ERR_INVALID_OP, 0, NULL);
       break;
     }
   }
@@ -369,7 +370,7 @@ mkc_process_unary_op (mkc_process_t *process, int type, mkc_value_t *vala)
     }
     default: {
       result = 0;
-      mkc_error_set (process->mkcerr, MKC_ERR_INVALID_OP);
+      mkc_error_set (process->mkcerr, MKC_ERR_INVALID_OP, 0, NULL);
       break;
     }
   }
@@ -386,7 +387,7 @@ mkc_process_stmt_print (mkc_process_t *process, mkc_value_t *value, int depth)
     return;
   }
   if (value == NULL) {
-    mkc_error_set (process->mkcerr, MKC_ERR_NULL_ARGUMENT);
+    mkc_error_set (process->mkcerr, MKC_ERR_NULL_ARGUMENT, 0, NULL);
     return;
   }
 
@@ -479,7 +480,7 @@ void
 mkc_process_stmt_configure (mkc_process_t *process)
 {
   if (process->method == NULL) {
-    mkc_error_set (process->mkcerr, MKC_ERR_PROC_NO_METHOD);
+    mkc_error_set (process->mkcerr, MKC_ERR_PROC_NO_METHOD, 0, NULL);
     return;
   }
 
@@ -489,16 +490,16 @@ mkc_process_stmt_configure (mkc_process_t *process)
     mkc_process_configure_auto (process, false);
   } else if (strcmp (process->method, "manual") == 0) {
     if (process->input == NULL) {
-      mkc_error_set (process->mkcerr, MKC_ERR_PROC_NO_INPUT);
+      mkc_error_set (process->mkcerr, MKC_ERR_PROC_NO_INPUT, 0, NULL);
       return;
     }
     if (process->output == NULL) {
-      mkc_error_set (process->mkcerr, MKC_ERR_PROC_NO_OUTPUT);
+      mkc_error_set (process->mkcerr, MKC_ERR_PROC_NO_OUTPUT, 0, NULL);
       return;
     }
     mkc_process_configure_manual (process);
   } else {
-    mkc_error_set (process->mkcerr, MKC_ERR_PROC_NO_METHOD);
+    mkc_error_set (process->mkcerr, MKC_ERR_PROC_NO_METHOD, 0, NULL);
     return;
   }
 
@@ -509,7 +510,7 @@ void
 mkc_process_stmt_project (mkc_process_t *process)
 {
   if (process->currentname == NULL) {
-    mkc_error_set (process->mkcerr, MKC_ERR_PROC_NO_NAME);
+    mkc_error_set (process->mkcerr, MKC_ERR_PROC_NO_NAME, 0, NULL);
     return;
   }
 
@@ -567,14 +568,14 @@ mkc_process_stmt_set (mkc_process_t *process,
     return MKC_OK;
   }
   if (valnm == NULL) {
-    mkc_error_set (process->mkcerr, MKC_ERR_NULL_ARGUMENT);
+    mkc_error_set (process->mkcerr, MKC_ERR_NULL_ARGUMENT, 0, NULL);
     return MKC_OK;
   }
 
   mkc_pvar_value_get_str (process->pvar, valnm, nm, sizeof (nm));
 
   if (*nm == '\0') {
-    mkc_error_set (process->mkcerr, MKC_ERR_INVALID_ARGUMENT);
+    mkc_error_set (process->mkcerr, MKC_ERR_INVALID_ARGUMENT, 0, NULL);
     return MKC_OK;
   }
 
@@ -619,7 +620,7 @@ mkc_process_attr_name (mkc_process_t *process, mkc_value_t *valnm)
   datafree (process->currentname);
   process->currentname = strdup (nm);
   if (process->currentname == NULL) {
-    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY);
+    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
   }
 }
 
@@ -742,7 +743,7 @@ mkc_process_attr_method (mkc_process_t *process, mkc_value_t *method)
   datafree (process->method);
   process->method = strdup (nm);
   if (process->method == NULL) {
-    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY);
+    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
   }
 }
 
@@ -759,7 +760,7 @@ mkc_process_attr_input (mkc_process_t *process, mkc_value_t *name)
   datafree (process->input);
   process->input = strdup (nm);
   if (process->input == NULL) {
-    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY);
+    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
   }
 }
 
@@ -776,7 +777,7 @@ mkc_process_attr_output (mkc_process_t *process, mkc_value_t *name)
   datafree (process->output);
   process->output = strdup (nm);
   if (process->output == NULL) {
-    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY);
+    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
   }
 }
 
@@ -1055,7 +1056,7 @@ mkc_process_local_set (mkc_process_t *process, const char *nm,
     return;
   }
   if (nm == NULL) {
-    mkc_error_set (process->mkcerr, MKC_ERR_NULL_ARGUMENT);
+    mkc_error_set (process->mkcerr, MKC_ERR_NULL_ARGUMENT, 0, NULL);
     return;
   }
 
@@ -1466,7 +1467,7 @@ mkc_process_int_checks (mkc_process_t *process)
 
   rc = mkc_chk_compiler_works (process->check, process->dfltcompiler);
   if (rc != 0) {
-    mkc_error_set (process->mkcerr, MKC_ERR_COMPILER_FAILURE);
+    mkc_error_set (process->mkcerr, MKC_ERR_COMPILER_FAILURE, 0, NULL);
     return MKC_ERR_FAILURE;
   }
 
@@ -1657,12 +1658,20 @@ mkc_process_configure_manual (mkc_process_t *process)
 
   data = mkc_read_file (process->input, &fsz, process->mkcerr);
   if (mkc_error_chk_err (process->mkcerr)) {
+    mkc_error_set (process->mkcerr, MKC_ERR_FILE_NOT_FOUND, errno, process->input);
     return;
   }
   ndata = mkc_pvar_substitute (process->pvar, data, 0);
   free (data);
   fh = mkc_fopen (process->output, "wb");
-  fwrite (ndata, strlen (ndata), 1, fh);
+  if (fh == NULL) {
+    mkc_error_set (process->mkcerr, MKC_ERR_FILE_NOT_FOUND, errno, process->output);
+    return;
+  }
+
+  if (fwrite (ndata, strlen (ndata), 1, fh) != 1) {
+    mkc_error_set (process->mkcerr, MKC_ERR_FILE_WRITE_ERROR, errno, NULL);
+  }
   fclose (fh);
   free (ndata);
 }

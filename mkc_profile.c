@@ -58,7 +58,7 @@ mkc_profile_init (mkc_log_t *log, mkc_error_t *mkcerr, const char *dfltprof, con
 
   profiles = malloc (sizeof (mkc_profile_t));
   if (profiles == NULL) {
-    mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY);
+    mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
     return NULL;
   }
 
@@ -71,7 +71,7 @@ mkc_profile_init (mkc_log_t *log, mkc_error_t *mkcerr, const char *dfltprof, con
 
   profiles->dfltprof = strdup (dfltprof);
   if (profiles->dfltprof == NULL) {
-    mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY);
+    mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
     mkc_profile_free (profiles);
     return NULL;
   }
@@ -79,7 +79,7 @@ mkc_profile_init (mkc_log_t *log, mkc_error_t *mkcerr, const char *dfltprof, con
   if (comparg != NULL) {
     profiles->dfltcompiler = mkc_compiler_get (comparg);
     if (profiles->dfltcompiler == MKC_COMPILER_UNKNOWN) {
-      mkc_error_set (mkcerr, MKC_ERR_INVALID_ARGUMENT);
+      mkc_error_set (mkcerr, MKC_ERR_INVALID_ARGUMENT, 0, NULL);
       mkc_profile_free (profiles);
       return NULL;
     }
@@ -88,7 +88,7 @@ mkc_profile_init (mkc_log_t *log, mkc_error_t *mkcerr, const char *dfltprof, con
   profiles->list = mkc_list_init (MKC_LIST_SORTED,
       mkc_profile_entry_free, mkc_profile_compare, mkcerr);
   if (profiles->list == NULL) {
-    mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY);
+    mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
     mkc_profile_free (profiles);
     return NULL;
   }
@@ -109,7 +109,7 @@ mkc_profile_init (mkc_log_t *log, mkc_error_t *mkcerr, const char *dfltprof, con
 
   pidx = mkc_profile_find_id (profiles, dfltprof, profiles->dfltcompiler);
   if (mkc_profile_get_type (profiles, pidx) != MKC_PROF_TYPE_USER) {
-    mkc_error_set (mkcerr, MKC_ERR_INVALID_PROFILE);
+    mkc_error_set (mkcerr, MKC_ERR_INVALID_PROFILE, 0, NULL);
     mkc_profile_free (profiles);
     return NULL;
   }
@@ -151,7 +151,7 @@ mkc_profile_clear (mkc_profile_t *profiles, mkc_profidx_t pidx)
   }
 
   if (pidx < 0 || pidx >= mkc_list_size (profiles->list)) {
-    mkc_error_set (profiles->mkcerr, MKC_ERR_OUT_OF_RANGE);
+    mkc_error_set (profiles->mkcerr, MKC_ERR_OUT_OF_RANGE, 0, NULL);
     return MKC_ERR_FAILURE;
   }
 
@@ -219,7 +219,7 @@ mkc_profile_local_create (mkc_profile_t *profiles)
   }
 
   if (profiles->stacksz >= MKC_PROF_STACK_MAX) {
-    mkc_error_set (profiles->mkcerr, MKC_ERR_EXCEEDS_STACK_SIZE);
+    mkc_error_set (profiles->mkcerr, MKC_ERR_EXCEEDS_STACK_SIZE, 0, NULL);
     return MKC_ERR_FAILURE;
   }
 
@@ -227,7 +227,7 @@ mkc_profile_local_create (mkc_profile_t *profiles)
 
   tentry.name = strdup (tbuff);
   if (tentry.name == NULL) {
-    mkc_error_set (profiles->mkcerr, MKC_ERR_OUT_OF_MEMORY);
+    mkc_error_set (profiles->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
     return MKC_ERR_FAILURE;
   }
   tentry.compiler = MKC_COMPILER_GENERAL;
@@ -240,7 +240,7 @@ mkc_profile_local_create (mkc_profile_t *profiles)
   pentry = mkc_list_append (profiles->list, &tentry,
       sizeof (mkc_prof_entry_t), &loc);
   if (pentry == NULL) {
-    mkc_error_set (profiles->mkcerr, MKC_ERR_OUT_OF_MEMORY);
+    mkc_error_set (profiles->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
     return MKC_ERR_FAILURE;
   }
 
@@ -419,7 +419,7 @@ mkc_profile_push (mkc_profile_t *profiles)
   }
 
   if (profiles->stacksz >= MKC_PROF_STACK_MAX) {
-    mkc_error_set (profiles->mkcerr, MKC_ERR_EXCEEDS_STACK_SIZE);
+    mkc_error_set (profiles->mkcerr, MKC_ERR_EXCEEDS_STACK_SIZE, 0, NULL);
     return MKC_ERR_FAILURE;
   }
 
@@ -442,7 +442,7 @@ mkc_profile_pop (mkc_profile_t *profiles)
   }
 
   if (profiles->stacksz <= 0) {
-    mkc_error_set (profiles->mkcerr, MKC_ERR_OUT_OF_RANGE);
+    mkc_error_set (profiles->mkcerr, MKC_ERR_OUT_OF_RANGE, 0, NULL);
     return MKC_ERR_FAILURE;
   }
 
@@ -473,7 +473,7 @@ mkc_profile_set_active (mkc_profile_t *profiles, mkc_profidx_t pidx)
   }
 
   if (pidx < 0 || pidx >= mkc_list_size (profiles->list)) {
-    mkc_error_set (profiles->mkcerr, MKC_ERR_OUT_OF_RANGE);
+    mkc_error_set (profiles->mkcerr, MKC_ERR_OUT_OF_RANGE, 0, NULL);
     return;
   }
 
@@ -562,7 +562,7 @@ mkc_profile_next (mkc_profile_t *profiles, mkc_compiler_t origcompiler)
 
       switch (type) {
         case MKC_PROF_TYPE_INVALID: {
-          mkc_error_set (profiles->mkcerr, MKC_ERR_INVALID_PROFILE);
+          mkc_error_set (profiles->mkcerr, MKC_ERR_INVALID_PROFILE, 0, NULL);
           break;
         }
         case MKC_PROF_TYPE_LOCAL: {
@@ -713,7 +713,7 @@ mkc_profile_create_id (mkc_profile_t *profiles, const char *pname,
 
   tentry.name = strdup (pname);
   if (tentry.name == NULL) {
-    mkc_error_set (profiles->mkcerr, MKC_ERR_OUT_OF_MEMORY);
+    mkc_error_set (profiles->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
     return MKC_ERR_FAILURE;
   }
   tentry.compiler = compiler;

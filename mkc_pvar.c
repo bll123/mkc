@@ -39,7 +39,7 @@ mkc_pvar_init (mkc_profile_t *profiles, mkc_log_t *log, mkc_error_t *mkcerr)
 
   pvar = malloc (sizeof (mkc_pvar_t));
   if (pvar == NULL) {
-    mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY);
+    mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
     return NULL;
   }
 
@@ -243,7 +243,7 @@ mkc_pvar_get_by_profile (mkc_pvar_t *pvar, const char *nm)
     return NULL;
   }
   if (nm == NULL) {
-    mkc_error_set (pvar->mkcerr, MKC_ERR_NULL_ARGUMENT);
+    mkc_error_set (pvar->mkcerr, MKC_ERR_NULL_ARGUMENT, 0, NULL);
     return NULL;
   }
 
@@ -290,7 +290,7 @@ mkc_pvar_get_by_profidx (mkc_pvar_t *pvar, const char *nm, mkc_profidx_t pidx)
     return NULL;
   }
   if (nm == NULL) {
-    mkc_error_set (pvar->mkcerr, MKC_ERR_NULL_ARGUMENT);
+    mkc_error_set (pvar->mkcerr, MKC_ERR_NULL_ARGUMENT, 0, NULL);
     return NULL;
   }
 
@@ -443,7 +443,7 @@ mkc_pvar_value_get_integer (mkc_pvar_t *pvar, mkc_value_t *value)
   int32_t     ival = 0;
 
   if (value->vtype == MKC_VT_INVALID) {
-    mkc_error_set (pvar->mkcerr, MKC_ERR_INVALID_VALUE);
+    mkc_error_set (pvar->mkcerr, MKC_ERR_INVALID_VALUE, 0, NULL);
   } else if (value->vtype == MKC_VT_INTEGER) {
     ival = value->ival;
   } else if (value->vtype == MKC_VT_STATIC_STRING) {
@@ -457,7 +457,7 @@ mkc_pvar_value_get_integer (mkc_pvar_t *pvar, mkc_value_t *value)
     ival = atol (tbuff);
     free (tbuff);
   } else if (value->vtype == MKC_VT_LIST) {
-    mkc_error_set (pvar->mkcerr, MKC_ERR_MISMATCHED_ARGUMENT);
+    mkc_error_set (pvar->mkcerr, MKC_ERR_MISMATCHED_ARGUMENT, 0, NULL);
     return 0;
   } else if (value->vtype == MKC_VT_ENV_VARIABLE) {
     char    tbuff [MKC_PATH_MAX];
@@ -471,7 +471,7 @@ mkc_pvar_value_get_integer (mkc_pvar_t *pvar, mkc_value_t *value)
 //  these could be removed, and just generate an error.
     ival = atol (value->sval);
   } else {
-    mkc_error_set (pvar->mkcerr, MKC_ERR_UNHANDLED_VALUE);
+    mkc_error_set (pvar->mkcerr, MKC_ERR_UNHANDLED_VALUE, 0, NULL);
     fprintf (stderr, "ERR: unhandled value: %d\n", value->vtype);
   }
 
@@ -486,7 +486,7 @@ mkc_pvar_value_get_str (mkc_pvar_t *pvar,
   *buff = '\0';
 
   if (value->vtype == MKC_VT_INVALID) {
-    mkc_error_set (pvar->mkcerr, MKC_ERR_INVALID_VALUE);
+    mkc_error_set (pvar->mkcerr, MKC_ERR_INVALID_VALUE, 0, NULL);
   } else if (value->vtype == MKC_VT_INTEGER) {
     snprintf (buff, sz, "%d", value->ival);
   } else if (value->vtype == MKC_VT_STRING) {
@@ -500,13 +500,13 @@ mkc_pvar_value_get_str (mkc_pvar_t *pvar,
     stpecpy (buff, buff + sz, tbuff);
     free (tbuff);
   } else if (value->vtype == MKC_VT_LIST) {
-    mkc_error_set (pvar->mkcerr, MKC_ERR_MISMATCHED_ARGUMENT);
+    mkc_error_set (pvar->mkcerr, MKC_ERR_MISMATCHED_ARGUMENT, 0, NULL);
   } else if (value->vtype == MKC_VT_ENV_VARIABLE) {
     mkc_pvar_get_env_str (pvar, value->sval, buff, sz);
   } else if (value->vtype == MKC_VT_VARIABLE) {
     mkc_pvar_get_variable_str (pvar, value, buff, sz);
   } else {
-    mkc_error_set (pvar->mkcerr, MKC_ERR_UNHANDLED_VALUE);
+    mkc_error_set (pvar->mkcerr, MKC_ERR_UNHANDLED_VALUE, 0, NULL);
     fprintf (stderr, "ERR: unhandled value: %d\n", value->vtype);
   }
 
@@ -604,7 +604,7 @@ mkc_pvar_substitute (mkc_pvar_t *pvar, const char *data, int depth)
       }
 
       if (brpl == NULL) {
-        mkc_error_set (pvar->mkcerr, MKC_ERR_UNBALANCED_BRACES);
+        mkc_error_set (pvar->mkcerr, MKC_ERR_UNBALANCED_BRACES, 0, NULL);
         fprintf (stderr, "ERROR: unbalanced braces '%s'\n", data);
         return NULL;
       }

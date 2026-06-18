@@ -23,18 +23,26 @@
 #  include "mkc_def.h"
 #  include "mkc_fileop.h"
 #  include "mkc_list.h"
-#  include "mkc_parse.h"
 #  include "mkc_var.h"
 
   typedef void *mkcyyscan_t;
 
 #  define MKCYYPARSE_PARAM mkcyyscan_t scanner
 #  define MKCYYLEX_PARAM scanner
+  /* define YY_BUF_SIZE so that the definition */
+  /* from mkc_lex.h is not needed, and a consistent size is ensured */
+#  define YY_BUF_SIZE 32768
 }
 
 %code {
+  /* mkc_lex.h could be included, but it introduces a dependency loop */
+
+  void mkcyyerror (MKCYYLTYPE* mkcyyllocp, mkcyyscan_t unused, mkc_astmain_t *ast, const char* msg);
   int mkcyylex (MKCYYSTYPE* mkcyylvalp, MKCYYLTYPE* mkcyyllocp, mkcyyscan_t scanner);
-  void mkcyyerror (MKCYYLTYPE* mkcyyllocp, mkcyyscan_t unused, mkc_parse_t *parse, mkc_astmain_t *ast, const char* msg);
+  typedef struct yy_buffer_state *YY_BUFFER_STATE;
+  YY_BUFFER_STATE mkcyy_create_buffer ( FILE *file, int size , mkcyyscan_t yyscanner );
+  void mkcyypush_buffer_state ( YY_BUFFER_STATE new_buffer , mkcyyscan_t yyscanner );
+  void mkcyypop_buffer_state ( mkcyyscan_t yyscanner );
 }
 
 %union {
@@ -45,7 +53,7 @@
 }
 
 %lex-param {void *scanner}
-%parse-param {void *scanner} {mkc_parse_t *parse} {mkc_astmain_t* ast}
+%parse-param {void *scanner} {mkc_astmain_t* ast}
 
 %start mkc
 
@@ -546,7 +554,18 @@ loadcachestmt[v]:
 includestmt[v]:
     T_STMT_INCLUDE T_ID_PATH_NAME[a] T_SEMICOLON
     {
-      mkc_parse_file (parse, $a, yyloc.first_line, yyloc.first_column);
+      FILE            *fh;
+      YY_BUFFER_STATE tstate;
+      int             rc;
+
+      fh = mkc_fopen ($a, "r");
+      tstate = mkcyy_create_buffer (fh, YY_BUF_SIZE, scanner);
+      mkcyypush_buffer_state (tstate, scanner);
+      rc = mkcyyparse (scanner, ast);
+      mkcyypop_buffer_state (scanner);
+      if (rc != 0) {
+        YYABORT;
+      }
       $v = NULL;
     }
   ;
@@ -954,7 +973,7 @@ integer[v]:
 
 void
 mkcyyerror (MKCYYLTYPE* mkcyyllocp, mkcyyscan_t unused,
-    mkc_parse_t *parse, mkc_astmain_t *ast, const char* msg)
+    mkc_astmain_t *ast, const char* msg)
 {
   fprintf (stderr, "[%d:%d]: %s\n",
       mkcyyllocp->first_line, mkcyyllocp->first_column, msg);

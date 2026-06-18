@@ -45,7 +45,7 @@ mkc_varlist_init (mkc_log_t *log, mkc_error_t *mkcerr)
 
   varlist = malloc (sizeof (mkc_varlist_t));
   if (varlist == NULL) {
-    mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY);
+    mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
     return NULL;
   }
 
@@ -106,7 +106,7 @@ mkc_var_name_alloc (mkc_varlist_t *varlist, const char *vname)
     varlist->names = realloc (varlist->names,
         sizeof (char *) * varlist->name_allocsz);
     if (varlist->names == NULL) {
-      mkc_error_set (varlist->mkcerr, MKC_ERR_OUT_OF_MEMORY);
+      mkc_error_set (varlist->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
       return NULL;
     }
   }
@@ -114,7 +114,7 @@ mkc_var_name_alloc (mkc_varlist_t *varlist, const char *vname)
   idx = varlist->name_sz;
   varlist->names [idx] = strdup (vname);
   if (varlist->names [idx] == NULL) {
-    mkc_error_set (varlist->mkcerr, MKC_ERR_OUT_OF_MEMORY);
+    mkc_error_set (varlist->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
     return NULL;
   }
   varlist->name_sz += 1;
@@ -393,7 +393,7 @@ mkc_var_create (mkc_varlist_t *varlist,
   mkc_var_t     tvar;
 
   if (name == NULL) {
-    mkc_error_set (varlist->mkcerr, MKC_ERR_NULL_ARGUMENT);
+    mkc_error_set (varlist->mkcerr, MKC_ERR_NULL_ARGUMENT, 0, NULL);
     return NULL;
   }
 

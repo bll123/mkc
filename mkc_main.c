@@ -68,6 +68,7 @@ main (int argc, char *argv [])
   static struct option mkc_options [] = {
     { "compiler",       required_argument,  NULL,   3, },
     { "no-cache",       no_argument,        NULL,   1, },
+    { "retest",         no_argument,        NULL,   4, },
     { "parsedebug",     no_argument,        NULL,   2 },
     { "profile",        required_argument,  NULL,   'p' },
     { NULL,             no_argument,        NULL,   0 },
@@ -134,8 +135,7 @@ main (int argc, char *argv [])
   if (fnidx < argcopy.nargc) {
     fh = mkc_fopen (argcopy.utf8argv [fnidx], "r");
     if (fh == NULL) {
-      fprintf (stderr, "%s: %s\n", argcopy.utf8argv [fnidx], strerror (errno));
-      mkc_error_set (mkcerr, MKC_ERR_FILE_NOT_FOUND);
+      mkc_error_set (mkcerr, MKC_ERR_FILE_NOT_FOUND, errno, argcopy.utf8argv [fnidx]);
       rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
       return rc;
     }
@@ -190,12 +190,10 @@ main (int argc, char *argv [])
   mkc_log (log, MKC_LOG_STATISTICS, "-- parse: %s\n", tbuff);
   mstimestart (&proctm);
 
-fprintf (stderr, "main: parse: rc: %d\n", rc);
   if (rc == 0) {
     rc = mkc_ast_start (astmain);
-fprintf (stderr, "main: ast: rc: %d\n", rc);
   } else {
-    mkc_error_set (mkcerr, MKC_ERR_PARSE_FAILURE);
+    mkc_error_set (mkcerr, MKC_ERR_PARSE_FAILURE, 0, NULL);
   }
 
   mkc_parse_free (parse);

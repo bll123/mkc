@@ -18,6 +18,7 @@
 #include <unistd.h>
 #include <limits.h>
 #include <wchar.h>
+#include <errno.h>
 
 #if __has_include (<windows.h>)
 # define WIN32_LEAN_AND_MEAN 1
@@ -146,23 +147,23 @@ mkc_read_file (const char *fn, size_t *sz, mkc_error_t *mkcerr)
   *sz = 0;
   fsz = mkc_file_size (fn);
   if (fsz < 0) {
-    mkc_error_set (mkcerr, MKC_ERR_FILE_NOT_FOUND);
+    mkc_error_set (mkcerr, MKC_ERR_FILE_NOT_FOUND, errno, fn);
     return NULL;
   }
 
   fdata = malloc (fsz + 1);
   if (fdata == NULL) {
-    mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY);
+    mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
     return NULL;
   }
 
   fh = mkc_fopen (fn, "rb");
   if (fh == NULL) {
-    mkc_error_set (mkcerr, MKC_ERR_FILE_NOT_FOUND);
+    mkc_error_set (mkcerr, MKC_ERR_FILE_NOT_FOUND, errno, fn);
   } else {
     rc = fread (fdata, fsz, 1, fh);
     if (rc != 1) {
-      mkc_error_set (mkcerr, MKC_ERR_FILE_READ_ERROR);
+      mkc_error_set (mkcerr, MKC_ERR_FILE_READ_ERROR, errno, fn);
     }
   }
   fclose (fh);
@@ -170,6 +171,7 @@ mkc_read_file (const char *fn, size_t *sz, mkc_error_t *mkcerr)
   if (rc != 1 && fdata != NULL) {
     free (fdata);
     fdata = NULL;
+    fsz = 0;
   }
 
   *sz = fsz;

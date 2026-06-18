@@ -18,6 +18,8 @@
 }
 
 %option prefix="mkcyy"
+%option align
+%option ecs
 %option noinput nounput noyywrap nodefault
 %option reentrant bison-bridge bison-locations
 %option yylineno

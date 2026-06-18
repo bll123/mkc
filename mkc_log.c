@@ -9,6 +9,7 @@
 #include <inttypes.h>
 #include <stdarg.h>
 #include <string.h>
+#include <errno.h>
 
 #include "mkc_error.h"
 #include "mkc_fileop.h"
@@ -28,7 +29,7 @@ mkc_log_init (mkc_error_t *mkcerr)
 
   log = malloc (sizeof (mkc_log_t));
   if (log == NULL) {
-    mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY);
+    mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
     return NULL;
   }
 
@@ -46,19 +47,19 @@ mkc_log_open (mkc_log_t *log, const char *fname, int32_t logflag)
     return;
   }
   if (fname == NULL) {
-    mkc_error_set (log->mkcerr, MKC_ERR_NULL_ARGUMENT);
+    mkc_error_set (log->mkcerr, MKC_ERR_NULL_ARGUMENT, 0, NULL);
     return;
   }
 
   log->fname = strdup (fname);
   if (log->fname == NULL) {
-    mkc_error_set (log->mkcerr, MKC_ERR_OUT_OF_MEMORY);
+    mkc_error_set (log->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
     return;
   }
 
   log->fh = mkc_fopen (fname, "w");
   if (log->fh == NULL) {
-    mkc_error_set (log->mkcerr, MKC_ERR_FILE_NOT_FOUND);
+    mkc_error_set (log->mkcerr, MKC_ERR_FILE_NOT_FOUND, errno, fname);
   }
 
   log->logflag = logflag;

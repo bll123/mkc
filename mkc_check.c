@@ -62,7 +62,7 @@ mkc_check_init (mkc_profile_t *profiles, mkc_pvar_t *pvar,
   check->cfallocsz = 10;
   check->cf = malloc (check->cfallocsz * sizeof (char *));
   if (check->cf == NULL) {
-    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY);
+    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
   }
 
   check->lf = NULL;
@@ -70,7 +70,7 @@ mkc_check_init (mkc_profile_t *profiles, mkc_pvar_t *pvar,
   check->lfallocsz = 10;
   check->lf = malloc (check->lfallocsz * sizeof (char *));
   if (check->lf == NULL) {
-    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY);
+    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
   }
 
   check->targv = NULL;
@@ -78,7 +78,7 @@ mkc_check_init (mkc_profile_t *profiles, mkc_pvar_t *pvar,
   check->targvallocsz = 10;
   check->targv = malloc (check->targvallocsz * sizeof (const char *));
   if (check->targv == NULL) {
-    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY);
+    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
   }
   mkc_chk_reset (check);
 
@@ -153,7 +153,7 @@ mkc_chk_compiler_works (mkc_check_t *check, mkc_compiler_t compiler)
   mkc_chk_append_comp_flag (check, "-Wno-deprecated");
 
   mkc_log (check->log, MKC_LOG_CHECK, "  == chk: compiler-works\n");
-  rc = mkc_compile_only (check, compiler, "int-main", NULL);
+  rc = mkc_compile_only (check, compiler, "int-main", NULL, NULL, 0);
   mkc_chk_reset (check);
   return rc;
 }
@@ -195,7 +195,7 @@ mkc_chk_append_comp_flag (mkc_check_t *check, const char *flag)
     check->cfallocsz += 10;
     check->cf = realloc (check->cf, check->cfallocsz * sizeof (char *));
     if (check->cf == NULL) {
-      mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY);
+      mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
       return;
     }
   }
@@ -215,7 +215,7 @@ mkc_chk_append_link_flag (mkc_check_t *check, const char *flag)
     check->lfallocsz += 10;
     check->lf = realloc (check->lf, check->lfallocsz * sizeof (char *));
     if (check->lf == NULL) {
-      mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY);
+      mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
       return;
     }
   }
@@ -230,7 +230,7 @@ mkc_chk_header_modern (mkc_check_t *check, mkc_compiler_t compiler)
   int         rc;
 
   mkc_log (check->log, MKC_LOG_CHECK, "  == chk: header-modern\n");
-  rc = mkc_compile_only (check, compiler, "int-header-modern", NULL);
+  rc = mkc_compile_only (check, compiler, "int-header-modern", NULL, NULL, 0);
   mkc_chk_reset (check);
   return rc;
 }
@@ -265,7 +265,7 @@ mkc_chk_variadic_macro (mkc_check_t *check, mkc_compiler_t compiler)
   int         rc;
 
   mkc_log (check->log, MKC_LOG_CHECK, "  == chk: variadic-macro\n");
-  rc = mkc_compile_only (check, compiler, "int-variadic-macro", NULL);
+  rc = mkc_compile_only (check, compiler, "int-variadic-macro", NULL, NULL, 0);
   mkc_chk_reset (check);
   return rc;
 }
@@ -305,9 +305,18 @@ mkc_chk_compiler_flag (mkc_check_t *check,
 {
   int               rc;
   char              tbuff [100];
-  char              rbuff [400];
+  char              *rbuff;
+  size_t            rsz;
   static const char *negprefix = "-Wno-";
   static size_t     neglen = 5;
+
+  rsz = 16384;
+  rbuff = malloc (rsz);
+  if (rbuff == NULL) {
+    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return MKC_ERR_FAILURE;
+  }
+  *rbuff = '\0';
 
   mkc_log (check->log, MKC_LOG_CHECK, "== chk: compiler-flag: %s\n", flag);
   stpecpy (tbuff, tbuff + sizeof (tbuff), flag);
@@ -321,7 +330,7 @@ mkc_chk_compiler_flag (mkc_check_t *check,
   }
 
   mkc_chk_append_comp_flag (check, tbuff);
-  rc = mkc_compile_only (check, compiler, "int-main", NULL);
+  rc = mkc_compile_only (check, compiler, "int-main", NULL, rbuff, rsz);
   if (rc == 0) {
     /* clang does not return an error code on a unknown warning */
     if (strstr (rbuff, "warning") != NULL) {
@@ -329,6 +338,8 @@ mkc_chk_compiler_flag (mkc_check_t *check,
     }
   }
   mkc_chk_reset (check);
+
+  free (rbuff);
   return rc;
 }
 
@@ -399,7 +410,7 @@ mkc_chk_type (mkc_check_t *check,
 
   mkc_pvar_profile_set_idx (check->pvar, opidx);
 
-  rc = mkc_compile_only (check, compiler, "c-type", NULL);
+  rc = mkc_compile_only (check, compiler, "c-type", NULL, NULL, 0);
   mkc_chk_reset (check);
   return rc;
 }
@@ -424,7 +435,7 @@ mkc_chk_struct_member (mkc_check_t *check,
 
   mkc_pvar_profile_set_idx (check->pvar, opidx);
 
-  rc = mkc_compile_only (check, compiler, "c-struct-member", NULL);
+  rc = mkc_compile_only (check, compiler, "c-struct-member", NULL, NULL, 0);
   mkc_chk_reset (check);
   return rc;
 }
@@ -456,15 +467,25 @@ mkc_chk_function (mkc_check_t *check, mkc_compiler_t compiler,
 
 int
 mkc_compile_only (mkc_check_t *check, mkc_compiler_t compiler,
-    const char *fname, const char *incpath)
+    const char *fname, const char *incpath, char *rbuff, size_t rsz)
 {
   int         rc;
   char        tbuff [MKC_PATH_MAX];
-  char        *rbuff;
-  size_t      rsz = 4000;
   size_t      retsz;
   const char  *sfx = NULL;
   char        compstr [MKC_PATH_MAX];
+  bool        rallocated = false;
+
+  if (rbuff == NULL) {
+    rsz = 16384;
+    rbuff = malloc (rsz);
+    if (rbuff == NULL) {
+      mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+      return MKC_ERR_FAILURE;
+    }
+    *rbuff = '\0';
+    rallocated = true;
+  }
 
   mkc_check_get_compstr (check, compiler, compstr, sizeof (compstr));
   sfx = mkc_compiler_get_suffix (compiler);
@@ -485,16 +506,13 @@ mkc_compile_only (mkc_check_t *check, mkc_compiler_t compiler,
   mkc_check_append_arg (check, tbuff);
   mkc_check_append_arg (check, NULL);
   if (mkc_error_chk_err (check->mkcerr)) {
+    if (rallocated) {
+      free (rbuff);
+    }
     return MKC_ERR_FAILURE;
   }
 
   mkc_check_log_command (check, "comp-only");
-
-  rbuff = malloc (rsz);
-  if (rbuff == NULL) {
-    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY);
-    return MKC_ERR_FAILURE;
-  }
 
   rc = mkc_os_process_pipe (check->targv,
       OS_PROC_WAIT | OS_PROC_NOWINDOW, rbuff, rsz, &retsz);
@@ -511,8 +529,9 @@ mkc_compile_only (mkc_check_t *check, mkc_compiler_t compiler,
     rc = - rc;
   }
 
-  free (rbuff);
-
+  if (rallocated) {
+    free (rbuff);
+  }
   return rc;
 }
 
@@ -526,11 +545,25 @@ mkc_compile_link (mkc_check_t *check, mkc_compiler_t compiler,
   bool        rallocated = false;
   char        compstr [MKC_PATH_MAX];
 
-  rc = mkc_compile_only (check, compiler, fname, incpath);
+  if (rbuff == NULL) {
+    rsz = 16384;
+    rbuff = malloc (rsz);
+    if (rbuff == NULL) {
+      mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+      return MKC_ERR_FAILURE;
+    }
+    *rbuff = '\0';
+    rallocated = true;
+  }
+
+  rc = mkc_compile_only (check, compiler, fname, incpath, rbuff, rsz);
   if (rc > 0) {
     rc = - rc;
   }
   if (rc != 0) {
+    if (rallocated) {
+      free (rbuff);
+    }
     return rc;
   }
 
@@ -546,20 +579,13 @@ mkc_compile_link (mkc_check_t *check, mkc_compiler_t compiler,
   }
   mkc_check_append_arg (check, NULL);
   if (mkc_error_chk_err (check->mkcerr)) {
+    if (rallocated) {
+      free (rbuff);
+    }
     return MKC_ERR_FAILURE;
   }
 
   mkc_check_log_command (check, "link");
-
-  if (rbuff == NULL) {
-    rsz = 4000;
-    rbuff = malloc (rsz);
-    if (rbuff == NULL) {
-      mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY);
-      return MKC_ERR_FAILURE;
-    }
-    rallocated = true;
-  }
 
   rc = mkc_os_process_pipe (check->targv,
       OS_PROC_WAIT | OS_PROC_NOWINDOW, rbuff, rsz, &retsz);
@@ -612,7 +638,7 @@ mkc_compile_run (mkc_check_t *check,
     rsz = 4000;
     rbuff = malloc (rsz);
     if (rbuff == NULL) {
-      mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY);
+      mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
       return MKC_ERR_FAILURE;
     }
     rallocated = true;
@@ -710,7 +736,7 @@ mkc_check_append_arg (mkc_check_t *check, const char *arg)
     check->targv = realloc (check->targv,
         check->targvallocsz * sizeof (const char *));
     if (check->targv == NULL) {
-      mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY);
+      mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
       return;
     }
   }

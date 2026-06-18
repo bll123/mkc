@@ -1281,8 +1281,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
           if ((*listnode)->asttype == MKC_T_LOOP_CONTINUE ||
               (*listnode)->asttype == MKC_T_LOOP_BREAK) {
             if (! mkc_context_check (astmain->context, MKC_CONTEXT_LOOP)) {
-fprintf (stderr, "brk/cont not loop\n");
-              mkc_error_set (astmain->mkcerr, MKC_ERR_STMT_NOT_ALLOWED);
+              mkc_error_set (astmain->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
               break;
             }
 
@@ -1461,7 +1460,7 @@ fprintf (stderr, "brk/cont not loop\n");
       }
       mkc_context_pop (astmain->context);
       if (count >= limit) {
-        mkc_error_set (astmain->mkcerr, MKC_ERR_WHILE_LIMIT_EXCEEDED);
+        mkc_error_set (astmain->mkcerr, MKC_ERR_WHILE_LIMIT_EXCEEDED, 0, NULL);
       }
       break;
     }
@@ -1518,8 +1517,7 @@ fprintf (stderr, "brk/cont not loop\n");
 
       if (! mkc_context_check (astmain->context,
           MKC_CONTEXT_CHECK | MKC_CONTEXT_PROJECT)) {
-fprintf (stderr, "name\n");
-        mkc_error_set (astmain->mkcerr, MKC_ERR_STMT_NOT_ALLOWED);
+        mkc_error_set (astmain->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
         break;
       }
 
@@ -1535,8 +1533,7 @@ fprintf (stderr, "name\n");
       mkc_value_t   *val;
 
       if (! mkc_context_check (astmain->context, MKC_CONTEXT_CHECK)) {
-fprintf (stderr, "hdr\n");
-        mkc_error_set (astmain->mkcerr, MKC_ERR_STMT_NOT_ALLOWED);
+        mkc_error_set (astmain->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
         break;
       }
 
@@ -1552,8 +1549,7 @@ fprintf (stderr, "hdr\n");
       mkc_value_t   *val;
 
       if (! mkc_context_check (astmain->context, MKC_CONTEXT_CHECK)) {
-fprintf (stderr, "comp-f\n");
-        mkc_error_set (astmain->mkcerr, MKC_ERR_STMT_NOT_ALLOWED);
+        mkc_error_set (astmain->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
         break;
       }
 
@@ -1569,8 +1565,7 @@ fprintf (stderr, "comp-f\n");
       mkc_value_t   *val;
 
       if (! mkc_context_check (astmain->context, MKC_CONTEXT_CHECK)) {
-fprintf (stderr, "link-f\n");
-        mkc_error_set (astmain->mkcerr, MKC_ERR_STMT_NOT_ALLOWED);
+        mkc_error_set (astmain->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
         break;
       }
 
@@ -1586,8 +1581,7 @@ fprintf (stderr, "link-f\n");
       mkc_value_t   *method;
 
       if (! mkc_context_check (astmain->context, MKC_CONTEXT_CONFIGURE)) {
-fprintf (stderr, "method\n");
-        mkc_error_set (astmain->mkcerr, MKC_ERR_STMT_NOT_ALLOWED);
+        mkc_error_set (astmain->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
         break;
       }
 
@@ -1603,8 +1597,7 @@ fprintf (stderr, "method\n");
       mkc_value_t   *name;
 
       if (! mkc_context_check (astmain->context, MKC_CONTEXT_CONFIGURE)) {
-fprintf (stderr, "input\n");
-        mkc_error_set (astmain->mkcerr, MKC_ERR_STMT_NOT_ALLOWED);
+        mkc_error_set (astmain->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
         break;
       }
 
@@ -1620,8 +1613,7 @@ fprintf (stderr, "input\n");
       mkc_value_t   *name;
 
       if (! mkc_context_check (astmain->context, MKC_CONTEXT_CONFIGURE)) {
-fprintf (stderr, "output\n");
-        mkc_error_set (astmain->mkcerr, MKC_ERR_STMT_NOT_ALLOWED);
+        mkc_error_set (astmain->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
         break;
       }
 
@@ -1637,8 +1629,7 @@ fprintf (stderr, "output\n");
       mkc_value_t   *name;
 
       if (! mkc_context_check (astmain->context, MKC_CONTEXT_PROJECT)) {
-fprintf (stderr, "comp\n");
-        mkc_error_set (astmain->mkcerr, MKC_ERR_STMT_NOT_ALLOWED);
+        mkc_error_set (astmain->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
         break;
       }
 
@@ -1855,7 +1846,7 @@ fprintf (stderr, "comp\n");
     case MKC_T_OP_UNARY_PLUS: {
       mkc_ast_process (astmain, astnode->unary_op.vala, ifcond, loopcond, depth);
       if (astmain->value.vtype != MKC_VT_INTEGER) {
-        mkc_error_set (astmain->mkcerr, MKC_ERR_MISMATCHED_ARGUMENT);
+        mkc_error_set (astmain->mkcerr, MKC_ERR_MISMATCHED_ARGUMENT, 0, NULL);
         break;
       }
       astmain->value.ival = mkc_process_unary_op (astmain->process, astnode->asttype, &astmain->value);
@@ -1864,7 +1855,7 @@ fprintf (stderr, "comp\n");
     }
 
     default: {
-      mkc_error_set (astmain->mkcerr, MKC_ERR_UNHANDLED_VALUE);
+      mkc_error_set (astmain->mkcerr, MKC_ERR_UNHANDLED_VALUE, 0, NULL);
       fprintf (stderr, "unhandled value %s\n", typenames [astnode->asttype]);
       break;
     }
@@ -1950,7 +1941,7 @@ mkc_ast_get_value (mkc_astmain_t *astmain, mkc_astnode_t *astnode)
   }
 
   if (astnode->asttype != MKC_T_VALUE) {
-    mkc_error_set (astmain->mkcerr, MKC_ERR_PARSE_FAILURE);
+    mkc_error_set (astmain->mkcerr, MKC_ERR_PARSE_FAILURE, 0, NULL);
     return NULL;
   }
   if (astnode->asttype == MKC_T_VALUE) {

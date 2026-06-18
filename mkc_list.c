@@ -37,13 +37,13 @@ mkc_list_init (mkc_list_type_t type, mkc_list_free_t freefunc,
   mkc_list_t  *list;
 
   if (type == MKC_LIST_SORTED && compare == NULL) {
-    mkc_error_set (mkcerr, MKC_ERR_NULL_ARGUMENT);
+    mkc_error_set (mkcerr, MKC_ERR_NULL_ARGUMENT, 0, NULL);
     return NULL;
   }
 
   list = malloc (sizeof (mkc_list_t));
   if (list == NULL) {
-    mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY);
+    mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
     return NULL;
   }
 
@@ -191,7 +191,7 @@ mkc_list_append (mkc_list_t *list, void *data, size_t sz, mkc_listidx_t *loc)
     list->allocsz += 10;
     list->data = realloc (list->data, list->itemsz * list->allocsz);
     if (list->data == NULL) {
-      mkc_error_set (list->mkcerr, MKC_ERR_OUT_OF_MEMORY);
+      mkc_error_set (list->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
       return NULL;
     }
   }
@@ -230,7 +230,7 @@ mkc_list_find (mkc_list_t *list, void *data, mkc_listidx_t *loc)
   }
 
   if (list->type == MKC_LIST_UNSORTED) {
-    mkc_error_set (list->mkcerr, MKC_ERR_SEARCH_UNSORTED_LIST);
+    mkc_error_set (list->mkcerr, MKC_ERR_SEARCH_UNSORTED_LIST, 0, NULL);
     fprintf (stderr, "ERROR: searching an unsorted list\n");
     return *loc;
   }
@@ -255,7 +255,7 @@ mkc_list_get_by_idx (mkc_list_t *list, mkc_listidx_t idx)
   }
 
   if (idx < 0 || idx >= list->sz) {
-    mkc_error_set (list->mkcerr, MKC_ERR_OUT_OF_RANGE);
+    mkc_error_set (list->mkcerr, MKC_ERR_OUT_OF_RANGE, 0, NULL);
     return NULL;
   }
 

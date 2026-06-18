@@ -1,22 +1,22 @@
 
-set a 1;
+set a 5;
 include tests/data/300-include.mkc;
-set b 2;
+set b 6;
 
-if (${a} == 1) {
-  print '  ok 1';
+if (${a} == 5) {
+  print '  ok 5';
 } else {
-  print '  fail 1';
+  print '  fail 5';
 }
 
-if (${b} == 2) {
-  print '  ok 2';
+if (${b} == 6) {
+  print '  ok 6';
 } else {
-  print '  fail 2';
+  print '  fail 6';
 }
 
-if (${c} == 3) {
-  print '  ok 3';
+if (${c} == 7) {
+  print '  ok 7';
 } else {
-  print '  fail 3';
+  print '  fail 7';
 }

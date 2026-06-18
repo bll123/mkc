@@ -45,7 +45,7 @@ int mkc_chk_type (mkc_check_t *check, mkc_compiler_t compiler, const char *type)
 int mkc_chk_struct_member (mkc_check_t *check, mkc_compiler_t compiler, const char *structname, const char *membername);
 int mkc_chk_function (mkc_check_t *check, mkc_compiler_t compiler, const char *funcname);
 
-int mkc_compile_only (mkc_check_t *check, mkc_compiler_t compiler, const char *fname, const char *incpath);
+int mkc_compile_only (mkc_check_t *check, mkc_compiler_t compiler, const char *fname, const char *incpath, char *rbuff, size_t rsz);
 int mkc_compile_link (mkc_check_t *check, mkc_compiler_t compiler, const char *fname, const char *incpath, char *rbuff, size_t rsz);
 int mkc_compile_run (mkc_check_t *check, mkc_compiler_t compiler, const char *fname, const char *incpath, char *rbuff, size_t rsz);
 

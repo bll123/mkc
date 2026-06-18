@@ -21,6 +21,7 @@ typedef enum {
   MKC_ERR_EXCEEDS_STACK_SIZE,
   MKC_ERR_FILE_NOT_FOUND,
   MKC_ERR_FILE_READ_ERROR,
+  MKC_ERR_FILE_WRITE_ERROR,
   MKC_ERR_INVALID_ARGUMENT,
   MKC_ERR_INVALID_OP,
   MKC_ERR_INVALID_PROFILE,
@@ -47,7 +48,7 @@ typedef struct mkc_error_t mkc_error_t;
 
 mkc_error_t *mkc_error_init (void);
 void mkc_error_free (mkc_error_t *mkcerr);
-void mkc_error_set (mkc_error_t *mkcerr, mkc_err_code_t err);
+void mkc_error_set (mkc_error_t *mkcerr, mkc_err_code_t err, int32_t syserr, const char *str);
 void mkc_error_set_line_col (mkc_error_t *mkcerr, int32_t lineno, int colno);
 bool mkc_error_chk_err (mkc_error_t *mkcerr);
 bool mkc_error_chk_ok (mkc_error_t *mkcerr);

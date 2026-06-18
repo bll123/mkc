@@ -31,7 +31,7 @@ mkc_parse_init (mkc_astmain_t *astmain, mkc_log_t *log,
 
   parse = malloc (sizeof (mkc_parse_t));
   if (parse == NULL) {
-    mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY);
+    mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
     return NULL;
   }
   parse->astmain = astmain;
@@ -74,7 +74,7 @@ mkc_parse_file (mkc_parse_t *parse, const char *fn, int32_t lineno, int colno)
     return MKC_ERR_FAILURE;
   }
   if (fn == NULL) {
-    mkc_error_set (parse->mkcerr, MKC_ERR_NULL_ARGUMENT);
+    mkc_error_set (parse->mkcerr, MKC_ERR_NULL_ARGUMENT, 0, NULL);
     return MKC_ERR_FAILURE;
   }
 
@@ -98,18 +98,18 @@ mkc_parse (mkc_parse_t *parse, FILE *fh)
     return MKC_ERR_FAILURE;
   }
   if (fh == NULL) {
-    mkc_error_set (parse->mkcerr, MKC_ERR_NULL_ARGUMENT);
+    mkc_error_set (parse->mkcerr, MKC_ERR_NULL_ARGUMENT, 0, NULL);
     return MKC_ERR_FAILURE;
   }
 
   parse->state = mkcyy_create_buffer (fh, YY_BUF_SIZE, parse->scanner);
   mkcyypush_buffer_state (parse->state, parse->scanner);
-  rc = mkcyyparse (parse->scanner, parse, parse->astmain);
+  rc = mkcyyparse (parse->scanner, parse->astmain);
   if (rc == 1) {
-    mkc_error_set (parse->mkcerr, MKC_ERR_PARSE_FAILURE);
+    mkc_error_set (parse->mkcerr, MKC_ERR_PARSE_FAILURE, 0, NULL);
   }
   if (rc == 2) {
-    mkc_error_set (parse->mkcerr, MKC_ERR_OUT_OF_MEMORY);
+    mkc_error_set (parse->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
   }
   mkcyypop_buffer_state (parse->scanner);
 
