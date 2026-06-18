@@ -13,26 +13,28 @@
 %locations
 
 %code requires {
-  #include <stdio.h>
-  #include <stdint.h>
-  #include <stdbool.h>
-  #include <stdlib.h>
-  #include <string.h>
+#  include <stdio.h>
+#  include <stdint.h>
+#  include <stdbool.h>
+#  include <stdlib.h>
+#  include <string.h>
 
-  #include "mkc_ast.h"
-  #include "mkc_def.h"
-  #include "mkc_list.h"
-  #include "mkc_var.h"
+#  include "mkc_ast.h"
+#  include "mkc_def.h"
+#  include "mkc_fileop.h"
+#  include "mkc_list.h"
+#  include "mkc_parse.h"
+#  include "mkc_var.h"
 
   typedef void *mkcyyscan_t;
 
-  #define MKCYYPARSE_PARAM mkcyyscan_t scanner
-  #define MKCYYLEX_PARAM scanner
+#  define MKCYYPARSE_PARAM mkcyyscan_t scanner
+#  define MKCYYLEX_PARAM scanner
 }
 
 %code {
   int mkcyylex (MKCYYSTYPE* mkcyylvalp, MKCYYLTYPE* mkcyyllocp, mkcyyscan_t scanner);
-  void mkcyyerror (MKCYYLTYPE* mkcyyllocp, mkcyyscan_t unused, mkc_astmain_t *ast, const char* msg);
+  void mkcyyerror (MKCYYLTYPE* mkcyyllocp, mkcyyscan_t unused, mkc_parse_t *parse, mkc_astmain_t *ast, const char* msg);
 }
 
 %union {
@@ -43,7 +45,7 @@
 }
 
 %lex-param {void *scanner}
-%parse-param {void *scanner} {mkc_astmain_t* ast}
+%parse-param {void *scanner} {mkc_parse_t *parse} {mkc_astmain_t* ast}
 
 %start mkc
 
@@ -101,6 +103,7 @@
 // directives
 %token T_STMT_CONFIGURE       "configure"
 %token T_STMT_DEBUG           "mkcdebug"
+%token T_STMT_INCLUDE         "include"
 %token T_STMT_LOADCACHE       "load_cache"
 %token T_STMT_PROJECT         "project"
 
@@ -152,6 +155,7 @@
 %type <astnode> foreachstmt whilestmt function loopcontrol
 // commands
 %type <astnode> printstmt setstmt configurestmt projectstmt loadcachestmt
+%type <astnode> includestmt
 // checks
 %type <astnode> checkcommand chkcompflag chklinkflag
 %type <astnode> chksize chktype chkstructmember
@@ -225,6 +229,10 @@ stmt[v]:
       $v = $a;
     }
   | loadcachestmt[a]
+    {
+      $v = $a;
+    }
+  | includestmt[a]
     {
       $v = $a;
     }
@@ -530,6 +538,16 @@ loadcachestmt[v]:
     {
       $v = mkc_ast_mk_loadcache (ast, $a,
           yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+// ### this should be: pathname...
+// ### would need to extract the path from the value.
+includestmt[v]:
+    T_STMT_INCLUDE T_ID_PATH_NAME[a] T_SEMICOLON
+    {
+      mkc_parse_file (parse, $a, yyloc.first_line, yyloc.first_column);
+      $v = NULL;
     }
   ;
 
@@ -936,7 +954,7 @@ integer[v]:
 
 void
 mkcyyerror (MKCYYLTYPE* mkcyyllocp, mkcyyscan_t unused,
-    mkc_astmain_t *ast, const char* msg)
+    mkc_parse_t *parse, mkc_astmain_t *ast, const char* msg)
 {
   fprintf (stderr, "[%d:%d]: %s\n",
       mkcyyllocp->first_line, mkcyyllocp->first_column, msg);

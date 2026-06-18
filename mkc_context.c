@@ -54,7 +54,7 @@ mkc_context_push (mkc_context_t *context, mkc_ctxt_val_t ctxtval,
     mkc_error_t *mkcerr)
 {
   if (context == NULL) {
-    mkc_error_set (mkcerr, MKC_ERR_INVALID_ARGUMENT);
+    mkc_error_set (mkcerr, MKC_ERR_NULL_ARGUMENT);
     return;
   }
 

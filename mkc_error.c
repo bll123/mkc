@@ -23,6 +23,7 @@ static const char * const mkcerrormsg [] = {
   [MKC_ERR_INVALID_PROFILE] = "invalid profile",
   [MKC_ERR_INVALID_VALUE] = "invalid value",
   [MKC_ERR_MISMATCHED_ARGUMENT] = "mismatched argument",
+  [MKC_ERR_NULL_ARGUMENT] = "null argument",
   [MKC_ERR_OUT_OF_MEMORY] = "out of memory",
   [MKC_ERR_OUT_OF_RANGE] = "out of range",
   [MKC_ERR_PARSE_FAILURE] = "parse failure",

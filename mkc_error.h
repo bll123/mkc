@@ -5,6 +5,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <stddef.h>
 #include <stdbool.h>
 
 #if defined (__cplusplus) || defined (c_plusplus)
@@ -25,6 +26,7 @@ typedef enum {
   MKC_ERR_INVALID_PROFILE,
   MKC_ERR_INVALID_VALUE,
   MKC_ERR_MISMATCHED_ARGUMENT,
+  MKC_ERR_NULL_ARGUMENT,
   MKC_ERR_OUT_OF_MEMORY,
   MKC_ERR_OUT_OF_RANGE,
   MKC_ERR_PARSE_FAILURE,

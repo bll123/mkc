@@ -1281,6 +1281,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
           if ((*listnode)->asttype == MKC_T_LOOP_CONTINUE ||
               (*listnode)->asttype == MKC_T_LOOP_BREAK) {
             if (! mkc_context_check (astmain->context, MKC_CONTEXT_LOOP)) {
+fprintf (stderr, "brk/cont not loop\n");
               mkc_error_set (astmain->mkcerr, MKC_ERR_STMT_NOT_ALLOWED);
               break;
             }
@@ -1517,6 +1518,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
 
       if (! mkc_context_check (astmain->context,
           MKC_CONTEXT_CHECK | MKC_CONTEXT_PROJECT)) {
+fprintf (stderr, "name\n");
         mkc_error_set (astmain->mkcerr, MKC_ERR_STMT_NOT_ALLOWED);
         break;
       }
@@ -1533,6 +1535,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       mkc_value_t   *val;
 
       if (! mkc_context_check (astmain->context, MKC_CONTEXT_CHECK)) {
+fprintf (stderr, "hdr\n");
         mkc_error_set (astmain->mkcerr, MKC_ERR_STMT_NOT_ALLOWED);
         break;
       }
@@ -1549,6 +1552,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       mkc_value_t   *val;
 
       if (! mkc_context_check (astmain->context, MKC_CONTEXT_CHECK)) {
+fprintf (stderr, "comp-f\n");
         mkc_error_set (astmain->mkcerr, MKC_ERR_STMT_NOT_ALLOWED);
         break;
       }
@@ -1565,6 +1569,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       mkc_value_t   *val;
 
       if (! mkc_context_check (astmain->context, MKC_CONTEXT_CHECK)) {
+fprintf (stderr, "link-f\n");
         mkc_error_set (astmain->mkcerr, MKC_ERR_STMT_NOT_ALLOWED);
         break;
       }
@@ -1581,6 +1586,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       mkc_value_t   *method;
 
       if (! mkc_context_check (astmain->context, MKC_CONTEXT_CONFIGURE)) {
+fprintf (stderr, "method\n");
         mkc_error_set (astmain->mkcerr, MKC_ERR_STMT_NOT_ALLOWED);
         break;
       }
@@ -1597,6 +1603,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       mkc_value_t   *name;
 
       if (! mkc_context_check (astmain->context, MKC_CONTEXT_CONFIGURE)) {
+fprintf (stderr, "input\n");
         mkc_error_set (astmain->mkcerr, MKC_ERR_STMT_NOT_ALLOWED);
         break;
       }
@@ -1613,6 +1620,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       mkc_value_t   *name;
 
       if (! mkc_context_check (astmain->context, MKC_CONTEXT_CONFIGURE)) {
+fprintf (stderr, "output\n");
         mkc_error_set (astmain->mkcerr, MKC_ERR_STMT_NOT_ALLOWED);
         break;
       }
@@ -1629,6 +1637,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       mkc_value_t   *name;
 
       if (! mkc_context_check (astmain->context, MKC_CONTEXT_PROJECT)) {
+fprintf (stderr, "comp\n");
         mkc_error_set (astmain->mkcerr, MKC_ERR_STMT_NOT_ALLOWED);
         break;
       }

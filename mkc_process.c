@@ -386,7 +386,7 @@ mkc_process_stmt_print (mkc_process_t *process, mkc_value_t *value, int depth)
     return;
   }
   if (value == NULL) {
-    mkc_error_set (process->mkcerr, MKC_ERR_INVALID_ARGUMENT);
+    mkc_error_set (process->mkcerr, MKC_ERR_NULL_ARGUMENT);
     return;
   }
 
@@ -567,7 +567,7 @@ mkc_process_stmt_set (mkc_process_t *process,
     return MKC_OK;
   }
   if (valnm == NULL) {
-    mkc_error_set (process->mkcerr, MKC_ERR_INVALID_ARGUMENT);
+    mkc_error_set (process->mkcerr, MKC_ERR_NULL_ARGUMENT);
     return MKC_OK;
   }
 
@@ -1055,7 +1055,7 @@ mkc_process_local_set (mkc_process_t *process, const char *nm,
     return;
   }
   if (nm == NULL) {
-    mkc_error_set (process->mkcerr, MKC_ERR_INVALID_ARGUMENT);
+    mkc_error_set (process->mkcerr, MKC_ERR_NULL_ARGUMENT);
     return;
   }
 

@@ -3,17 +3,18 @@
    * Copyright 2026 Brad Lanam Pleasant Hill CA
    */
 
-  #include <stdio.h>
-  #include <stdint.h>
+#  include <stdio.h>
+#  include <stddef.h>
+#  include <stdint.h>
 
-  #include "mkc_grammar.h"
+#  include "mkc_grammar.h"
 
 //  #pragma clang diagnostic push
 //  #pragma clang diagnostic ignored "-Wunused-but-set-variable"
 
   /* no idea if this is the right way to work around this */
-  #define YYSTYPE MKCYYSTYPE
-  #define YYLTYPE MKCYYLTYPE
+#  define YYSTYPE MKCYYSTYPE
+#  define YYLTYPE MKCYYLTYPE
 }
 
 %option prefix="mkcyy"
@@ -137,6 +138,7 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 
 "configure"   { return T_STMT_CONFIGURE; }
 "load_cache"  { return T_STMT_LOADCACHE; }
+"include"     { return T_STMT_INCLUDE; }
 "mkcdebug"    { return T_STMT_DEBUG; }
 "option"      { return T_STMT_OPTION; }
 "project"     { return T_STMT_PROJECT; }

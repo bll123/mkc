@@ -393,7 +393,7 @@ mkc_var_create (mkc_varlist_t *varlist,
   mkc_var_t     tvar;
 
   if (name == NULL) {
-    mkc_error_set (varlist->mkcerr, MKC_ERR_INVALID_ARGUMENT);
+    mkc_error_set (varlist->mkcerr, MKC_ERR_NULL_ARGUMENT);
     return NULL;
   }
 

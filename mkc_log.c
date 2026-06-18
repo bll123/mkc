@@ -46,7 +46,7 @@ mkc_log_open (mkc_log_t *log, const char *fname, int32_t logflag)
     return;
   }
   if (fname == NULL) {
-    mkc_error_set (log->mkcerr, MKC_ERR_INVALID_ARGUMENT);
+    mkc_error_set (log->mkcerr, MKC_ERR_NULL_ARGUMENT);
     return;
   }
 

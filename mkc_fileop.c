@@ -186,7 +186,7 @@ mkc_file_delete (const char *fname)
 #endif
 
   if (fname == NULL) {
-    return MKC_ERR_INVALID_ARGUMENT;
+    return MKC_ERR_NULL_ARGUMENT;
   }
 
 #if _lib__wunlink || (MKC_BOOTSTRAP && _WIN32)
@@ -204,7 +204,7 @@ mkc_file_delete (const char *fname)
 int
 mkc_file_move (const char *fname, const char *nfn)
 {
-  int       rc = MKC_ERR_INVALID_ARGUMENT;
+  int       rc = MKC_ERR_NULL_ARGUMENT;
 
   if (fname == NULL || nfn == NULL) {
     return rc;

@@ -46,7 +46,7 @@ tclean:
 	@-find . -name '*~' -print | xargs rm -f
 	@-rm -f w ww www *.orig asan.* core.*
 	@-rm -f mkc_grammar.output *.mk.bak
-	@-rm -f tests/output/*
+	@-rm -f tests/tmp/*
 	@-rm -f mkc_files/tmp/*
 
 # depend for bootstrap makefile

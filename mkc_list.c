@@ -37,7 +37,7 @@ mkc_list_init (mkc_list_type_t type, mkc_list_free_t freefunc,
   mkc_list_t  *list;
 
   if (type == MKC_LIST_SORTED && compare == NULL) {
-    mkc_error_set (mkcerr, MKC_ERR_INVALID_ARGUMENT);
+    mkc_error_set (mkcerr, MKC_ERR_NULL_ARGUMENT);
     return NULL;
   }
 

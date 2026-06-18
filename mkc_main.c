@@ -23,9 +23,8 @@
 #include "mkc_ast.h"
 #include "mkc_error.h"
 #include "mkc_fileop.h"
-#include "mkc_grammar.h"
-#include "mkc_lex.h"
 #include "mkc_log.h"
+#include "mkc_parse.h"
 #include "mkc_profile.h"
 #include "mkc_util.h"
 #include "mkc_string.h"
@@ -36,7 +35,6 @@ typedef struct {
 } argcopy_t;
 
 static void cleanargs (argcopy_t *argcopy);
-static int mkc_parse (FILE *fh, mkcyyscan_t scanner, mkc_astmain_t *astmain, mkc_log_t *log, const char *dfltprof, mkc_error_t *mkcerr);
 mkc_err_code_t mkc_cleanup (mkc_astmain_t *astmain, argcopy_t *argcopy, mkc_log_t *log, mkc_error_t *error);
 
 int
@@ -50,11 +48,11 @@ main (int argc, char *argv [])
   int             c;
   int             option_index;
   int             fnidx;
+  mkc_parse_t     * parse = NULL;
   FILE            * fh = NULL;
   const char      * dfltprof = MKC_PROF_RELEASE_NAME;
   const char      * comparg = NULL;
   mkc_astmain_t   * astmain = NULL;
-  mkcyyscan_t     scanner;
   mkc_error_t     * mkcerr = NULL;
   mkc_log_t       * log = NULL;
   mstime_t        starttm;
@@ -62,6 +60,7 @@ main (int argc, char *argv [])
   time_t          etm;
   char            tbuff [40];
   bool            loadcache = true;
+  bool            debug = false;
   int             rc = 0;
   time_t          cachetm;
   time_t          mkctm;
@@ -106,7 +105,7 @@ main (int argc, char *argv [])
         break;
       }
       case 2: {
-        mkcyydebug = 1;
+        debug = 1;
         break;
       }
       case 3: {
@@ -149,7 +148,8 @@ main (int argc, char *argv [])
   }
 
   mstimestart (&starttm);
-  mkcyylex_init (&scanner);
+  parse = mkc_parse_init (astmain, log, mkcerr);
+  mkc_parse_debug (parse, debug);
 
   cachetm = mkc_file_modtime ("mkc_files/cache.mkc");
   mkctm = mkc_file_modtime (argcopy.utf8argv [fnidx]);
@@ -167,7 +167,7 @@ main (int argc, char *argv [])
       mkc_message ("-- loading cache\n");
       mkc_log (log, MKC_LOG_AST_PROCESS, "-- loading cache\n");
 
-      rc = mkc_parse (cachefh, scanner, astmain, log, dfltprof, mkcerr);
+      rc = mkc_parse (parse, cachefh);
       fclose (cachefh);
 
       if (mkc_error_chk_err (mkcerr)) {
@@ -178,7 +178,7 @@ main (int argc, char *argv [])
     }
   }
 
-  rc = mkc_parse (fh, scanner, astmain, log, dfltprof, mkcerr);
+  rc = mkc_parse (parse, fh);
   if (mkc_error_chk_err (mkcerr)) {
     rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
     return rc;
@@ -190,13 +190,15 @@ main (int argc, char *argv [])
   mkc_log (log, MKC_LOG_STATISTICS, "-- parse: %s\n", tbuff);
   mstimestart (&proctm);
 
+fprintf (stderr, "main: parse: rc: %d\n", rc);
   if (rc == 0) {
     rc = mkc_ast_start (astmain);
+fprintf (stderr, "main: ast: rc: %d\n", rc);
   } else {
     mkc_error_set (mkcerr, MKC_ERR_PARSE_FAILURE);
   }
 
-  mkcyylex_destroy (scanner);
+  mkc_parse_free (parse);
 
   if (fh != stdin) {
     fclose (fh);
@@ -229,23 +231,6 @@ cleanargs (argcopy_t *argcopy)
 
     free (argcopy->utf8argv);
   }
-}
-
-static int
-mkc_parse (FILE *fh, mkcyyscan_t scanner, mkc_astmain_t *astmain,
-    mkc_log_t *log, const char *dfltprof,
-    mkc_error_t *mkcerr)
-{
-  int               rc = 0;
-  YY_BUFFER_STATE   state;
-
-  state = mkcyy_create_buffer (fh, YY_BUF_SIZE, scanner);
-  mkcyy_switch_to_buffer (state, scanner);
-  rc = mkcyyparse (scanner, astmain);
-
-  mkcyy_delete_buffer (state, scanner);
-
-  return rc;
 }
 
 mkc_err_code_t

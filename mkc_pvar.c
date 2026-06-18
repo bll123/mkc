@@ -243,7 +243,7 @@ mkc_pvar_get_by_profile (mkc_pvar_t *pvar, const char *nm)
     return NULL;
   }
   if (nm == NULL) {
-    mkc_error_set (pvar->mkcerr, MKC_ERR_INVALID_ARGUMENT);
+    mkc_error_set (pvar->mkcerr, MKC_ERR_NULL_ARGUMENT);
     return NULL;
   }
 
@@ -290,7 +290,7 @@ mkc_pvar_get_by_profidx (mkc_pvar_t *pvar, const char *nm, mkc_profidx_t pidx)
     return NULL;
   }
   if (nm == NULL) {
-    mkc_error_set (pvar->mkcerr, MKC_ERR_INVALID_ARGUMENT);
+    mkc_error_set (pvar->mkcerr, MKC_ERR_NULL_ARGUMENT);
     return NULL;
   }
 

@@ -3,6 +3,7 @@
  */
 #pragma once
 
+#include <stddef.h>
 #include <unistd.h>
 
 #if defined (__cplusplus) || defined (c_plusplus)
