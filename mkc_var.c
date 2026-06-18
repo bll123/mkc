@@ -123,7 +123,8 @@ mkc_var_name_alloc (mkc_varlist_t *varlist, const char *vname)
 }
 
 int
-mkc_var_set (mkc_varlist_t *varlist, const char *name, mkc_value_t *value)
+mkc_var_set (mkc_varlist_t *varlist,
+    const char *name, mkc_value_t *value)
 {
   mkc_err_code_t  rc = MKC_OK;
   mkc_var_t       *var;
@@ -174,6 +175,7 @@ mkc_var_set (mkc_varlist_t *varlist, const char *name, mkc_value_t *value)
     mkc_list_free (tvalue->list);
   }
 
+  tvalue->vctxt = value->vctxt;
   tvalue->vtype = nvtype;
   if (nvtype == MKC_VT_STRING) {
     tvalue->sval = strdup (value->sval);

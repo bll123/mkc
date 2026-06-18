@@ -22,7 +22,7 @@ Unary Operations on Integers
 
 Examples
 
-    set a 1 &plus; 2;
+    set a 1 plus 2;
     set b 0;
     set c ${a} && ${b};
     if (${a} || ${b}) {

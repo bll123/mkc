@@ -92,6 +92,8 @@ mkc_context_check (mkc_context_t *context, mkc_ctxt_val_t ctxtval)
     return false;
   }
 
+  /* ctxtval is a set of allowed values */
+  /* ctxt is the current context */
   ctxt = context->val [context->idx];
   if ((ctxtval & ctxt) == ctxt) {
     return true;

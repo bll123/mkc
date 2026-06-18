@@ -163,7 +163,7 @@
 %type <astnode> foreachstmt whilestmt function loopcontrol
 // commands
 %type <astnode> printstmt setstmt configurestmt projectstmt loadcachestmt
-%type <astnode> includestmt
+%type <astnode> includestmt profilestmt
 // checks
 %type <astnode> checkcommand chkcompflag chklinkflag
 %type <astnode> chksize chktype chkstructmember
@@ -221,6 +221,10 @@ stmt[v]:
       $v = $a;
     }
   | setstmt[a]
+    {
+      $v = $a;
+    }
+  | profilestmt[a]
     {
       $v = $a;
     }
@@ -473,17 +477,7 @@ funcargs:
   ;
 
 directive[v]:
-    T_STMT_PROFILE varname[a] stmtblock_or_semi[b]
-    {
-      $v = mkc_ast_mk_profile (ast, $a, NULL, $b,
-          yylloc.first_line, yylloc.first_column);
-    }
-  | T_STMT_PROFILE varname[a] varname[b] stmtblock_or_semi[c]
-    {
-      $v = mkc_ast_mk_profile (ast, $a, $b, $c,
-          yylloc.first_line, yylloc.first_column);
-    }
-  | T_STMT_DEBUG varname[a] T_SEMICOLON
+    T_STMT_DEBUG varname[a] T_SEMICOLON
     {
       $v = mkc_ast_mk_debug (ast, $a, NULL,
           yylloc.first_line, yylloc.first_column);
@@ -525,6 +519,14 @@ setstmt[v]:
     }
   ;
 
+profilestmt[v]:
+    T_STMT_PROFILE varname[a] stmtblock_or_semi[b]
+    {
+      $v = mkc_ast_mk_profile (ast, $a, $b,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
 configurestmt[v]:
     T_STMT_CONFIGURE stmtblock[a]
     {
@@ -542,9 +544,9 @@ projectstmt[v]:
   ;
 
 loadcachestmt[v]:
-    T_STMT_LOADCACHE stmtblock[a]
+    T_STMT_LOADCACHE integer[a] stmtblock[b]
     {
-      $v = mkc_ast_mk_loadcache (ast, $a,
+      $v = mkc_ast_mk_loadcache (ast, $a, $b,
           yylloc.first_line, yylloc.first_column);
     }
   ;

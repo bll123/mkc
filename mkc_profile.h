@@ -43,9 +43,8 @@ int mkc_profile_clear (mkc_profile_t *profiles, mkc_profidx_t pidx);
 mkc_compiler_t mkc_profile_get_dflt_compiler (mkc_profile_t *profiles);
 void mkc_profile_set_dflt_compiler (mkc_profile_t *profiles, mkc_compiler_t compiler);
 
-mkc_profidx_t mkc_profile_find (mkc_profile_t *profiles, const char *pname, const char *compid);
-mkc_profidx_t mkc_profile_find_id (mkc_profile_t *profiles, const char *pname, mkc_compiler_t compiler);
-mkc_profidx_t mkc_profile_create (mkc_profile_t *profiles, const char *pname, const char *comptxt, mkc_prof_type_t);
+mkc_profidx_t mkc_profile_find (mkc_profile_t *profiles, const char *pname, mkc_compiler_t compiler);
+mkc_profidx_t mkc_profile_create (mkc_profile_t *profiles, const char *pname, mkc_compiler_t compiler, mkc_prof_type_t ptype);
 int mkc_profile_local_create (mkc_profile_t *profiles);
 void mkc_profile_local_pop (mkc_profile_t *profiles);
 

@@ -134,6 +134,7 @@ typedef struct mkc_ast_project_t {
 } mkc_ast_project_t;
 
 typedef struct mkc_ast_loadcache_t {
+  mkc_astnode_t       *version;
   mkc_astnode_t       *stmtblock;
 } mkc_ast_loadcache_t;
 
@@ -168,7 +169,6 @@ typedef struct mkc_ast_set_t {
 
 typedef struct mkc_ast_profile_t {
   mkc_astnode_t     *nm;
-  mkc_astnode_t     *comp;
   mkc_astnode_t     *stmtblock;
 } mkc_ast_profile_t;
 
@@ -322,14 +322,15 @@ mkc_ast_init (mkc_log_t *log, const char *dfltprof, const char *comparg, mkc_err
     return NULL;
   }
 
-  astmain->process = mkc_process_init (astmain->profiles, log, mkcerr);
-  if (astmain->process == NULL) {
+  astmain->context = mkc_context_init (mkcerr);
+  if (astmain->context == NULL) {
     mkc_ast_free (astmain);
     return NULL;
   }
 
-  astmain->context = mkc_context_init (mkcerr);
-  if (astmain->context == NULL) {
+  astmain->process = mkc_process_init (astmain->profiles, log,
+      astmain->context, mkcerr);
+  if (astmain->process == NULL) {
     mkc_ast_free (astmain);
     return NULL;
   }
@@ -667,7 +668,8 @@ mkc_ast_mk_project (mkc_astmain_t *astmain, mkc_astnode_t *stmtblock,
 }
 
 mkc_astnode_t *
-mkc_ast_mk_loadcache (mkc_astmain_t *astmain, mkc_astnode_t *stmtblock,
+mkc_ast_mk_loadcache (mkc_astmain_t *astmain,
+    mkc_astnode_t *version, mkc_astnode_t *stmtblock,
     int32_t lineno, int colno)
 {
   mkc_astnode_t   *astnode;
@@ -680,6 +682,7 @@ mkc_ast_mk_loadcache (mkc_astmain_t *astmain, mkc_astnode_t *stmtblock,
     return NULL;
   }
 
+  astnode->loadcachestmt.version = version;
   astnode->loadcachestmt.stmtblock = stmtblock;
 
   return astnode;
@@ -708,7 +711,7 @@ mkc_ast_mk_set (mkc_astmain_t *astmain,
 
 mkc_astnode_t *
 mkc_ast_mk_profile (mkc_astmain_t *astmain,
-    mkc_astnode_t *nm, mkc_astnode_t *comp, mkc_astnode_t *stmtblock,
+    mkc_astnode_t *nm, mkc_astnode_t *stmtblock,
     int32_t lineno, int colno)
 {
   mkc_astnode_t   *astnode;
@@ -722,7 +725,6 @@ mkc_ast_mk_profile (mkc_astmain_t *astmain,
   }
 
   astnode->profilestmt.nm = nm;
-  astnode->profilestmt.comp = comp;
   astnode->profilestmt.stmtblock = stmtblock;
 
   return astnode;
@@ -1350,14 +1352,16 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
 
     case MKC_T_STMT_LOADCACHE: {
       int32_t     rval = true;
+      mkc_value_t *value;
 
-      mkc_process_stmt_loadcache (astmain->process, true);
+      value = mkc_ast_get_value (astmain, astnode->loadcachestmt.version);
+      mkc_process_stmt_loadcache (astmain->process, value, true);
       if (astnode->loadcachestmt.stmtblock != NULL) {
         mkc_context_push (astmain->context, MKC_CONTEXT_CACHE, astmain->mkcerr);
         mkc_ast_process (astmain, astnode->loadcachestmt.stmtblock, ifcond, &rval, depth + 1);
         mkc_context_pop (astmain->context);
       }
-      mkc_process_stmt_loadcache (astmain->process, false);
+      mkc_process_stmt_loadcache (astmain->process, value, false);
       break;
     }
 
@@ -1484,42 +1488,26 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
 
     case MKC_T_STMT_PROFILE: {
       mkc_value_t   *valnm;
-      mkc_value_t   *valcomp = NULL;
 
       valnm = mkc_ast_get_value (astmain, astnode->profilestmt.nm);
       if (mkc_error_chk_err (astmain->mkcerr)) {
         break;
-      }
-      if (astnode->profilestmt.comp != NULL) {
-        valcomp = mkc_ast_get_value (astmain, astnode->profilestmt.comp);
-        if (mkc_error_chk_err (astmain->mkcerr)) {
-          break;
-        }
       }
 
       if (! mkc_process_profile_is_current (astmain->process, valnm)) {
         break;
       }
 
-      if (astnode->profilestmt.stmtblock == NULL) {
-// ### this does a push with no pop...
-        mkc_process_stmt_profile (astmain->process, valnm, valcomp);
-      } else {
-        mkc_process_stmt_profile (astmain->process, valnm, valcomp);
-        mkc_ast_process (astmain, astnode->profilestmt.stmtblock, ifcond, loopcond, depth + 1);
-        mkc_process_stmt_profile_post (astmain->process);
-      }
+      mkc_process_stmt_profile (astmain->process, valnm);
+      mkc_context_push (astmain->context, MKC_CONTEXT_PROFILE, astmain->mkcerr);
+      mkc_ast_process (astmain, astnode->profilestmt.stmtblock, ifcond, loopcond, depth + 1);
+      mkc_context_pop (astmain->context);
+      mkc_process_stmt_profile_post (astmain->process);
       break;
     }
 
     case MKC_T_ATTR_NAME: {
       mkc_value_t   *valnm;
-
-      if (! mkc_context_check (astmain->context,
-          MKC_CONTEXT_CHECK | MKC_CONTEXT_PROJECT)) {
-        mkc_error_set (astmain->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
-        break;
-      }
 
       valnm = mkc_ast_get_value (astmain, astnode->nameattr.nm);
       if (mkc_error_chk_err (astmain->mkcerr)) {
@@ -1532,11 +1520,6 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
     case MKC_T_ATTR_HEADER: {
       mkc_value_t   *val;
 
-      if (! mkc_context_check (astmain->context, MKC_CONTEXT_CHECK)) {
-        mkc_error_set (astmain->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
-        break;
-      }
-
       val = mkc_ast_get_value (astmain, astnode->hdrattr.hdrlist);
       if (mkc_error_chk_err (astmain->mkcerr)) {
         break;
@@ -1547,11 +1530,6 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
 
     case MKC_T_ATTR_COMP_FLAGS: {
       mkc_value_t   *val;
-
-      if (! mkc_context_check (astmain->context, MKC_CONTEXT_CHECK)) {
-        mkc_error_set (astmain->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
-        break;
-      }
 
       val = mkc_ast_get_value (astmain, astnode->compflagattr.compflaglist);
       if (mkc_error_chk_err (astmain->mkcerr)) {
@@ -1564,11 +1542,6 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
     case MKC_T_ATTR_LINK_FLAGS: {
       mkc_value_t   *val;
 
-      if (! mkc_context_check (astmain->context, MKC_CONTEXT_CHECK)) {
-        mkc_error_set (astmain->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
-        break;
-      }
-
       val = mkc_ast_get_value (astmain, astnode->linkflagattr.linkflaglist);
       if (mkc_error_chk_err (astmain->mkcerr)) {
         break;
@@ -1579,11 +1552,6 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
 
     case MKC_T_ATTR_METHOD: {
       mkc_value_t   *method;
-
-      if (! mkc_context_check (astmain->context, MKC_CONTEXT_CONFIGURE)) {
-        mkc_error_set (astmain->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
-        break;
-      }
 
       method = mkc_ast_get_value (astmain, astnode->methodattr.method);
       if (mkc_error_chk_err (astmain->mkcerr)) {
@@ -1596,11 +1564,6 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
     case MKC_T_ATTR_INPUT: {
       mkc_value_t   *name;
 
-      if (! mkc_context_check (astmain->context, MKC_CONTEXT_CONFIGURE)) {
-        mkc_error_set (astmain->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
-        break;
-      }
-
       name = mkc_ast_get_value (astmain, astnode->inputattr.name);
       if (mkc_error_chk_err (astmain->mkcerr)) {
         break;
@@ -1612,11 +1575,6 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
     case MKC_T_ATTR_OUTPUT: {
       mkc_value_t   *name;
 
-      if (! mkc_context_check (astmain->context, MKC_CONTEXT_CONFIGURE)) {
-        mkc_error_set (astmain->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
-        break;
-      }
-
       name = mkc_ast_get_value (astmain, astnode->outputattr.name);
       if (mkc_error_chk_err (astmain->mkcerr)) {
         break;
@@ -1627,11 +1585,6 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
 
     case MKC_T_ATTR_COMPILER: {
       mkc_value_t   *name;
-
-      if (! mkc_context_check (astmain->context, MKC_CONTEXT_PROJECT)) {
-        mkc_error_set (astmain->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
-        break;
-      }
 
       name = mkc_ast_get_value (astmain, astnode->compilerattr.name);
       if (mkc_error_chk_err (astmain->mkcerr)) {

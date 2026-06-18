@@ -3,29 +3,25 @@
 
 ### Syntax: profile
 
-The following patterns set the profile for the statements in
-_statement-list_.
-
     profile <profile-name> { <statement-list> };
-    profile <profile-name> <compiler> { <statement-list> };
+
+if _profile-name_ is active, then the statements in _statement-list_
+will be run.
 
 _profile-name_ is usually a user-defined name.
-_mkc_ defined names are __internal__ and  __global__.
+_mkc_ defined names are __internal__, __global__ and __release__.
 
-_compiler_ is one of __c__, __c&plus;&plus;__, __objc__.
-
-
-The following patterns set the profile for all actions following the
+The following pattern sets the profile for all actions following the
 profile statement.  Be aware that this will override any profile set
-on the command line.  These patterns are used in debugging and
+on the command line.  This pattern is used for debugging and
 testing.
 
     profile <profile-name>;
-    profile <profile-name> <compiler>;
 
 When a variable is used, _mkc_ will check the profiles in the
 following order:
 
+* local variables
 * target / compiler
 * target
 * user-profile / compiler
@@ -33,6 +29,10 @@ following order:
 * global / compiler
 * global
 * internal
+
+##### Allowed Attributes
+
+* [compiler](SyntaxCompiler)
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

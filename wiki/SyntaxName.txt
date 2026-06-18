@@ -1,18 +1,18 @@
 [Wiki Home](Home)
 <br>[Syntax](Syntax)
 
-### Syntax: Name (attribute)
+### Syntax: name (attribute)
 
     name <new-name>;
 
-The name statement is an attribute for [check](SyntaxCheck)
+The __name__ attribute is an attribute for [check](SyntaxCheck)
 statements and for [project](SyntaxProject) statements.
 
-For [check](SyntaxCheck) statements, the _name_ statement replaces the
-generated name of the check with _new-name_.
+For [check](SyntaxCheck) statements, the __name__ attribute replaces
+the generated name of the check with _new-name_.
 
-For [project](SyntaxProject) statements, the _name_ statement sets the
-name of the project.
+For [project](SyntaxProject) statements, the __name__ attribute
+defines the name of the project.
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

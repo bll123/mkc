@@ -1,7 +1,6 @@
 # also tests putting the variables into the global/any profile
-profile global;
 set a [ 'a' 'b' 'c' 'd' ];
 set b [ 1 2 3 4 ];
 set c ${a};
 set d ${b};
-mkcdebug printvar test;
+mkcdebug printvar release;

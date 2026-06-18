@@ -30,6 +30,17 @@ typedef enum {
   MKC_VT_ENV_VARIABLE,
 } mkc_var_type_t;
 
+/* variable context, used to determine if the variable should be output */
+typedef enum {
+  MKC_VCTXT_CHECK,
+  MKC_VCTXT_ENV,
+  MKC_VCTXT_FLAG,
+  MKC_VCTXT_MKC,
+  MKC_VCTXT_TEMP,
+  MKC_VCTXT_USER_IGNORE,
+  MKC_VCTXT_USER_OUTPUT,
+} mkc_var_ctxt_t;
+
 enum {
   MKC_VAR_FOUND = MKC_LIST_FOUND,
   MKC_VAR_NOTFOUND = MKC_LIST_NOTFOUND,
@@ -46,6 +57,7 @@ typedef struct mkc_value_t {
     int32_t     ival;
   };
   mkc_var_type_t  vtype;
+  mkc_var_ctxt_t  vctxt;
 } mkc_value_t;
 
 mkc_varlist_t *mkc_varlist_init (mkc_log_t *log, mkc_error_t *mkcerr);

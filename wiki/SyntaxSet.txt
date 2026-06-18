@@ -7,10 +7,10 @@ Variable names may contain any valid UTF-8 character.
 
 Variable names may not contain spaces.
 
-    set variable_name _value_;
+    set variable_name <value>;
 
 _value_ may be an integer, quoted string, single quoted string,
-a variable, or an expression.
+a variable, an expression, or a list.
 <br>See [Syntax: Variables](SyntaxVariable)
 
 [Wiki Home](Home)

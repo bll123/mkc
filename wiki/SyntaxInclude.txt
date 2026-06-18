@@ -1,0 +1,15 @@
+[Wiki Home](Home)
+<br>[Syntax](Syntax)
+
+### Syntax: include
+
+Includes a _mkc_ configuration file and processes it.
+
+    include <path>;
+
+##### Examples
+
+    include 'cflags.mkc';
+
+[Wiki Home](Home)
+<br>[Syntax](Syntax)

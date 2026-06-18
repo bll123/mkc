@@ -69,6 +69,7 @@ main (int argc, char *argv [])
     { "compiler",       required_argument,  NULL,   3, },
     { "no-cache",       no_argument,        NULL,   1, },
     { "retest",         no_argument,        NULL,   4, },
+    { "mkc-dir",        required_argument,  NULL,   5, },
     { "parsedebug",     no_argument,        NULL,   2 },
     { "profile",        required_argument,  NULL,   'p' },
     { NULL,             no_argument,        NULL,   0 },

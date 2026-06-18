@@ -3,14 +3,19 @@
 
 ### Syntax: project
 
+The _project_ statement defines attributes for the project.
+
     project { <attribute-list> };
+
+The name of the project is defined with the [name](SyntaxName) attribute.
+The default compiler is defined with the [compiler](SyntaxCompiler) attribute.
 
 ##### Allowed Attributes
 
 The _project_ statement allows the following attribute statements:
 
-* name (required)
-* compiler
+* [name](SyntaxName) (required)
+* [compiler](SyntaxCompiler)
 
 ##### Examples
 

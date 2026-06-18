@@ -1,9 +1,11 @@
-profile global;
+
 set こんにちは 1;
 set 夕陽伴我歸 2;
 set 내가제일잘나가 3;
 set Ne_Русский_Шторм 4;
-mkcdebug printvar test;
+
+mkcdebug printvar release;
+
 if (${こんにちは} == 1) {
   print '  ok 1';
 }

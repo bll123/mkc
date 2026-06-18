@@ -1,30 +1,37 @@
 # basic tests putting variables into different profiles
 profile global {
-  set d "g-general";
-}
-profile global c {
-  set c "g-c";
-}
-profile release c {
-  set i "r-c";
-}
-profile global c++ {
-  set b "g-c++";
+  set d 'g-general';
 }
 profile global {
-  set f "g-general";
+  compiler c;
+  set c 'g-c';
 }
-profile global c {
-  set e "g-c";
+profile release {
+  compiler c;
+  set k 'r-c';
 }
-profile global c++ {
-  set f "g-c++";
+profile global {
+  compiler c++;
+  set b 'g-c++';
 }
-profile release c++ {
-  set h "r-c++";
+profile global {
+  set f 'g-general';
 }
-profile debug c++ {
-  set i "d-c++";
+profile global {
+  compiler c;
+  set e 'g-c';
+}
+profile global {
+  compiler c++;
+  set f 'g-c++';
+}
+profile release {
+  compiler c++;
+  set h 'r-c++';
+}
+profile debug {
+  compiler c++;
+  set i 'd-c++';
 }
 
 mkcdebug printprof;

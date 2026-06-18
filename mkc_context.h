@@ -11,12 +11,13 @@ extern "C" {
 #endif
 
 typedef enum {
-  MKC_CONTEXT_CHECK       = (1 << 0),
-  MKC_CONTEXT_CONFIGURE   = (1 << 1),
-  MKC_CONTEXT_GENERAL     = (1 << 2),
-  MKC_CONTEXT_LOOP        = (1 << 3),
-  MKC_CONTEXT_PROJECT     = (1 << 4),
-  MKC_CONTEXT_CACHE       = (1 << 5),
+  MKC_CONTEXT_CACHE       = (1 << 0),
+  MKC_CONTEXT_CHECK       = (1 << 1),
+  MKC_CONTEXT_CONFIGURE   = (1 << 2),
+  MKC_CONTEXT_GENERAL     = (1 << 3),
+  MKC_CONTEXT_LOOP        = (1 << 4),
+  MKC_CONTEXT_PROFILE     = (1 << 5),
+  MKC_CONTEXT_PROJECT     = (1 << 6),
 } mkc_ctxt_val_t;
 
 typedef struct mkc_context_t mkc_context_t;

@@ -3,7 +3,7 @@
 
 ### Syntax: print
 
-    print _value_;
+    print <value>;
 
 _value_ may be an integer, quoted string, single quoted string,
 environment variable or a variable;

@@ -75,7 +75,7 @@ mkc_pvar_profile_set (mkc_pvar_t *pvar, const char *pname,
     return MKC_PROF_NOT_FOUND;
   }
 
-  pidx = mkc_profile_find_id (pvar->profiles, pname, compiler);
+  pidx = mkc_profile_find (pvar->profiles, pname, compiler);
   if (pidx != MKC_PROF_NOT_FOUND) {
     mkc_varlist_t  *varlist;
 
@@ -135,7 +135,8 @@ mkc_pvar_name_alloc (mkc_pvar_t *pvar, const char *vname)
 }
 
 int
-mkc_pvar_set (mkc_pvar_t *pvar, const char *vname, mkc_value_t *value)
+mkc_pvar_set (mkc_pvar_t *pvar,
+    const char *vname, mkc_value_t *value, mkc_var_ctxt_t vctxt)
 {
   mkc_varlist_t   *varlist;
   int             rc = MKC_ERR_FAILURE;
@@ -145,13 +146,15 @@ mkc_pvar_set (mkc_pvar_t *pvar, const char *vname, mkc_value_t *value)
   }
 
   varlist = mkc_profile_get_varlist (pvar->profiles, pvar->pidx);
+  value->vctxt = vctxt;
   rc = mkc_var_set (varlist, vname, value);
 
   return rc;
 }
 
 int
-mkc_pvar_set_integer (mkc_pvar_t *pvar, const char *vname, int32_t ival)
+mkc_pvar_set_integer (mkc_pvar_t *pvar,
+    const char *vname, int32_t ival, mkc_var_ctxt_t vctxt)
 {
   int         rc = MKC_ERR_FAILURE;
   mkc_value_t value;
@@ -159,12 +162,13 @@ mkc_pvar_set_integer (mkc_pvar_t *pvar, const char *vname, int32_t ival)
   value.ival = ival;
   value.vtype = MKC_VT_INTEGER;
 
-  rc = mkc_pvar_set (pvar, vname, &value);
+  rc = mkc_pvar_set (pvar, vname, &value, vctxt);
   return rc;
 }
 
 int
-mkc_pvar_set_str (mkc_pvar_t *pvar, const char *vname, const char *str)
+mkc_pvar_set_str (mkc_pvar_t *pvar,
+    const char *vname, const char *str, mkc_var_ctxt_t vctxt)
 {
   int         rc = MKC_ERR_FAILURE;
   mkc_value_t value;
@@ -172,7 +176,7 @@ mkc_pvar_set_str (mkc_pvar_t *pvar, const char *vname, const char *str)
   value.sval = (char *) str;
   value.vtype = MKC_VT_STRING;
 
-  rc = mkc_pvar_set (pvar, vname, &value);
+  rc = mkc_pvar_set (pvar, vname, &value, vctxt);
   return rc;
 }
 

@@ -1,5 +1,4 @@
 # also tests putting the variables into the global/any profile
-profile global;
 set fff "111";
 set ddd '222';
 set iii '333';
@@ -12,4 +11,4 @@ set ccc 'ghi';
 # other valid variable names
 set v-1 'a';
 set v_2 'b';
-mkcdebug printvar test;
+mkcdebug printvar release;

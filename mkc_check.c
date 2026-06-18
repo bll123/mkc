@@ -379,7 +379,7 @@ mkc_chk_size (mkc_check_t *check,
   mkc_pvar_profile_set (check->pvar,
       MKC_PROF_INTERNAL_NAME, MKC_COMPILER_GENERAL);
 
-  mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_SIZE", type);
+  mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_SIZE", type, MKC_VCTXT_TEMP);
 
   mkc_pvar_profile_set_idx (check->pvar, opidx);
 
@@ -406,7 +406,7 @@ mkc_chk_type (mkc_check_t *check,
   mkc_pvar_profile_set (check->pvar,
       MKC_PROF_INTERNAL_NAME, MKC_COMPILER_GENERAL);
 
-  mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_TYPE", type);
+  mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_TYPE", type, MKC_VCTXT_TEMP);
 
   mkc_pvar_profile_set_idx (check->pvar, opidx);
 
@@ -430,8 +430,8 @@ mkc_chk_struct_member (mkc_check_t *check,
   mkc_pvar_profile_set (check->pvar,
       MKC_PROF_INTERNAL_NAME, MKC_COMPILER_GENERAL);
 
-  mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_STRUCT_NAME", structname);
-  mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_STRUCT_MEMBER", membername);
+  mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_STRUCT_NAME", structname, MKC_VCTXT_TEMP);
+  mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_STRUCT_MEMBER", membername, MKC_VCTXT_TEMP);
 
   mkc_pvar_profile_set_idx (check->pvar, opidx);
 
@@ -455,7 +455,7 @@ mkc_chk_function (mkc_check_t *check, mkc_compiler_t compiler,
   mkc_pvar_profile_set (check->pvar,
       MKC_PROF_INTERNAL_NAME, MKC_COMPILER_GENERAL);
 
-  mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_FUNCTION_NAME", funcname);
+  mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_FUNCTION_NAME", funcname, MKC_VCTXT_TEMP);
 
   mkc_pvar_profile_set_idx (check->pvar, opidx);
 
@@ -718,7 +718,7 @@ mkc_chk_env_var_set (mkc_check_t *check, const char *nm)
   *tbuff = '\0';
   mkc_env_get (nm, tbuff, sizeof (tbuff));
   if (*tbuff) {
-    rc = mkc_pvar_set_str (check->pvar, nm, tbuff);
+    rc = mkc_pvar_set_str (check->pvar, nm, tbuff, MKC_VCTXT_ENV);
   }
 
   return rc;

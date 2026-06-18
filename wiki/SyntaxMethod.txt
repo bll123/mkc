@@ -1,0 +1,15 @@
+[Wiki Home](Home)
+<br>[Syntax](Syntax)
+
+### Syntax: method (attribute)
+
+The __method__ attribute is used to specify the processing method. It is
+used in the [configure](SyntaxConfigure) statement.
+
+    method <method>;
+
+For a [configure](SyntaxConfigure) statement, _method_ may be one of
+_auto_, _auto-nozero_, or _manual_.
+
+[Wiki Home](Home)
+<br>[Syntax](Syntax)

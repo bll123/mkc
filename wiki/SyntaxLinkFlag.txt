@@ -5,7 +5,7 @@
 
     link_flags '-flag' ['-flag' ...];
 
-The link\_flags statement is an attribute for a [check](SyntaxCheck)
+The __link\_flags__ attribute is used for a [check](SyntaxCheck)
 statement.
 
 The flags specified will be added to the check.

@@ -1,17 +1,85 @@
 [Wiki Home](Home)
 <br>[Syntax](Syntax)
 
-### Syntax: project
+### Syntax: configure
+
+_configure_ generates a configuration file for use by the project.
 
     configure { <attribute-list> };
+
+If the _method_ attribute is _auto_ or _auto-nozero_, the
+filename will be automatically generated based on the project name:
+_project_\_config.h .
+
+If the _method_ attribute is _manual_, the input file should
+contain
 
 ##### Allowed Attributes
 
 The _configure_ statement allows the following attribute statements:
 
-* method (required)
-* input (required for manual method)
-* output (required)
+* [method](SyntaxMethod) (required)
+* [input](SyntaxInput) (required for manual method)
+* [output](SyntaxOutput) (required for manual method)
+
+##### Examples
+
+###### Example 1:
+
+    project {
+      name mkctest;
+    }
+    check_function malloc;
+    check_function junk;
+
+    configure {
+      method auto;
+      # an output attribute overrides automatic generation of the filename
+      # output 'config.h';
+    }
+
+mkctest_config.h:
+
+    #define _function_malloc 1
+    #define _function_junk 0
+
+###### Example 2:
+
+    project {
+      name mkctest;
+    }
+    check_function malloc;
+    check_function junk;
+
+    configure {
+      method auto-nozero;
+    }
+
+mkctest_config.h:
+
+    #define _function_malloc 1
+
+###### Example 3:
+
+    check_function malloc;
+    check_function junk;
+
+    configure {
+      method manual;
+      input 'config.h.in';
+      output 'config.h';
+    }
+
+config.h.in:
+
+    #define HAVE_MALLOC ${_function_malloc}
+    #define SHLIBEXT ${MKC_SHARED_LIBRARY_EXTENSION}
+
+config.h:
+
+    #define HAVE_MALLOC 1
+    #define SHLIBEXT ".so"
+
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

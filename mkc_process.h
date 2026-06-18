@@ -6,6 +6,7 @@
 
 #include <stdint.h>
 
+#include "mkc_context.h"
 #include "mkc_error.h"
 #include "mkc_list.h"
 #include "mkc_log.h"
@@ -18,7 +19,7 @@ extern "C" {
 
 typedef struct mkc_process_t mkc_process_t;
 
-mkc_process_t *mkc_process_init (mkc_profile_t *profiles, mkc_log_t *log, mkc_error_t *mkcerr);
+mkc_process_t *mkc_process_init (mkc_profile_t *profiles, mkc_log_t *log, mkc_context_t *context, mkc_error_t *mkcerr);
 void mkc_process_free (mkc_process_t *process);
 
 int32_t mkc_process_condition (mkc_process_t *process, mkc_value_t *value);
@@ -27,13 +28,13 @@ int32_t mkc_process_str_op (mkc_process_t *process, int type, mkc_value_t *stra,
 int32_t mkc_process_unary_op (mkc_process_t *process, int type, mkc_value_t *vala);
 
 void mkc_process_stmt_print (mkc_process_t *process, mkc_value_t *value, int depth);
-void mkc_process_stmt_profile (mkc_process_t *process, mkc_value_t *valnm, mkc_value_t *valcomp);
+void mkc_process_stmt_profile (mkc_process_t *process, mkc_value_t *valnm);
 void mkc_process_stmt_profile_post (mkc_process_t *process);
 int mkc_process_stmt_debug (mkc_process_t *process, mkc_value_t *value, mkc_value_t *subvalue);
 int mkc_process_stmt_set (mkc_process_t *process, mkc_value_t *valnm, mkc_value_t *value);
 void mkc_process_stmt_configure (mkc_process_t *process);
 void mkc_process_stmt_project (mkc_process_t *process);
-void mkc_process_stmt_loadcache (mkc_process_t *process, bool fromcache);
+void mkc_process_stmt_loadcache (mkc_process_t *process, mkc_value_t *valvers, bool fromcache);
 
 void mkc_process_attr_name (mkc_process_t *process, mkc_value_t *valnm);
 void mkc_process_attr_header (mkc_process_t *process, mkc_value_t *value);

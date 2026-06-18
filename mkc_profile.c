@@ -48,7 +48,6 @@ const char * const MKC_PROF_RELEASE_NAME = "release";
 
 static void mkc_profile_entry_free (void *pentry);
 static int mkc_profile_compare (void *tentrya, void *tentryb);
-int mkc_profile_create_id (mkc_profile_t *profiles, const char *pname, mkc_compiler_t compiler, mkc_prof_type_t type);
 
 mkc_profile_t *
 mkc_profile_init (mkc_log_t *log, mkc_error_t *mkcerr, const char *dfltprof, const char *comparg)
@@ -93,28 +92,28 @@ mkc_profile_init (mkc_log_t *log, mkc_error_t *mkcerr, const char *dfltprof, con
     return NULL;
   }
 
-  mkc_profile_create_id (profiles, MKC_PROF_INTERNAL_NAME,
+  mkc_profile_create (profiles, MKC_PROF_INTERNAL_NAME,
       MKC_COMPILER_GENERAL, MKC_PROF_TYPE_INTERNAL);
   for (mkc_compiler_t i = 0; i < MKC_COMPILER_MAX; ++i) {
     if (mkc_error_chk_err (profiles->mkcerr)) {
       break;
     }
-    mkc_profile_create_id (profiles, MKC_PROF_GLOBAL_NAME,
+    mkc_profile_create (profiles, MKC_PROF_GLOBAL_NAME,
         i, MKC_PROF_TYPE_GLOBAL);
   }
-  mkc_profile_create_id (profiles, MKC_PROF_RELEASE_NAME,
+  mkc_profile_create (profiles, MKC_PROF_RELEASE_NAME,
       MKC_COMPILER_GENERAL, MKC_PROF_TYPE_USER);
-  pidx = mkc_profile_create_id (profiles, MKC_PROF_RELEASE_NAME,
+  pidx = mkc_profile_create (profiles, MKC_PROF_RELEASE_NAME,
       profiles->dfltcompiler, MKC_PROF_TYPE_USER);
 
-  pidx = mkc_profile_find_id (profiles, dfltprof, profiles->dfltcompiler);
+  pidx = mkc_profile_find (profiles, dfltprof, profiles->dfltcompiler);
   if (mkc_profile_get_type (profiles, pidx) != MKC_PROF_TYPE_USER) {
     mkc_error_set (mkcerr, MKC_ERR_INVALID_PROFILE, 0, NULL);
     mkc_profile_free (profiles);
     return NULL;
   }
   if (pidx == MKC_PROF_NOT_FOUND) {
-    pidx = mkc_profile_create_id (profiles, dfltprof,
+    pidx = mkc_profile_create (profiles, dfltprof,
           profiles->dfltcompiler, MKC_PROF_TYPE_USER);
   }
   mkc_message ("-- default profile: %s %s\n", dfltprof,
@@ -191,19 +190,40 @@ mkc_profile_set_dflt_compiler (mkc_profile_t *profiles,
 
 int
 mkc_profile_create (mkc_profile_t *profiles, const char *pname,
-    const char *comptxt, mkc_prof_type_t type)
+    mkc_compiler_t compiler, mkc_prof_type_t type)
 {
-  mkc_compiler_t   compiler;
-  mkc_profidx_t     pidx;
+  mkc_prof_entry_t    *pentry;
+  mkc_prof_entry_t    tentry;
+  mkc_profidx_t       loc = MKC_LIST_NOTFOUND;
 
   if (profiles == NULL) {
     return MKC_ERR_FAILURE;
   }
 
-  compiler = mkc_compiler_get (comptxt);
-  pidx = mkc_profile_create_id (profiles, pname, compiler, type);
+  tentry.name = strdup (pname);
+  if (tentry.name == NULL) {
+    mkc_error_set (profiles->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return MKC_ERR_FAILURE;
+  }
+  tentry.compiler = compiler;
+  tentry.type = type;
+  tentry.varlist = mkc_varlist_init (profiles->log, profiles->mkcerr);
+  if (tentry.varlist == NULL) {
+    return MKC_ERR_FAILURE;
+  }
 
-  return pidx;
+  pentry = mkc_list_set (profiles->list, &tentry,
+      sizeof (mkc_prof_entry_t), &loc);
+  if (pentry == NULL) {
+    return MKC_ERR_FAILURE;
+  }
+  pentry->pidx = loc;
+
+  mkc_log (profiles->log, MKC_LOG_PROFILE,
+      "profile: create: %s %s (%d)\n", pname,
+      mkc_compiler_get_name (compiler), loc);
+
+  return loc;
 }
 
 int
@@ -276,22 +296,6 @@ mkc_profile_local_pop (mkc_profile_t *profiles)
 
 mkc_profidx_t
 mkc_profile_find (mkc_profile_t *profiles, const char *pname,
-    const char *comptxt)
-{
-  mkc_compiler_t   compiler;
-  mkc_profidx_t     pidx;
-
-  if (profiles == NULL) {
-    return MKC_ERR_FAILURE;
-  }
-
-  compiler = mkc_compiler_get (comptxt);
-  pidx = mkc_profile_find_id (profiles, pname, compiler);
-  return pidx;
-}
-
-mkc_profidx_t
-mkc_profile_find_id (mkc_profile_t *profiles, const char *pname,
     mkc_compiler_t compiler)
 {
   mkc_prof_entry_t  tentry;
@@ -552,7 +556,7 @@ mkc_profile_next (mkc_profile_t *profiles, mkc_compiler_t origcompiler)
     if (compiler != MKC_COMPILER_GENERAL) {
       /* if the compiler is not set to general, check the */
       /* profile with the same name, with compiler-general set */
-      pidx = mkc_profile_find_id (profiles, pentry->name,
+      pidx = mkc_profile_find (profiles, pentry->name,
           MKC_COMPILER_GENERAL);
     } else {
       /* reset the compiler back to the original */
@@ -572,18 +576,18 @@ mkc_profile_next (mkc_profile_t *profiles, mkc_compiler_t origcompiler)
           const char  *userprof = "ng";
 
           userprof = mkc_profile_get_name (profiles, profiles->user_idx);
-          pidx = mkc_profile_find_id (profiles, userprof, compiler);
+          pidx = mkc_profile_find (profiles, userprof, compiler);
           type = MKC_PROF_TYPE_USER;
           break;
         }
         case MKC_PROF_TYPE_USER: {
-          pidx = mkc_profile_find_id (profiles,
+          pidx = mkc_profile_find (profiles,
               MKC_PROF_GLOBAL_NAME, compiler);
           type = MKC_PROF_TYPE_GLOBAL;
           break;
         }
         case MKC_PROF_TYPE_GLOBAL: {
-          pidx = mkc_profile_find_id (profiles,
+          pidx = mkc_profile_find (profiles,
               MKC_PROF_INTERNAL_NAME, MKC_COMPILER_GENERAL);
           type = MKC_PROF_TYPE_INTERNAL;
           break;
@@ -636,7 +640,7 @@ mkc_profile_is_current (mkc_profile_t *profiles, const char *reqnm)
     return false;
   }
 
-  pidx = mkc_profile_find_id (profiles, reqnm, MKC_COMPILER_GENERAL);
+  pidx = mkc_profile_find (profiles, reqnm, MKC_COMPILER_GENERAL);
   if (pidx != MKC_PROF_NOT_FOUND) {
     pentry = mkc_list_get_by_idx (profiles->list, pidx);
     /* internal and global profiles are always allowed */
@@ -697,43 +701,5 @@ mkc_profile_compare (void *tentrya, void *tentryb)
   }
 
   return rc;
-}
-
-int
-mkc_profile_create_id (mkc_profile_t *profiles, const char *pname,
-    mkc_compiler_t compiler, mkc_prof_type_t type)
-{
-  mkc_prof_entry_t    *pentry;
-  mkc_prof_entry_t    tentry;
-  mkc_profidx_t       loc = MKC_LIST_NOTFOUND;
-
-  if (profiles == NULL) {
-    return MKC_ERR_FAILURE;
-  }
-
-  tentry.name = strdup (pname);
-  if (tentry.name == NULL) {
-    mkc_error_set (profiles->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return MKC_ERR_FAILURE;
-  }
-  tentry.compiler = compiler;
-  tentry.type = type;
-  tentry.varlist = mkc_varlist_init (profiles->log, profiles->mkcerr);
-  if (tentry.varlist == NULL) {
-    return MKC_ERR_FAILURE;
-  }
-
-  pentry = mkc_list_set (profiles->list, &tentry,
-      sizeof (mkc_prof_entry_t), &loc);
-  if (pentry == NULL) {
-    return MKC_ERR_FAILURE;
-  }
-  pentry->pidx = loc;
-
-  mkc_log (profiles->log, MKC_LOG_PROFILE,
-      "profile: create: %s %s (%d)\n", pname,
-      mkc_compiler_get_name (compiler), loc);
-
-  return loc;
 }
 

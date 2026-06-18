@@ -13,7 +13,6 @@ profile global {
 }
 
 configure {
-  method manual;
-  input 'tests/data/301-configure-manual.h';
-  output 'tests/tmp/301-configure-manual.h';
+  method auto;
+  output 'tests/tmp/302-configure-auto-def.h';
 }

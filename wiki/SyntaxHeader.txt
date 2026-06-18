@@ -1,15 +1,15 @@
 [Wiki Home](Home)
 <br>[Syntax](Syntax)
 
-### Syntax: Header (attribute)
+### Syntax: header (attribute)
+
+The __header__ attribute specifies the required headers for a check.
+The headers specified will be added to the check.
 
     header <header-name> [<header-name> ...];
 
-The header statement is an attribute for a [check](SyntaxCheck)
+The __header__ attribute is used with a [check](SyntaxCheck)
 statement.
-
-The header statement specifies the required headers for a check.  The
-headers specified will be added to the check.
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

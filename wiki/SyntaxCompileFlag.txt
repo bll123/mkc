@@ -5,7 +5,7 @@
 
     compiler_flags '-flag' ['-flag' ...];
 
-The compiler\_flags statement is an attribute for a [check](SyntaxCheck)
+The __compiler\_flags__ attribute is used with a [check](SyntaxCheck)
 statement.
 
 The flags specified will be added to the check.

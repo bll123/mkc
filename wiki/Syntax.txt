@@ -15,7 +15,7 @@ __target__: An executable or library or other target that will be
 built or processed.
 
 __profile__: A profile is a namespace for variables and attributes.
-_mkc_ defines the __internal__ and __global__ profiles.
+_mkc_ defines the __internal__, __global__ and __release__ profiles.
 
 A user profile can have any name.  The usual names might be
 __release__ and __debug__.
@@ -31,9 +31,10 @@ A profile may have an associated compiler.
   * [Profile Statement](SyntaxProfile)
   * [Set Statement](SyntaxSet)
   * [Values and Variables](SyntaxVariable)
-  * [Print](SyntaxPrint)
-  * [Control Statements](SyntaxControl)
+  * [Flow Control Statements](SyntaxControl)
   * [Expressions](SyntaxExpression)
+  * [Include](SyntaxInclude)
+  * [Print](SyntaxPrint)
   * [Directives](SyntaxDirective)
   * [Check Statements](SyntaxCheck)
       * [Check Compiler Flag](SyntaxCheckCompilerFlag)
@@ -43,10 +44,13 @@ A profile may have an associated compiler.
       * [Check Struct Member](SyntaxCheckStructMember)
       * [Check Type](SyntaxCheckType)
   * Attributes
-      * [Compiler](SyntaxCompiler)
       * [Compiler Flags](SyntaxCompileFlag)
+      * [Compiler](SyntaxCompiler)
       * [Header](SyntaxHeader)
+      * [Input](SyntaxInput)
       * [Link Flags](SyntaxLinkFlag)
+      * [Method](SyntaxMethod)
       * [Name](SyntaxName)
+      * [Output](SyntaxOutput)
 
 [Wiki Home](Home)

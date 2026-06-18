@@ -5,13 +5,15 @@
 
     compiler <compiler-name>;
 
-The _compiler_ statement is an attribute for a [project](SyntaxProject)
-statement.
+The _compiler_ attribute is used for [project](SyntaxProject)
+and [profile](SyntaxProfile) statements.
 
-The default compiler will be set to _compiler-name_.
+In a __project__ statement, the default compiler will be set to
+_compiler-name_.  In a __profile__ statement, the compiler is set
+for the following statements in the profile statement block.
 
-As of 2026-6-15, the compiler names that are recognized are 'c', 'c++'
-and 'objc'.
+As of 2026-6-18, the compiler names that are recognized are 'c', 'c++'
+, 'objc', 'bison' and 'flex'.
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)
