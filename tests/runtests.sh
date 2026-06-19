@@ -25,31 +25,7 @@ while test $# -gt 0; do
   esac
 done
 
-for tnm in ${tdir}/${pattern}; do
-  case ${tnm} in
-    *~)
-      continue
-      ;;
-    *.mkc)
-      prog=./mkc
-      args=--no-cache
-      ;;
-    *.sh)
-      prog=bash
-      args=""
-      ;;
-  esac
-
-  echo "== $tnm"
-  echo "== $tnm" >> ${LOG}
-  bnm=$(basename $tnm | sed 's,\.mkc$,,')
-  expfail=F
-  case $tnm in
-    *-error.*)
-      expfail=T
-      ;;
-  esac
-
+function dotest {
   ${prog} ${args} $tnm > ${odir}/$bnm.out 2>>${LOG}
   rc=$?
   if [[ $expfail == T ]]; then
@@ -86,5 +62,39 @@ for tnm in ${tdir}/${pattern}; do
 
   if [[ -f ${mkclog} ]]; then
     mv ${mkclog} ${MKCTMP}/log-${bnm}.txt
+  fi
+}
+
+for tnm in ${tdir}/${pattern}; do
+  case ${tnm} in
+    *~)
+      continue
+      ;;
+    *.mkc)
+      prog=./mkc
+      args=--no-cache
+      ;;
+    *.sh)
+      prog=bash
+      args=""
+      ;;
+  esac
+
+  echo "== $tnm"
+  echo "== $tnm" >> ${LOG}
+  bnm=$(basename $tnm | sed 's,\.mkc$,,')
+  expfail=F
+  case $tnm in
+    *-error.*)
+      expfail=T
+      ;;
+  esac
+
+  dotest
+  if [[ -f ${tdir}/${bnm}.cache ]]; then
+    args=""
+    echo "== $tnm (cache)"
+    echo "== $tnm (cache)" >> ${LOG}
+    dotest
   fi
 done

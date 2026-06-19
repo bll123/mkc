@@ -70,9 +70,10 @@ main (int argc, char *argv [])
     { "no-cache",       no_argument,        NULL,   1, },
     { "retest",         no_argument,        NULL,   4, },
     { "mkc-dir",        required_argument,  NULL,   5, },
-    { "parsedebug",     no_argument,        NULL,   2 },
+    { "parsedebug",     no_argument,        NULL,   2, },
+    { "prefix",         required_argument,  NULL,   6, },
     { "profile",        required_argument,  NULL,   'p' },
-    { NULL,             no_argument,        NULL,   0 },
+    { NULL,             no_argument,        NULL,   0, },
   };
 
   mkcerr = mkc_error_init ();
@@ -114,6 +115,15 @@ main (int argc, char *argv [])
         if (optarg != NULL) {
           comparg = argcopy.utf8argv [optind - 1];
         }
+        break;
+      }
+      case 4: {
+        break;
+      }
+      case 5: {
+        break;
+      }
+      case 6: {
         break;
       }
       default: {
