@@ -13,5 +13,11 @@ _value_ may be an integer, quoted string, single quoted string,
 a variable, an expression, or a list.
 <br>See [Syntax: Variables](SyntaxVariable)
 
+    set variable_name <value> { context <context>; }
+
+This form of __set__ is used internally by the cache to set the context.
+_context_ may be one of _check_, _env_, _flag_, _mkc_, _temp_,
+_disable_, _enable_.
+
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

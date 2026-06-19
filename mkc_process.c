@@ -109,6 +109,7 @@ static const char * const mkcisysid = "MKC_I_SYSID";
 static const char * const mkcicompid = "MKC_I_COMPID";
 static const char * const mkcihdrmodern = "MKC_I_HEADER_MODERN";
 static const char * const mkcivarmacro = "MKC_I_VARIADIC_MACRO";
+static const char * const mkcprojectname = "MKC_PROJECT_NAME";
 
 static void mkc_process_var_print (mkc_process_t *process, const char *pname);
 static void mkc_process_prof_print (mkc_process_t *process);
@@ -525,13 +526,22 @@ mkc_process_stmt_configure (mkc_process_t *process)
 void
 mkc_process_stmt_project (mkc_process_t *process)
 {
-  if (process->currentname == NULL) {
+  mkc_profidx_t   pidx;
+
+  if (process->currentname == NULL ||
+      *(process->currentname) == '\0') {
     mkc_error_set (process->mkcerr, MKC_ERR_PROC_NO_NAME, 0, NULL);
     return;
   }
 
   datafree (process->projectname);
   process->projectname = strdup (process->currentname);
+
+  pidx = mkc_profile_get_active (process->profiles);
+  mkc_pvar_profile_set (process->pvar, MKC_PROF_INTERNAL_NAME,
+      MKC_COMPILER_GENERAL);
+  mkc_pvar_set_str (process->pvar, mkcprojectname, process->projectname, MKC_VCTXT_MKC);
+  mkc_pvar_profile_set_idx (process->pvar, pidx);
 
   datafree (process->currentname);
   process->currentname = NULL;

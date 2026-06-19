@@ -19,11 +19,13 @@ static const char * const mkcerrormsg [] = {
   [MKC_OK_CHANGE] = "success, cache invalidated",
   [MKC_ERR_COMPILER_FAILURE] = "compiler failure",
   /* exceeds the set size of internal stacks */
+  [MKC_ERR_DIVIDE_BY_ZERO] = "division by zero",
   [MKC_ERR_EXCEEDS_STACK_SIZE] = "exceeds stack size",
   [MKC_ERR_FILE_NOT_FOUND] = "file not found",
   [MKC_ERR_FILE_READ_ERROR] = "file read error",
   [MKC_ERR_FILE_WRITE_ERROR] = "file write error",
   [MKC_ERR_INVALID_ARGUMENT] = "invalid argument",
+  [MKC_ERR_INVALID_OP] = "invalid operation",
   [MKC_ERR_INVALID_PROFILE] = "invalid profile",
   [MKC_ERR_INVALID_VALUE] = "invalid value",
   [MKC_ERR_MISMATCHED_ARGUMENT] = "mismatched argument",
