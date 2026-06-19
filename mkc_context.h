@@ -18,6 +18,7 @@ typedef enum {
   MKC_CONTEXT_LOOP        = (1 << 4),
   MKC_CONTEXT_PROFILE     = (1 << 5),
   MKC_CONTEXT_PROJECT     = (1 << 6),
+  MKC_CONTEXT_SET         = (1 << 7),
 } mkc_ctxt_val_t;
 
 typedef struct mkc_context_t mkc_context_t;

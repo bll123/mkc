@@ -32,6 +32,16 @@ typedef struct mkc_varlist_t {
   bool          fromcache;
 } mkc_varlist_t;
 
+static const char * const vctxtnames [] = {
+  [MKC_VCTXT_CHECK] = "check",
+  [MKC_VCTXT_ENV] = "env",
+  [MKC_VCTXT_FLAG] = "flag",
+  [MKC_VCTXT_MKC] = "mkc",
+  [MKC_VCTXT_TEMP] = "temp",
+  [MKC_VCTXT_USER_DISABLE] = "disable",
+  [MKC_VCTXT_USER_ENABLE] = "enable",
+};
+
 static mkc_var_t *mkc_var_create (mkc_varlist_t *varlist, const char *vname, mkc_var_type_t type, mkc_listidx_t *loc);
 static mkc_varidx_t mkc_var_find (mkc_varlist_t *varlist, const char *name, mkc_listidx_t *loc);
 static void mkc_var_free (void *data);
@@ -91,6 +101,16 @@ mkc_var_set_fromcache (mkc_varlist_t *varlist, bool flag)
 
   varlist->fromcache = flag;
 }
+
+const char *
+mkc_var_vctxt_str (mkc_var_ctxt_t vctxt)
+{
+  const char  * vctxtstr;
+
+  vctxtstr = vctxtnames [vctxt];
+  return vctxtstr;
+}
+
 
 const char *
 mkc_var_name_alloc (mkc_varlist_t *varlist, const char *vname)
@@ -188,6 +208,32 @@ mkc_var_set (mkc_varlist_t *varlist,
   }
 
   return rc;
+}
+
+void
+mkc_var_set_context (mkc_varlist_t *varlist, const char *vname, int vctxt)
+{
+  mkc_listidx_t   vidx;
+  mkc_listidx_t   loc;
+  mkc_var_t       *var;
+  mkc_value_t     *tvalue;
+
+  if (varlist == NULL) {
+    return;
+  }
+  if (vname == NULL) {
+    mkc_error_set (varlist->mkcerr, MKC_ERR_NULL_ARGUMENT, 0, NULL);
+    return;
+  }
+
+  vidx = mkc_var_find (varlist, vname, &loc);
+  if (vidx == MKC_VAR_NOTFOUND) {
+    return;
+  }
+
+  var = mkc_list_get_by_idx (varlist->list, vidx);
+  tvalue = &var->value;
+  tvalue->vctxt = vctxt;
 }
 
 int32_t

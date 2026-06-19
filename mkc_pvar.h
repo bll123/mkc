@@ -30,6 +30,7 @@ const char *mkc_pvar_name_alloc (mkc_pvar_t *pvar, const char *vname);
 int mkc_pvar_set (mkc_pvar_t *pvar, const char *vname, mkc_value_t *value, mkc_var_ctxt_t vctxt);
 int mkc_pvar_set_integer (mkc_pvar_t *pvar, const char *vname, int32_t ival, mkc_var_ctxt_t vctxt);
 int mkc_pvar_set_str (mkc_pvar_t *pvar, const char *vname, const char *str, mkc_var_ctxt_t vctxt);
+void mkc_pvar_set_context (mkc_pvar_t *pvar, const char *vname, int vctxt);
 
 mkc_varidx_t mkc_pvar_get_prof_idx (mkc_pvar_t *pvar, const char *vname);
 

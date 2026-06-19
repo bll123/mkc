@@ -18,6 +18,7 @@ extern "C" {
 typedef enum {
   MKC_T_ATTR_COMPILER,
   MKC_T_ATTR_COMP_FLAGS,
+  MKC_T_ATTR_CONTEXT,
   MKC_T_ATTR_DEFINE_ZERO,
   MKC_T_ATTR_HEADER,
   MKC_T_ATTR_INPUT,
@@ -69,6 +70,7 @@ typedef enum {
   MKC_T_STMT_FUNCTION,
   MKC_T_STMT_IF,
   MKC_T_STMT_LOADCACHE,
+  MKC_T_STMT_MARK,
   MKC_T_STMT_PRINT,
   MKC_T_STMT_PROFILE,
   MKC_T_STMT_PROJECT,
@@ -95,47 +97,49 @@ mkc_astnode_t * mkc_ast_mk_value (mkc_astmain_t *astmain, int asttype, char *str
 mkc_astnode_t * mkc_ast_mk_value_list (mkc_astmain_t *astmain, mkc_astnode_t *list, mkc_astnode_t *vala, int32_t lineno, int colno);
 
 mkc_astnode_t * mkc_ast_mk_op (mkc_astmain_t *astmain, mkc_astnode_t *vala, int op, mkc_astnode_t *valb, int32_t lineno, int colno);
-mkc_astnode_t * mkc_ast_mk_unary_op (mkc_astmain_t *astmain, mkc_astnode_t *value, int op, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_range (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *valb, int32_t lineno, int colno);
+mkc_astnode_t * mkc_ast_mk_unary_op (mkc_astmain_t *astmain, mkc_astnode_t *value, int op, int32_t lineno, int colno);
 
-mkc_astnode_t * mkc_ast_mk_stmtlist (mkc_astmain_t *astmain, mkc_astnode_t *list, mkc_astnode_t *vala, int32_t lineno, int colno);
-mkc_astnode_t * mkc_ast_mk_main (mkc_astmain_t *astmain, mkc_astnode_t *vala, int32_t lineno, int colno);
-mkc_astnode_t * mkc_ast_mk_if (mkc_astmain_t *astmain, mkc_astnode_t *expr, mkc_astnode_t *stmtblock, mkc_astnode_t *elseif, mkc_astnode_t *elseblock, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_elseif (mkc_astmain_t *astmain, mkc_astnode_t *expr, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_foreach (mkc_astmain_t *astmain, mkc_astnode_t *nm, mkc_astnode_t *list, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_foreach_range (mkc_astmain_t *astmain, mkc_astnode_t *nm, mkc_astnode_t *range, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
-mkc_astnode_t * mkc_ast_mk_while (mkc_astmain_t *astmain, mkc_astnode_t *expr, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_function (mkc_astmain_t *astmain, mkc_astnode_t *nm, mkc_astnode_t *arglist, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
+mkc_astnode_t * mkc_ast_mk_if (mkc_astmain_t *astmain, mkc_astnode_t *expr, mkc_astnode_t *stmtblock, mkc_astnode_t *elseif, mkc_astnode_t *elseblock, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_loop_control (mkc_astmain_t *astmain, mkc_astnode_token_t type, int32_t lineno, int colno);
+mkc_astnode_t * mkc_ast_mk_main (mkc_astmain_t *astmain, mkc_astnode_t *vala, int32_t lineno, int colno);
+mkc_astnode_t * mkc_ast_mk_stmtlist (mkc_astmain_t *astmain, mkc_astnode_t *list, mkc_astnode_t *vala, int32_t lineno, int colno);
+mkc_astnode_t * mkc_ast_mk_while (mkc_astmain_t *astmain, mkc_astnode_t *expr, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
 
-mkc_astnode_t * mkc_ast_mk_set (mkc_astmain_t *astmain, mkc_astnode_t *nm, mkc_astnode_t *expr, int32_t lineno, int colno);
-mkc_astnode_t * mkc_ast_mk_set_value (mkc_astmain_t *astmain, mkc_astnode_t *nm, mkc_astnode_t *vala, int32_t lineno, int colno);
-mkc_astnode_t * mkc_ast_mk_profile (mkc_astmain_t *astmain, mkc_astnode_t *nm, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
-mkc_astnode_t * mkc_ast_mk_print (mkc_astmain_t *astmain, mkc_astnode_t *vala, int32_t lineno, int colno);
-mkc_astnode_t * mkc_ast_mk_debug (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *valb, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_configure (mkc_astmain_t *astmain, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
-mkc_astnode_t * mkc_ast_mk_project (mkc_astmain_t *astmain, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
+mkc_astnode_t * mkc_ast_mk_debug (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *valb, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_loadcache (mkc_astmain_t *astmain, mkc_astnode_t *vers, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
+mkc_astnode_t * mkc_ast_mk_mark (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *valb, int32_t lineno, int colno);
+mkc_astnode_t * mkc_ast_mk_print (mkc_astmain_t *astmain, mkc_astnode_t *vala, int32_t lineno, int colno);
+mkc_astnode_t * mkc_ast_mk_profile (mkc_astmain_t *astmain, mkc_astnode_t *nm, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
+mkc_astnode_t * mkc_ast_mk_project (mkc_astmain_t *astmain, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
+mkc_astnode_t * mkc_ast_mk_set (mkc_astmain_t *astmain, mkc_astnode_t *nm, mkc_astnode_t *expr, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
+mkc_astnode_t * mkc_ast_mk_set_value (mkc_astmain_t *astmain, mkc_astnode_t *nm, mkc_astnode_t *vala, int32_t lineno, int colno);
 
 /* checks */
 mkc_astnode_t * mkc_ast_mk_chk_comp_flag (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *stmtblock, int addflag, int32_t lineno, int colno);
+mkc_astnode_t * mkc_ast_mk_chk_function (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_chk_link_flag (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *stmtblock, int addchk, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_chk_size (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
-mkc_astnode_t * mkc_ast_mk_chk_type (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_chk_struct_member (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *valb, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
-mkc_astnode_t * mkc_ast_mk_chk_function (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
+mkc_astnode_t * mkc_ast_mk_chk_type (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
 
-/* internal statements */
-mkc_astnode_t * mkc_ast_mk_attr_name (mkc_astmain_t *astmain, mkc_astnode_t *nm, int32_t lineno, int colno);
-mkc_astnode_t * mkc_ast_mk_attr_negate (mkc_astmain_t *astmain, int32_t lineno, int colno);
-mkc_astnode_t * mkc_ast_mk_attr_header (mkc_astmain_t *astmain, mkc_astnode_t *hdrlist, int32_t lineno, int colno);
+/* attribute statements */
 mkc_astnode_t * mkc_ast_mk_attr_compflags (mkc_astmain_t *astmain, mkc_astnode_t *compflaglist, int32_t lineno, int colno);
+mkc_astnode_t * mkc_ast_mk_attr_compiler (mkc_astmain_t *astmain, mkc_astnode_t *name, int32_t lineno, int colno);
+mkc_astnode_t * mkc_ast_mk_attr_context (mkc_astmain_t *astmain, mkc_astnode_t *context, int32_t lineno, int colno);
+mkc_astnode_t * mkc_ast_mk_attr_define_zero (mkc_astmain_t *astmain, int32_t lineno, int colno);
+mkc_astnode_t * mkc_ast_mk_attr_header (mkc_astmain_t *astmain, mkc_astnode_t *hdrlist, int32_t lineno, int colno);
+mkc_astnode_t * mkc_ast_mk_attr_input (mkc_astmain_t *astmain, mkc_astnode_t *name, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_attr_linkflags (mkc_astmain_t *astmain, mkc_astnode_t *linkflaglist, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_attr_method (mkc_astmain_t *astmain, mkc_astnode_t *method, int32_t lineno, int colno);
-mkc_astnode_t * mkc_ast_mk_attr_input (mkc_astmain_t *astmain, mkc_astnode_t *name, int32_t lineno, int colno);
+mkc_astnode_t * mkc_ast_mk_attr_name (mkc_astmain_t *astmain, mkc_astnode_t *nm, int32_t lineno, int colno);
+mkc_astnode_t * mkc_ast_mk_attr_negate (mkc_astmain_t *astmain, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_attr_output (mkc_astmain_t *astmain, mkc_astnode_t *name, int32_t lineno, int colno);
-mkc_astnode_t * mkc_ast_mk_attr_compiler (mkc_astmain_t *astmain, mkc_astnode_t *name, int32_t lineno, int colno);
-mkc_astnode_t * mkc_ast_mk_attr_define_zero (mkc_astmain_t *astmain, int32_t lineno, int colno);
 
 mkc_astmain_t * mkc_ast_init (mkc_log_t *log, const char *dfltprof, const char *comparg, mkc_error_t *mkcerr);
 void mkc_ast_set_main (mkc_astmain_t *, mkc_astnode_t *astnode);

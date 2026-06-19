@@ -37,8 +37,8 @@ typedef enum {
   MKC_VCTXT_FLAG,
   MKC_VCTXT_MKC,
   MKC_VCTXT_TEMP,
-  MKC_VCTXT_USER_IGNORE,
-  MKC_VCTXT_USER_OUTPUT,
+  MKC_VCTXT_USER_DISABLE,
+  MKC_VCTXT_USER_ENABLE,
 } mkc_var_ctxt_t;
 
 enum {
@@ -63,9 +63,11 @@ typedef struct mkc_value_t {
 mkc_varlist_t *mkc_varlist_init (mkc_log_t *log, mkc_error_t *mkcerr);
 void mkc_varlist_free (mkc_varlist_t *varlist);
 void mkc_var_set_fromcache (mkc_varlist_t *varlist, bool flag);
+const char *mkc_var_vctxt_str (mkc_var_ctxt_t vctxt);
 
 const char * mkc_var_name_alloc (mkc_varlist_t *varlist, const char *vname);
 int mkc_var_set (mkc_varlist_t *varlist, const char *vname, mkc_value_t *value);
+void mkc_var_set_context (mkc_varlist_t *varlist, const char *vname, int vctxt);
 
 int32_t mkc_var_size (mkc_varlist_t *varlist);
 void mkc_var_iter_start (mkc_varlist_t *varlist, mkc_varidx_t *iteridx);

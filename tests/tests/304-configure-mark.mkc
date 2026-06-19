@@ -1,0 +1,26 @@
+profile global {
+  compiler c;
+
+  check_function malloc;
+  check_function fstat {
+    header sys/stat.h;
+  }
+  check_function sqrt {
+    header math.h;
+    link_flags '-lm';
+  }
+  check_function other;
+
+  mark _function_malloc disable-output;
+}
+
+profile internal {
+  # for the purposes of this tests, pick a variable with a static value
+  mark MKC_SYS_UNKNOWN enable-output;
+}
+
+configure {
+  method auto;
+  define_zero;
+  output 'tests/tmp/304-configure-mark.h';
+}

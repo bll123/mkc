@@ -25,6 +25,7 @@
 static const char *typenames [MKC_T_MAX] = {
   [MKC_T_ATTR_COMPILER] = "attr_compiler",
   [MKC_T_ATTR_COMP_FLAGS] = "attr_comp_flags",
+  [MKC_T_ATTR_CONTEXT] = "attr_context",
   [MKC_T_ATTR_DEFINE_ZERO] = "attr_define_zero",
   [MKC_T_ATTR_HEADER] = "attr_header",
   [MKC_T_ATTR_INPUT] = "attr_input",
@@ -76,6 +77,7 @@ static const char *typenames [MKC_T_MAX] = {
   [MKC_T_STMT_FUNCTION] = "stmt_function",
   [MKC_T_STMT_IF] = "stmt_if",
   [MKC_T_STMT_LOADCACHE] = "stmt_load_cache",
+  [MKC_T_STMT_MARK] = "stmt_mark",
   [MKC_T_STMT_PRINT] = "stmt_print",
   [MKC_T_STMT_SET] = "stmt_set",
   [MKC_T_STMT_PROFILE] = "stmt_profile",
@@ -140,6 +142,11 @@ typedef struct mkc_ast_loadcache_t {
   mkc_astnode_t       *stmtblock;
 } mkc_ast_loadcache_t;
 
+typedef struct mkc_ast_mark_t {
+  mkc_astnode_t       *vala;
+  mkc_astnode_t       *valb;
+} mkc_ast_mark_t;
+
 typedef struct mkc_ast_if_t {
   mkc_astnode_t       *expr;
   mkc_astnode_t       *stmtblock;
@@ -167,6 +174,7 @@ typedef struct mkc_ast_while_t {
 typedef struct mkc_ast_set_t {
   mkc_astnode_t     *nm;
   mkc_astnode_t     *vala;
+  mkc_astnode_t     *stmtblock;
 } mkc_ast_set_t;
 
 typedef struct mkc_ast_profile_t {
@@ -207,6 +215,10 @@ typedef struct mkc_ast_chk_function_t {
   mkc_astnode_t     *stmtblock;
 } mkc_ast_chk_function_t;
 
+typedef struct mkc_ast_attr_context_t {
+  mkc_astnode_t     *context;
+} mkc_ast_attr_context_t;
+
 typedef struct mkc_ast_attr_name_t {
   mkc_astnode_t     *nm;
 } mkc_ast_attr_name_t;
@@ -242,36 +254,38 @@ typedef struct mkc_ast_attr_compiler_t {
 typedef struct mkc_astnode_t {
   union {
     mkc_ast_attr_compflag_t     compflagattr;
-    mkc_ast_attr_linkflag_t     linkflagattr;
-    mkc_ast_attr_header_t       hdrattr;
-    mkc_ast_attr_name_t         nameattr;
-    mkc_ast_attr_method_t       methodattr;
-    mkc_ast_attr_input_t        inputattr;
-    mkc_ast_attr_output_t       outputattr;
     mkc_ast_attr_compiler_t     compilerattr;
+    mkc_ast_attr_context_t      contextattr;
+    mkc_ast_attr_header_t       hdrattr;
+    mkc_ast_attr_input_t        inputattr;
+    mkc_ast_attr_linkflag_t     linkflagattr;
+    mkc_ast_attr_method_t       methodattr;
+    mkc_ast_attr_name_t         nameattr;
+    mkc_ast_attr_output_t       outputattr;
     mkc_ast_chk_comp_flag_t     chkcompflag;
+    mkc_ast_chk_function_t      chkfunction;
     mkc_ast_chk_link_flag_t     chklinkflag;
     mkc_ast_chk_size_t          chksize;
-    mkc_ast_chk_type_t          chktype;
     mkc_ast_chk_struct_member_t chkstructmember;
-    mkc_ast_chk_function_t      chkfunction;
-    mkc_ast_debug_t             debugstmt;
+    mkc_ast_chk_type_t          chktype;
     mkc_ast_conf_t              confstmt;
-    mkc_ast_project_t           projectstmt;
-    mkc_ast_loadcache_t         loadcachestmt;
+    mkc_ast_debug_t             debugstmt;
     mkc_ast_elseif_t            elseif;
     mkc_ast_foreach_t           foreachstmt;
-    mkc_ast_while_t             whilestmt;
     mkc_ast_if_t                ifstmt;
     mkc_ast_list_t              list;
+    mkc_ast_loadcache_t         loadcachestmt;
     mkc_ast_main_t              main;
+    mkc_ast_mark_t              markstmt;
     mkc_ast_op_t                op;
     mkc_ast_print_t             printstmt;
     mkc_ast_profile_t           profilestmt;
+    mkc_ast_project_t           projectstmt;
     mkc_ast_set_t               setstmt;
     mkc_ast_stmtlist_t          stmtlist;
     mkc_ast_unary_op_t          unary_op;
     mkc_ast_value_t             value;
+    mkc_ast_while_t             whilestmt;
   };
   int32_t               nodenum;
   int32_t               lineno;
@@ -690,8 +704,29 @@ mkc_ast_mk_loadcache (mkc_astmain_t *astmain,
 }
 
 mkc_astnode_t *
+mkc_ast_mk_mark (mkc_astmain_t *astmain,
+    mkc_astnode_t *vala, mkc_astnode_t *valb,
+    int32_t lineno, int colno)
+{
+  mkc_astnode_t   *astnode;
+
+  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
+      "ast-mk: mark\n");
+
+  astnode = mkc_astnode_init (astmain, MKC_T_STMT_MARK, lineno, colno);
+  if (astnode == NULL) {
+    return NULL;
+  }
+
+  astnode->markstmt.vala = vala;
+  astnode->markstmt.valb = valb;
+
+  return astnode;
+}
+
+mkc_astnode_t *
 mkc_ast_mk_set (mkc_astmain_t *astmain,
-    mkc_astnode_t *nm, mkc_astnode_t *vala,
+    mkc_astnode_t *nm, mkc_astnode_t *vala, mkc_astnode_t *stmtblock,
     int32_t lineno, int colno)
 {
   mkc_astnode_t   *astnode;
@@ -706,6 +741,7 @@ mkc_ast_mk_set (mkc_astmain_t *astmain,
 
   astnode->setstmt.nm = nm;
   astnode->setstmt.vala = vala;
+  astnode->setstmt.stmtblock = stmtblock;
 
   return astnode;
 }
@@ -1082,6 +1118,24 @@ mkc_ast_mk_attr_compflags (mkc_astmain_t *astmain,
 }
 
 mkc_astnode_t *
+mkc_ast_mk_attr_context (mkc_astmain_t *astmain,
+    mkc_astnode_t *context, int32_t lineno, int colno)
+{
+  mkc_astnode_t   *astnode;
+
+  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
+      "ast-mk: attr-context\n");
+
+  astnode = mkc_astnode_init (astmain, MKC_T_ATTR_CONTEXT, lineno, colno);
+  if (astnode == NULL) {
+    return NULL;
+  }
+
+  astnode->contextattr.context = context;
+  return astnode;
+}
+
+mkc_astnode_t *
 mkc_ast_mk_attr_linkflags (mkc_astmain_t *astmain,
     mkc_astnode_t *linkflaglist,
     int32_t lineno, int colno)
@@ -1382,6 +1436,16 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       break;
     }
 
+    case MKC_T_STMT_MARK: {
+      mkc_value_t *vala;
+      mkc_value_t *valb;
+
+      vala = mkc_ast_get_value (astmain, astnode->markstmt.vala);
+      valb = mkc_ast_get_value (astmain, astnode->markstmt.valb);
+      mkc_process_stmt_mark (astmain->process, vala, valb);
+      break;
+    }
+
     case MKC_T_STMT_IF: {
       int32_t   rval;
 
@@ -1495,6 +1559,12 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
         break;
       }
 
+      if (astnode->setstmt.stmtblock != NULL) {
+        mkc_context_push (astmain->context, MKC_CONTEXT_SET, astmain->mkcerr);
+        mkc_ast_process (astmain, astnode->setstmt.stmtblock, ifcond, loopcond, depth + 1);
+        mkc_context_pop (astmain->context);
+      }
+
       mkc_ast_process (astmain, astnode->setstmt.vala, ifcond, loopcond, depth);
       rc = mkc_process_stmt_set (astmain->process, valnm, &astmain->value);
       if (rc == MKC_OK_CHANGE) {
@@ -1553,6 +1623,17 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
         break;
       }
       mkc_process_attr_comp_flags (astmain->process, val);
+      break;
+    }
+
+    case MKC_T_ATTR_CONTEXT: {
+      mkc_value_t   *context;
+
+      context = mkc_ast_get_value (astmain, astnode->contextattr.context);
+      if (mkc_error_chk_err (astmain->mkcerr)) {
+        break;
+      }
+      mkc_process_attr_context (astmain->process, context);
       break;
     }
 

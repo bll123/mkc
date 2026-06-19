@@ -140,6 +140,7 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 
 "configure"   { return T_STMT_CONFIGURE; }
 "load_cache"  { return T_STMT_LOADCACHE; }
+"mark"        { return T_STMT_MARK; }
 "include"     { return T_STMT_INCLUDE; }
 "mkcdebug"    { return T_STMT_DEBUG; }
 "option"      { return T_STMT_OPTION; }
@@ -159,6 +160,7 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 
 "compiler"                  { return T_ATTR_COMPILER; }
 "compiler_flags"            { return T_ATTR_COMP_FLAGS; }
+"context"                   { return T_ATTR_CONTEXT; }
 "define_zero"               { return T_ATTR_DEFINE_ZERO; }
 "header"                    { return T_ATTR_HEADER; }
 "input"                     { return T_ATTR_INPUT; }

@@ -180,6 +180,19 @@ mkc_pvar_set_str (mkc_pvar_t *pvar,
   return rc;
 }
 
+void
+mkc_pvar_set_context (mkc_pvar_t *pvar, const char *vname, int vctxt)
+{
+  mkc_varlist_t  *varlist;
+
+  if (pvar == NULL || vname == NULL) {
+    return;
+  }
+
+  varlist = mkc_profile_get_varlist (pvar->profiles, pvar->pidx);
+  mkc_var_set_context (varlist, vname, vctxt);
+}
+
 int32_t
 mkc_pvar_size (mkc_pvar_t *pvar)
 {

@@ -100,9 +100,9 @@
 %token <sval> T_VARIABLE          "${...}"
 
 // keywords
-%token T_STMT_ELSE            "else"
 %token T_LOOP_BREAK           "break"
 %token T_LOOP_CONTINUE        "continue"
+%token T_STMT_ELSE            "else"
 %token T_STMT_FOREACH         "foreach"
 %token T_STMT_IF              "if"
 %token T_STMT_SET             "set"
@@ -113,6 +113,7 @@
 %token T_STMT_DEBUG           "mkcdebug"
 %token T_STMT_INCLUDE         "include"
 %token T_STMT_LOADCACHE       "load_cache"
+%token T_STMT_MARK            "mark"
 %token T_STMT_PROJECT         "project"
 
 // commands
@@ -136,6 +137,7 @@
 // attributes
 %token T_ATTR_COMPILER        "compiler"
 %token T_ATTR_COMP_FLAGS      "compiler_flags"
+%token T_ATTR_CONTEXT         "context"
 %token T_ATTR_DEFINE_ZERO     "define_zero"
 %token T_ATTR_HEADER          "header"
 %token T_ATTR_INPUT           "input"
@@ -164,14 +166,14 @@
 %type <astnode> foreachstmt whilestmt function loopcontrol
 // commands
 %type <astnode> printstmt setstmt configurestmt projectstmt loadcachestmt
-%type <astnode> includestmt profilestmt
+%type <astnode> includestmt profilestmt markstmt
 // checks
 %type <astnode> checkcommand chkcompflag chklinkflag
 %type <astnode> chksize chktype chkstructmember
 %type <astnode> chkfunction
 // attributes
 %type <astnode> attr attrname source header compilerflags linkflags negate
-%type <astnode> method input output compiler define_zero
+%type <astnode> method input output compiler define_zero context
 
 // precedence rules: the lowest precedence comes first
 %left T_OP_OR
@@ -201,6 +203,7 @@ stmt[v]:
     {
       $v = NULL;
     }
+// control statements
   | ifstmt[a]
     {
       $v = $a;
@@ -217,15 +220,8 @@ stmt[v]:
     {
       $v = NULL;
     }
-  | printstmt[a]
-    {
-      $v = $a;
-    }
-  | setstmt[a]
-    {
-      $v = $a;
-    }
-  | profilestmt[a]
+// statements
+  | configurestmt[a]
     {
       $v = $a;
     }
@@ -233,11 +229,7 @@ stmt[v]:
     {
       $v = $a;
     }
-  | configurestmt[a]
-    {
-      $v = $a;
-    }
-  | projectstmt[a]
+  | includestmt[a]
     {
       $v = $a;
     }
@@ -245,15 +237,32 @@ stmt[v]:
     {
       $v = $a;
     }
-  | includestmt[a]
+  | markstmt[a]
+    {
+      $v = $a;
+    }
+  | printstmt[a]
+    {
+      $v = $a;
+    }
+  | profilestmt[a]
+    {
+      $v = $a;
+    }
+  | projectstmt[a]
+    {
+      $v = $a;
+    }
+  | setstmt[a]
+    {
+      $v = $a;
+    }
+// other
+  | attr[a]
     {
       $v = $a;
     }
   | checkcommand[a]
-    {
-      $v = $a;
-    }
-  | attr[a]
     {
       $v = $a;
     }
@@ -268,23 +277,15 @@ attr[v]:
     {
       $v = $a;
     }
+  | compiler[a]
+    {
+      $v = $a;
+    }
   | compilerflags[a]
     {
       $v = $a;
     }
-  | linkflags[a]
-    {
-      $v = $a;
-    }
-  | header[a]
-    {
-      $v = $a;
-    }
-  | source[a]
-    {
-      $v = $a;
-    }
-  | negate[a]
+  | context[a]
     {
       $v = $a;
     }
@@ -292,7 +293,7 @@ attr[v]:
     {
       $v = $a;
     }
-  | method[a]
+  | header[a]
     {
       $v = $a;
     }
@@ -300,11 +301,23 @@ attr[v]:
     {
       $v = $a;
     }
+  | linkflags[a]
+    {
+      $v = $a;
+    }
+  | method[a]
+    {
+      $v = $a;
+    }
+  | negate[a]
+    {
+      $v = $a;
+    }
   | output[a]
     {
       $v = $a;
     }
-  | compiler[a]
+  | source[a]
     {
       $v = $a;
     }
@@ -481,6 +494,16 @@ funcargs:
     }
   ;
 
+// statements
+
+configurestmt[v]:
+    T_STMT_CONFIGURE stmtblock[a]
+    {
+      $v = mkc_ast_mk_configure (ast, $a,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
 directive[v]:
     T_STMT_DEBUG varname[a] T_SEMICOLON
     {
@@ -498,66 +521,9 @@ directive[v]:
     }
   ;
 
-printstmt[v]:
-    T_STMT_PRINT varvalue[a] T_SEMICOLON
-    {
-      $v = mkc_ast_mk_print (ast, $a,
-          yylloc.first_line, yylloc.first_column);
-    }
-  ;
-
-setstmt[v]:
-    T_STMT_SET varname[a] expr[b] T_SEMICOLON
-    {
-      $v = mkc_ast_mk_set (ast, $a, $b,
-          yylloc.first_line, yylloc.first_column);
-    }
-  | T_STMT_SET varname[a] valuelist[b] T_SEMICOLON
-    {
-      $v = mkc_ast_mk_set (ast, $a, $b,
-          yylloc.first_line, yylloc.first_column);
-    }
-  | T_STMT_SET varname[a] T_LEFT_BRACKET valuelist[l] T_RIGHT_BRACKET T_SEMICOLON
-    {
-      $v = mkc_ast_mk_set (ast, $a, $l,
-          yylloc.first_line, yylloc.first_column);
-    }
-  ;
-
-profilestmt[v]:
-    T_STMT_PROFILE varname[a] stmtblock_or_semi[b]
-    {
-      $v = mkc_ast_mk_profile (ast, $a, $b,
-          yylloc.first_line, yylloc.first_column);
-    }
-  ;
-
-configurestmt[v]:
-    T_STMT_CONFIGURE stmtblock[a]
-    {
-      $v = mkc_ast_mk_configure (ast, $a,
-          yylloc.first_line, yylloc.first_column);
-    }
-  ;
-
-projectstmt[v]:
-    T_STMT_PROJECT stmtblock[a]
-    {
-      $v = mkc_ast_mk_project (ast, $a,
-          yylloc.first_line, yylloc.first_column);
-    }
-  ;
-
-loadcachestmt[v]:
-    T_STMT_LOADCACHE integer[a] stmtblock[b]
-    {
-      $v = mkc_ast_mk_loadcache (ast, $a, $b,
-          yylloc.first_line, yylloc.first_column);
-    }
-  ;
-
 // ### this should be: pathname...
 // ### would need to extract the path from the value.
+// ### try to fix lexer so that path/file are combined
 includestmt[v]:
     T_STMT_INCLUDE T_ID_PATH_NAME[a] T_SEMICOLON
     {
@@ -576,6 +542,71 @@ includestmt[v]:
       $v = NULL;
     }
   ;
+
+loadcachestmt[v]:
+    T_STMT_LOADCACHE integer[a] stmtblock[b]
+    {
+      $v = mkc_ast_mk_loadcache (ast, $a, $b,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+markstmt[v]:
+    T_STMT_MARK varname[a] varname[b] T_SEMICOLON
+    {
+      $v = mkc_ast_mk_mark (ast, $a, $b,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+printstmt[v]:
+    T_STMT_PRINT varvalue[a] T_SEMICOLON
+    {
+      $v = mkc_ast_mk_print (ast, $a,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+profilestmt[v]:
+    T_STMT_PROFILE varname[a] stmtblock_or_semi[b]
+    {
+      $v = mkc_ast_mk_profile (ast, $a, $b,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+projectstmt[v]:
+    T_STMT_PROJECT stmtblock[a]
+    {
+      $v = mkc_ast_mk_project (ast, $a,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+setstmt[v]:
+    T_STMT_SET varname[a] expr[b] T_SEMICOLON
+    {
+      $v = mkc_ast_mk_set (ast, $a, $b, NULL,
+          yylloc.first_line, yylloc.first_column);
+    }
+  | T_STMT_SET varname[a] expr[b] stmtblock[c]
+    {
+      $v = mkc_ast_mk_set (ast, $a, $b, $c,
+          yylloc.first_line, yylloc.first_column);
+    }
+  | T_STMT_SET varname[a] valuelist[b] T_SEMICOLON
+    {
+      $v = mkc_ast_mk_set (ast, $a, $b, NULL,
+          yylloc.first_line, yylloc.first_column);
+    }
+  | T_STMT_SET varname[a] T_LEFT_BRACKET valuelist[l] T_RIGHT_BRACKET T_SEMICOLON
+    {
+      $v = mkc_ast_mk_set (ast, $a, $l, NULL,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+// checks
 
 chkcompflag[v]:
     T_ADD_COMP_FLAG varvalue[a] stmtblock_or_semi[b]
@@ -635,11 +666,22 @@ chkfunction[v]:
     }
   ;
 
+// attributes
+
 /* a name is the user requested name that overrides the generated name */
 attrname[v]:
     T_ATTR_NAME varname[a] T_SEMICOLON
     {
       $v = mkc_ast_mk_attr_name (ast, $a,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+/* context for set */
+context[v]:
+    T_ATTR_CONTEXT varvalue[a] T_SEMICOLON
+    {
+      $v = mkc_ast_mk_attr_context (ast, $a,
           yylloc.first_line, yylloc.first_column);
     }
   ;
