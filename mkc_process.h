@@ -44,6 +44,8 @@ void mkc_process_attr_method (mkc_process_t *process, mkc_value_t *method);
 void mkc_process_attr_input (mkc_process_t *process, mkc_value_t *name);
 void mkc_process_attr_output (mkc_process_t *process, mkc_value_t *name);
 void mkc_process_attr_compiler (mkc_process_t *process, mkc_value_t *name);
+void mkc_process_attr_negate (mkc_process_t *process);
+void mkc_process_attr_define_zero (mkc_process_t *process);
 
 mkc_value_t * mkc_process_get_value (mkc_process_t *process, const char *nm);
 

@@ -13,6 +13,6 @@ profile global {
 }
 
 configure {
-  method auto-nozero;
-  output 'tests/tmp/302-configure-auto-nodef.h';
+  method auto;
+  output 'tests/tmp/303-configure-auto-nodef.h';
 }

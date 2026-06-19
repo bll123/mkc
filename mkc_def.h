@@ -15,8 +15,6 @@ extern "C" {
 #endif
 
 enum {
-  MKC_NEGATE,
-  MKC_AS_IS,
   MKC_ADD,
   MKC_CHK,
 };

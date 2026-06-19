@@ -3,11 +3,11 @@
 
 ### Syntax: configure
 
-_configure_ generates a configuration file for use by the project.
+__configure__ generates a configuration file for use by the project.
 
     configure { <attribute-list> };
 
-If the _method_ attribute is _auto_ or _auto-nozero_, the
+If the _method_ attribute is _auto_, the
 filename will be automatically generated based on the project name:
 _project_\_config.h .
 
@@ -16,11 +16,12 @@ contain
 
 ##### Allowed Attributes
 
-The _configure_ statement allows the following attribute statements:
+The __configure__ statement allows the following attribute statements:
 
 * [method](SyntaxMethod) (required)
 * [input](SyntaxInput) (required for manual method)
 * [output](SyntaxOutput) (required for manual method)
+* define_zero
 
 ##### Examples
 
@@ -34,8 +35,9 @@ The _configure_ statement allows the following attribute statements:
 
     configure {
       method auto;
-      # an output attribute overrides automatic generation of the filename
-      # output 'config.h';
+      # the _define\_zero_ attribute will output defines if the
+      # check failed.
+      define_zero;
     }
 
 mkctest_config.h:
@@ -52,10 +54,12 @@ mkctest_config.h:
     check_function junk;
 
     configure {
-      method auto-nozero;
+      method auto;
+      # an output attribute overrides automatic generation of the filename
+      output 'myconfig.h';
     }
 
-mkctest_config.h:
+myconfig.h:
 
     #define _function_malloc 1
 

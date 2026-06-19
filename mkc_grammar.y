@@ -136,6 +136,7 @@
 // attributes
 %token T_ATTR_COMPILER        "compiler"
 %token T_ATTR_COMP_FLAGS      "compiler_flags"
+%token T_ATTR_DEFINE_ZERO     "define_zero"
 %token T_ATTR_HEADER          "header"
 %token T_ATTR_INPUT           "input"
 %token T_ATTR_LINK_FLAGS      "link_flags"
@@ -170,7 +171,7 @@
 %type <astnode> chkfunction
 // attributes
 %type <astnode> attr attrname source header compilerflags linkflags negate
-%type <astnode> method input output compiler
+%type <astnode> method input output compiler define_zero
 
 // precedence rules: the lowest precedence comes first
 %left T_OP_OR
@@ -285,7 +286,11 @@ attr[v]:
     }
   | negate[a]
     {
-      $v = NULL;
+      $v = $a;
+    }
+  | define_zero[a]
+    {
+      $v = $a;
     }
   | method[a]
     {
@@ -575,12 +580,12 @@ includestmt[v]:
 chkcompflag[v]:
     T_ADD_COMP_FLAG varvalue[a] stmtblock_or_semi[b]
     {
-      $v = mkc_ast_mk_chk_comp_flag (ast, $a, $b, MKC_ADD, MKC_AS_IS,
+      $v = mkc_ast_mk_chk_comp_flag (ast, $a, $b, MKC_ADD,
           yylloc.first_line, yylloc.first_column);
     }
   | T_CHK_COMP_FLAG varvalue[a] stmtblock_or_semi[b]
     {
-      $v = mkc_ast_mk_chk_comp_flag (ast, $a, $b, MKC_CHK, MKC_AS_IS,
+      $v = mkc_ast_mk_chk_comp_flag (ast, $a, $b, MKC_CHK,
           yylloc.first_line, yylloc.first_column);
     }
   ;
@@ -644,6 +649,15 @@ negate[v]:
     T_ATTR_NEGATE T_SEMICOLON
     {
       $v = mkc_ast_mk_attr_negate (ast,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+/* define-zero flag for configure */
+define_zero[v]:
+    T_ATTR_DEFINE_ZERO T_SEMICOLON
+    {
+      $v = mkc_ast_mk_attr_define_zero (ast,
           yylloc.first_line, yylloc.first_column);
     }
   ;

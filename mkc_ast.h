@@ -18,6 +18,7 @@ extern "C" {
 typedef enum {
   MKC_T_ATTR_COMPILER,
   MKC_T_ATTR_COMP_FLAGS,
+  MKC_T_ATTR_DEFINE_ZERO,
   MKC_T_ATTR_HEADER,
   MKC_T_ATTR_INPUT,
   MKC_T_ATTR_LINK_FLAGS,
@@ -117,7 +118,7 @@ mkc_astnode_t * mkc_ast_mk_project (mkc_astmain_t *astmain, mkc_astnode_t *stmtb
 mkc_astnode_t * mkc_ast_mk_loadcache (mkc_astmain_t *astmain, mkc_astnode_t *vers, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
 
 /* checks */
-mkc_astnode_t * mkc_ast_mk_chk_comp_flag (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *stmtblock, int addflag, int negate, int32_t lineno, int colno);
+mkc_astnode_t * mkc_ast_mk_chk_comp_flag (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *stmtblock, int addflag, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_chk_link_flag (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *stmtblock, int addchk, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_chk_size (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_chk_type (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
@@ -134,6 +135,7 @@ mkc_astnode_t * mkc_ast_mk_attr_method (mkc_astmain_t *astmain, mkc_astnode_t *m
 mkc_astnode_t * mkc_ast_mk_attr_input (mkc_astmain_t *astmain, mkc_astnode_t *name, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_attr_output (mkc_astmain_t *astmain, mkc_astnode_t *name, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_attr_compiler (mkc_astmain_t *astmain, mkc_astnode_t *name, int32_t lineno, int colno);
+mkc_astnode_t * mkc_ast_mk_attr_define_zero (mkc_astmain_t *astmain, int32_t lineno, int colno);
 
 mkc_astmain_t * mkc_ast_init (mkc_log_t *log, const char *dfltprof, const char *comparg, mkc_error_t *mkcerr);
 void mkc_ast_set_main (mkc_astmain_t *, mkc_astnode_t *astnode);

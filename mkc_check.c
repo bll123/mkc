@@ -301,7 +301,7 @@ mkc_chk_compiler_id (mkc_check_t *check, mkc_compiler_t compiler)
 int
 mkc_chk_compiler_flag (mkc_check_t *check,
     mkc_compiler_t compiler,
-    const char *flag, int negate)
+    const char *flag, bool negate)
 {
   int               rc;
   char              tbuff [100];
@@ -320,7 +320,7 @@ mkc_chk_compiler_flag (mkc_check_t *check,
 
   mkc_log (check->log, MKC_LOG_CHECK, "== chk: compiler-flag: %s\n", flag);
   stpecpy (tbuff, tbuff + sizeof (tbuff), flag);
-  if (negate == MKC_NEGATE) {
+  if (negate == true) {
     char    *p;
 
     if (strncmp (flag, negprefix, neglen) == 0) {

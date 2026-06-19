@@ -1,2 +1,3 @@
 == release c
+  cf_no_unreachable_code -Wno-unreachable-code
   cf_unreachable_code -Wunreachable-code

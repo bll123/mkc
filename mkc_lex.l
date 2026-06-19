@@ -159,6 +159,7 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 
 "compiler"                  { return T_ATTR_COMPILER; }
 "compiler_flags"            { return T_ATTR_COMP_FLAGS; }
+"define_zero"               { return T_ATTR_DEFINE_ZERO; }
 "header"                    { return T_ATTR_HEADER; }
 "input"                     { return T_ATTR_INPUT; }
 "link_flags"                { return T_ATTR_LINK_FLAGS; }

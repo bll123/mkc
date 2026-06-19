@@ -65,7 +65,7 @@ for tnm in ${tdir}/${pattern}; do
   fi
 
   diff=F
-  if [[ -f ${ddir}/$bnm.h ]]; then
+  if [[ -f ${rdir}/$bnm.h ]]; then
     diff=T
     diff -q -w ${rdir}/$bnm.h ${odir}/$bnm.h >>${LOG} 2>&1
     rc=$?

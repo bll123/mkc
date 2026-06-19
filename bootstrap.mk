@@ -120,13 +120,13 @@ mkc_check.o: mkc_string.h
 mkc_compiler.o:  mkc_compiler.h
 mkc_context.o:  mkc_context.h mkc_error.h
 mkc_env.o:  mkc_env.h mkc_string.h mkc_nodiscard.h
-mkc_error.o:   mkc_error.h
-mkc_fileop.o:  mkc_def.h mkc_error.h mkc_fileop.h
-mkc_fileop.o: mkc_nodiscard.h mkc_string.h
+mkc_error.o:  mkc_error.h mkc_util.h 
+mkc_fileop.o:   mkc_def.h mkc_error.h
+mkc_fileop.o: mkc_fileop.h mkc_nodiscard.h mkc_string.h
 mkc_grammar.o: mkc_grammar.h  
 mkc_grammar.o: mkc_ast.h mkc_error.h mkc_log.h  mkc_var.h
 mkc_grammar.o: mkc_list.h mkc_def.h 
-mkc_grammar.o:  mkc_fileop.h mkc_nodiscard.h mkc_lex.h
+mkc_grammar.o:  mkc_fileop.h mkc_nodiscard.h
 mkc_lex.o:   mkc_grammar.h
 mkc_lex.o:  mkc_ast.h mkc_error.h mkc_log.h
 mkc_lex.o:  mkc_var.h mkc_list.h mkc_def.h
@@ -134,8 +134,8 @@ mkc_lex.o:   mkc_fileop.h
 mkc_lex.o: mkc_nodiscard.h 
 mkc_list.o:   mkc_error.h
 mkc_list.o: mkc_list.h
-mkc_log.o:   mkc_error.h
-mkc_log.o: mkc_fileop.h  mkc_nodiscard.h mkc_log.h
+mkc_log.o: mkc_error.h mkc_fileop.h  mkc_nodiscard.h
+mkc_log.o: mkc_log.h
 mkc_main.o:  mkc_ast.h mkc_error.h mkc_log.h
 mkc_main.o:  mkc_var.h mkc_list.h mkc_fileop.h
 mkc_main.o: mkc_nodiscard.h mkc_parse.h mkc_profile.h mkc_compiler.h
@@ -149,11 +149,11 @@ mkc_parse.o:  mkc_var.h mkc_list.h mkc_fileop.h
 mkc_parse.o: mkc_nodiscard.h mkc_grammar.h 
 mkc_parse.o:  mkc_def.h 
 mkc_parse.o:  mkc_lex.h  mkc_parse.h
-mkc_process.o:  mkc_ast.h mkc_error.h mkc_log.h
-mkc_process.o:  mkc_var.h mkc_list.h mkc_check.h
-mkc_process.o: mkc_compiler.h mkc_profile.h mkc_pvar.h mkc_def.h
-mkc_process.o:  mkc_fileop.h mkc_nodiscard.h
-mkc_process.o: mkc_process.h mkc_string.h mkc_util.h
+mkc_process.o:   mkc_ast.h
+mkc_process.o: mkc_error.h mkc_log.h  mkc_var.h mkc_list.h
+mkc_process.o: mkc_check.h mkc_compiler.h mkc_profile.h mkc_pvar.h
+mkc_process.o: mkc_context.h mkc_def.h  mkc_fileop.h
+mkc_process.o: mkc_nodiscard.h mkc_process.h mkc_string.h mkc_util.h
 mkc_profile.o: mkc_compiler.h mkc_error.h mkc_list.h mkc_profile.h mkc_log.h
 mkc_profile.o:  mkc_var.h mkc_string.h mkc_nodiscard.h
 mkc_pvar.o:   mkc_def.h

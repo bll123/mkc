@@ -14,5 +14,6 @@ profile global {
 
 configure {
   method auto;
+  define_zero;
   output 'tests/tmp/302-configure-auto-def.h';
 }

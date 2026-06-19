@@ -25,6 +25,7 @@
 static const char *typenames [MKC_T_MAX] = {
   [MKC_T_ATTR_COMPILER] = "attr_compiler",
   [MKC_T_ATTR_COMP_FLAGS] = "attr_comp_flags",
+  [MKC_T_ATTR_DEFINE_ZERO] = "attr_define_zero",
   [MKC_T_ATTR_HEADER] = "attr_header",
   [MKC_T_ATTR_INPUT] = "attr_input",
   [MKC_T_ATTR_LINK_FLAGS] = "attr_link_flags",
@@ -127,6 +128,7 @@ typedef struct mkc_ast_debug_t {
 
 typedef struct mkc_ast_conf_t {
   mkc_astnode_t       *stmtblock;
+  bool                definezero;
 } mkc_ast_conf_t;
 
 typedef struct mkc_ast_project_t {
@@ -176,7 +178,6 @@ typedef struct mkc_ast_chk_comp_flag_t {
   mkc_astnode_t   *vala;
   mkc_astnode_t   *stmtblock;
   int             addchk;
-  int             negate;
 } mkc_ast_chk_comp_flag_t;
 
 typedef struct mkc_ast_chk_link_flag_t {
@@ -885,7 +886,7 @@ mkc_ast_mk_function (mkc_astmain_t *astmain,
 
 mkc_astnode_t *
 mkc_ast_mk_chk_comp_flag (mkc_astmain_t *astmain,
-    mkc_astnode_t *vala, mkc_astnode_t *stmtblock, int addchk, int negate,
+    mkc_astnode_t *vala, mkc_astnode_t *stmtblock, int addchk,
     int32_t lineno, int colno)
 {
   mkc_astnode_t   *astnode;
@@ -901,7 +902,6 @@ mkc_ast_mk_chk_comp_flag (mkc_astmain_t *astmain,
   astnode->chkcompflag.vala = vala;
   astnode->chkcompflag.stmtblock = stmtblock;
   astnode->chkcompflag.addchk = addchk;
-  astnode->chkcompflag.negate = negate;
   return astnode;
 }
 
@@ -1030,7 +1030,7 @@ mkc_astnode_t *
 mkc_ast_mk_attr_negate (mkc_astmain_t *astmain,
     int32_t lineno, int colno)
 {
-  mkc_astnode_t   *astnode;
+  mkc_astnode_t *astnode;
 
   mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
       "ast-mk: attr-negate\n");
@@ -1169,6 +1169,23 @@ mkc_ast_mk_attr_compiler (mkc_astmain_t *astmain,
   }
 
   astnode->compilerattr.name = name;
+  return astnode;
+}
+
+mkc_astnode_t *
+mkc_ast_mk_attr_define_zero (mkc_astmain_t *astmain,
+    int32_t lineno, int colno)
+{
+  mkc_astnode_t   *astnode;
+
+  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
+      "ast-mk: attr-define-zero\n");
+
+  astnode = mkc_astnode_init (astmain, MKC_T_ATTR_DEFINE_ZERO, lineno, colno);
+  if (astnode == NULL) {
+    return NULL;
+  }
+
   return astnode;
 }
 
@@ -1591,6 +1608,16 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
         break;
       }
       mkc_process_attr_compiler (astmain->process, name);
+      break;
+    }
+
+    case MKC_T_ATTR_NEGATE: {
+      mkc_process_attr_negate (astmain->process);
+      break;
+    }
+
+    case MKC_T_ATTR_DEFINE_ZERO: {
+      mkc_process_attr_define_zero (astmain->process);
       break;
     }
 

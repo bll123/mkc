@@ -50,6 +50,7 @@ typedef struct mkc_process_t {
   mkc_compiler_id_t     compid;
   mkc_lib_loc_t         libloc;
   mkc_header_t          headertype;
+  int                   define_zero;
   bool                  variadicmacro;
   bool                  negate;
   bool                  cacheloaded;
@@ -139,6 +140,7 @@ mkc_process_init (mkc_profile_t *profiles,
   process->input = NULL;
   process->output = NULL;
   process->negate = false;
+  process->define_zero = MKC_AUTO_SKIP_ZERO;
   process->cacheloaded = false;
   process->cacheinvalidated = false;
   process->mkcerr = mkcerr;
@@ -480,15 +482,18 @@ mkc_process_stmt_debug (mkc_process_t *process,
 void
 mkc_process_stmt_configure (mkc_process_t *process)
 {
+  int       defzero = MKC_AUTO_SKIP_ZERO;
+
   if (process->method == NULL) {
     mkc_error_set (process->mkcerr, MKC_ERR_PROC_NO_METHOD, 0, NULL);
     return;
   }
 
+  defzero = process->define_zero;
+  process->define_zero = MKC_AUTO_SKIP_ZERO;
+
   if (strcmp (process->method, "auto") == 0) {
-    mkc_process_configure_auto (process, MKC_AUTO_DEFINE_ZERO);
-  } else if (strcmp (process->method, "auto-nozero") == 0) {
-    mkc_process_configure_auto (process, MKC_AUTO_SKIP_ZERO);
+    mkc_process_configure_auto (process, defzero);
   } else if (strcmp (process->method, "manual") == 0) {
     if (process->input == NULL) {
       mkc_error_set (process->mkcerr, MKC_ERR_PROC_NO_INPUT, 0, NULL);
@@ -648,6 +653,16 @@ mkc_process_attr_negate (mkc_process_t *process)
   }
 
   process->negate = true;
+}
+
+void
+mkc_process_attr_define_zero (mkc_process_t *process)
+{
+  if (process == NULL) {
+    return;
+  }
+
+  process->define_zero = MKC_AUTO_DEFINE_ZERO;
 }
 
 void
