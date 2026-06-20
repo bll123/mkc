@@ -53,7 +53,7 @@ tclean:
 
 .PHONY:depend
 depend:
-	-makedepend -f $(BOOTSTRAPMAKE) *.c 2>/dev/null
+	-makedepend -f $(BOOTSTRAPMAKE) -Iinclude *.c 2>/dev/null
 	cat $(BOOTSTRAPMAKE) | \
 	    sed -e 's,[/]usr[/]include[/][^ ]*,,g' \
 	    -e '/^[a-z][a-z_]*\.o:[ ]*$$/ d' \

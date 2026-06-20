@@ -13,7 +13,7 @@
 #include <ctype.h>
 #include <errno.h>
 
-#include "mkc_ast.h"
+#include "mkc_asttoken.h"
 #include "mkc_check.h"
 #include "mkc_context.h"
 #include "mkc_def.h"

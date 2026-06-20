@@ -19,7 +19,7 @@
 #include "mkc_os_process.h"
 #include "mkc_string.h"
 
-static const char *MKC_INCLUDE_PATH = ".";
+static const char *MKC_INCLUDE_PATH = "include";
 
 typedef struct mkc_check_t {
   mkc_profile_t   * profiles;
