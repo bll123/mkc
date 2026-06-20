@@ -124,6 +124,7 @@
 
 %token T_CHK_COMP_FLAG        "check_compile_flag"
 %token T_CHK_CONST            "check_const"
+%token T_CHK_DEFINE           "check_define"
 %token T_CHK_FUNCTION         "check_function"
 %token T_CHK_HEADER           "check_header"
 %token T_CHK_LINK_FLAG        "check_link_flag"
@@ -170,7 +171,7 @@
 // checks
 %type <astnode> checkcommand chkcompflag chklinkflag
 %type <astnode> chksize chktype chkstructmember
-%type <astnode> chkfunction
+%type <astnode> chkfunction chkdefine
 // attributes
 %type <astnode> attr attrname source header compilerflags linkflags negate
 %type <astnode> method input output compiler define_zero context
@@ -338,6 +339,10 @@ loopcontrol[v]:
 
 checkcommand[v]:
     chkcompflag[a]
+    {
+      $v = $a;
+    }
+  | chkdefine[a]
     {
       $v = $a;
     }
@@ -617,6 +622,14 @@ chkcompflag[v]:
   | T_CHK_COMP_FLAG varvalue[a] stmtblock_or_semi[b]
     {
       $v = mkc_ast_mk_chk_comp_flag (ast, $a, $b, MKC_CHK,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+chkdefine[v]:
+    T_CHK_DEFINE varvalue[a] stmtblock_or_semi[b]
+    {
+      $v = mkc_ast_mk_chk_define (ast, $a, $b,
           yylloc.first_line, yylloc.first_column);
     }
   ;

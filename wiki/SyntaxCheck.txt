@@ -55,11 +55,12 @@ statement.
 ##### Checks
 
 * [Check/Add Compiler Flag](SyntaxCheckCompilerFlag)
+* [Check Define](SyntaxCheckDefine)
+* [Check Function](SyntaxCheckFunction)
 * [Check/Add Link Flag](SyntaxCheckLinkFlag)
 * [Check Size](SyntaxCheckSize)
-* [Check Type](SyntaxCheckType)
 * [Check Struct Member](SyntaxCheckStructMember)
-* [Check Function](SyntaxCheckFunction)
+* [Check Type](SyntaxCheckType)
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

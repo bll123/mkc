@@ -148,6 +148,7 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 
 "check_compile_flag"        { return T_CHK_COMP_FLAG; }
 "check_const"               { return T_CHK_CONST; }
+"check_define"              { return T_CHK_DEFINE; }
 "check_function"            { return T_CHK_FUNCTION; }
 "check_header"              { return T_CHK_HEADER; }
 "check_link_flag"           { return T_CHK_LINK_FLAG; }

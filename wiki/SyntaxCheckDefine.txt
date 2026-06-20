@@ -1,0 +1,17 @@
+[Wiki Home](Home)
+<br>[Syntax](Syntax)
+<br>[Checks](SyntaxCheck)
+
+### Check Define
+
+    check_define <macro-name>;
+    check_define <macro-name> { <attribute-statements> }
+
+Checks if _macro-name_ exists as a macro.
+
+Generated Name: Prefix __\_define\___
+<br>Example: _define_EPERM
+
+[Wiki Home](Home)
+<br>[Syntax](Syntax)
+<br>[Checks](SyntaxCheck)

@@ -1039,6 +1039,39 @@ mkc_process_chk_compiler_flag (mkc_process_t *process,
 
 
 int32_t
+mkc_process_chk_define (mkc_process_t *process, mkc_value_t *valdef)
+{
+  int         rc = MKC_OK;
+  char        tnm [MKC_VNAME_MAX];
+  char        def [MKC_VNAME_MAX];
+  mkc_pvar_t  *pvar;
+  const char  *tmp;
+
+  if (process == NULL) {
+    return MKC_ERR_FAILURE;
+  }
+
+  pvar = process->pvar;
+  mkc_pvar_value_get_str (process->pvar, valdef, def, sizeof (def));
+  mkc_process_create_name (process, tnm, sizeof (tnm), "_define_", def, NULL);
+
+  if (mkc_process_chk_cache (process, def, tnm)) {
+    return rc;
+  }
+
+  rc = mkc_chk_define (process->check, process->currcompiler, def);
+  tmp = mkc_pvar_name_alloc (pvar, tnm);
+  mkc_pvar_set_integer (pvar, tmp, rc == 0 ? true : false, MKC_VCTXT_CHECK);
+
+  mkc_message ("-- check define: %s - %s\n",
+      def, mkc_success_msg (rc));
+  mkc_log (process->log, MKC_LOG_CHECK, "-- check define: %s - %s\n",
+      def, mkc_success_msg (rc));
+
+  return rc;
+}
+
+int32_t
 mkc_process_chk_link_flag (mkc_process_t *process,
     mkc_value_t *valflag, int addchk)
 {
@@ -1718,16 +1751,11 @@ mkc_process_int_checks (mkc_process_t *process)
 
   /* shared library extension : internal/general */
 
+  /* default is .so */
+  mkc_pvar_set_str (process->pvar, shlibext, ".so", MKC_VCTXT_MKC);
   switch (process->systype) {
     case MKC_SYS_AIX: {
       mkc_pvar_set_str (process->pvar, shlibext, ".a", MKC_VCTXT_MKC);
-      break;
-    }
-    case MKC_SYS_ANDROID:
-    case MKC_SYS_BSD:
-    case MKC_SYS_LINUX:
-    case MKC_SYS_SOLARIS: {
-      mkc_pvar_set_str (process->pvar, shlibext, ".so", MKC_VCTXT_MKC);
       break;
     }
     case MKC_SYS_MACOS: {
@@ -1736,10 +1764,6 @@ mkc_process_int_checks (mkc_process_t *process)
     }
     case MKC_SYS_WINDOWS: {
       mkc_pvar_set_str (process->pvar, shlibext, ".dll", MKC_VCTXT_MKC);
-      break;
-    }
-    default: {
-      mkc_pvar_set_str (process->pvar, shlibext, ".so", MKC_VCTXT_MKC);
       break;
     }
   }
