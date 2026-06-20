@@ -171,7 +171,7 @@
 // checks
 %type <astnode> checkcommand chkcompflag chklinkflag
 %type <astnode> chksize chktype chkstructmember
-%type <astnode> chkfunction chkdefine
+%type <astnode> chkfunction chkdefine chkconst
 // attributes
 %type <astnode> attr attrname source header compilerflags linkflags negate
 %type <astnode> method input output compiler define_zero context
@@ -339,6 +339,10 @@ loopcontrol[v]:
 
 checkcommand[v]:
     chkcompflag[a]
+    {
+      $v = $a;
+    }
+  | chkconst[a]
     {
       $v = $a;
     }
@@ -622,6 +626,14 @@ chkcompflag[v]:
   | T_CHK_COMP_FLAG varvalue[a] stmtblock_or_semi[b]
     {
       $v = mkc_ast_mk_chk_comp_flag (ast, $a, $b, MKC_CHK,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+chkconst[v]:
+    T_CHK_CONST varvalue[a] stmtblock_or_semi[b]
+    {
+      $v = mkc_ast_mk_chk_const (ast, $a, $b,
           yylloc.first_line, yylloc.first_column);
     }
   ;

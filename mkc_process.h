@@ -52,6 +52,7 @@ void mkc_process_attr_output (mkc_process_t *process, mkc_value_t *name);
 mkc_value_t * mkc_process_get_value (mkc_process_t *process, const char *nm);
 
 int32_t mkc_process_chk_compiler_flag (mkc_process_t *process, mkc_value_t *valflag, int addchk);
+int32_t mkc_process_chk_const (mkc_process_t *process, mkc_value_t *valtype);
 int32_t mkc_process_chk_define (mkc_process_t *process, mkc_value_t *valtype);
 int32_t mkc_process_chk_function (mkc_process_t *process, mkc_value_t *valfuncnm);
 int32_t mkc_process_chk_link_flag (mkc_process_t *process, mkc_value_t *valflag, int addchk);

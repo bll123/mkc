@@ -39,6 +39,7 @@ int mkc_chk_variadic_macro (mkc_check_t *check, mkc_compiler_t compiler);
 
 /* user checks */
 int mkc_chk_compiler_flag (mkc_check_t *check, mkc_compiler_t compiler, const char *flag, bool negate);
+int mkc_chk_const (mkc_check_t *check, mkc_compiler_t compiler, const char *consttxt);
 int mkc_chk_define (mkc_check_t *check, mkc_compiler_t compiler, const char *def);
 int mkc_chk_function (mkc_check_t *check, mkc_compiler_t compiler, const char *funcname);
 int mkc_chk_link_flag (mkc_check_t *check, mkc_compiler_t compiler, const char *flag);

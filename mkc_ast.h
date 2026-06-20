@@ -29,6 +29,7 @@ typedef enum {
   MKC_T_ATTR_OUTPUT,
   MKC_T_ATTR_SOURCE,
   MKC_T_CHK_COMP_FLAG,
+  MKC_T_CHK_CONST,
   MKC_T_CHK_DEFINE,
   MKC_T_CHK_FUNCTION,
   MKC_T_CHK_LINK_FLAG,
@@ -123,6 +124,7 @@ mkc_astnode_t * mkc_ast_mk_set_value (mkc_astmain_t *astmain, mkc_astnode_t *nm,
 
 /* checks */
 mkc_astnode_t * mkc_ast_mk_chk_comp_flag (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *stmtblock, int addflag, int32_t lineno, int colno);
+mkc_astnode_t * mkc_ast_mk_chk_const (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_chk_define (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_chk_function (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_chk_link_flag (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *stmtblock, int addchk, int32_t lineno, int colno);

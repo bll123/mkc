@@ -1,0 +1,17 @@
+[Wiki Home](Home)
+<br>[Syntax](Syntax)
+<br>[Checks](SyntaxCheck)
+
+### Check Constant
+
+    check_constant <constant-name>;
+    check_constant <constant-name> { <attribute-statements> }
+
+Checks if _constant-name_ exists and is numeric.
+
+Generated Name: Prefix __\_constant\___
+<br>Example: _constant_EPERM
+
+[Wiki Home](Home)
+<br>[Syntax](Syntax)
+<br>[Checks](SyntaxCheck)

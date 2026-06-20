@@ -1,0 +1,20 @@
+
+check_constant EPERM {
+  header errno.h;
+}
+
+check_constant O_RDONLY {
+  header fcntl.h;
+}
+
+if (${_constant_EPERM} == 1) {
+  print '  ok';
+} else {
+  print '  fail eperm';
+}
+
+if (${_constant_O_RDONLY} == 1) {
+  print '  ok';
+} else {
+  print '  fail o_rdonly';
+}

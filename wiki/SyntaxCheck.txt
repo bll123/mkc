@@ -55,6 +55,7 @@ statement.
 ##### Checks
 
 * [Check/Add Compiler Flag](SyntaxCheckCompilerFlag)
+* [Check Constant](SyntaxCheckConstant)
 * [Check Define](SyntaxCheckDefine)
 * [Check Function](SyntaxCheckFunction)
 * [Check/Add Link Flag](SyntaxCheckLinkFlag)

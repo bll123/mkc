@@ -1037,6 +1037,38 @@ mkc_process_chk_compiler_flag (mkc_process_t *process,
   return rc;
 }
 
+int32_t
+mkc_process_chk_const (mkc_process_t *process, mkc_value_t *valconst)
+{
+  int         rc = MKC_OK;
+  char        tnm [MKC_VNAME_MAX];
+  char        consttxt [MKC_VNAME_MAX];
+  mkc_pvar_t  *pvar;
+  const char  *tmp;
+
+  if (process == NULL) {
+    return MKC_ERR_FAILURE;
+  }
+
+  pvar = process->pvar;
+  mkc_pvar_value_get_str (process->pvar, valconst, consttxt, sizeof (consttxt));
+  mkc_process_create_name (process, tnm, sizeof (tnm), "_constant_", consttxt, NULL);
+
+  if (mkc_process_chk_cache (process, consttxt, tnm)) {
+    return rc;
+  }
+
+  rc = mkc_chk_const (process->check, process->currcompiler, consttxt);
+  tmp = mkc_pvar_name_alloc (pvar, tnm);
+  mkc_pvar_set_integer (pvar, tmp, rc == 0 ? true : false, MKC_VCTXT_CHECK);
+
+  mkc_message ("-- check constant: %s - %s\n",
+      consttxt, mkc_success_msg (rc));
+  mkc_log (process->log, MKC_LOG_CHECK, "-- check constant: %s - %s\n",
+      consttxt, mkc_success_msg (rc));
+
+  return rc;
+}
 
 int32_t
 mkc_process_chk_define (mkc_process_t *process, mkc_value_t *valdef)
@@ -1664,6 +1696,7 @@ mkc_process_int_checks (mkc_process_t *process)
   mkc_profidx_t       pidx_global_general;
   mkc_profidx_t       pidx_global_comp;
   mkc_profidx_t       pidx_internal;
+  int                 isystype;
 
   mstimestart (&starttm);
   mkc_create_dirs ();
@@ -1753,7 +1786,8 @@ mkc_process_int_checks (mkc_process_t *process)
 
   /* default is .so */
   mkc_pvar_set_str (process->pvar, shlibext, ".so", MKC_VCTXT_MKC);
-  switch (process->systype) {
+  isystype = process->systype;
+  switch (isystype) {
     case MKC_SYS_AIX: {
       mkc_pvar_set_str (process->pvar, shlibext, ".a", MKC_VCTXT_MKC);
       break;
