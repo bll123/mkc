@@ -127,8 +127,7 @@ mkc_astnode_t * mkc_ast_mk_set_value (mkc_astmain_t *astmain, mkc_astnode_t *nm,
 
 /* checks */
 mkc_astnode_t * mkc_ast_mk_check (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *stmtblock, mkc_astnode_token_t asttype, int32_t lineno, int colno);
-mkc_astnode_t * mkc_ast_mk_chk_comp_flag (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *stmtblock, int addflag, int32_t lineno, int colno);
-mkc_astnode_t * mkc_ast_mk_chk_link_flag (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *stmtblock, int addchk, int32_t lineno, int colno);
+mkc_astnode_t * mkc_ast_mk_check_flag (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *stmtblock, int addflag, mkc_astnode_token_t asttype, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_chk_package (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_chk_struct_member (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *valb, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
 

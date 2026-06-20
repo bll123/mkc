@@ -35,11 +35,11 @@ const char * const typenames [MKC_T_MAX] = {
   [MKC_T_ATTR_NEGATE] = "attr_negate",
   [MKC_T_ATTR_OUTPUT] = "attr_output",
   [MKC_T_ATTR_SOURCE] = "attr_source",
-  [MKC_T_CHK_COMP_FLAG] = "chk_comp_flag",
+  [MKC_T_CHK_COMP_FLAG] = "compiler flag",
   [MKC_T_CHK_CONST] = "constant",
   [MKC_T_CHK_DEFINE] = "define",
   [MKC_T_CHK_FUNCTION] = "function",
-  [MKC_T_CHK_LINK_FLAG] = "link_flag",
+  [MKC_T_CHK_LINK_FLAG] = "link flag",
   [MKC_T_CHK_PACKAGE] = "package",
   [MKC_T_CHK_SIZE] = "size",
   [MKC_T_CHK_STRUCT_MEMBER] = "struct_member",
@@ -190,22 +190,16 @@ typedef struct mkc_ast_check_t {
   mkc_astnode_t     *stmtblock;
 } mkc_ast_check_t;
 
-typedef struct mkc_ast_chk_comp_flag_t {
+typedef struct mkc_ast_check_flag_t {
   mkc_astnode_t   *vala;
   mkc_astnode_t   *stmtblock;
   int             addchk;
-} mkc_ast_chk_comp_flag_t;
+} mkc_ast_check_flag_t;
 
 typedef struct mkc_ast_chk_package_t {
   mkc_astnode_t     *vala;
   mkc_astnode_t     *stmtblock;
 } mkc_ast_chk_package_t;
-
-typedef struct mkc_ast_chk_link_flag_t {
-  mkc_astnode_t   *vala;
-  mkc_astnode_t   *stmtblock;
-  int             addchk;
-} mkc_ast_chk_link_flag_t;
 
 typedef struct mkc_ast_chk_struct_member_t {
   mkc_astnode_t     *vala;
@@ -261,8 +255,7 @@ typedef struct mkc_astnode_t {
     mkc_ast_attr_name_t         nameattr;
     mkc_ast_attr_output_t       outputattr;
     mkc_ast_check_t             checkstmt;
-    mkc_ast_chk_comp_flag_t     chkcompflag;
-    mkc_ast_chk_link_flag_t     chklinkflag;
+    mkc_ast_check_flag_t        checkflag;
     mkc_ast_chk_package_t       chkpackage;
     mkc_ast_chk_struct_member_t chkstructmember;
     mkc_ast_conf_t              confstmt;
@@ -938,44 +931,24 @@ mkc_ast_mk_check (mkc_astmain_t *astmain,
 }
 
 mkc_astnode_t *
-mkc_ast_mk_chk_comp_flag (mkc_astmain_t *astmain,
-    mkc_astnode_t *vala, mkc_astnode_t *stmtblock, int addchk,
+mkc_ast_mk_check_flag (mkc_astmain_t *astmain,
+    mkc_astnode_t *vala, mkc_astnode_t *stmtblock,
+    int addchk, mkc_astnode_token_t asttype,
     int32_t lineno, int colno)
 {
   mkc_astnode_t   *astnode;
 
   mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
-      "ast-mk: chk-comp-flag\n");
+      "ast-mk: chk-%s\n", typenames [asttype]);
 
-  astnode = mkc_astnode_init (astmain, MKC_T_CHK_COMP_FLAG, lineno, colno);
+  astnode = mkc_astnode_init (astmain, asttype, lineno, colno);
   if (astnode == NULL) {
     return NULL;
   }
 
-  astnode->chkcompflag.vala = vala;
-  astnode->chkcompflag.stmtblock = stmtblock;
-  astnode->chkcompflag.addchk = addchk;
-  return astnode;
-}
-
-mkc_astnode_t *
-mkc_ast_mk_chk_link_flag (mkc_astmain_t *astmain,
-    mkc_astnode_t *vala, mkc_astnode_t *stmtblock, int addchk,
-    int32_t lineno, int colno)
-{
-  mkc_astnode_t   *astnode;
-
-  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
-      "ast-mk: chk-link-flag\n");
-
-  astnode = mkc_astnode_init (astmain, MKC_T_CHK_LINK_FLAG, lineno, colno);
-  if (astnode == NULL) {
-    return NULL;
-  }
-
-  astnode->chklinkflag.vala = vala;
-  astnode->chklinkflag.stmtblock = stmtblock;
-  astnode->chklinkflag.addchk = addchk;
+  astnode->checkflag.vala = vala;
+  astnode->checkflag.stmtblock = stmtblock;
+  astnode->checkflag.addchk = addchk;
   return astnode;
 }
 
@@ -1679,21 +1652,22 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       break;
     }
 
-    case MKC_T_CHK_COMP_FLAG: {
+    case MKC_T_CHK_COMP_FLAG:
+    case MKC_T_CHK_LINK_FLAG: {
       mkc_value_t   *val;
 
-      if (astnode->chkcompflag.stmtblock != NULL) {
+      if (astnode->checkflag.stmtblock != NULL) {
         mkc_context_push (astmain->context, MKC_CONTEXT_CHECK, astmain->mkcerr);
-        mkc_ast_process (astmain, astnode->chkcompflag.stmtblock, ifcond, loopcond, depth + 1);
+        mkc_ast_process (astmain, astnode->checkflag.stmtblock, ifcond, loopcond, depth + 1);
         mkc_context_pop (astmain->context);
       }
 
-      val = mkc_ast_get_value (astmain, astnode->chkcompflag.vala);
+      val = mkc_ast_get_value (astmain, astnode->checkflag.vala);
       if (mkc_error_chk_err (astmain->mkcerr)) {
         break;
       }
-      astmain->value.ival = mkc_process_chk_compiler_flag (astmain->process,
-          val, astnode->chkcompflag.addchk);
+      astmain->value.ival = mkc_process_check_flag (astmain->process,
+          val, astnode->checkflag.addchk, astnode->asttype);
       astmain->value.vtype = MKC_VT_INTEGER;
       break;
     }
@@ -1716,24 +1690,6 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       }
       astmain->value.ival = mkc_process_check (astmain->process,
           val, astnode->asttype);
-      astmain->value.vtype = MKC_VT_INTEGER;
-      break;
-    }
-
-    case MKC_T_CHK_LINK_FLAG: {
-      mkc_value_t   *val;
-
-      if (astnode->chklinkflag.stmtblock != NULL) {
-        mkc_context_push (astmain->context, MKC_CONTEXT_CHECK, astmain->mkcerr);
-        mkc_ast_process (astmain, astnode->chklinkflag.stmtblock, ifcond, loopcond, depth + 1);
-        mkc_context_pop (astmain->context);
-      }
-      val = mkc_ast_get_value (astmain, astnode->chklinkflag.vala);
-      if (mkc_error_chk_err (astmain->mkcerr)) {
-        break;
-      }
-      astmain->value.ival = mkc_process_chk_link_flag (astmain->process,
-          val, astnode->chklinkflag.addchk);
       astmain->value.vtype = MKC_VT_INTEGER;
       break;
     }

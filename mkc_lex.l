@@ -72,9 +72,6 @@ VAR_ALNUM         [0-9A-Za-z_]
 VAR_INNER         [0-9A-Za-z${}_]
 /* filenames and directory names may include: _ - + . */
 /* (for include files) */
-FILE_ALNUM        [0-9A-Za-z_.]
-/* filenames and directory names may include: _ - + . */
-/* (for include files) */
 PATH_ALNUM        [0-9A-Za-z_./]
 
 /* these ranges also include various unicode space characters */
@@ -82,11 +79,10 @@ PATH_ALNUM        [0-9A-Za-z_./]
 /* let the users deal with that */
 VAR_UG              {VAR_ALNUM}|{U2}|{U3}|{U4}
 VAR_INNER_UG        {VAR_INNER}|{U2}|{U3}|{U4}
-FILENAME_UG         {FILE_ALNUM}|{U2}|{U3}|{U4}
 PATH_UG             {PATH_ALNUM}|{U2}|{U3}|{U4}
 
-CHAR_T_OP_NOT_DOUBLE_QUOTE [^"\r\n]
-CHAR_T_OP_NOT_SINGLE_QUOTE [^'\r\n]
+CHAR_NOT_DOUBLE_QUOTE [^"\r\n]
+CHAR_NOT_SINGLE_QUOTE [^'\r\n]
 DOUBLE_QUOTE          ["]
 SINGLE_QUOTE          [']
 COMMENT               ("//"|"#")[^\r\n]*[\r\n]
@@ -183,24 +179,19 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
     return T_ID_VAR_NAME;
   }
 
-({FILENAME_UG}({FILENAME_UG}|{TXT_PLUS_HYPHEN})*)     {
-    yylval->sval = strdup (yytext);
-    return T_ID_FILE_NAME;
-  }
-
 ({PATH_UG}({PATH_UG}|{TXT_PLUS_HYPHEN})*)     {
     yylval->sval = strdup (yytext);
     return T_ID_PATH_NAME;
   }
 
-{DOUBLE_QUOTE}(({CHAR_T_OP_NOT_DOUBLE_QUOTE}|\\{DOUBLE_QUOTE})*){DOUBLE_QUOTE} {
+{DOUBLE_QUOTE}(({CHAR_NOT_DOUBLE_QUOTE}|\\{DOUBLE_QUOTE})*){DOUBLE_QUOTE} {
     yytext [yyleng - 1] = '\0';
     yyleng -= 2;
     yylval->sval = strdup (yytext + 1);
     return T_VAL_QUOTED_STRING;
   }
 
-{SINGLE_QUOTE}({CHAR_T_OP_NOT_SINGLE_QUOTE}*){SINGLE_QUOTE} {
+{SINGLE_QUOTE}({CHAR_NOT_SINGLE_QUOTE}*){SINGLE_QUOTE} {
     yytext [yyleng - 1] = '\0';
     yyleng -= 2;
     yylval->sval = strdup (yytext + 1);

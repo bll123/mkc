@@ -997,7 +997,7 @@ mkc_process_check (mkc_process_t *process, mkc_value_t *valconst,
   char        pfx [MKC_VNAME_MAX];
   mkc_pvar_t  *pvar;
   const char  *tmp;
-  int         iasttype;
+  int         iasttype = asttype;
   bool        successtype = false;
   bool        valtype = false;
 
@@ -1016,7 +1016,6 @@ mkc_process_check (mkc_process_t *process, mkc_value_t *valconst,
 
   tmp = mkc_pvar_name_alloc (pvar, tnm);
 
-  iasttype = asttype;
   switch (iasttype) {
     case MKC_T_CHK_CONST: {
       successtype = true;
@@ -1057,6 +1056,72 @@ mkc_process_check (mkc_process_t *process, mkc_value_t *valconst,
     mkc_message ("-- check %s: %s : %d\n", typenames [asttype], txt, rc);
     mkc_log (process->log, MKC_LOG_CHECK,
         "-- check %s: %s : %d\n", typenames [asttype], txt, rc);
+  }
+
+  return rc;
+}
+
+int32_t
+mkc_process_check_flag (mkc_process_t *process,
+    mkc_value_t *valflag, int addchk, mkc_astnode_token_t asttype)
+{
+  int         rc = MKC_OK;
+  char        tnm [MKC_VNAME_MAX];
+  char        flag [MKC_VNAME_MAX];
+  const char  *pfx = NULL;
+  mkc_pvar_t  *pvar;
+  int         iasttype = asttype;
+
+  if (process == NULL) {
+    return MKC_ERR_FAILURE;
+  }
+
+  mkc_pvar_value_get_str (process->pvar, valflag, flag, sizeof (flag));
+  switch (iasttype) {
+    case MKC_T_CHK_COMP_FLAG: { pfx = "cf_"; break; }
+    case MKC_T_CHK_LINK_FLAG: { pfx = "lf_"; break; }
+  }
+  mkc_process_create_name (process, tnm, sizeof (tnm), pfx, flag, NULL);
+
+  pvar = process->pvar;
+
+  if (mkc_process_chk_cache (process, flag, tnm)) {
+    return rc;
+  }
+
+  if (addchk == MKC_CHK) {
+    switch (iasttype) {
+      case MKC_T_CHK_COMP_FLAG: {
+        rc = mkc_chk_compiler_flag (process->check,
+            process->currcompiler, flag, process->negate);
+        break;
+      }
+      case MKC_T_CHK_LINK_FLAG: {
+        rc = mkc_chk_link_flag (process->check,
+            process->currcompiler, flag);
+        break;
+      }
+    }
+  }
+  process->negate = false;
+
+  if (rc == 0) {
+    const char  *tmp;
+
+    tmp = mkc_pvar_name_alloc (pvar, tnm);
+    mkc_pvar_set_str (pvar, tmp, flag, MKC_VCTXT_FLAG);
+  }
+
+  if (addchk == MKC_ADD) {
+    mkc_message ("-- add %s: %s\n", typenames [asttype], flag);
+    mkc_log (process->log, MKC_LOG_CHECK,
+        "-- add %s: %s\n", typenames [asttype], flag);
+  }
+  if (addchk == MKC_CHK) {
+    mkc_message ("-- check %s: %s - %s\n",
+        typenames [asttype], flag, mkc_success_msg (rc));
+    mkc_log (process->log, MKC_LOG_CHECK, "-- check %s: %s - %s\n",
+        typenames [asttype], flag, mkc_success_msg (rc));
   }
 
   return rc;

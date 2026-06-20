@@ -91,7 +91,6 @@
 %token T_VAL_TRUE             "true"
 
 /* a T_VARIABLE is a ${...} complex */
-%token <sval> T_ID_FILE_NAME
 %token <sval> T_ID_PATH_NAME
 %token <sval> T_ID_VAR_NAME
 %token <sval> T_VAL_STATIC_STRING "'...'"
@@ -625,12 +624,12 @@ setstmt[v]:
 chkcompflag[v]:
     T_ADD_COMP_FLAG varvalue[a] stmtblock_or_semi[b]
     {
-      $v = mkc_ast_mk_chk_comp_flag (ast, $a, $b, MKC_ADD,
+      $v = mkc_ast_mk_check_flag (ast, $a, $b, MKC_ADD, MKC_T_CHK_COMP_FLAG,
           yylloc.first_line, yylloc.first_column);
     }
   | T_CHK_COMP_FLAG varvalue[a] stmtblock_or_semi[b]
     {
-      $v = mkc_ast_mk_chk_comp_flag (ast, $a, $b, MKC_CHK,
+      $v = mkc_ast_mk_check_flag (ast, $a, $b, MKC_CHK, MKC_T_CHK_COMP_FLAG,
           yylloc.first_line, yylloc.first_column);
     }
   ;
@@ -654,12 +653,12 @@ chkdefine[v]:
 chklinkflag[v]:
     T_ADD_LINK_FLAG varvalue[a] stmtblock_or_semi[b]
     {
-      $v = mkc_ast_mk_chk_link_flag (ast, $a, $b, MKC_ADD,
+      $v = mkc_ast_mk_check_flag (ast, $a, $b, MKC_ADD, MKC_T_CHK_LINK_FLAG,
           yylloc.first_line, yylloc.first_column);
     }
   | T_CHK_LINK_FLAG varvalue[a] stmtblock_or_semi[b]
     {
-      $v = mkc_ast_mk_chk_link_flag (ast, $a, $b, MKC_CHK,
+      $v = mkc_ast_mk_check_flag (ast, $a, $b, MKC_CHK, MKC_T_CHK_LINK_FLAG,
           yylloc.first_line, yylloc.first_column);
     }
   ;
@@ -959,12 +958,7 @@ expr[v]:
   ;
 
 pathname[v]:
-    T_ID_FILE_NAME[a]
-    {
-      $v = mkc_ast_mk_value (ast, MKC_T_ID_FILE_NAME, $a,
-          yylloc.first_line, yylloc.first_column);
-    }
-  | T_ID_PATH_NAME[a]
+    T_ID_PATH_NAME[a]
     {
       $v = mkc_ast_mk_value (ast, MKC_T_ID_PATH_NAME, $a,
           yylloc.first_line, yylloc.first_column);
