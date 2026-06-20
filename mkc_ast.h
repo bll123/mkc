@@ -33,6 +33,7 @@ typedef enum {
   MKC_T_CHK_DEFINE,
   MKC_T_CHK_FUNCTION,
   MKC_T_CHK_LINK_FLAG,
+  MKC_T_CHK_PACKAGE,
   MKC_T_CHK_SIZE,
   MKC_T_CHK_STRUCT_MEMBER,
   MKC_T_CHK_TYPE,
@@ -92,6 +93,8 @@ typedef enum {
   MKC_T_MAX,
 } mkc_astnode_token_t;
 
+extern const char * const typenames [MKC_T_MAX];
+
 typedef struct mkc_astnode_t mkc_astnode_t;
 typedef struct mkc_astmain_t mkc_astmain_t;
 
@@ -123,14 +126,11 @@ mkc_astnode_t * mkc_ast_mk_set (mkc_astmain_t *astmain, mkc_astnode_t *nm, mkc_a
 mkc_astnode_t * mkc_ast_mk_set_value (mkc_astmain_t *astmain, mkc_astnode_t *nm, mkc_astnode_t *vala, int32_t lineno, int colno);
 
 /* checks */
+mkc_astnode_t * mkc_ast_mk_check (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *stmtblock, mkc_astnode_token_t asttype, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_chk_comp_flag (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *stmtblock, int addflag, int32_t lineno, int colno);
-mkc_astnode_t * mkc_ast_mk_chk_const (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
-mkc_astnode_t * mkc_ast_mk_chk_define (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
-mkc_astnode_t * mkc_ast_mk_chk_function (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_chk_link_flag (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *stmtblock, int addchk, int32_t lineno, int colno);
-mkc_astnode_t * mkc_ast_mk_chk_size (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
+mkc_astnode_t * mkc_ast_mk_chk_package (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_chk_struct_member (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *valb, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
-mkc_astnode_t * mkc_ast_mk_chk_type (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
 
 /* attribute statements */
 mkc_astnode_t * mkc_ast_mk_attr_compflags (mkc_astmain_t *astmain, mkc_astnode_t *compflaglist, int32_t lineno, int colno);

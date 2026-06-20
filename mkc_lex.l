@@ -152,6 +152,7 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 "check_function"            { return T_CHK_FUNCTION; }
 "check_header"              { return T_CHK_HEADER; }
 "check_link_flag"           { return T_CHK_LINK_FLAG; }
+"check_package"             { return T_CHK_PACKAGE; }
 "check_size"                { return T_CHK_SIZE; }
 "check_struct_member"       { return T_CHK_STRUCT_MEMBER; }
 "check_type"                { return T_CHK_TYPE; }

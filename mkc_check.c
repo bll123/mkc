@@ -388,6 +388,29 @@ mkc_chk_define (mkc_check_t *check,
 }
 
 int
+mkc_chk_package (mkc_check_t *check,
+    mkc_compiler_t compiler, const char *pkg)
+{
+  int             rc;
+  mkc_profidx_t   opidx;
+
+  mkc_log (check->log, MKC_LOG_CHECK, "== chk: package: %s\n", pkg);
+  opidx = mkc_profile_get_active (check->profiles);
+
+  mkc_pvar_profile_set (check->pvar,
+      MKC_PROF_INTERNAL_NAME, MKC_COMPILER_GENERAL);
+
+  mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_PACKAGE", pkg, MKC_VCTXT_TEMP);
+
+  mkc_pvar_profile_set_idx (check->pvar, opidx);
+
+  rc = 0;
+// ###
+  mkc_chk_reset (check);
+  return rc;
+}
+
+int
 mkc_chk_link_flag (mkc_check_t *check,
     mkc_compiler_t compiler,
     const char *flag)

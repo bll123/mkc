@@ -43,6 +43,7 @@ int mkc_chk_const (mkc_check_t *check, mkc_compiler_t compiler, const char *cons
 int mkc_chk_define (mkc_check_t *check, mkc_compiler_t compiler, const char *def);
 int mkc_chk_function (mkc_check_t *check, mkc_compiler_t compiler, const char *funcname);
 int mkc_chk_link_flag (mkc_check_t *check, mkc_compiler_t compiler, const char *flag);
+int mkc_chk_package (mkc_check_t *check, mkc_compiler_t compiler, const char *pkg);
 int mkc_chk_size (mkc_check_t *check, mkc_compiler_t compiler, const char *type);
 int mkc_chk_struct_member (mkc_check_t *check, mkc_compiler_t compiler, const char *structname, const char *membername);
 int mkc_chk_type (mkc_check_t *check, mkc_compiler_t compiler, const char *type);

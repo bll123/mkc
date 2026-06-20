@@ -22,7 +22,7 @@
 #include "mkc_string.h"
 #include "mkc_var.h"
 
-static const char *typenames [MKC_T_MAX] = {
+const char * const typenames [MKC_T_MAX] = {
   [MKC_T_ATTR_COMPILER] = "attr_compiler",
   [MKC_T_ATTR_COMP_FLAGS] = "attr_comp_flags",
   [MKC_T_ATTR_CONTEXT] = "attr_context",
@@ -36,13 +36,14 @@ static const char *typenames [MKC_T_MAX] = {
   [MKC_T_ATTR_OUTPUT] = "attr_output",
   [MKC_T_ATTR_SOURCE] = "attr_source",
   [MKC_T_CHK_COMP_FLAG] = "chk_comp_flag",
-  [MKC_T_CHK_CONST] = "chk_const",
-  [MKC_T_CHK_DEFINE] = "chk_define",
-  [MKC_T_CHK_FUNCTION] = "chk_function",
-  [MKC_T_CHK_LINK_FLAG] = "chk_link_flag",
-  [MKC_T_CHK_SIZE] = "chk_size",
-  [MKC_T_CHK_STRUCT_MEMBER] = "chk_struct_member",
-  [MKC_T_CHK_TYPE] = "chk_type",
+  [MKC_T_CHK_CONST] = "constant",
+  [MKC_T_CHK_DEFINE] = "define",
+  [MKC_T_CHK_FUNCTION] = "function",
+  [MKC_T_CHK_LINK_FLAG] = "link_flag",
+  [MKC_T_CHK_PACKAGE] = "package",
+  [MKC_T_CHK_SIZE] = "size",
+  [MKC_T_CHK_STRUCT_MEMBER] = "struct_member",
+  [MKC_T_CHK_TYPE] = "type",
   [MKC_T_ID_FILE_NAME] = "id_file_name",
   [MKC_T_ID_PATH_NAME] = "id_path_name",
   [MKC_T_ID_VAR_NAME] = "id_var_name",
@@ -184,21 +185,21 @@ typedef struct mkc_ast_profile_t {
   mkc_astnode_t     *stmtblock;
 } mkc_ast_profile_t;
 
+typedef struct mkc_ast_check_t {
+  mkc_astnode_t     *vala;
+  mkc_astnode_t     *stmtblock;
+} mkc_ast_check_t;
+
 typedef struct mkc_ast_chk_comp_flag_t {
   mkc_astnode_t   *vala;
   mkc_astnode_t   *stmtblock;
   int             addchk;
 } mkc_ast_chk_comp_flag_t;
 
-typedef struct mkc_ast_chk_define_t {
+typedef struct mkc_ast_chk_package_t {
   mkc_astnode_t     *vala;
   mkc_astnode_t     *stmtblock;
-} mkc_ast_chk_define_t;
-
-typedef struct mkc_ast_chk_const_t {
-  mkc_astnode_t     *vala;
-  mkc_astnode_t     *stmtblock;
-} mkc_ast_chk_const_t;
+} mkc_ast_chk_package_t;
 
 typedef struct mkc_ast_chk_link_flag_t {
   mkc_astnode_t   *vala;
@@ -206,26 +207,11 @@ typedef struct mkc_ast_chk_link_flag_t {
   int             addchk;
 } mkc_ast_chk_link_flag_t;
 
-typedef struct mkc_ast_chk_size_t {
-  mkc_astnode_t     *vala;
-  mkc_astnode_t     *stmtblock;
-} mkc_ast_chk_size_t;
-
-typedef struct mkc_ast_chk_type_t {
-  mkc_astnode_t     *vala;
-  mkc_astnode_t     *stmtblock;
-} mkc_ast_chk_type_t;
-
 typedef struct mkc_ast_chk_struct_member_t {
   mkc_astnode_t     *vala;
   mkc_astnode_t     *valb;
   mkc_astnode_t     *stmtblock;
 } mkc_ast_chk_struct_member_t;
-
-typedef struct mkc_ast_chk_function_t {
-  mkc_astnode_t     *vala;
-  mkc_astnode_t     *stmtblock;
-} mkc_ast_chk_function_t;
 
 typedef struct mkc_ast_attr_context_t {
   mkc_astnode_t     *context;
@@ -274,14 +260,11 @@ typedef struct mkc_astnode_t {
     mkc_ast_attr_method_t       methodattr;
     mkc_ast_attr_name_t         nameattr;
     mkc_ast_attr_output_t       outputattr;
+    mkc_ast_check_t             checkstmt;
     mkc_ast_chk_comp_flag_t     chkcompflag;
-    mkc_ast_chk_const_t         chkconst;
-    mkc_ast_chk_define_t        chkdefine;
-    mkc_ast_chk_function_t      chkfunction;
     mkc_ast_chk_link_flag_t     chklinkflag;
-    mkc_ast_chk_size_t          chksize;
+    mkc_ast_chk_package_t       chkpackage;
     mkc_ast_chk_struct_member_t chkstructmember;
-    mkc_ast_chk_type_t          chktype;
     mkc_ast_conf_t              confstmt;
     mkc_ast_debug_t             debugstmt;
     mkc_ast_elseif_t            elseif;
@@ -935,6 +918,26 @@ mkc_ast_mk_function (mkc_astmain_t *astmain,
 }
 
 mkc_astnode_t *
+mkc_ast_mk_check (mkc_astmain_t *astmain,
+    mkc_astnode_t *vala, mkc_astnode_t *stmtblock, mkc_astnode_token_t asttype,
+    int32_t lineno, int colno)
+{
+  mkc_astnode_t       *astnode;
+
+  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
+      "ast-mk: chk-%s\n", typenames [asttype]);
+
+  astnode = mkc_astnode_init (astmain, asttype, lineno, colno);
+  if (astnode == NULL) {
+    return NULL;
+  }
+
+  astnode->checkstmt.vala = vala;
+  astnode->checkstmt.stmtblock = stmtblock;
+  return astnode;
+}
+
+mkc_astnode_t *
 mkc_ast_mk_chk_comp_flag (mkc_astmain_t *astmain,
     mkc_astnode_t *vala, mkc_astnode_t *stmtblock, int addchk,
     int32_t lineno, int colno)
@@ -952,46 +955,6 @@ mkc_ast_mk_chk_comp_flag (mkc_astmain_t *astmain,
   astnode->chkcompflag.vala = vala;
   astnode->chkcompflag.stmtblock = stmtblock;
   astnode->chkcompflag.addchk = addchk;
-  return astnode;
-}
-
-mkc_astnode_t *
-mkc_ast_mk_chk_const (mkc_astmain_t *astmain,
-    mkc_astnode_t *vala, mkc_astnode_t *stmtblock,
-    int32_t lineno, int colno)
-{
-  mkc_astnode_t   *astnode;
-
-  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
-      "ast-mk: chk-const\n");
-
-  astnode = mkc_astnode_init (astmain, MKC_T_CHK_CONST, lineno, colno);
-  if (astnode == NULL) {
-    return NULL;
-  }
-
-  astnode->chkconst.vala = vala;
-  astnode->chkconst.stmtblock = stmtblock;
-  return astnode;
-}
-
-mkc_astnode_t *
-mkc_ast_mk_chk_define (mkc_astmain_t *astmain,
-    mkc_astnode_t *vala, mkc_astnode_t *stmtblock,
-    int32_t lineno, int colno)
-{
-  mkc_astnode_t   *astnode;
-
-  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
-      "ast-mk: chk-define\n");
-
-  astnode = mkc_astnode_init (astmain, MKC_T_CHK_DEFINE, lineno, colno);
-  if (astnode == NULL) {
-    return NULL;
-  }
-
-  astnode->chkdefine.vala = vala;
-  astnode->chkdefine.stmtblock = stmtblock;
   return astnode;
 }
 
@@ -1017,42 +980,22 @@ mkc_ast_mk_chk_link_flag (mkc_astmain_t *astmain,
 }
 
 mkc_astnode_t *
-mkc_ast_mk_chk_size (mkc_astmain_t *astmain,
+mkc_ast_mk_chk_package (mkc_astmain_t *astmain,
     mkc_astnode_t *vala, mkc_astnode_t *stmtblock,
     int32_t lineno, int colno)
 {
   mkc_astnode_t   *astnode;
 
   mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
-      "ast-mk: chk-size\n");
+      "ast-mk: chk-package\n");
 
-  astnode = mkc_astnode_init (astmain, MKC_T_CHK_SIZE, lineno, colno);
+  astnode = mkc_astnode_init (astmain, MKC_T_CHK_PACKAGE, lineno, colno);
   if (astnode == NULL) {
     return NULL;
   }
 
-  astnode->chksize.vala = vala;
-  astnode->chksize.stmtblock = stmtblock;
-  return astnode;
-}
-
-mkc_astnode_t *
-mkc_ast_mk_chk_type (mkc_astmain_t *astmain,
-    mkc_astnode_t *vala, mkc_astnode_t *stmtblock,
-    int32_t lineno, int colno)
-{
-  mkc_astnode_t   *astnode;
-
-  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
-      "ast-mk: chk-type\n");
-
-  astnode = mkc_astnode_init (astmain, MKC_T_CHK_TYPE, lineno, colno);
-  if (astnode == NULL) {
-    return NULL;
-  }
-
-  astnode->chktype.vala = vala;
-  astnode->chktype.stmtblock = stmtblock;
+  astnode->chkpackage.vala = vala;
+  astnode->chkpackage.stmtblock = stmtblock;
   return astnode;
 }
 
@@ -1074,26 +1017,6 @@ mkc_ast_mk_chk_struct_member (mkc_astmain_t *astmain,
   astnode->chkstructmember.vala = vala;
   astnode->chkstructmember.valb = valb;
   astnode->chkstructmember.stmtblock = stmtblock;
-  return astnode;
-}
-
-mkc_astnode_t *
-mkc_ast_mk_chk_function (mkc_astmain_t *astmain,
-    mkc_astnode_t *vala, mkc_astnode_t *stmtblock,
-    int32_t lineno, int colno)
-{
-  mkc_astnode_t   *astnode;
-
-  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
-      "ast-mk: chk-function\n");
-
-  astnode = mkc_astnode_init (astmain, MKC_T_CHK_FUNCTION, lineno, colno);
-  if (astnode == NULL) {
-    return NULL;
-  }
-
-  astnode->chkfunction.vala = vala;
-  astnode->chkfunction.stmtblock = stmtblock;
   return astnode;
 }
 
@@ -1775,36 +1698,24 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       break;
     }
 
-    case MKC_T_CHK_CONST: {
+    case MKC_T_CHK_CONST:
+    case MKC_T_CHK_DEFINE:
+    case MKC_T_CHK_FUNCTION:
+    case MKC_T_CHK_SIZE:
+    case MKC_T_CHK_TYPE: {
       mkc_value_t   *val;
 
-      if (astnode->chkconst.stmtblock != NULL) {
+      if (astnode->checkstmt.stmtblock != NULL) {
         mkc_context_push (astmain->context, MKC_CONTEXT_CHECK, astmain->mkcerr);
-        mkc_ast_process (astmain, astnode->chkconst.stmtblock, ifcond, loopcond, depth + 1);
+        mkc_ast_process (astmain, astnode->checkstmt.stmtblock, ifcond, loopcond, depth + 1);
         mkc_context_pop (astmain->context);
       }
-      val = mkc_ast_get_value (astmain, astnode->chkconst.vala);
+      val = mkc_ast_get_value (astmain, astnode->checkstmt.vala);
       if (mkc_error_chk_err (astmain->mkcerr)) {
         break;
       }
-      astmain->value.ival = mkc_process_chk_const (astmain->process, val);
-      astmain->value.vtype = MKC_VT_INTEGER;
-      break;
-    }
-
-    case MKC_T_CHK_DEFINE: {
-      mkc_value_t   *val;
-
-      if (astnode->chkdefine.stmtblock != NULL) {
-        mkc_context_push (astmain->context, MKC_CONTEXT_CHECK, astmain->mkcerr);
-        mkc_ast_process (astmain, astnode->chkdefine.stmtblock, ifcond, loopcond, depth + 1);
-        mkc_context_pop (astmain->context);
-      }
-      val = mkc_ast_get_value (astmain, astnode->chkdefine.vala);
-      if (mkc_error_chk_err (astmain->mkcerr)) {
-        break;
-      }
-      astmain->value.ival = mkc_process_chk_define (astmain->process, val);
+      astmain->value.ival = mkc_process_check (astmain->process,
+          val, astnode->asttype);
       astmain->value.vtype = MKC_VT_INTEGER;
       break;
     }
@@ -1823,40 +1734,6 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       }
       astmain->value.ival = mkc_process_chk_link_flag (astmain->process,
           val, astnode->chklinkflag.addchk);
-      astmain->value.vtype = MKC_VT_INTEGER;
-      break;
-    }
-
-    case MKC_T_CHK_SIZE: {
-      mkc_value_t   *val;
-
-      if (astnode->chksize.stmtblock != NULL) {
-        mkc_context_push (astmain->context, MKC_CONTEXT_CHECK, astmain->mkcerr);
-        mkc_ast_process (astmain, astnode->chksize.stmtblock, ifcond, loopcond, depth + 1);
-        mkc_context_pop (astmain->context);
-      }
-      val = mkc_ast_get_value (astmain, astnode->chksize.vala);
-      if (mkc_error_chk_err (astmain->mkcerr)) {
-        break;
-      }
-      astmain->value.ival = mkc_process_chk_size (astmain->process, val);
-      astmain->value.vtype = MKC_VT_INTEGER;
-      break;
-    }
-
-    case MKC_T_CHK_TYPE: {
-      mkc_value_t   *val;
-
-      if (astnode->chktype.stmtblock != NULL) {
-        mkc_context_push (astmain->context, MKC_CONTEXT_CHECK, astmain->mkcerr);
-        mkc_ast_process (astmain, astnode->chktype.stmtblock, ifcond, loopcond, depth + 1);
-        mkc_context_pop (astmain->context);
-      }
-      val = mkc_ast_get_value (astmain, astnode->chktype.vala);
-      if (mkc_error_chk_err (astmain->mkcerr)) {
-        break;
-      }
-      astmain->value.ival = mkc_process_chk_type (astmain->process, val);
       astmain->value.vtype = MKC_VT_INTEGER;
       break;
     }
@@ -1883,25 +1760,6 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
 
       astmain->value.ival = mkc_process_chk_struct_member (astmain->process,
           vala, valb);
-      astmain->value.vtype = MKC_VT_INTEGER;
-      break;
-    }
-
-    case MKC_T_CHK_FUNCTION: {
-      mkc_value_t   *vala;
-
-      if (astnode->chkfunction.stmtblock != NULL) {
-        mkc_context_push (astmain->context, MKC_CONTEXT_CHECK, astmain->mkcerr);
-        mkc_ast_process (astmain, astnode->chkfunction.stmtblock, ifcond, loopcond, depth + 1);
-        mkc_context_pop (astmain->context);
-      }
-
-      vala = mkc_ast_get_value (astmain, astnode->chkfunction.vala);
-      if (mkc_error_chk_err (astmain->mkcerr)) {
-        break;
-      }
-
-      astmain->value.ival = mkc_process_chk_function (astmain->process, vala);
       astmain->value.vtype = MKC_VT_INTEGER;
       break;
     }

@@ -128,6 +128,7 @@
 %token T_CHK_FUNCTION         "check_function"
 %token T_CHK_HEADER           "check_header"
 %token T_CHK_LINK_FLAG        "check_link_flag"
+%token T_CHK_PACKAGE          "check_package"
 %token T_CHK_SIZE             "check_size"
 %token T_CHK_STRUCT_MEMBER    "check_struct_member"
 %token T_CHK_TYPE             "check_type"
@@ -171,7 +172,7 @@
 // checks
 %type <astnode> checkcommand chkcompflag chklinkflag
 %type <astnode> chksize chktype chkstructmember
-%type <astnode> chkfunction chkdefine chkconst
+%type <astnode> chkfunction chkdefine chkconst chkpackage
 // attributes
 %type <astnode> attr attrname source header compilerflags linkflags negate
 %type <astnode> method input output compiler define_zero context
@@ -351,6 +352,10 @@ checkcommand[v]:
       $v = $a;
     }
   | chklinkflag[a]
+    {
+      $v = $a;
+    }
+  | chkpackage[a]
     {
       $v = $a;
     }
@@ -633,7 +638,7 @@ chkcompflag[v]:
 chkconst[v]:
     T_CHK_CONST varvalue[a] stmtblock_or_semi[b]
     {
-      $v = mkc_ast_mk_chk_const (ast, $a, $b,
+      $v = mkc_ast_mk_check (ast, $a, $b, MKC_T_CHK_CONST,
           yylloc.first_line, yylloc.first_column);
     }
   ;
@@ -641,7 +646,7 @@ chkconst[v]:
 chkdefine[v]:
     T_CHK_DEFINE varvalue[a] stmtblock_or_semi[b]
     {
-      $v = mkc_ast_mk_chk_define (ast, $a, $b,
+      $v = mkc_ast_mk_check (ast, $a, $b, MKC_T_CHK_DEFINE,
           yylloc.first_line, yylloc.first_column);
     }
   ;
@@ -659,10 +664,18 @@ chklinkflag[v]:
     }
   ;
 
+chkpackage[v]:
+    T_CHK_PACKAGE varvalue[a] stmtblock_or_semi[b]
+    {
+      $v = mkc_ast_mk_chk_package (ast, $a, $b,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
 chksize[v]:
     T_CHK_SIZE varvalue[a] stmtblock_or_semi[b]
     {
-      $v = mkc_ast_mk_chk_size (ast, $a, $b,
+      $v = mkc_ast_mk_check (ast, $a, $b, MKC_T_CHK_SIZE,
           yylloc.first_line, yylloc.first_column);
     }
   ;
@@ -670,7 +683,7 @@ chksize[v]:
 chktype[v]:
     T_CHK_TYPE varvalue[a] stmtblock_or_semi[b]
     {
-      $v = mkc_ast_mk_chk_type (ast, $a, $b,
+      $v = mkc_ast_mk_check (ast, $a, $b, MKC_T_CHK_TYPE,
           yylloc.first_line, yylloc.first_column);
     }
   ;
@@ -686,7 +699,7 @@ chkstructmember[v]:
 chkfunction[v]:
     T_CHK_FUNCTION varvalue[a] stmtblock_or_semi[b]
     {
-      $v = mkc_ast_mk_chk_function (ast, $a, $b,
+      $v = mkc_ast_mk_check (ast, $a, $b, MKC_T_CHK_FUNCTION,
           yylloc.first_line, yylloc.first_column);
     }
   ;

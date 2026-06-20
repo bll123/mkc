@@ -988,6 +988,81 @@ mkc_process_get_value (mkc_process_t *process, const char *nm)
 }
 
 int32_t
+mkc_process_check (mkc_process_t *process, mkc_value_t *valconst,
+    mkc_astnode_token_t asttype)
+{
+  int         rc = MKC_OK;
+  char        tnm [MKC_VNAME_MAX];
+  char        txt [MKC_VNAME_MAX];
+  char        pfx [MKC_VNAME_MAX];
+  mkc_pvar_t  *pvar;
+  const char  *tmp;
+  int         iasttype;
+  bool        successtype = false;
+  bool        valtype = false;
+
+  if (process == NULL) {
+    return MKC_ERR_FAILURE;
+  }
+
+  pvar = process->pvar;
+  mkc_pvar_value_get_str (process->pvar, valconst, txt, sizeof (txt));
+  snprintf (pfx, sizeof (pfx), "_%s_", typenames [asttype]);
+  mkc_process_create_name (process, tnm, sizeof (tnm), pfx, txt, NULL);
+
+  if (mkc_process_chk_cache (process, txt, tnm)) {
+    return rc;
+  }
+
+  tmp = mkc_pvar_name_alloc (pvar, tnm);
+
+  iasttype = asttype;
+  switch (iasttype) {
+    case MKC_T_CHK_CONST: {
+      successtype = true;
+      rc = mkc_chk_const (process->check, process->currcompiler, txt);
+      break;
+    }
+    case MKC_T_CHK_DEFINE: {
+      successtype = true;
+      rc = mkc_chk_define (process->check, process->currcompiler, txt);
+      break;
+    }
+    case MKC_T_CHK_SIZE: {
+      valtype = true;
+      rc = mkc_chk_size (process->check, process->currcompiler, txt);
+      break;
+    }
+    case MKC_T_CHK_TYPE: {
+      successtype = true;
+      rc = mkc_chk_type (process->check, process->currcompiler, txt);
+      break;
+    }
+    case MKC_T_CHK_FUNCTION: {
+      successtype = true;
+      rc = mkc_chk_function (process->check, process->currcompiler, txt);
+      break;
+    }
+  }
+
+  if (successtype) {
+    mkc_pvar_set_integer (pvar, tmp, rc == 0 ? true : false, MKC_VCTXT_CHECK);
+    mkc_message ("-- check %s: %s - %s\n",
+        typenames [asttype], txt, mkc_success_msg (rc));
+    mkc_log (process->log, MKC_LOG_CHECK, "-- check %s: %s - %s\n",
+        typenames [asttype], txt, mkc_success_msg (rc));
+  }
+  if (valtype) {
+    mkc_pvar_set_integer (pvar, tmp, rc, MKC_VCTXT_CHECK);
+    mkc_message ("-- check %s: %s : %d\n", typenames [asttype], txt, rc);
+    mkc_log (process->log, MKC_LOG_CHECK,
+        "-- check %s: %s : %d\n", typenames [asttype], txt, rc);
+  }
+
+  return rc;
+}
+
+int32_t
 mkc_process_chk_compiler_flag (mkc_process_t *process,
     mkc_value_t *valflag, int addchk)
 {
@@ -1033,72 +1108,6 @@ mkc_process_chk_compiler_flag (mkc_process_t *process,
     mkc_log (process->log, MKC_LOG_CHECK, "-- check compiler flag: %s - %s\n",
         flag, mkc_success_msg (rc));
   }
-
-  return rc;
-}
-
-int32_t
-mkc_process_chk_const (mkc_process_t *process, mkc_value_t *valconst)
-{
-  int         rc = MKC_OK;
-  char        tnm [MKC_VNAME_MAX];
-  char        consttxt [MKC_VNAME_MAX];
-  mkc_pvar_t  *pvar;
-  const char  *tmp;
-
-  if (process == NULL) {
-    return MKC_ERR_FAILURE;
-  }
-
-  pvar = process->pvar;
-  mkc_pvar_value_get_str (process->pvar, valconst, consttxt, sizeof (consttxt));
-  mkc_process_create_name (process, tnm, sizeof (tnm), "_constant_", consttxt, NULL);
-
-  if (mkc_process_chk_cache (process, consttxt, tnm)) {
-    return rc;
-  }
-
-  rc = mkc_chk_const (process->check, process->currcompiler, consttxt);
-  tmp = mkc_pvar_name_alloc (pvar, tnm);
-  mkc_pvar_set_integer (pvar, tmp, rc == 0 ? true : false, MKC_VCTXT_CHECK);
-
-  mkc_message ("-- check constant: %s - %s\n",
-      consttxt, mkc_success_msg (rc));
-  mkc_log (process->log, MKC_LOG_CHECK, "-- check constant: %s - %s\n",
-      consttxt, mkc_success_msg (rc));
-
-  return rc;
-}
-
-int32_t
-mkc_process_chk_define (mkc_process_t *process, mkc_value_t *valdef)
-{
-  int         rc = MKC_OK;
-  char        tnm [MKC_VNAME_MAX];
-  char        def [MKC_VNAME_MAX];
-  mkc_pvar_t  *pvar;
-  const char  *tmp;
-
-  if (process == NULL) {
-    return MKC_ERR_FAILURE;
-  }
-
-  pvar = process->pvar;
-  mkc_pvar_value_get_str (process->pvar, valdef, def, sizeof (def));
-  mkc_process_create_name (process, tnm, sizeof (tnm), "_define_", def, NULL);
-
-  if (mkc_process_chk_cache (process, def, tnm)) {
-    return rc;
-  }
-
-  rc = mkc_chk_define (process->check, process->currcompiler, def);
-  tmp = mkc_pvar_name_alloc (pvar, tnm);
-  mkc_pvar_set_integer (pvar, tmp, rc == 0 ? true : false, MKC_VCTXT_CHECK);
-
-  mkc_message ("-- check define: %s - %s\n",
-      def, mkc_success_msg (rc));
-  mkc_log (process->log, MKC_LOG_CHECK, "-- check define: %s - %s\n",
-      def, mkc_success_msg (rc));
 
   return rc;
 }
@@ -1151,11 +1160,11 @@ mkc_process_chk_link_flag (mkc_process_t *process,
 }
 
 int32_t
-mkc_process_chk_size (mkc_process_t *process, mkc_value_t *valtype)
+mkc_process_chk_package (mkc_process_t *process, mkc_value_t *valpkg)
 {
   int         rc = MKC_OK;
   char        tnm [MKC_VNAME_MAX];
-  char        type [MKC_VNAME_MAX];
+  char        pkg [MKC_VNAME_MAX];
   mkc_pvar_t  *pvar;
   const char  *tmp;
 
@@ -1164,55 +1173,21 @@ mkc_process_chk_size (mkc_process_t *process, mkc_value_t *valtype)
   }
 
   pvar = process->pvar;
-  mkc_pvar_value_get_str (process->pvar, valtype, type, sizeof (type));
-  mkc_process_create_name (process, tnm, sizeof (tnm), "_size_", type, NULL);
+  mkc_pvar_value_get_str (process->pvar, valpkg, pkg, sizeof (pkg));
+  mkc_process_create_name (process, tnm, sizeof (tnm), "_package_", pkg, NULL);
 
-  if (mkc_process_chk_cache (process, type, tnm)) {
+  if (mkc_process_chk_cache (process, pkg, tnm)) {
     return rc;
   }
 
-  rc = mkc_chk_size (process->check,
-      process->currcompiler, type);
-  tmp = mkc_pvar_name_alloc (pvar, tnm);
-  mkc_pvar_set_integer (pvar, tmp, rc, MKC_VCTXT_CHECK);
-
-  mkc_message ("-- check size: %s : %d\n", type, rc);
-  mkc_log (process->log, MKC_LOG_CHECK,
-      "-- check size: %s : %d\n", type, rc);
-
-  return rc;
-}
-
-int32_t
-mkc_process_chk_type (mkc_process_t *process, mkc_value_t *valtype)
-{
-  int         rc = MKC_OK;
-  char        tnm [MKC_VNAME_MAX];
-  char        type [MKC_VNAME_MAX];
-  mkc_pvar_t  *pvar;
-  const char  *tmp;
-
-  if (process == NULL) {
-    return MKC_ERR_FAILURE;
-  }
-
-  pvar = process->pvar;
-  mkc_pvar_value_get_str (process->pvar, valtype, type, sizeof (type));
-  mkc_process_create_name (process, tnm, sizeof (tnm), "_type_", type, NULL);
-
-  if (mkc_process_chk_cache (process, type, tnm)) {
-    return rc;
-  }
-
-  rc = mkc_chk_type (process->check,
-      process->currcompiler, type);
+  rc = mkc_chk_package (process->check, process->currcompiler, pkg);
   tmp = mkc_pvar_name_alloc (pvar, tnm);
   mkc_pvar_set_integer (pvar, tmp, rc == 0 ? true : false, MKC_VCTXT_CHECK);
 
-  mkc_message ("-- check type: %s - %s\n",
-      type, mkc_success_msg (rc));
-  mkc_log (process->log, MKC_LOG_CHECK, "-- check type: %s - %s\n",
-      type, mkc_success_msg (rc));
+  mkc_message ("-- check package: %s - %s\n",
+      pkg, mkc_success_msg (rc));
+  mkc_log (process->log, MKC_LOG_CHECK, "-- check package: %s - %s\n",
+      pkg, mkc_success_msg (rc));
 
   return rc;
 }
@@ -1256,42 +1231,6 @@ mkc_process_chk_struct_member (mkc_process_t *process,
 
   return rc;
 }
-
-int32_t
-mkc_process_chk_function (mkc_process_t *process, mkc_value_t *valfuncnm)
-{
-  int         rc = MKC_OK;
-  char        tnm [MKC_VNAME_MAX];
-  char        funcname [MKC_VNAME_MAX];
-  mkc_pvar_t  *pvar;
-  const char  *tmp;
-
-  if (process == NULL) {
-    return MKC_ERR_FAILURE;
-  }
-
-  pvar = process->pvar;
-  mkc_pvar_value_get_str (process->pvar, valfuncnm, funcname, sizeof (funcname));
-  mkc_process_create_name (process, tnm, sizeof (tnm),
-      "_function_", funcname, NULL);
-
-  if (mkc_process_chk_cache (process, funcname, tnm)) {
-    return rc;
-  }
-
-  rc = mkc_chk_function (process->check,
-      process->currcompiler, funcname);
-  tmp = mkc_pvar_name_alloc (pvar, tnm);
-  mkc_pvar_set_integer (pvar, tmp, rc == 0 ? true : false, MKC_VCTXT_CHECK);
-
-  mkc_message ("-- check function: %s - %s\n",
-      funcname, mkc_success_msg (rc));
-  mkc_log (process->log, MKC_LOG_CHECK, "-- check function: %s - %s\n",
-      funcname, mkc_success_msg (rc));
-
-  return rc;
-}
-
 
 void
 mkc_process_local_set (mkc_process_t *process, const char *nm,
