@@ -1,8 +1,8 @@
 /*
  * Copyright 2026 Brad Lanam Pleasant Hill CA
  */
-
-#pragma once
+#ifndef INC_MKC_LIST_H
+#define INC_MKC_LIST_H
 
 #include <stddef.h>
 #include <stdint.h>
@@ -45,3 +45,5 @@ mkc_listidx_t mkc_list_iter_next (mkc_list_t *list, mkc_listidx_t *iteridx);
 #if defined (__cplusplus) || defined (c_plusplus)
 }
 #endif
+
+#endif /* INC_MKC_LIST_H */

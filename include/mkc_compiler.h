@@ -1,8 +1,8 @@
 /*
  * Copyright 2026 Brad Lanam Pleasant Hill CA
  */
-
-#pragma once
+#ifndef INC_MKC_COMPILER_H
+#define INC_MKC_COMPILER_H
 
 #if defined (__cplusplus) || defined (c_plusplus)
 extern "C" {
@@ -40,3 +40,4 @@ mkc_compiler_t mkc_compiler_get (const char *compiler);
 }
 #endif
 
+#endif /* INC_MKC_COMPILER_H */

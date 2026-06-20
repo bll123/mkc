@@ -1938,17 +1938,38 @@ mkc_process_configure_auto (mkc_process_t *process, int defzero)
   FILE            *fh;
   int             tcount = 0;
   char            fname [MKC_PATH_MAX];
+  char            *tp;
+  char            projnm [MKC_VNAME_MAX];
+  size_t          len;
+
+  tp = process->projectname;
+  if (tp == NULL) {
+    tp = "project";
+  }
+  tp = stpecpy (projnm, projnm + sizeof (projnm), tp);
+  stpecpy (tp, projnm + sizeof (projnm), "_config");
 
   if (process->output != NULL) {
     stpecpy (fname, fname + sizeof (fname), process->output);
-  } else {
-    const char      *p;
-
-    p = process->projectname;
-    if (p == NULL) {
-      p = "project";
+    tp = strrchr (fname, '/');
+    if (tp != NULL) {
+      tp = stpecpy (projnm, projnm + sizeof (projnm), tp + 1);
+      tp = strrchr (projnm, '.');
+      if (tp != NULL) {
+        *tp = '\0';
+      }
     }
-    snprintf (fname, sizeof (fname), "%s_config.h", p);
+  } else {
+    snprintf (fname, sizeof (fname), "%s_config.h", projnm);
+  }
+
+  len = strlen (projnm);
+  for (size_t i = 0; i < len; ++i) {
+    if (projnm [i] == '-') {
+      projnm [i] = '_';
+    } else {
+      projnm [i] = toupper (projnm [i]);
+    }
   }
 
   fh = mkc_fopen (fname, "w");
@@ -1960,7 +1981,9 @@ mkc_process_configure_auto (mkc_process_t *process, int defzero)
   opidx = mkc_profile_get_active (process->profiles);
 
   fprintf (fh, "/* built by mkc */\n");
-  fprintf (fh, "#pragma once\n");
+  fprintf (fh, "#ifndef INC_%s_H\n", projnm);
+  fprintf (fh, "#define INC_%s_H\n", projnm);
+  fprintf (fh, "\n");
 
   profiles = process->profiles;
   mkc_profile_iter_start (profiles, &piter);
@@ -2019,6 +2042,9 @@ mkc_process_configure_auto (mkc_process_t *process, int defzero)
       }
     }
   }
+
+  fprintf (fh, "\n");
+  fprintf (fh, "#endif /* INC_%s_H */\n", projnm);
 
   mkc_pvar_profile_set_idx (process->pvar, opidx);
   fclose (fh);

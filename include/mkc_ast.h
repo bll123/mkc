@@ -1,8 +1,8 @@
 /*
  * Copyright 2026 Brad Lanam Pleasant Hill CA
  */
-
-#pragma once
+#ifndef INC_MKC_AST_H
+#define INC_MKC_AST_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -73,3 +73,5 @@ void mkc_ast_free (mkc_astmain_t *astmain);
 #if defined (__cplusplus) || defined (c_plusplus)
 }
 #endif
+
+#endif /* INC_MKC_AST_H */

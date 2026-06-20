@@ -1,7 +1,8 @@
 /*
  * Copyright 2026 Brad Lanam Pleasant Hill CA
  */
-#pragma once
+#ifndef INC_MKC_CHECK_H
+#define INC_MKC_CHECK_H
 
 #include <stddef.h>
 #include <stdbool.h>
@@ -56,3 +57,4 @@ int mkc_compile_run (mkc_check_t *check, mkc_compiler_t compiler, const char *fn
 }
 #endif
 
+#endif /* INC_MKC_CHECK_H */

@@ -1,8 +1,8 @@
 /*
  * Copyright 2026 Brad Lanam Pleasant Hill CA
  */
-
-#pragma once
+#ifndef INC_MKC_VAR_H
+#define INC_MKC_VAR_H
 
 #include <stdint.h>
 #include <stddef.h>
@@ -83,3 +83,5 @@ const char *mkc_value_to_str (mkc_value_t *value, char *buff, size_t sz);
 #if defined (__cplusplus) || defined (c_plusplus)
 }
 #endif
+
+#endif /* INC_MKC_VAR_H */

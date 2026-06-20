@@ -1,7 +1,8 @@
 /*
  * Copyright 2026 Brad Lanam Pleasant Hill CA
  */
-#pragma once
+#ifndef INC_MKC_FILEOP_H
+#define INC_MKC_FILEOP_H
 
 #include <stdio.h>
 #include <stddef.h>
@@ -36,3 +37,4 @@ int mkc_link_create (const char *target, const char *linkpath);
 }
 #endif
 
+#endif /* INC_MKC_FILEOP_H */

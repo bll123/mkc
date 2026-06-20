@@ -1,8 +1,8 @@
 /*
  * Copyright 2026 Brad Lanam Pleasant Hill CA
  */
-
-#pragma once
+#ifndef INC_MKC_STRING_H
+#define INC_MKC_STRING_H
 
 #include "mkc_nodiscard.h"
 
@@ -11,6 +11,7 @@ extern "C" {
 #endif
 
 char * stpecpy (char *dst, char *end, const char *restrict src);
+void mkc_strupper (char *buff);
 
 #if defined (_WIN32)
 
@@ -22,3 +23,5 @@ MKC_NODISCARD char * mkc_fromwide (const wchar_t *buff);
 #if defined (__cplusplus) || defined (c_plusplus)
 }
 #endif
+
+#endif /* INC_MKC_STRING_H */

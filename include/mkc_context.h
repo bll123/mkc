@@ -1,8 +1,8 @@
 /*
  * Copyright 2026 Brad Lanam Pleasant Hill CA
  */
-
-#pragma once
+#ifndef INC_MKC_CONTEXT_H
+#define INC_MKC_CONTEXT_H
 
 #include "mkc_error.h"
 
@@ -32,3 +32,5 @@ bool mkc_context_check (mkc_context_t *context, mkc_ctxt_val_t ctxtval);
 #if defined (__cplusplus) || defined (c_plusplus)
 }
 #endif
+
+#endif /* INC_MKC_CONTEXT_H */

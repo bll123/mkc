@@ -1,8 +1,8 @@
 /*
  * Copyright 2026 Brad Lanam Pleasant Hill CA
  */
-
-#pragma once
+#ifndef INC_MKC_NODISCARD_H
+#define INC_MKC_NODISCARD_H
 
 #include <stddef.h>
 
@@ -17,3 +17,5 @@
 #if ! defined (MKC_NODISCARD)
 # define MKC_NODISCARD
 #endif
+
+#endif /* INC_MKC_NODISCARD_H */

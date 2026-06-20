@@ -1,8 +1,8 @@
 /*
  * Copyright 2026 Brad Lanam Pleasant Hill CA
  */
-
-#pragma once
+#ifndef INC_MKC_PROCESS_H
+#define INC_MKC_PROCESS_H
 
 #include <stdint.h>
 
@@ -65,3 +65,5 @@ void mkc_process_save_cache (mkc_process_t *process);
 #if defined (__cplusplus) || defined (c_plusplus)
 }
 #endif
+
+#endif /* INC_MKC_PROCESS_H */

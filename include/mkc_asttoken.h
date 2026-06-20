@@ -1,11 +1,8 @@
 /*
  * Copyright 2026 Brad Lanam Pleasant Hill CA
  */
-
-#pragma once
-
-#include <stdint.h>
-#include <stdbool.h>
+#ifndef INC_MKC_ASTTOKEN_H
+#define INC_MKC_ASTTOKEN_H
 
 #if defined (__cplusplus) || defined (c_plusplus)
 extern "C" {
@@ -94,3 +91,5 @@ extern const char * const typenames [MKC_T_MAX];
 #if defined (__cplusplus) || defined (c_plusplus)
 }
 #endif
+
+#endif /* INC_MKC_ASTTOKEN_H */

@@ -1,8 +1,8 @@
 /*
  * Copyright 2026 Brad Lanam Pleasant Hill CA
  */
-
-#pragma once
+#ifndef INC_MKC_PARSE_H
+#define INC_MKC_PARSE_H
 
 #include <stdio.h>
 #include <stdint.h>
@@ -26,3 +26,5 @@ int mkc_parse (mkc_parse_t *parse, FILE *fh);
 #if defined (__cplusplus) || defined (c_plusplus)
 }
 #endif
+
+#endif /* INC_MKC_PARSE_H */

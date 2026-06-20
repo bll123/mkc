@@ -1,3 +1,8 @@
+project {
+  name mkctest;
+  compiler c;
+}
+
 profile global {
   compiler c;
 

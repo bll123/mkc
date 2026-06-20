@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #if __has_include (<windows.h>)
 # define WIN32_LEAN_AND_MEAN 1
@@ -64,6 +65,17 @@ stpecpy (char *dst, char *end, const char *restrict src)
 }
 
 #endif /* ! _lib_stpecpy */
+
+void
+mkc_strupper (char *buff)
+{
+  size_t    len;
+
+  len = strlen (buff);
+  for (size_t i = 0; i < len; ++i) {
+    buff [i] = toupper (buff [i]);
+  }
+}
 
 #if defined (_WIN32)
 

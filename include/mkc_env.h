@@ -1,7 +1,8 @@
 /*
  * Copyright 2026 Brad Lanam Pleasant Hill CA
  */
-#pragma once
+#ifndef INC_MKC_ENV_H
+#define INC_MKC_ENV_H
 
 #include <stddef.h>
 
@@ -15,3 +16,5 @@ int mkc_env_set (const char *name, const char *value);
 #if defined (__cplusplus) || defined (c_plusplus)
 }
 #endif
+
+#endif /* INC_MKC_ENV_H */

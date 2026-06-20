@@ -1,8 +1,8 @@
 /*
  * Copyright 2026 Brad Lanam Pleasant Hill CA
  */
-
-#pragma once
+#ifndef INC_MKC_ERROR_H
+#define INC_MKC_ERROR_H
 
 #include <stdint.h>
 #include <stddef.h>
@@ -61,3 +61,5 @@ mkc_err_code_t mkc_error_value (mkc_error_t *mkcerr);
 #if defined (__cplusplus) || defined (c_plusplus)
 }
 #endif
+
+#endif /* INC_MKC_ERROR_H */

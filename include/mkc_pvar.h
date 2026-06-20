@@ -1,8 +1,8 @@
 /*
  * Copyright 2026 Brad Lanam Pleasant Hill CA
  */
-
-#pragma once
+#ifndef INC_MKC_PVAR_H
+#define INC_MKC_PVAR_H
 
 #include <stddef.h>
 #include <stdint.h>
@@ -59,3 +59,5 @@ char * mkc_pvar_substitute (mkc_pvar_t *pvar, const char *vname, int depth);
 #if defined (__cplusplus) || defined (c_plusplus)
 }
 #endif
+
+#endif /* INC_MKC_PVAR_H */

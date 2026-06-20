@@ -1,8 +1,8 @@
 /*
  * Copyright 2026 Brad Lanam Pleasant Hill CA
  */
-
-#pragma once
+#ifndef INC_MKC_DEF_H
+#define INC_MKC_DEF_H
 
 #include <stddef.h>
 #include <stdint.h>
@@ -76,3 +76,4 @@ typedef enum {
 }
 #endif
 
+#endif /* INC_MKC_DEF_H */
