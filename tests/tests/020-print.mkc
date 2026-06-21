@@ -1,3 +1,5 @@
+# Copyright 2026 Brad Lanam Pleasant Hill CA
+
 # test the print statement
 # test single quoted string, double quoted string, integer
 print 'mkc-a';

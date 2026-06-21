@@ -11,6 +11,7 @@
 #include "mkc_error.h"
 #include "mkc_list.h"
 #include "mkc_log.h"
+#include "mkc_option.h"
 #include "mkc_var.h"
 
 #if defined (__cplusplus) || defined (c_plusplus)
@@ -37,7 +38,7 @@ extern const char * const MKC_PROF_GLOBAL_NAME;
 extern const char * const MKC_PROF_INTERNAL_NAME;
 extern const char * const MKC_PROF_RELEASE_NAME;
 
-mkc_profile_t * mkc_profile_init (mkc_log_t *log, mkc_error_t *mkcerr, const char *dfltprof, const char *comparg);
+mkc_profile_t * mkc_profile_init (mkc_log_t *log, mkc_error_t *mkcerr, mkc_option_t *mkcoptions);
 void mkc_profile_free (mkc_profile_t *profiles);
 int mkc_profile_clear (mkc_profile_t *profiles, mkc_profidx_t pidx);
 mkc_compiler_t mkc_profile_get_dflt_compiler (mkc_profile_t *profiles);

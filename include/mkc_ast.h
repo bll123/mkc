@@ -10,6 +10,7 @@
 #include "mkc_asttoken.h"
 #include "mkc_error.h"
 #include "mkc_log.h"
+#include "mkc_option.h"
 #include "mkc_var.h"
 
 #if defined (__cplusplus) || defined (c_plusplus)
@@ -65,7 +66,7 @@ mkc_astnode_t * mkc_ast_mk_attr_name (mkc_astmain_t *astmain, mkc_astnode_t *nm,
 mkc_astnode_t * mkc_ast_mk_attr_negate (mkc_astmain_t *astmain, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_attr_output (mkc_astmain_t *astmain, mkc_astnode_t *name, int32_t lineno, int colno);
 
-mkc_astmain_t * mkc_ast_init (mkc_log_t *log, const char *dfltprof, const char *comparg, mkc_error_t *mkcerr);
+mkc_astmain_t * mkc_ast_init (mkc_log_t *log, mkc_option_t *mkcoptions, mkc_error_t *mkcerr);
 void mkc_ast_set_main (mkc_astmain_t *, mkc_astnode_t *astnode);
 int32_t mkc_ast_start (mkc_astmain_t *);
 void mkc_ast_free (mkc_astmain_t *astmain);

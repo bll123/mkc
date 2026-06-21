@@ -49,9 +49,8 @@ main (int argc, char *argv [])
   int             option_index;
   int             fnidx;
   mkc_parse_t     * parse = NULL;
+  mkc_option_t    mkcoptions;
   FILE            * fh = NULL;
-  const char      * dfltprof = MKC_PROF_RELEASE_NAME;
-  const char      * comparg = NULL;
   mkc_astmain_t   * astmain = NULL;
   mkc_error_t     * mkcerr = NULL;
   mkc_log_t       * log = NULL;
@@ -65,14 +64,14 @@ main (int argc, char *argv [])
   time_t          cachetm;
   time_t          mkctm;
 
-  static struct option mkc_options [] = {
+  static struct option mkc_cli_opts [] = {
     { "compiler",       required_argument,  NULL,   3, },
-    { "no-cache",       no_argument,        NULL,   1, },
-    { "retest",         no_argument,        NULL,   4, },
     { "mkc-dir",        required_argument,  NULL,   5, },
+    { "no-cache",       no_argument,        NULL,   1, },
     { "parsedebug",     no_argument,        NULL,   2, },
     { "prefix",         required_argument,  NULL,   6, },
     { "profile",        required_argument,  NULL,   'p' },
+    { "retest",         no_argument,        NULL,   'r', },
     { NULL,             no_argument,        NULL,   0, },
   };
 
@@ -94,13 +93,24 @@ main (int argc, char *argv [])
   }
 #endif
 
-  while ((c = getopt_long_only (argcopy.nargc, argcopy.utf8argv, "p:",
-      mkc_options, &option_index)) != -1) {
+  mkcoptions.dfltprof = MKC_PROF_RELEASE_NAME;
+  mkcoptions.compilertxt = NULL;
+  mkcoptions.mkcfile_dir = NULL;
+  mkcoptions.stage = NULL;
+  mkcoptions.prefix = NULL;
+  mkcoptions.retest = false;
+
+  while ((c = getopt_long_only (argcopy.nargc, argcopy.utf8argv,
+      "p:r", mkc_cli_opts, &option_index)) != -1) {
     switch (c) {
       case 'p': {
         if (optarg != NULL) {
-          dfltprof = argcopy.utf8argv [optind - 1];
+          mkcoptions.dfltprof = argcopy.utf8argv [optind - 1];
         }
+        break;
+      }
+      case 'r': {
+        mkcoptions.retest = true;
         break;
       }
       case 1: {
@@ -113,11 +123,8 @@ main (int argc, char *argv [])
       }
       case 3: {
         if (optarg != NULL) {
-          comparg = argcopy.utf8argv [optind - 1];
+          mkcoptions.compilertxt = argcopy.utf8argv [optind - 1];
         }
-        break;
-      }
-      case 4: {
         break;
       }
       case 5: {
@@ -152,7 +159,7 @@ main (int argc, char *argv [])
     }
   }
 
-  astmain = mkc_ast_init (log, dfltprof, comparg, mkcerr);
+  astmain = mkc_ast_init (log, &mkcoptions, mkcerr);
   if (mkc_error_chk_err (mkcerr)) {
     rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
     return rc;

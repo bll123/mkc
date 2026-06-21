@@ -1,3 +1,5 @@
+# Copyright 2026 Brad Lanam Pleasant Hill CA
+
 check_type something_t;
 check_type int;
 check_type 'struct stat' {

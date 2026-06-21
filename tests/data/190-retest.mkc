@@ -1,0 +1,26 @@
+# Copyright 2026 Brad Lanam Pleasant Hill CA
+
+project {
+  name mkctest;
+  compiler c;
+}
+
+check_constant alwaysdef {
+  compiler_flags '-Itests/tmp';
+  header '190-retest-a.h';
+}
+check_constant maybedef {
+  compiler_flags '-Itests/tmp';
+  header '190-retest-b.h';
+}
+
+if (${_constant_alwaysdef}) {
+  print '  ok a';
+} else {
+  print '  fail a';
+}
+if (${_constant_maybedef}) {
+  print '  ok m';
+} else {
+  print '  fail m';
+}

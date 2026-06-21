@@ -1,3 +1,5 @@
+# Copyright 2026 Brad Lanam Pleasant Hill CA
+
 
 # windows has 'max' defined, unix-like systems have 'MAX' in sys/param.h
 # these are both macros

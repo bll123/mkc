@@ -1,3 +1,4 @@
+/* Copyright 2026 Brad Lanam Pleasant Hill CA */
 #ifndef INC_301_CONFIGURE_MANUAL_H
 #define INC_301_CONFIGURE_MANUAL_H
 

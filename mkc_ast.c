@@ -17,25 +17,26 @@
 #include "mkc_error.h"
 #include "mkc_log.h"
 #include "mkc_list.h"
+#include "mkc_option.h"
 #include "mkc_os_process.h"
 #include "mkc_process.h"
 #include "mkc_string.h"
 #include "mkc_var.h"
 
 const char * const typenames [MKC_T_MAX] = {
-  [MKC_T_ATTR_COMPILER] = "attr_compiler",
-  [MKC_T_ATTR_COMP_FLAGS] = "attr_comp_flags",
-  [MKC_T_ATTR_CONTEXT] = "attr_context",
-  [MKC_T_ATTR_DEFINE_ZERO] = "attr_define_zero",
-  [MKC_T_ATTR_HEADER] = "attr_header",
-  [MKC_T_ATTR_INPUT] = "attr_input",
-  [MKC_T_ATTR_LINK_FLAGS] = "attr_link_flags",
-  [MKC_T_ATTR_METHOD] = "attr_method",
-  [MKC_T_ATTR_NAME] = "attr_name",
-  [MKC_T_ATTR_NEGATE] = "attr_negate",
-  [MKC_T_ATTR_OUTPUT] = "attr_output",
-  [MKC_T_ATTR_SOURCE] = "attr_source",
-  [MKC_T_CHK_COMP_FLAG] = "compiler flag",
+  [MKC_T_ATTR_COMPILER] = "compiler",
+  [MKC_T_ATTR_COMP_FLAGS] = "compiler_flags",
+  [MKC_T_ATTR_CONTEXT] = "context",
+  [MKC_T_ATTR_DEFINE_ZERO] = "define_zero",
+  [MKC_T_ATTR_HEADER] = "header",
+  [MKC_T_ATTR_INPUT] = "input",
+  [MKC_T_ATTR_LINK_FLAGS] = "link_flags",
+  [MKC_T_ATTR_METHOD] = "method",
+  [MKC_T_ATTR_NAME] = "name",
+  [MKC_T_ATTR_NEGATE] = "negate",
+  [MKC_T_ATTR_OUTPUT] = "output",
+  [MKC_T_ATTR_SOURCE] = "source",
+  [MKC_T_CHK_COMP_FLAG] = "compiler_flag",
   [MKC_T_CHK_CONST] = "constant",
   [MKC_T_CHK_DEFINE] = "define",
   [MKC_T_CHK_FUNCTION] = "function",
@@ -288,13 +289,14 @@ typedef struct mkc_astmain_t {
   /* e.g. cache + project.mkc, etc. */
   /* use a list of the main astnodes */
   mkc_list_t            * mainlist;
-  mkc_value_t           value;
   mkc_profile_t         * profiles;
   mkc_process_t         * process;
   mkc_context_t         * context;
   mkc_astnode_t         ** nodelist;
   mkc_error_t           * mkcerr;
   mkc_log_t             * log;
+  mkc_option_t          * mkcoptions;
+  mkc_value_t           value;
   int32_t               allocsz;
   int32_t               sz;
   int32_t               ccidx;
@@ -311,7 +313,7 @@ static void mkc_astnode_free (mkc_astmain_t *astmain, mkc_astnode_t *astnode);
 static mkc_value_t *mkc_ast_get_value (mkc_astmain_t *astmain, mkc_astnode_t *astnode);
 
 mkc_astmain_t *
-mkc_ast_init (mkc_log_t *log, const char *dfltprof, const char *comparg, mkc_error_t *mkcerr)
+mkc_ast_init (mkc_log_t *log, mkc_option_t *mkcoptions, mkc_error_t *mkcerr)
 {
   mkc_astmain_t   *astmain;
 
@@ -321,7 +323,9 @@ mkc_ast_init (mkc_log_t *log, const char *dfltprof, const char *comparg, mkc_err
   }
   memset (astmain, 0, sizeof (mkc_astmain_t));
 
-  astmain->profiles = mkc_profile_init (log, mkcerr, dfltprof, comparg);
+  astmain->mkcoptions = mkcoptions;
+
+  astmain->profiles = mkc_profile_init (log, mkcerr, mkcoptions);
   if (astmain->profiles == NULL) {
     mkc_ast_free (astmain);
     return NULL;
@@ -334,7 +338,7 @@ mkc_ast_init (mkc_log_t *log, const char *dfltprof, const char *comparg, mkc_err
   }
 
   astmain->process = mkc_process_init (astmain->profiles, log,
-      astmain->context, mkcerr);
+      astmain->context, mkcoptions, mkcerr);
   if (astmain->process == NULL) {
     mkc_ast_free (astmain);
     return NULL;

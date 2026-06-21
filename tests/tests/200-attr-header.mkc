@@ -1,0 +1,48 @@
+# Copyright 2026 Brad Lanam Pleasant Hill CA
+
+# checks the header statement, uses check_size to test it.
+
+check_size 'DIR *' {
+  name  chka;
+  header dirent.h;
+}
+
+check_size 'DIR *' {
+  name  chkb;
+  header fcntl.h;
+}
+
+check_size 'DIR *' {
+  name  chkc;
+  header fcntl.h dirent.h;
+}
+
+check_size 'DIR *' {
+  name  chkd;
+  header fcntl.h;
+  header dirent.h;
+}
+
+if (${chka} != 0) {
+  print '  ok chka';
+} else {
+  print '  fail chka';
+}
+
+if (${chkb} == 0) {
+  print '  ok chkb';
+} else {
+  print '  fail chkb';
+}
+
+if (${chkc} != 0) {
+  print '  ok chkc';
+} else {
+  print '  fail chkc';
+}
+
+if (${chkd} != 0) {
+  print '  ok chkd';
+} else {
+  print '  fail chkd';
+}

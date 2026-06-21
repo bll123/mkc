@@ -11,6 +11,7 @@
 #include "mkc_compiler.h"
 #include "mkc_error.h"
 #include "mkc_list.h"
+#include "mkc_option.h"
 #include "mkc_profile.h"
 #include "mkc_string.h"
 #include "mkc_var.h"
@@ -31,7 +32,7 @@ typedef struct mkc_profile_t {
   mkc_list_t        * list;
   mkc_error_t       * mkcerr;
   mkc_log_t         * log;
-  char              * dfltprof;
+  mkc_option_t      * mkcoptions;
   mkc_compiler_t    dfltcompiler;
   mkc_profidx_t     localstack [MKC_PROF_STACK_MAX];
   mkc_profidx_t     stack [MKC_PROF_STACK_MAX];
@@ -50,7 +51,7 @@ static void mkc_profile_entry_free (void *pentry);
 static int mkc_profile_compare (void *tentrya, void *tentryb);
 
 mkc_profile_t *
-mkc_profile_init (mkc_log_t *log, mkc_error_t *mkcerr, const char *dfltprof, const char *comparg)
+mkc_profile_init (mkc_log_t *log, mkc_error_t *mkcerr, mkc_option_t *mkcoptions)
 {
   mkc_profile_t   *profiles;
   mkc_profidx_t   pidx;
@@ -67,16 +68,10 @@ mkc_profile_init (mkc_log_t *log, mkc_error_t *mkcerr, const char *dfltprof, con
   profiles->mkcerr = mkcerr;
   profiles->log = log;
   profiles->dfltcompiler = MKC_COMPILER_C;
+  profiles->mkcoptions = mkcoptions;
 
-  profiles->dfltprof = strdup (dfltprof);
-  if (profiles->dfltprof == NULL) {
-    mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    mkc_profile_free (profiles);
-    return NULL;
-  }
-
-  if (comparg != NULL) {
-    profiles->dfltcompiler = mkc_compiler_get (comparg);
+  if (mkcoptions->compilertxt != NULL) {
+    profiles->dfltcompiler = mkc_compiler_get (mkcoptions->compilertxt);
     if (profiles->dfltcompiler == MKC_COMPILER_UNKNOWN) {
       mkc_error_set (mkcerr, MKC_ERR_INVALID_ARGUMENT, 0, NULL);
       mkc_profile_free (profiles);
@@ -106,20 +101,21 @@ mkc_profile_init (mkc_log_t *log, mkc_error_t *mkcerr, const char *dfltprof, con
   pidx = mkc_profile_create (profiles, MKC_PROF_RELEASE_NAME,
       profiles->dfltcompiler, MKC_PROF_TYPE_USER);
 
-  pidx = mkc_profile_find (profiles, dfltprof, profiles->dfltcompiler);
+  pidx = mkc_profile_find (profiles,
+      mkcoptions->dfltprof, profiles->dfltcompiler);
   if (mkc_profile_get_type (profiles, pidx) != MKC_PROF_TYPE_USER) {
     mkc_error_set (mkcerr, MKC_ERR_INVALID_PROFILE, 0, NULL);
     mkc_profile_free (profiles);
     return NULL;
   }
   if (pidx == MKC_PROF_NOT_FOUND) {
-    pidx = mkc_profile_create (profiles, dfltprof,
+    pidx = mkc_profile_create (profiles, mkcoptions->dfltprof,
           profiles->dfltcompiler, MKC_PROF_TYPE_USER);
   }
-  mkc_message ("-- default profile: %s %s\n", dfltprof,
+  mkc_message ("-- default profile: %s %s\n", mkcoptions->dfltprof,
       mkc_compiler_get_name (profiles->dfltcompiler));
-  mkc_log (log, MKC_LOG_PROFILE, "== default profile: %s %s\n", dfltprof,
-      mkc_compiler_get_name (profiles->dfltcompiler));
+  mkc_log (log, MKC_LOG_PROFILE, "== default profile: %s %s\n",
+      mkcoptions->dfltprof, mkc_compiler_get_name (profiles->dfltcompiler));
 
   profiles->active_idx = pidx;
   profiles->user_idx = pidx;

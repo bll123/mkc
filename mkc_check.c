@@ -405,7 +405,7 @@ mkc_chk_package (mkc_check_t *check,
   mkc_pvar_profile_set_idx (check->pvar, opidx);
 
   rc = 0;
-// ###
+// ### write this...
   mkc_chk_reset (check);
   return rc;
 }

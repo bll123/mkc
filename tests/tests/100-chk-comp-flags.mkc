@@ -1,3 +1,5 @@
+# Copyright 2026 Brad Lanam Pleasant Hill CA
+
 check_compile_flag    '-Wunreachable-code';
 check_compile_flag    '-Wno-unreachable-code';
 check_compile_flag    '-Wsomething-bad';

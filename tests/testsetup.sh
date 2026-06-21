@@ -1,0 +1,77 @@
+#!/bin/bash
+#
+# Copyright 2026 Brad Lanam Pleasant Hill CA
+#
+
+tdir=tests/tests
+ddir=tests/data
+rdir=tests/results
+odir=tests/tmp
+LANG=C
+MKCTMP=tests/tmp
+LOG=${MKCTMP}/log-runtests.txt
+MKCLOG=mkc_files
+mkclog=${MKCLOG}/log-mkc.txt
+
+function dotest {
+  tfile=$1
+
+  if [[ $ttype == mkc ]]; then
+    prog=./mkc
+  fi
+  if [[ $ttype == sh ]]; then
+    prog=". "
+    args=""
+  fi
+
+  ${prog} ${args} ${tfile} > ${odir}/$bnm.out 2>>${LOG}
+  rc=$?
+  if [[ $expfail == T ]]; then
+    if [[ $rc -eq 0 ]]; then
+      echo "   fail: test: $tfile"
+    fi
+  else
+    if [[ $rc -ne 0 ]]; then
+      echo "   fail: test: $tfile"
+    fi
+  fi
+}
+
+function dodiff {
+  dfile=$1
+  ofile=$2
+
+  if [[ $dfile == "" ]]; then
+    if [[ -f ${rdir}/$bnm.h ]]; then
+      diff=T
+      dfile=${rdir}/$bnm.h
+      ofile=${odir}/$bnm.h
+    fi
+    if [[ -f ${rdir}/$bnm.out ]]; then
+      diff=T
+      dfile=${rdir}/$bnm.out
+      ofile=${odir}/$bnm.out
+    fi
+  else
+    diff=T
+  fi
+
+  if [[ ${diff} == T ]]; then
+    diff=T
+    diff -q -w ${dfile} ${ofile} >>${LOG} 2>&1
+    rc=$?
+
+    if [[ $rc -ne 0 ]]; then
+      echo "   fail: diff: $tnm"
+    else
+      true
+      # echo "   ok: diff: $tnm"
+    fi
+  fi
+}
+
+function testfin {
+  if [[ -f ${mkclog} ]]; then
+    mv ${mkclog} ${MKCTMP}/log-${bnm}.txt
+  fi
+}

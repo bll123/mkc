@@ -180,8 +180,7 @@ mkc_pvar.o: include/mkc_error.h include/mkc_profile.h include/mkc_compiler.h
 mkc_pvar.o: include/mkc_list.h include/mkc_log.h 
 mkc_pvar.o: include/mkc_var.h include/mkc_pvar.h include/mkc_string.h
 mkc_pvar.o: include/mkc_nodiscard.h
-mkc_string.o:  include/mkc_string.h
-mkc_string.o: include/mkc_nodiscard.h
+mkc_string.o: include/mkc_string.h include/mkc_nodiscard.h
 mkc_util.o: include/mkc_util.h
 mkc_var.o:   include/mkc_def.h
 mkc_var.o:   include/mkc_error.h

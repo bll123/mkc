@@ -1,14 +1,9 @@
 #!/bin/bash
+#
+# Copyright 2026 Brad Lanam Pleasant Hill CA
+#
 
-tdir=tests/tests
-ddir=tests/data
-rdir=tests/results
-odir=tests/tmp
-LANG=C
-MKCTMP=tests/tmp
-LOG=${MKCTMP}/log-runtests.txt
-MKCLOG=mkc_files
-mkclog=${MKCLOG}/log-mkc.txt
+. ./tests/testsetup.sh
 
 test -d ${odir} || mkdir -p ${odir}
 test -d ${MKCTMP} || mkdir -p ${MKCTMP}
@@ -25,57 +20,17 @@ while test $# -gt 0; do
   esac
 done
 
-function dotest {
-  ${prog} ${args} $tnm > ${odir}/$bnm.out 2>>${LOG}
-  rc=$?
-  if [[ $expfail == T ]]; then
-    if [[ $rc -eq 0 ]]; then
-      echo "   fail: test: $tnm"
-      continue
-    fi
-  else
-    if [[ $rc -ne 0 ]]; then
-      echo "   fail: test: $tnm"
-      continue
-    fi
-  fi
-
-  diff=F
-  if [[ -f ${rdir}/$bnm.h ]]; then
-    diff=T
-    diff -q -w ${rdir}/$bnm.h ${odir}/$bnm.h >>${LOG} 2>&1
-    rc=$?
-  elif [[ -f ${rdir}/$bnm.out ]]; then
-    diff=T
-    diff -q -w ${rdir}/$bnm.out ${odir}/$bnm.out >>${LOG} 2>&1
-    rc=$?
-  fi
-
-  if [[ $diff == T ]]; then
-    if [[ $rc -ne 0 ]]; then
-      echo "   fail: diff: $tnm"
-    else
-      true
-      # echo "   ok: diff: $tnm"
-    fi
-  fi
-
-  if [[ -f ${mkclog} ]]; then
-    mv ${mkclog} ${MKCTMP}/log-${bnm}.txt
-  fi
-}
-
 for tnm in ${tdir}/${pattern}; do
   case ${tnm} in
     *~)
       continue
       ;;
     *.mkc)
-      prog=./mkc
+      ttype=mkc
       args=--no-cache
       ;;
     *.sh)
-      prog=bash
+      ttype=sh
       args=""
       ;;
   esac
@@ -90,11 +45,24 @@ for tnm in ${tdir}/${pattern}; do
       ;;
   esac
 
-  dotest
-  if [[ -f ${tdir}/${bnm}.cache ]]; then
-    args=""
-    echo "== $tnm (cache)"
-    echo "== $tnm (cache)" >> ${LOG}
-    dotest
+  ottype=${ttype}
+  dotest ${tnm}
+  if [[ $rc -ne 0 ]]; then continue; fi
+  if [[ $ottype == mkc ]]; then
+    # shell scripts run their own diff...
+    dodiff
+  fi
+  testfin
+
+  if [[ $ottype == mkc ]]; then
+    if [[ -f ${ddir}/${bnm}.cache ]]; then
+      args=""
+      echo "== $tnm (cache)"
+      echo "== $tnm (cache)" >> ${LOG}
+      dotest ${tnm}
+      if [[ $rc -ne 0 ]]; then continue; fi
+      dodiff
+      testfin
+    fi
   fi
 done

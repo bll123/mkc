@@ -1,3 +1,5 @@
+# Copyright 2026 Brad Lanam Pleasant Hill CA
+
 
 # break not in loop
 if (1 == 1) {
