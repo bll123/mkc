@@ -28,8 +28,12 @@ grc=0
 # check for missing copyrights
 echo "## checking for missing copyright"
 
-for fn in *.y *.l *.c *.h bootstrap.mk; do
+for fn in *.y *.l *.c *.mk include/*.h \
+    tests/tests/*.mkc tests/*.sh tests/tests/*.sh; do
   case $fn in
+    *000-empty.mkc)
+      continue;
+      ;;
     *tt.sh|*z.sh)
       continue
       ;;
@@ -69,7 +73,7 @@ main (int argc, char *argv [])
   return 0;
 }
 _HERE_
-  cc -c -I build -I . $INCTC >> $INCTOUT 2>&1
+  cc -c -I build -I include $INCTC >> $INCTOUT 2>&1
   rc=$?
   if [[ $rc -ne 0 ]]; then
     echo "compile of $bfn failed"
@@ -88,13 +92,11 @@ rm -f $INCTOUT
 # check the include file hierarchy for problems.
 echo "## checking include file hierarchy"
 > $TIIN
-if [[ -f config.h ]]; then
-  cfh=config.h
+cfh=""
+if [[ -f mkc_config.h ]]; then
+  cfh=mkc_config.h
 fi
-if [[ -f build/config.h ]]; then
-  cfh=build/config.h
-fi
-for fn in *.c *.h ${cfh}; do
+for fn in *.c include/*.h ${cfh}; do
   echo $fn $fn >> $TIIN
   grep -E '^# *include "' $fn |
       sed -e 's,^# *include ",,' \
