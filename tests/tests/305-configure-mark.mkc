@@ -29,5 +29,5 @@ profile internal {
 configure {
   method auto;
   define_zero;
-  output 'tests/tmp/304-configure-mark.h';
+  output 'tests/tmp/305-configure-mark.h';
 }

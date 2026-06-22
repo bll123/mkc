@@ -10,7 +10,6 @@
 #include "mkc_ast.h"
 #include "mkc_error.h"
 #include "mkc_fileop.h"
-#include "mkc_grammar.h"
 #include "mkc_lex.h"
 #include "mkc_log.h"
 #include "mkc_parse.h"
@@ -65,35 +64,8 @@ mkc_parse_debug (mkc_parse_t *parse, bool debug)
 }
 
 int
-mkc_parse_file (mkc_parse_t *parse, const char *fn, int32_t lineno, int colno)
+mkc_parse_start (mkc_parse_t *parse, FILE *fh)
 {
-  FILE    *fh;
-  int     rc = MKC_ERR_FILE_NOT_FOUND;
-
-  if (parse == NULL) {
-    return MKC_ERR_FAILURE;
-  }
-  if (fn == NULL) {
-    mkc_error_set (parse->mkcerr, MKC_ERR_NULL_ARGUMENT, 0, NULL);
-    return MKC_ERR_FAILURE;
-  }
-
-  mkc_error_set_line_col (parse->mkcerr, lineno, colno);
-
-  fh = mkc_fopen (fn, "r");
-  if (fh != NULL) {
-    rc = mkc_parse (parse, fh);
-    fclose (fh);
-  }
-
-  return rc;
-}
-
-int
-mkc_parse (mkc_parse_t *parse, FILE *fh)
-{
-  int               rc = 0;
-
   if (parse == NULL) {
     return MKC_ERR_FAILURE;
   }
@@ -104,15 +76,26 @@ mkc_parse (mkc_parse_t *parse, FILE *fh)
 
   parse->state = mkcyy_create_buffer (fh, YY_BUF_SIZE, parse->scanner);
   mkcyypush_buffer_state (parse->state, parse->scanner);
-  rc = mkcyyparse (parse->scanner, parse->astmain);
-  if (rc == 1) {
-    mkc_error_set (parse->mkcerr, MKC_ERR_PARSE_FAILURE, 0, NULL);
-  }
-  if (rc == 2) {
-    mkc_error_set (parse->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-  }
-  mkcyypop_buffer_state (parse->scanner);
 
-  return rc;
+  return MKC_OK;
 }
 
+void
+mkc_parse_finish (mkc_parse_t *parse)
+{
+  if (parse == NULL) {
+    return;
+  }
+
+  mkcyypop_buffer_state (parse->scanner);
+}
+
+void *
+mkc_parse_get_scanner (mkc_parse_t *parse)
+{
+  if (parse == NULL) {
+    return NULL;
+  }
+
+  return parse->scanner;
+}

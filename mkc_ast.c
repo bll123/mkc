@@ -45,7 +45,7 @@ typedef struct mkc_ast_stmtlist_t {
 } mkc_ast_stmtlist_t;
 
 typedef struct mkc_ast_main_t {
-  mkc_astnode_t       *stmtblock;
+  mkc_astnode_t       *stmtlist;
 } mkc_ast_main_t;
 
 typedef struct mkc_ast_print_t {
@@ -210,10 +210,7 @@ typedef struct mkc_astnode_t {
 } mkc_astnode_t;
 
 typedef struct mkc_astmain_t {
-  /* there may be multiple files that need to be processed */
-  /* e.g. cache + project.mkc, etc. */
-  /* use a list of the main astnodes */
-  mkc_list_t            * mainlist;
+  mkc_astnode_t         * mainnode;
   mkc_profile_t         * profiles;
   mkc_process_t         * process;
   mkc_context_t         * context;
@@ -280,7 +277,7 @@ mkc_ast_init (mkc_log_t *log, mkc_option_t *mkcoptions, mkc_error_t *mkcerr)
   astmain->depth = 0;
   astmain->rdepth = 0;
   astmain->maxrdepth = 0;
-  astmain->mainlist = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, astmain->mkcerr);
+  astmain->mainnode = NULL;
 
   return astmain;
 }
@@ -290,26 +287,9 @@ mkc_ast_start (mkc_astmain_t *astmain)
 {
   int32_t         ifcond = false;
   int32_t         loopcond = true;
-  mkc_listidx_t   iteridx;
-  mkc_listidx_t   lidx;
 
   astmain->rdepth = 0;
-
-  mkc_list_iter_start (astmain->mainlist, &iteridx);
-  while ((lidx = mkc_list_iter_next (astmain->mainlist, &iteridx)) != MKC_ITER_FINISH) {
-    mkc_astnode_t   **listnode;
-
-    if (mkc_error_chk_err (astmain->mkcerr)) {
-      break;
-    }
-
-    listnode = mkc_list_get_by_idx (astmain->mainlist, lidx);
-    if (listnode != NULL) {
-      ifcond = false;
-      loopcond = true;
-      mkc_ast_process (astmain, *listnode, &ifcond, &loopcond, 0);
-    }
-  }
+  mkc_ast_process (astmain, astmain->mainnode, &ifcond, &loopcond, 0);
   mkc_process_save_cache (astmain->process);
   return mkc_error_value (astmain->mkcerr);
 }
@@ -321,7 +301,6 @@ mkc_ast_free (mkc_astmain_t *astmain)
     return;
   }
 
-  mkc_list_free (astmain->mainlist);
   if (astmain->nodelist != NULL) {
     for (int32_t i = 0; i < astmain->sz; ++i) {
       mkc_astnode_free (astmain, astmain->nodelist [i]);
@@ -337,16 +316,6 @@ mkc_ast_free (mkc_astmain_t *astmain)
   free (astmain);
 }
 
-void
-mkc_ast_set_main (mkc_astmain_t *astmain, mkc_astnode_t *stmtblock)
-{
-  mkc_list_t    *tlist;
-  mkc_listidx_t loc;
-
-  tlist = astmain->mainlist;
-  mkc_list_set (tlist, &stmtblock, sizeof (mkc_astnode_t *), &loc);
-}
-
 /* for basic values, numbers, strings, variables */
 mkc_astnode_t *
 mkc_ast_mk_value (mkc_astmain_t *astmain, int asttype, char *str, int32_t lineno, int colno)
@@ -354,6 +323,9 @@ mkc_ast_mk_value (mkc_astmain_t *astmain, int asttype, char *str, int32_t lineno
   mkc_astnode_t    *astnode = NULL;
   mkc_ast_value_t  *astvalue;
   mkc_value_t      *value;
+
+  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
+      "ast-mk: main\n");
 
   astnode = mkc_astnode_init (astmain, MKC_T_VALUE, lineno, colno);
   if (astnode == NULL) {
@@ -1124,7 +1096,7 @@ mkc_ast_mk_attr_define_zero (mkc_astmain_t *astmain,
 
 mkc_astnode_t *
 mkc_ast_mk_main (mkc_astmain_t *astmain,
-    mkc_astnode_t *stmtblock,
+    mkc_astnode_t *stmtlist,
     int32_t lineno, int colno)
 {
   mkc_astnode_t   *astnode;
@@ -1137,9 +1109,20 @@ mkc_ast_mk_main (mkc_astmain_t *astmain,
     return NULL;
   }
 
-  astnode->main.stmtblock = stmtblock;
+  astmain->mainnode = astnode;
+  astnode->main.stmtlist = stmtlist;
 
   return astnode;
+}
+
+mkc_astnode_t *
+mkc_ast_get_main (mkc_astmain_t *astmain)
+{
+  if (astmain == NULL) {
+    return NULL;
+  }
+
+  return astmain->mainnode;
 }
 
 /* internal routines */
@@ -1184,7 +1167,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
 
   switch (astnode->asttype) {
     case MKC_T_MAIN: {
-      mkc_ast_process (astmain, astnode->main.stmtblock, ifcond, loopcond, depth);
+      mkc_ast_process (astmain, astnode->main.stmtlist, ifcond, loopcond, depth);
       break;
     }
 
@@ -1384,7 +1367,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       mkc_list_iter_start (tlist, &iteridx);
       while ((lidx = mkc_list_iter_next (tlist, &iteridx)) != MKC_ITER_FINISH) {
         mkc_astnode_t   *listnode;
-        mkc_value_t *tval;
+        mkc_value_t     *tval;
 
         if (mkc_error_chk_err (astmain->mkcerr)) {
           break;

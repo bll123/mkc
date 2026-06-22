@@ -21,6 +21,6 @@ profile global {
 
 configure {
   method manual;
-  input 'tests/data/301-configure-manual.h';
-  output 'tests/tmp/301-configure-manual.h';
+  input 'tests/data/302-configure-manual.h';
+  output 'tests/tmp/302-configure-manual.h';
 }

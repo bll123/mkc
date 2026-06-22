@@ -33,7 +33,7 @@ mkc_astnode_t * mkc_ast_mk_foreach_range (mkc_astmain_t *astmain, mkc_astnode_t 
 mkc_astnode_t * mkc_ast_mk_function (mkc_astmain_t *astmain, mkc_astnode_t *nm, mkc_astnode_t *arglist, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_if (mkc_astmain_t *astmain, mkc_astnode_t *expr, mkc_astnode_t *stmtblock, mkc_astnode_t *elseif, mkc_astnode_t *elseblock, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_loop_control (mkc_astmain_t *astmain, mkc_astnode_token_t type, int32_t lineno, int colno);
-mkc_astnode_t * mkc_ast_mk_main (mkc_astmain_t *astmain, mkc_astnode_t *vala, int32_t lineno, int colno);
+mkc_astnode_t * mkc_ast_mk_main (mkc_astmain_t *astmain, mkc_astnode_t *stmtlist, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_stmtlist (mkc_astmain_t *astmain, mkc_astnode_t *list, mkc_astnode_t *vala, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_while (mkc_astmain_t *astmain, mkc_astnode_t *expr, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
 
@@ -67,9 +67,9 @@ mkc_astnode_t * mkc_ast_mk_attr_negate (mkc_astmain_t *astmain, int32_t lineno, 
 mkc_astnode_t * mkc_ast_mk_attr_output (mkc_astmain_t *astmain, mkc_astnode_t *name, int32_t lineno, int colno);
 
 mkc_astmain_t * mkc_ast_init (mkc_log_t *log, mkc_option_t *mkcoptions, mkc_error_t *mkcerr);
-void mkc_ast_set_main (mkc_astmain_t *, mkc_astnode_t *astnode);
 int32_t mkc_ast_start (mkc_astmain_t *);
 void mkc_ast_free (mkc_astmain_t *astmain);
+mkc_astnode_t * mkc_ast_get_main (mkc_astmain_t *astmain);
 
 #if defined (__cplusplus) || defined (c_plusplus)
 }

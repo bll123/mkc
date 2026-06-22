@@ -185,7 +185,13 @@ main (int argc, char *argv [])
       mkc_message ("-- loading cache\n");
       mkc_log (log, MKC_LOG_AST_PROCESS, "-- loading cache\n");
 
-      rc = mkc_parse (parse, cachefh);
+      mkc_parse_start (parse, cachefh);
+      if (mkc_error_chk_err (mkcerr)) {
+        rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
+        return rc;
+      }
+      rc = mkc_parse (parse, mkc_parse_get_scanner (parse), astmain, mkcerr);
+      mkc_parse_finish (parse);
       fclose (cachefh);
 
       if (mkc_error_chk_err (mkcerr)) {
@@ -196,7 +202,13 @@ main (int argc, char *argv [])
     }
   }
 
-  rc = mkc_parse (parse, fh);
+  mkc_parse_start (parse, fh);
+  if (mkc_error_chk_err (mkcerr)) {
+    rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
+    return rc;
+  }
+  rc = mkc_parse (parse, mkc_parse_get_scanner (parse), astmain, mkcerr);
+  mkc_parse_finish (parse);
   if (mkc_error_chk_err (mkcerr)) {
     rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
     return rc;

@@ -21,8 +21,10 @@
 
 #  include "mkc_ast.h"
 #  include "mkc_def.h"
+#  include "mkc_error.h"
 #  include "mkc_fileop.h"
 #  include "mkc_list.h"
+#  include "mkc_parse.h"
 #  include "mkc_var.h"
 
   typedef void *mkcyyscan_t;
@@ -37,8 +39,8 @@
 %code {
   /* mkc_lex.h could be included, but it introduces a dependency loop */
 
-  void mkcyyerror (MKCYYLTYPE* mkcyyllocp, mkcyyscan_t unused, mkc_astmain_t *ast, const char* msg);
-  int mkcyylex (MKCYYSTYPE* mkcyylvalp, MKCYYLTYPE* mkcyyllocp, mkcyyscan_t scanner);
+  void mkcyyerror (MKCYYLTYPE* mkcyyllocp, mkcyyscan_t unused, mkc_parse_t *parse, mkc_astmain_t *ast, mkc_error_t *mkcerr, const char* msg);
+  int mkcyylex (MKCYYSTYPE* mkcyylvalp, MKCYYLTYPE* mkcyyllocp, mkcyyscan_t yyscanner);
   typedef struct yy_buffer_state *YY_BUFFER_STATE;
   YY_BUFFER_STATE mkcyy_create_buffer ( FILE *file, int size , mkcyyscan_t yyscanner );
   void mkcyypush_buffer_state ( YY_BUFFER_STATE new_buffer , mkcyyscan_t yyscanner );
@@ -53,7 +55,7 @@
 }
 
 %lex-param {void *scanner}
-%parse-param {void *scanner} {mkc_astmain_t* ast}
+%parse-param {void *scanner} {mkc_parse_t * parse} {mkc_astmain_t * ast} {mkc_error_t * mkcerr}
 
 %start mkc
 
@@ -152,15 +154,15 @@
 %type <astnode> expr
 %type <astnode> integer stringvalue basicvalue
 %type <astnode> varname
-%type <astnode> pathname
 %type <astnode> varvalue
+%type <astnode> pathname
 
 %type <astnode> valuelist pathlist
 %type <astnode> range
 
 %type <astnode> funcargs
 
-%type <astnode> stmtblock_or_semi stmtblock stmtlist stmt
+%type <astnode> mkc stmtblock_or_semi stmtblock stmtlist stmt
 %type <astnode> directive
 // program control
 %type <astnode> ifexpr ifstmt elseif elseclause
@@ -187,15 +189,15 @@
 %nonassoc T_OP_RANGE
 
 %%
-mkc:
+mkc[v]:
     %empty
-  | stmtlist[v]
     {
-      mkc_astnode_t   *stmts;
-
-      stmts = mkc_ast_mk_main (ast, $v,
+      $v = NULL;
+    }
+  | stmtlist[a]
+    {
+      $v = mkc_ast_mk_main (ast, $a,
           yylloc.first_line, yylloc.first_column);
-      mkc_ast_set_main (ast, stmts);
     }
   ;
 
@@ -534,25 +536,20 @@ directive[v]:
     }
   ;
 
-// ### this should be: pathname...
-// ### would need to extract the path from the value.
-// ### try to fix lexer so that path/file are combined
 includestmt[v]:
     T_STMT_INCLUDE T_ID_PATH_NAME[a] T_SEMICOLON
     {
       FILE            *fh;
-      YY_BUFFER_STATE tstate;
       int             rc;
 
       fh = mkc_fopen ($a, "r");
-      tstate = mkcyy_create_buffer (fh, YY_BUF_SIZE, scanner);
-      mkcyypush_buffer_state (tstate, scanner);
-      rc = mkcyyparse (scanner, ast);
-      mkcyypop_buffer_state (scanner);
+      mkc_parse_start (parse, fh);
+      rc = mkc_parse (parse, scanner, ast, mkcerr);
+      mkc_parse_finish (parse);
       if (rc != 0) {
         YYABORT;
       }
-      $v = NULL;
+      $v = mkc_ast_get_main (ast);
     }
   ;
 
@@ -1063,8 +1060,25 @@ integer[v]:
 
 void
 mkcyyerror (MKCYYLTYPE* mkcyyllocp, mkcyyscan_t unused,
-    mkc_astmain_t *ast, const char* msg)
+    mkc_parse_t *parse, mkc_astmain_t *ast, mkc_error_t *mkcerr,
+    const char * msg)
 {
   fprintf (stderr, "[%d:%d]: %s\n",
       mkcyyllocp->first_line, mkcyyllocp->first_column, msg);
+}
+
+int
+mkc_parse (mkc_parse_t *parse, void *scanner,
+    mkc_astmain_t *astmain, mkc_error_t *mkcerr)
+{
+  int     rc;
+
+  rc = mkcyyparse (scanner, parse, astmain, mkcerr);
+  if (rc == 1) {
+    mkc_error_set (mkcerr, MKC_ERR_PARSE_FAILURE, 0, NULL);
+  }
+  if (rc == 2) {
+    mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+  }
+  return rc;
 }

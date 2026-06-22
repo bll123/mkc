@@ -1,5 +1,7 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
+# the statements before, included, and after the include statement
+# should all work.
 
 set a 5;
 include tests/data/300-include.mkc;

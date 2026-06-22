@@ -41,6 +41,7 @@ function dodiff {
   dfile=$1
   ofile=$2
 
+  diff=F
   if [[ $dfile == "" ]]; then
     if [[ -f ${rdir}/$bnm.h ]]; then
       diff=T
@@ -52,8 +53,6 @@ function dodiff {
       dfile=${rdir}/$bnm.out
       ofile=${odir}/$bnm.out
     fi
-  else
-    diff=T
   fi
 
   if [[ ${diff} == T ]]; then
