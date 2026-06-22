@@ -21,6 +21,8 @@ enum {
 
 enum {
   MKC_VNAME_MAX = 256,
+  MKC_SMALL_BUFF_SZ = 8 * 1024,
+  MKC_LARGE_BUFF_SZ = 32 * 1024,
 };
 
 #define TEMP_PATH_MAX PATH_MAX

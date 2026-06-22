@@ -1,0 +1,27 @@
+# Copyright 2026 Brad Lanam Pleasant Hill CA
+
+check_package unknown;
+check_package zlib;
+
+if (${_package_unknown} == 0) {
+  print '  ok u';
+} else {
+  print '  fail u';
+}
+
+if (${_package_zlib} == 1) {
+  print '  ok z';
+} else {
+  print '  fail z';
+}
+# zlib does not define any cflags
+if (${zlib_CFLAGS} eq '') {
+  print '  ok z';
+} else {
+  print '  fail z';
+}
+if (${zlib_LIBS} ne '') {
+  print '  ok z';
+} else {
+  print '  fail z';
+}

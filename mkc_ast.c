@@ -1604,6 +1604,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
     case MKC_T_CHK_CONST:
     case MKC_T_CHK_DEFINE:
     case MKC_T_CHK_FUNCTION:
+    case MKC_T_CHK_PACKAGE:
     case MKC_T_CHK_SIZE:
     case MKC_T_CHK_TYPE: {
       mkc_value_t   *val;
@@ -1748,7 +1749,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
 
     default: {
       mkc_error_set (astmain->mkcerr, MKC_ERR_UNHANDLED_VALUE, 0, NULL);
-      fprintf (stderr, "unhandled value %s\n", typenames [astnode->asttype]);
+      fprintf (stderr, "ERR: ast: unhandled value %s\n", typenames [astnode->asttype]);
       break;
     }
   }

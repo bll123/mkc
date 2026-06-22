@@ -17,6 +17,7 @@
 #include "mkc_check.h"
 #include "mkc_context.h"
 #include "mkc_def.h"
+#include "mkc_env.h"
 #include "mkc_error.h"
 #include "mkc_fileop.h"
 #include "mkc_log.h"
@@ -101,20 +102,36 @@ enum {
   MKC_VARIADIC_MACRO_SUPPORTED = true,
 };
 
-static const char * const liblocname = "MKC_LIB_LOC_LIB64";
-static const char * const shlibext = "MKC_SHARED_LIBRARY_EXTENSION";
-static const char * const objext = "MKC_OBJECT_EXTENSION";
-static const char * const exeext = "MKC_EXECUTABLE_EXTENSION";
-static const char * const mkctesthdrlist = "MKC_TV_TEST_HEADER_LIST";
-static const char * const mkcwhilelimit = "MKC_TV_WHILE_LIMIT";
-static const char * const mkctempvarpfx = "MKC_TV_";
+static char const * const liblocname = "MKC_LIB_LOC_LIB64";
+static char const * const shlibext = "MKC_SHARED_LIBRARY_EXTENSION";
+static char const * const objext = "MKC_OBJECT_EXTENSION";
+static char const * const exeext = "MKC_EXECUTABLE_EXTENSION";
+static char const * const mkctesthdrlist = "MKC_TV_TEST_HEADER_LIST";
+static char const * const mkcwhilelimit = "MKC_TV_WHILE_LIMIT";
+static char const * const mkctempvarpfx = "MKC_TV_";
 static size_t mkctvpfxlen = 0;
-static const char * const mkcisystype = "MKC_I_SYSTYPE";
-static const char * const mkcisysid = "MKC_I_SYSID";
-static const char * const mkcicompid = "MKC_I_COMPID";
-static const char * const mkcihdrmodern = "MKC_I_HEADER_MODERN";
-static const char * const mkcivarmacro = "MKC_I_VARIADIC_MACRO";
-static const char * const mkcprojectname = "MKC_PROJECT_NAME";
+static char const * const mkcisystype = "MKC_I_SYSTYPE";
+static char const * const mkcisysid = "MKC_I_SYSID";
+static char const * const mkcicompid = "MKC_I_COMPID";
+static char const * const mkcihdrmodern = "MKC_I_HEADER_MODERN";
+static char const * const mkcivarmacro = "MKC_I_VARIADIC_MACRO";
+static char const * const mkcprojectname = "MKC_PROJECT_NAME";
+static char const * const mkcpathname = "MKC_PATH";
+/* these are duplicated from mkc_profile.c */
+/* so that the static aggregator can be initialized */
+static char const * const mkcppkgconf = "MKC_PATH_PKGCONF";
+static char const * const mkcppkgconfig = "MKC_PATH_PKG_CONFIG";
+
+typedef struct mkc_prog_chk_t {
+  const char  * program;
+  const char  * mkcvarname;
+} mkc_prog_chk_t;
+
+static mkc_prog_chk_t proglist [] = {
+  { "pkgconf",      mkcppkgconf },
+  { "pkg-config",   mkcppkgconfig },
+  { NULL,           NULL },
+};
 
 static void mkc_process_var_print (mkc_process_t *process, const char *pname);
 static void mkc_process_prof_print (mkc_process_t *process);
@@ -124,6 +141,7 @@ static void mkc_process_set_defaults (mkc_process_t *process);
 static void mkc_process_configure_manual (mkc_process_t *process);
 static void mkc_process_configure_auto (mkc_process_t *process, int defzero);
 static bool mkc_process_chk_cache (mkc_process_t *process, const char *disp, const char *nm);
+static void mkc_process_find_executables (mkc_process_t *process);
 
 mkc_process_t *
 mkc_process_init (mkc_profile_t *profiles, mkc_log_t *log,
@@ -1048,6 +1066,17 @@ mkc_process_check (mkc_process_t *process, mkc_value_t *valconst,
       rc = mkc_chk_function (process->check, process->attr.currcompiler, txt);
       break;
     }
+    case MKC_T_CHK_PACKAGE: {
+      successtype = true;
+// ### package info should go into global/general
+      rc = mkc_chk_package (process->check, process->attr.currcompiler, txt);
+      break;
+    }
+    default: {
+      mkc_error_set (process->mkcerr, MKC_ERR_UNHANDLED_VALUE, 0, NULL);
+      fprintf (stderr, "ERR: process: unhandled check %s\n", typenames [asttype]);
+      break;
+    }
   }
 
   if (successtype) {
@@ -1226,39 +1255,6 @@ mkc_process_chk_link_flag (mkc_process_t *process,
     mkc_log (process->log, MKC_LOG_CHECK, "-- check link flag: %s - %s\n",
         flag, mkc_success_msg (rc));
   }
-
-  return rc;
-}
-
-int32_t
-mkc_process_chk_package (mkc_process_t *process, mkc_value_t *valpkg)
-{
-  int         rc = MKC_OK;
-  char        tnm [MKC_VNAME_MAX];
-  char        pkg [MKC_VNAME_MAX];
-  mkc_pvar_t  *pvar;
-  const char  *tmp;
-
-  if (process == NULL) {
-    return MKC_ERR_FAILURE;
-  }
-
-  pvar = process->pvar;
-  mkc_pvar_value_get_str (process->pvar, valpkg, pkg, sizeof (pkg));
-  mkc_process_create_name (process, tnm, sizeof (tnm), "_package_", pkg, NULL);
-
-  if (mkc_process_chk_cache (process, pkg, tnm)) {
-    return rc;
-  }
-
-  rc = mkc_chk_package (process->check, process->attr.currcompiler, pkg);
-  tmp = mkc_pvar_name_alloc (pvar, tnm);
-  mkc_pvar_set_integer (pvar, tmp, rc == 0 ? true : false, MKC_VCTXT_CHECK);
-
-  mkc_message ("-- check package: %s - %s\n",
-      pkg, mkc_success_msg (rc));
-  mkc_log (process->log, MKC_LOG_CHECK, "-- check package: %s - %s\n",
-      pkg, mkc_success_msg (rc));
 
   return rc;
 }
@@ -1904,6 +1900,8 @@ mkc_process_set_defaults (mkc_process_t *process)
   mkc_pvar_profile_set (process->pvar, MKC_PROF_GLOBAL_NAME, MKC_COMPILER_C);
 
   mkc_pvar_set_integer (process->pvar, mkcihdrmodern, process->headertype, MKC_VCTXT_MKC);
+
+  mkc_process_find_executables (process);
 }
 
 static void
@@ -2083,4 +2081,81 @@ mkc_process_chk_cache (mkc_process_t *process,
   }
 
   return rc;
+}
+
+static void
+mkc_process_find_executables (mkc_process_t *process)
+{
+  char            *tbuff;
+  char            *testpath;
+  char            *tpath;
+  mkc_prog_chk_t  *chk;
+  char            *p;
+  mkc_list_t      *pathlist;
+  mkc_listidx_t   loc;
+  mkc_listidx_t   iteridx;
+  mkc_listidx_t   lidx;
+  char            *tokstr;
+  const char      *pathdelim = ":";
+
+
+  if (process->systype == MKC_SYS_WINDOWS) {
+    pathdelim = ";";
+  }
+
+  pathlist = mkc_list_init (MKC_LIST_UNSORTED, datafree, NULL, process->mkcerr);
+  if (mkc_error_chk_err (process->mkcerr)) {
+    return;
+  }
+
+  tbuff = malloc (MKC_LARGE_BUFF_SZ);
+  if (tbuff == NULL) {
+    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return;
+  }
+  testpath = malloc (MKC_PATH_MAX);
+  if (testpath == NULL) {
+    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return;
+  }
+
+  mkc_env_get ("PATH", tbuff, MKC_LARGE_BUFF_SZ);
+
+  tpath = mkc_strtok (tbuff, pathdelim, &tokstr);
+  while (tpath != NULL) {
+    char    *tmp;
+
+    tmp = strdup (tpath);
+    mkc_list_append (pathlist, &tmp, sizeof (char *), &loc);
+    tpath = mkc_strtok (NULL, pathdelim, &tokstr);
+  }
+
+  mkc_pvar_profile_set (process->pvar,
+      MKC_PROF_INTERNAL_NAME, MKC_COMPILER_GENERAL);
+  mkc_pvar_set_list (process->pvar, mkcpathname, pathlist, MKC_VCTXT_MKC);
+
+  chk = proglist;
+  while (chk->program != NULL) {
+    mkc_list_iter_start (pathlist, &iteridx);
+    while ((lidx = mkc_list_iter_next (pathlist, &iteridx)) != MKC_ITER_FINISH) {
+      char    **tmp;
+
+      tmp = mkc_list_get_by_idx (pathlist, lidx);
+      tpath = *tmp;
+
+      p = stpecpy (testpath, testpath + MKC_PATH_MAX, tpath);
+      p = stpecpy (p, testpath + MKC_PATH_MAX, "/");
+      p = stpecpy (p, testpath + MKC_PATH_MAX, chk->program);
+
+      /* using file-size as an existence check */
+      if (mkc_file_size (testpath) > 0) {
+        mkc_pvar_set_str (process->pvar, chk->mkcvarname, testpath, MKC_VCTXT_MKC);
+        break;
+      }
+    }
+    chk += 1;
+  }
+
+  free (tbuff);
+  free (testpath);
 }

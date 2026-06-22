@@ -18,6 +18,7 @@
 #include "mkc_pvar.h"
 #include "mkc_os_process.h"
 #include "mkc_string.h"
+#include "mkc_util.h"
 
 static const char *MKC_INCLUDE_PATH = "include";
 
@@ -29,6 +30,8 @@ typedef struct mkc_check_t {
   char            ** cf;
   char            ** lf;
   const char      ** targv;
+  char            * pkgname;
+  mkc_profidx_t   pidx_internal;
   mkc_profidx_t   pidx_global_general;
   int             cfcount;
   int             cfallocsz;
@@ -43,12 +46,17 @@ static void mkc_check_log_command (mkc_check_t *check, const char *tag);
 static mkc_err_code_t mkc_chk_env_var_set (mkc_check_t *check, const char *nm);
 static void mkc_check_append_arg (mkc_check_t *check, const char *arg);
 const char * mkc_check_get_compstr (mkc_check_t *check, mkc_compiler_t compiler, char *buff, size_t sz);
+#if _package_PKGCONF
+static int mkc_chk_package_lib (mkc_check_t *check, const char *pkg);
+#endif
+static int mkc_chk_package_exec (mkc_check_t *check, const char *pkg);
 
 mkc_check_t *
 mkc_check_init (mkc_profile_t *profiles, mkc_pvar_t *pvar,
     mkc_log_t *log, mkc_profidx_t pidx, mkc_error_t *mkcerr)
 {
   mkc_check_t   *check;
+  mkc_profidx_t tpidx;
 
   check = malloc (sizeof (mkc_check_t));
   check->profiles = profiles;
@@ -56,6 +64,11 @@ mkc_check_init (mkc_profile_t *profiles, mkc_pvar_t *pvar,
   check->mkcerr = mkcerr;
   check->log = log;
   check->pidx_global_general = pidx;
+  check->pkgname = NULL;
+
+  tpidx = mkc_profile_find (check->profiles,
+      MKC_PROF_INTERNAL_NAME, MKC_COMPILER_GENERAL);
+  check->pidx_internal = tpidx;
 
   check->cf = NULL;
   check->cfcount = 0;
@@ -310,7 +323,7 @@ mkc_chk_compiler_flag (mkc_check_t *check,
   static const char *negprefix = "-Wno-";
   static size_t     neglen = 5;
 
-  rsz = 16384;
+  rsz = MKC_LARGE_BUFF_SZ;
   rbuff = malloc (rsz);
   if (rbuff == NULL) {
     mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
@@ -353,9 +366,7 @@ mkc_chk_const (mkc_check_t *check,
   mkc_log (check->log, MKC_LOG_CHECK, "== chk: constant: %s\n", consttxt);
   opidx = mkc_profile_get_active (check->profiles);
 
-  mkc_pvar_profile_set (check->pvar,
-      MKC_PROF_INTERNAL_NAME, MKC_COMPILER_GENERAL);
-
+  mkc_pvar_profile_set_idx (check->pvar, check->pidx_internal);
   mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_CONSTANT", consttxt, MKC_VCTXT_TEMP);
 
   mkc_pvar_profile_set_idx (check->pvar, opidx);
@@ -375,9 +386,7 @@ mkc_chk_define (mkc_check_t *check,
   mkc_log (check->log, MKC_LOG_CHECK, "== chk: define: %s\n", def);
   opidx = mkc_profile_get_active (check->profiles);
 
-  mkc_pvar_profile_set (check->pvar,
-      MKC_PROF_INTERNAL_NAME, MKC_COMPILER_GENERAL);
-
+  mkc_pvar_profile_set_idx (check->pvar, check->pidx_internal);
   mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_DEFINE", def, MKC_VCTXT_TEMP);
 
   mkc_pvar_profile_set_idx (check->pvar, opidx);
@@ -391,21 +400,22 @@ int
 mkc_chk_package (mkc_check_t *check,
     mkc_compiler_t compiler, const char *pkg)
 {
-  int             rc;
+  int             rc = MKC_ERR_FAILURE;
   mkc_profidx_t   opidx;
 
   mkc_log (check->log, MKC_LOG_CHECK, "== chk: package: %s\n", pkg);
   opidx = mkc_profile_get_active (check->profiles);
 
-  mkc_pvar_profile_set (check->pvar,
-      MKC_PROF_INTERNAL_NAME, MKC_COMPILER_GENERAL);
-
-  mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_PACKAGE", pkg, MKC_VCTXT_TEMP);
+  datafree (check->pkgname);
+  check->pkgname = strdup (pkg);
+#if _pkg_PKGCONF
+  rc = mkc_chk_package_lib (check, pkg);
+#else
+  rc = mkc_chk_package_exec (check, pkg);
+#endif
 
   mkc_pvar_profile_set_idx (check->pvar, opidx);
 
-  rc = 0;
-// ### write this...
   mkc_chk_reset (check);
   return rc;
 }
@@ -443,9 +453,7 @@ mkc_chk_size (mkc_check_t *check,
   mkc_log (check->log, MKC_LOG_CHECK, "== chk: size: %s\n", type);
   opidx = mkc_profile_get_active (check->profiles);
 
-  mkc_pvar_profile_set (check->pvar,
-      MKC_PROF_INTERNAL_NAME, MKC_COMPILER_GENERAL);
-
+  mkc_pvar_profile_set_idx (check->pvar, check->pidx_internal);
   mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_SIZE", type, MKC_VCTXT_TEMP);
 
   mkc_pvar_profile_set_idx (check->pvar, opidx);
@@ -470,9 +478,7 @@ mkc_chk_type (mkc_check_t *check,
   mkc_log (check->log, MKC_LOG_CHECK, "== chk: type: %s\n", type);
   opidx = mkc_profile_get_active (check->profiles);
 
-  mkc_pvar_profile_set (check->pvar,
-      MKC_PROF_INTERNAL_NAME, MKC_COMPILER_GENERAL);
-
+  mkc_pvar_profile_set_idx (check->pvar, check->pidx_internal);
   mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_TYPE", type, MKC_VCTXT_TEMP);
 
   mkc_pvar_profile_set_idx (check->pvar, opidx);
@@ -494,9 +500,7 @@ mkc_chk_struct_member (mkc_check_t *check,
       "== chk: struct member: %s.%s\n", structname, membername);
   opidx = mkc_profile_get_active (check->profiles);
 
-  mkc_pvar_profile_set (check->pvar,
-      MKC_PROF_INTERNAL_NAME, MKC_COMPILER_GENERAL);
-
+  mkc_pvar_profile_set_idx (check->pvar, check->pidx_internal);
   mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_STRUCT_NAME", structname, MKC_VCTXT_TEMP);
   mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_STRUCT_MEMBER", membername, MKC_VCTXT_TEMP);
 
@@ -519,9 +523,7 @@ mkc_chk_function (mkc_check_t *check, mkc_compiler_t compiler,
 
   opidx = mkc_profile_get_active (check->profiles);
 
-  mkc_pvar_profile_set (check->pvar,
-      MKC_PROF_INTERNAL_NAME, MKC_COMPILER_GENERAL);
-
+  mkc_pvar_profile_set_idx (check->pvar, check->pidx_internal);
   mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_FUNCTION_NAME", funcname, MKC_VCTXT_TEMP);
 
   mkc_pvar_profile_set_idx (check->pvar, opidx);
@@ -544,7 +546,7 @@ mkc_compile_only (mkc_check_t *check, mkc_compiler_t compiler,
   bool        rallocated = false;
 
   if (rbuff == NULL) {
-    rsz = 16384;
+    rsz = MKC_LARGE_BUFF_SZ;
     rbuff = malloc (rsz);
     if (rbuff == NULL) {
       mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
@@ -613,7 +615,7 @@ mkc_compile_link (mkc_check_t *check, mkc_compiler_t compiler,
   char        compstr [MKC_PATH_MAX];
 
   if (rbuff == NULL) {
-    rsz = 16384;
+    rsz = MKC_LARGE_BUFF_SZ;
     rbuff = malloc (rsz);
     if (rbuff == NULL) {
       mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
@@ -702,7 +704,7 @@ mkc_compile_run (mkc_check_t *check,
   mkc_check_log_command (check, "run");
 
   if (rbuff == NULL) {
-    rsz = 4000;
+    rsz = MKC_SMALL_BUFF_SZ;
     rbuff = malloc (rsz);
     if (rbuff == NULL) {
       mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
@@ -823,4 +825,121 @@ mkc_check_get_compstr (mkc_check_t *check, mkc_compiler_t compiler,
   value = mkc_pvar_get_by_profidx (check->pvar, envstr, check->pidx_global_general);
   mkc_pvar_value_get_str (check->pvar, value, buff, sz);
   return buff;
+}
+
+static int
+mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
+{
+  mkc_value_t   *value;
+  char          pkgconfpath [MKC_PATH_MAX];
+  char          tmpname [MKC_VNAME_MAX];
+  mkc_profidx_t opidx;
+  char          *rbuff;
+  size_t        rsz;
+  size_t        retsz;
+  int           rc;
+
+  opidx = mkc_profile_get_active (check->profiles);
+
+  *pkgconfpath = '\0';
+  value = mkc_pvar_get_by_profidx (check->pvar, mkcpathpkgconf, check->pidx_internal);
+  if (value == NULL) {
+    value = mkc_pvar_get_by_profidx (check->pvar, mkcpathpkgconfig, check->pidx_internal);
+  }
+  if (value != NULL) {
+    mkc_pvar_value_get_str (check->pvar, value, pkgconfpath, sizeof (pkgconfpath));
+  }
+
+  if (! *pkgconfpath) {
+    mkc_error_set (check->mkcerr, MKC_ERR_PKGCONF_NOT_FOUND, 0, NULL);
+    return MKC_ERR_FAILURE;
+  }
+
+  check->targc = 0;
+  mkc_check_append_arg (check, pkgconfpath);
+  mkc_check_append_arg (check, "--exists");
+  mkc_check_append_arg (check, pkg);
+// ### --with-path
+  mkc_check_append_arg (check, NULL);
+  if (mkc_error_chk_err (check->mkcerr)) {
+    return MKC_ERR_FAILURE;
+  }
+
+  rsz = MKC_SMALL_BUFF_SZ;
+  rbuff = malloc (rsz);
+  if (rbuff == NULL) {
+    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return MKC_ERR_FAILURE;
+  }
+  mkc_check_log_command (check, "pkg-exists");
+
+  rc = mkc_os_process_pipe (check->targv,
+      OS_PROC_WAIT | OS_PROC_NOWINDOW, rbuff, rsz, &retsz);
+  mkc_log (check->log, MKC_LOG_CHECK, "pkg exists: %s\n", pkg);
+  mkc_log (check->log, MKC_LOG_CHECK, "  rc: %d\n", rc);
+  if (rc != MKC_OK) {
+    free (rbuff);
+    return rc;
+  }
+
+  check->targc = 0;
+  mkc_check_append_arg (check, pkgconfpath);
+  mkc_check_append_arg (check, "--cflags");
+  mkc_check_append_arg (check, pkg);
+// ### --with-path
+  mkc_check_append_arg (check, NULL);
+  if (mkc_error_chk_err (check->mkcerr)) {
+    free (rbuff);
+    mkc_chk_reset (check);
+    return MKC_ERR_FAILURE;
+  }
+
+  mkc_check_log_command (check, "pkg-cflags");
+
+  rc = mkc_os_process_pipe (check->targv,
+      OS_PROC_WAIT | OS_PROC_NOWINDOW, rbuff, rsz, &retsz);
+  mkc_log (check->log, MKC_LOG_CHECK, "pkg cflags: %s\n", rbuff);
+  mkc_log (check->log, MKC_LOG_CHECK, "  rc: %d\n", rc);
+  if (rc != MKC_OK) {
+    free (rbuff);
+    mkc_chk_reset (check);
+    return rc;
+  }
+  if (retsz > 0) {
+    mkc_strtrim (rbuff, retsz);
+    snprintf (tmpname, sizeof (tmpname), "%s_CFLAGS", pkg);
+    mkc_pvar_set_str (check->pvar, tmpname, rbuff, MKC_VCTXT_CHECK);
+  }
+
+  mkc_chk_reset (check);
+  check->targc = 0;
+  mkc_check_append_arg (check, pkgconfpath);
+  mkc_check_append_arg (check, "--libs");
+  mkc_check_append_arg (check, pkg);
+// ### --with-path
+  mkc_check_append_arg (check, NULL);
+  if (mkc_error_chk_err (check->mkcerr)) {
+    free (rbuff);
+    mkc_chk_reset (check);
+    return MKC_ERR_FAILURE;
+  }
+
+  rsz = MKC_SMALL_BUFF_SZ;
+  rbuff = malloc (rsz);
+  mkc_check_log_command (check, "pkg-libs");
+
+  rc = mkc_os_process_pipe (check->targv,
+      OS_PROC_WAIT | OS_PROC_NOWINDOW, rbuff, rsz, &retsz);
+  mkc_log (check->log, MKC_LOG_CHECK, "pkg libs: %s\n", rbuff);
+  mkc_log (check->log, MKC_LOG_CHECK, "  rc: %d\n", rc);
+  if (retsz > 0) {
+    mkc_strtrim (rbuff, retsz);
+    snprintf (tmpname, sizeof (tmpname), "%s_LIBS", pkg);
+    mkc_pvar_set_str (check->pvar, tmpname, rbuff, MKC_VCTXT_CHECK);
+  }
+
+  mkc_pvar_profile_set_idx (check->pvar, opidx);
+
+  mkc_chk_reset (check);
+  return rc;
 }

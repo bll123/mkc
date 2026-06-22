@@ -5,6 +5,8 @@ project {
   compiler c;
 }
 
+check_package libpkgconf;
+
 check_function fork {
   header unistd.h;
 }

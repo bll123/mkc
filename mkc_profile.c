@@ -43,9 +43,11 @@ typedef struct mkc_profile_t {
   int               localstacksz;
 } mkc_profile_t;
 
-const char * const MKC_PROF_GLOBAL_NAME = "global";
-const char * const MKC_PROF_INTERNAL_NAME = "internal";
-const char * const MKC_PROF_RELEASE_NAME = "release";
+char const * const MKC_PROF_GLOBAL_NAME = "global";
+char const * const MKC_PROF_INTERNAL_NAME = "internal";
+char const * const MKC_PROF_RELEASE_NAME = "release";
+char const * const mkcpathpkgconf = "MKC_PATH_PKGCONF";
+char const * const mkcpathpkgconfig = "MKC_PATH_PKG_CONFIG";
 
 static void mkc_profile_entry_free (void *pentry);
 static int mkc_profile_compare (void *tentrya, void *tentryb);

@@ -180,6 +180,20 @@ mkc_pvar_set_str (mkc_pvar_t *pvar,
   return rc;
 }
 
+int
+mkc_pvar_set_list (mkc_pvar_t *pvar,
+    const char *vname, mkc_list_t *list, mkc_var_ctxt_t vctxt)
+{
+  int         rc = MKC_ERR_FAILURE;
+  mkc_value_t value;
+
+  value.list = list;
+  value.vtype = MKC_VT_LIST;
+
+  rc = mkc_pvar_set (pvar, vname, &value, vctxt);
+  return rc;
+}
+
 void
 mkc_pvar_set_context (mkc_pvar_t *pvar, const char *vname, int vctxt)
 {

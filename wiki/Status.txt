@@ -2,15 +2,14 @@
 
 ### Status
 
-##### 2026-6-9 pre-alpha
+##### 2026-6-22 pre-alpha
 
 Basic syntax is working.  I believe I have figured a decent
 syntax to handle the profiles/targets and their attributes.
 
-Current problems:
-
-Need to figure out how I am going to handle compiler/link
-flags.  These may exist in multiple profiles.
+Just working through everything, cleaning up, adding more checks.
+The current goal is to get the configuration step all working,
+and get all the infrastructure needed for a release done.
 
 ##### Goals
 

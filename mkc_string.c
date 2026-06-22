@@ -77,6 +77,35 @@ mkc_strupper (char *buff)
   }
 }
 
+char *
+mkc_strtok (char *buff, const char *delim, char **tokstr)
+{
+  char    *tmp;
+
+#if _function_strtok_r
+  tmp = strtok_r (buff, ":", tokstr);
+#else
+  tmp = strtok (buff, ":");
+#endif
+
+  return tmp;
+}
+
+void
+mkc_strtrim (char *buff, size_t sz)
+{
+  char    *p;
+
+  if (sz == 0) {
+    sz = strlen (buff);
+  }
+  p = buff + sz - 1;
+  while (p >= buff && (*p == '\n' || *p == '\r')) {
+    *p = '\0';
+    --p;
+  }
+}
+
 #if defined (_WIN32)
 
 MKC_NODISCARD

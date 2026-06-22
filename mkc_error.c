@@ -14,7 +14,7 @@
 #include "mkc_error.h"
 #include "mkc_util.h"
 
-static const char * const mkcerrormsg [] = {
+static char const * const mkcerrormsg [] = {
   [MKC_OK] = "success",
   [MKC_OK_CHANGE] = "success, cache invalidated",
   [MKC_ERR_COMPILER_FAILURE] = "compiler failure",
@@ -33,6 +33,7 @@ static const char * const mkcerrormsg [] = {
   [MKC_ERR_OUT_OF_MEMORY] = "out of memory",
   [MKC_ERR_OUT_OF_RANGE] = "out of range",
   [MKC_ERR_PARSE_FAILURE] = "parse failure",
+  [MKC_ERR_PKGCONF_NOT_FOUND] = "pkgconf not found",
   [MKC_ERR_PROC_INVALID_MARK] = "invalid mark",
   [MKC_ERR_PROC_INVALID_METHOD] = "invalid method",
   [MKC_ERR_PROC_NO_INPUT] = "no input",

@@ -55,7 +55,6 @@ mkc_value_t * mkc_process_get_value (mkc_process_t *process, const char *nm);
 
 int32_t mkc_process_check (mkc_process_t *process, mkc_value_t *valtype, mkc_astnode_token_t asttype);
 int32_t mkc_process_check_flag (mkc_process_t *process, mkc_value_t *valflag, int addchk, mkc_astnode_token_t asttype);
-int32_t mkc_process_chk_package (mkc_process_t *process, mkc_value_t *valpkg);
 int32_t mkc_process_chk_struct_member (mkc_process_t *process, mkc_value_t *valstructnm, mkc_value_t *valmembernm);
 
 void mkc_process_local_set (mkc_process_t *process, const char *nm, const char *sval, mkc_profidx_t pidx);

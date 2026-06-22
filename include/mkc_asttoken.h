@@ -86,7 +86,7 @@ typedef enum {
   MKC_T_MAX,
 } mkc_astnode_token_t;
 
-extern const char * const typenames [MKC_T_MAX];
+extern char const * const typenames [MKC_T_MAX];
 
 #if defined (__cplusplus) || defined (c_plusplus)
 }

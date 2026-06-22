@@ -32,7 +32,7 @@ typedef struct mkc_varlist_t {
   bool          fromcache;
 } mkc_varlist_t;
 
-static const char * const vctxtnames [] = {
+static char const * const vctxtnames [] = {
   [MKC_VCTXT_CHECK] = "check",
   [MKC_VCTXT_ENV] = "env",
   [MKC_VCTXT_FLAG] = "flag",

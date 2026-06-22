@@ -11,7 +11,7 @@
 #include "mkc_compiler.h"
 
 /* these are internal names, not the actual names of the compilers */
-static const char * const compnames [MKC_COMPILER_MAX] = {
+static char const * const compnames [MKC_COMPILER_MAX] = {
   [MKC_COMPILER_BISON] = "bison",
   [MKC_COMPILER_C] = "c",
   [MKC_COMPILER_CXX] = "c++",
@@ -21,7 +21,7 @@ static const char * const compnames [MKC_COMPILER_MAX] = {
   [MKC_COMPILER_UNKNOWN] = "unknown",
 };
 
-static const char * const compsuffix [MKC_COMPILER_MAX] = {
+static char const * const compsuffix [MKC_COMPILER_MAX] = {
   [MKC_COMPILER_BISON] = ".y",
   [MKC_COMPILER_C] = ".c",
   [MKC_COMPILER_CXX] = ".cpp",
@@ -31,7 +31,7 @@ static const char * const compsuffix [MKC_COMPILER_MAX] = {
   [MKC_COMPILER_UNKNOWN] = ".c",
 };
 
-static const char * const compenv [MKC_COMPILER_MAX] = {
+static char const * const compenv [MKC_COMPILER_MAX] = {
   [MKC_COMPILER_BISON] = "BISON",
   [MKC_COMPILER_C] = "CC",
   [MKC_COMPILER_CXX] = "CXX",

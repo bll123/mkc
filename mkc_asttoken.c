@@ -4,7 +4,7 @@
 
 #include "mkc_asttoken.h"
 
-const char * const typenames [MKC_T_MAX] = {
+char const * const typenames [MKC_T_MAX] = {
   [MKC_T_ATTR_COMPILER] = "compiler",
   [MKC_T_ATTR_COMP_FLAGS] = "compiler_flags",
   [MKC_T_ATTR_CONTEXT] = "context",

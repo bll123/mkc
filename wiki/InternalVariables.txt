@@ -44,11 +44,13 @@ Subject to change.
 The compiler to use.  These are set to defaults as shown below, and are
 replaced with the enviroment variable of the same name.
 
-* BISON (bison)
-* CC (cc)
-* CXX (c&plus;&plus;)
-* FLEX (flex)
-* OBJC (objc)
+  Name|Default
+  ----|-------
+  BISON|bison
+  CC|cc
+  CXX|c&plus;&plus;
+  FLEX|flex
+  OBJC|cc
 
 ##### Compiler Identification (boolean)
 
@@ -62,10 +64,21 @@ The compiler identification.
 * MKC_COMP_ID_UNKNOWN (not determined)
 * MKC_COMP_ID_XLC
 
-##### Other (string)
+##### Other
 
-* MKC_EXECUTABLE_EXTENSION
-* MKC_OBJECT_EXTENSION
-* MKC_SHARED_LIBRARY_EXTENSION
+  Name|Type|Notes
+  ----|----|-----
+  MKC_EXECUTABLE_EXTENSION|string|
+  MKC_I_COMPID|integer|internal
+  MKC_I_HEADER_MODERN|boolean|internal global/compiler
+  MKC_I_SYSID|integer|internal
+  MKC_I_SYSTYPE|integer|internal
+  MKC_I_VARIADIC_MACRO|boolean|internal
+  MKC_OBJECT_EXTENSION|string|
+  MKC_PATH|list|
+  MKC_PATH_PKGCONF|string|path to pkgconf
+  MKC_PATH_PKG_CONFIG|string|path to pkg-config
+  MKC_SHARED_LIBRARY_EXTENSION|string|
+  MKC_TV_|string|any variable with the prefix is temporary
 
 [Wiki Home](Home)

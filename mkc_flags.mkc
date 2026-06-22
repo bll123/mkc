@@ -1,10 +1,4 @@
 
-// ### get the version from the version.txt file
-project {
-  name mkc;
-  compiler c;
-}
-
 check_compile_flag '-pedantic';
 check_compile_flag '-pedantic-errors';
 check_compile_flag '-Wall';
@@ -61,45 +55,3 @@ print "== false";
   add_compile_flag '-U_FORTIFY_SOURCE';
   add_compile_flag '-D_FORTIFY_SOURCE=0';
 }
-
-check_function fork {
-  header unistd.h;
-}
-check_function nanosleep {
-  header time.h;
-}
-check_function symlink {
-  header unistd.h;
-}
-
-# windows functions
-check_function GetCommandLineW {
-  header windows.h;
-}
-check_function CopyFileW {
-  header windows.h;
-}
-check_function Sleep {
-  header windows.h;
-}
-check_function _wgetenv_s {
-  header windows.h;
-}
-check_function _wputenv_s {
-  header windows.h;
-}
-check_function _wrename {
-  header io.h;
-}
-check_function _wstat64 {
-  header wchar.h;
-}
-check_function _wunlink {
-  header io.h;
-}
-
-#mkcdebug printvar release;
-#mkcdebug printvar debug;
-#mkcdebug printvar sanitize;
-#mkcdebug printvar global;
-#mkcdebug printvar internal;
