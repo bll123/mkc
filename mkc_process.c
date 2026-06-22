@@ -39,6 +39,7 @@ typedef struct mkc_attribute_t {
   char            * vcontext;
   char            * input;
   char            * output;
+  char            * path;
   mkc_compiler_t  currcompiler;
   int             define_zero;
   bool            negate;
@@ -171,6 +172,7 @@ mkc_process_init (mkc_profile_t *profiles, mkc_log_t *log,
   process->attr.vcontext = NULL;
   process->attr.input = NULL;
   process->attr.output = NULL;
+  process->attr.path = NULL;
   process->attr.negate = false;
   process->attr.define_zero = MKC_AUTO_SKIP_ZERO;
   process->cacheloaded = false;
@@ -720,6 +722,117 @@ mkc_process_stmt_set (mkc_process_t *process,
 }
 
 void
+mkc_process_attribute (mkc_process_t *process, mkc_value_t *valname,
+    mkc_astnode_token_t asttype)
+{
+  char            nm [MKC_VNAME_MAX];
+  int             iasttype = asttype;
+  mkc_ctxt_val_t  ctxt = 0;
+  char            **p = NULL;
+
+  if (process == NULL) {
+    return;
+  }
+
+  switch (iasttype) {
+    case MKC_T_ATTR_CONTEXT: {
+      ctxt = MKC_CONTEXT_SET;
+      break;
+    }
+    case MKC_T_ATTR_DEFINE_ZERO: {
+      ctxt = MKC_CONTEXT_CONFIGURE;
+      break;
+    }
+    case MKC_T_ATTR_INPUT: {
+      ctxt = MKC_CONTEXT_CONFIGURE;
+      break;
+    }
+    case MKC_T_ATTR_METHOD: {
+      ctxt = MKC_CONTEXT_CONFIGURE;
+      break;
+    }
+    case MKC_T_ATTR_NAME: {
+      ctxt = MKC_CONTEXT_CHECK | MKC_CONTEXT_COMP_FLAG | MKC_CONTEXT_PROJECT;
+      break;
+    }
+    case MKC_T_ATTR_NEGATE: {
+      ctxt = MKC_CONTEXT_COMP_FLAG;
+      break;
+    }
+    case MKC_T_ATTR_OUTPUT: {
+      ctxt = MKC_CONTEXT_CONFIGURE;
+      break;
+    }
+    default: {
+      mkc_error_set (process->mkcerr, MKC_ERR_UNHANDLED_VALUE, 0, NULL);
+      fprintf (stderr, "ERR: process: unhandled attr %s\n", typenames [asttype]);
+      break;
+    }
+  }
+
+  if (! mkc_context_check (process->context, ctxt)) {
+    mkc_error_set (process->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
+    return;
+  }
+
+  *nm = '\0';
+  if (valname != NULL) {
+    mkc_pvar_value_get_str (process->pvar, valname, nm, sizeof (nm));
+  }
+
+  switch (iasttype) {
+    case MKC_T_ATTR_CONTEXT: {
+      p = &process->attr.vcontext;
+      break;
+    }
+    case MKC_T_ATTR_DEFINE_ZERO: {
+      p = NULL;
+      process->attr.define_zero = MKC_AUTO_DEFINE_ZERO;
+      break;
+    }
+    case MKC_T_ATTR_INPUT: {
+      p = &process->attr.input;
+      break;
+    }
+    case MKC_T_ATTR_METHOD: {
+      p = &process->attr.method;
+      break;
+    }
+    case MKC_T_ATTR_NAME: {
+      p = &process->attr.name;
+      break;
+    }
+    case MKC_T_ATTR_NEGATE: {
+      p = NULL;
+      process->attr.negate = true;
+      break;
+    }
+    case MKC_T_ATTR_OUTPUT: {
+      p = &process->attr.output;
+      break;
+    }
+    case MKC_T_ATTR_PATH: {
+      p = &process->attr.path;
+      break;
+    }
+    default: {
+      mkc_error_set (process->mkcerr, MKC_ERR_UNHANDLED_VALUE, 0, NULL);
+      fprintf (stderr, "ERR: process: unhandled attr %s\n", typenames [asttype]);
+      break;
+    }
+  }
+
+  if (p != NULL) {
+    datafree (*p);
+    *p = strdup (nm);
+    if (*p == NULL) {
+      mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    }
+  }
+}
+
+#if 0
+void
 mkc_process_attr_name (mkc_process_t *process, mkc_value_t *valnm)
 {
   char    nm [MKC_VNAME_MAX];
@@ -761,6 +874,7 @@ mkc_process_attr_define_zero (mkc_process_t *process)
 
   process->attr.define_zero = MKC_AUTO_DEFINE_ZERO;
 }
+#endif
 
 void
 mkc_process_attr_header (mkc_process_t *process, mkc_value_t *value)
@@ -873,6 +987,7 @@ mkc_process_attr_link_flags (mkc_process_t *process, mkc_value_t *value)
   return;
 }
 
+#if 0
 void
 mkc_process_attr_method (mkc_process_t *process, mkc_value_t *method)
 {
@@ -938,6 +1053,7 @@ mkc_process_attr_output (mkc_process_t *process, mkc_value_t *name)
     mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
   }
 }
+#endif
 
 void
 mkc_process_attr_compiler (mkc_process_t *process, mkc_value_t *name)
@@ -983,6 +1099,7 @@ mkc_process_attr_compiler (mkc_process_t *process, mkc_value_t *name)
   mkc_pvar_profile_set_idx (process->pvar, pidx);
 }
 
+#if 0
 void
 mkc_process_attr_context (mkc_process_t *process, mkc_value_t *valcontext)
 {
@@ -1004,6 +1121,7 @@ mkc_process_attr_context (mkc_process_t *process, mkc_value_t *valcontext)
     mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
   }
 }
+#endif
 
 mkc_value_t *
 mkc_process_get_value (mkc_process_t *process, const char *nm)

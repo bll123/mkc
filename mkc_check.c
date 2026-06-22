@@ -31,22 +31,25 @@
 static const char *MKC_INCLUDE_PATH = "include";
 
 typedef struct mkc_check_t {
-  mkc_profile_t   * profiles;
-  mkc_pvar_t      * pvar;
-  mkc_error_t     * mkcerr;
-  mkc_log_t       * log;
-  char            ** cf;
-  char            ** lf;
-  const char      ** targv;
-  char            * pkgname;
-  mkc_profidx_t   pidx_internal;
-  mkc_profidx_t   pidx_global_general;
-  int             cfcount;
-  int             cfallocsz;
-  int             lfcount;
-  int             lfallocsz;
-  int             targc;
-  int             targvallocsz;
+#if _package_libpkgconf
+  pkgconf_client_t  *pconfclient;
+#endif
+  mkc_profile_t     * profiles;
+  mkc_pvar_t        * pvar;
+  mkc_error_t       * mkcerr;
+  mkc_log_t         * log;
+  char              ** cf;
+  char              ** lf;
+  const   char      ** targv;
+  char              * pkgname;
+  mkc_profidx_t     pidx_internal;
+  mkc_profidx_t     pidx_global_general;
+  int               cfcount;
+  int               cfallocsz;
+  int               lfcount;
+  int               lfallocsz;
+  int               targc;
+  int               targvallocsz;
 } mkc_check_t;
 
 static void mkc_check_file_sub_copy (mkc_check_t *check, char *tbuff, size_t sz, const char *fname, const char *sfx);
@@ -56,6 +59,7 @@ static void mkc_check_append_arg (mkc_check_t *check, const char *arg);
 const char * mkc_check_get_compstr (mkc_check_t *check, mkc_compiler_t compiler, char *buff, size_t sz);
 #if _package_libpkgconf
 static int mkc_chk_package_lib (mkc_check_t *check, const char *pkg);
+static bool pkgconftrace (const char *msg, const pkgconf_client_t *client, const void *data);
 #endif
 static int mkc_chk_package_exec (mkc_check_t *check, const char *pkg);
 
@@ -103,6 +107,15 @@ mkc_check_init (mkc_profile_t *profiles, mkc_pvar_t *pvar,
   }
   mkc_chk_reset (check);
 
+#if _package_libpkgconf
+  check->pconfclient = pkgconf_client_new (pkgconftrace, check,
+      pkgconf_cross_personality_default ());
+  if (check->pconfclient != NULL) {
+    pkgconf_client_dir_list_build (check->pconfclient,
+        pkgconf_cross_personality_default ());
+  }
+#endif
+
   return check;
 }
 
@@ -133,6 +146,11 @@ mkc_check_free (mkc_check_t *check)
   if (check->targv != NULL) {
     free (check->targv);
   }
+#if _package_libpkgconf
+  if (check->pconfclient != NULL) {
+    pkgconf_client_free (check->pconfclient);
+  }
+#endif
 
   free (check);
 }
@@ -957,55 +975,66 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
 static int
 mkc_chk_package_lib (mkc_check_t *check, const char *pkg)
 {
-  pkgconf_client_t    *pconfclient = NULL;
   pkgconf_pkg_t       *pconfpkg = NULL;
-  pkgconf_fragment_t  pconflist;
+  pkgconf_list_t      pconflist = PKGCONF_LIST_INITIALIZER;
+  pkgconf_list_t      pconflistempty = PKGCONF_LIST_INITIALIZER;
   char                tmpname [MKC_VNAME_MAX];
   char                *tmp;
   mkc_profidx_t       opidx;
   int                 rc;
 
-  pconfclient = pkgconf_client_new (NULL, NULL, NULL);
-  if (pconfclient == NULL) {
+  if (check->pconfclient == NULL) {
+    /* if there was some sort of failure */
     return mkc_chk_package_exec (check, pkg);
   }
 
   opidx = mkc_profile_get_active (check->profiles);
 
-  pconfpkg = pkgconf_pkg_find (pconfclient, pkg);
+  // pkgconf_client_set_trace_handler (check->pconfclient, pkgconftrace, check);
+
+  pconfpkg = pkgconf_pkg_find (check->pconfclient, pkg);
   if (pconfpkg == NULL) {
-    pkgconf_client_free (pclient);
     return MKC_ERR_FAILURE;
   }
 
-  rc = pkgconf_pkg_cflags (pconfclient, pconfpkg, &pconflist, -1);
+  rc = pkgconf_pkg_cflags (check->pconfclient, pconfpkg, &pconflist, -1);
   if (rc != PKGCONF_PKG_ERRF_OK) {
-    pkgconf_client_free (pclient);
     return MKC_ERR_FAILURE;
   }
 
-  tmp = pkgconf_fragment_render (&pconflist);
+  tmp = pkgconf_fragment_render (&pconflist, false, NULL);
+// ### need to create a list...
   snprintf (tmpname, sizeof (tmpname), "%s_CFLAGS", pkg);
   mkc_pvar_set_str (check->pvar, tmpname, tmp, MKC_VCTXT_CHECK);
   pkgconf_fragment_free (&pconflist);
+  memcpy (&pconflist, &pconflistempty, sizeof (pkgconf_list_t));
   free (tmp);
 
-  rc = pkgconf_pkg_libs (pconfclient, pconfpkg, &pconflist, -1);
+  rc = pkgconf_pkg_libs (check->pconfclient, pconfpkg, &pconflist, -1);
   if (rc != PKGCONF_PKG_ERRF_OK) {
-    pkgconf_client_free (pclient);
     return MKC_ERR_FAILURE;
   }
 
-  tmp = pkgconf_fragment_render (&pconflist);
+  tmp = pkgconf_fragment_render (&pconflist, false, NULL);
+// ### need to create a list...
   snprintf (tmpname, sizeof (tmpname), "%s_LIBS", pkg);
-  mkc_pvar_set_str (check->pvar, tmpname, rbuff, MKC_VCTXT_CHECK);
+  mkc_pvar_set_str (check->pvar, tmpname, tmp, MKC_VCTXT_CHECK);
   pkgconf_fragment_free (&pconflist);
+  memcpy (&pconflist, &pconflistempty, sizeof (pkgconf_list_t));
   free (tmp);
 
-  pkgconf_client_free (pclient);
   mkc_pvar_profile_set_idx (check->pvar, opidx);
   mkc_chk_reset (check);
   return rc;
 }
 
+static bool
+pkgconftrace (const char *msg,
+    const pkgconf_client_t *client, const void *data)
+{
+//  mkc_message ("%s\n", msg);
+  return true;
+}
+
 #endif /* _package_libpkgconf */
+

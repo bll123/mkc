@@ -39,17 +39,11 @@ void mkc_process_stmt_profile_post (mkc_process_t *process);
 void mkc_process_stmt_project (mkc_process_t *process);
 int mkc_process_stmt_set (mkc_process_t *process, mkc_value_t *valnm, mkc_value_t *value);
 
+void mkc_process_attribute (mkc_process_t *process, mkc_value_t *name, mkc_astnode_token_t asttype);
 void mkc_process_attr_comp_flags (mkc_process_t *process, mkc_value_t *value);
-void mkc_process_attr_compiler (mkc_process_t *process, mkc_value_t *name);
-void mkc_process_attr_context (mkc_process_t *process, mkc_value_t *context);
-void mkc_process_attr_define_zero (mkc_process_t *process);
 void mkc_process_attr_header (mkc_process_t *process, mkc_value_t *value);
-void mkc_process_attr_input (mkc_process_t *process, mkc_value_t *name);
 void mkc_process_attr_link_flags (mkc_process_t *process, mkc_value_t *value);
-void mkc_process_attr_method (mkc_process_t *process, mkc_value_t *method);
-void mkc_process_attr_name (mkc_process_t *process, mkc_value_t *valnm);
-void mkc_process_attr_negate (mkc_process_t *process);
-void mkc_process_attr_output (mkc_process_t *process, mkc_value_t *name);
+void mkc_process_attr_compiler (mkc_process_t *process, mkc_value_t *name);
 
 mkc_value_t * mkc_process_get_value (mkc_process_t *process, const char *nm);
 

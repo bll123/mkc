@@ -149,6 +149,7 @@
 %token T_ATTR_NAME            "name"
 %token T_ATTR_NEGATE          "negate"
 %token T_ATTR_OUTPUT          "output"
+%token T_ATTR_PATH            "path"
 %token T_ATTR_SOURCE          "source"
 
 %type <astnode> expr
@@ -176,7 +177,7 @@
 %type <astnode> chkfunction chkdefine chkconst chkpackage
 // attributes
 %type <astnode> attr attrname source header compilerflags linkflags negate
-%type <astnode> method input output compiler define_zero context
+%type <astnode> method input output compiler define_zero context path
 
 // precedence rules: the lowest precedence comes first
 %left T_OP_OR
@@ -317,6 +318,10 @@ attr[v]:
       $v = $a;
     }
   | output[a]
+    {
+      $v = $a;
+    }
+  | path[a]
     {
       $v = $a;
     }
@@ -702,11 +707,10 @@ chkfunction[v]:
 
 // attributes
 
-/* a name is the user requested name that overrides the generated name */
-attrname[v]:
-    T_ATTR_NAME varname[a] T_SEMICOLON
+compiler[v]:
+    T_ATTR_COMPILER varvalue[a] T_SEMICOLON
     {
-      $v = mkc_ast_mk_attr_name (ast, $a,
+      $v = mkc_ast_mk_attribute (ast, $a, MKC_T_ATTR_COMPILER,
           yylloc.first_line, yylloc.first_column);
     }
   ;
@@ -715,16 +719,7 @@ attrname[v]:
 context[v]:
     T_ATTR_CONTEXT varvalue[a] T_SEMICOLON
     {
-      $v = mkc_ast_mk_attr_context (ast, $a,
-          yylloc.first_line, yylloc.first_column);
-    }
-  ;
-
-/* negation flag for compiler-flag check */
-negate[v]:
-    T_ATTR_NEGATE T_SEMICOLON
-    {
-      $v = mkc_ast_mk_attr_negate (ast,
+      $v = mkc_ast_mk_attribute (ast, NULL, MKC_T_ATTR_CONTEXT,
           yylloc.first_line, yylloc.first_column);
     }
   ;
@@ -733,7 +728,15 @@ negate[v]:
 define_zero[v]:
     T_ATTR_DEFINE_ZERO T_SEMICOLON
     {
-      $v = mkc_ast_mk_attr_define_zero (ast,
+      $v = mkc_ast_mk_attribute (ast, NULL, MKC_T_ATTR_DEFINE_ZERO,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+input[v]:
+    T_ATTR_INPUT varvalue[a] T_SEMICOLON
+    {
+      $v = mkc_ast_mk_attribute (ast, $a, MKC_T_ATTR_INPUT,
           yylloc.first_line, yylloc.first_column);
     }
   ;
@@ -742,15 +745,25 @@ define_zero[v]:
 method[v]:
     T_ATTR_METHOD varvalue[a] T_SEMICOLON
     {
-      $v = mkc_ast_mk_attr_method (ast, $a,
+      $v = mkc_ast_mk_attribute (ast, $a, MKC_T_ATTR_METHOD,
           yylloc.first_line, yylloc.first_column);
     }
   ;
 
-input[v]:
-    T_ATTR_INPUT varvalue[a] T_SEMICOLON
+/* a name is the user requested name that overrides the generated name */
+attrname[v]:
+    T_ATTR_NAME varname[a] T_SEMICOLON
     {
-      $v = mkc_ast_mk_attr_input (ast, $a,
+      $v = mkc_ast_mk_attribute (ast, $a, MKC_T_ATTR_NAME,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+/* negation flag for compiler-flag check */
+negate[v]:
+    T_ATTR_NEGATE T_SEMICOLON
+    {
+      $v = mkc_ast_mk_attribute (ast, NULL, MKC_T_ATTR_NEGATE,
           yylloc.first_line, yylloc.first_column);
     }
   ;
@@ -758,15 +771,15 @@ input[v]:
 output[v]:
     T_ATTR_OUTPUT varvalue[a] T_SEMICOLON
     {
-      $v = mkc_ast_mk_attr_output (ast, $a,
+      $v = mkc_ast_mk_attribute (ast, $a, MKC_T_ATTR_OUTPUT,
           yylloc.first_line, yylloc.first_column);
     }
   ;
 
-compiler[v]:
-    T_ATTR_COMPILER varvalue[a] T_SEMICOLON
+path[v]:
+    T_ATTR_PATH varvalue[a] T_SEMICOLON
     {
-      $v = mkc_ast_mk_attr_compiler (ast, $a,
+      $v = mkc_ast_mk_attribute (ast, $a, MKC_T_ATTR_PATH,
           yylloc.first_line, yylloc.first_column);
     }
   ;

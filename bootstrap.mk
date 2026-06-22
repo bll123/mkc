@@ -8,6 +8,7 @@ MAKEFILE = bootstrap.mk
 CFLAGS = -g -ggdb3 -Og -Wall -Wextra -Wno-unused-parameter \
 	-DMKC_BOOTSTRAP=1 -Iinclude
 LDFLAGS = -g -ggdb3 -Og -Wall -Wextra
+LIBS =
 
 SANCFLAGS = -g -ggdb3 -Og -Wall -Wextra -DMKC_BOOTSTRAP=1 -Iinclude \
     -Wno-unused-parameter \
@@ -23,15 +24,29 @@ SANLDFLAGS = -g \
     -fsanitize-recover=address \
     -lrt
 
-CONFCFLAGS = -g -ggdb3 -Og -Wall -Wextra -Wno-unused-parameter -Iinclude
+CONFCFLAGS = -g -ggdb3 -Og -Wall -Wextra -Wno-unused-parameter \
+	-Iinclude $$(pkgconf --cflags libpkgconf)
 CONFLDFLAGS = -g -ggdb3 -Og -Wall -Wextra
+CONFLIBS = $$(pkgconf --libs libpkgconf)
 
 WIN=F
 WINOBJ=mkc_os_win_process.o
 
 .PHONY: all
 all:
-	@$(MAKE) -f $(MAKEFILE) TARGET=$@ oscheck
+	@if [ -f mkc_config.h ]; then \
+	  if [ -f bootstrap.txt ]; then \
+	    $(MAKE) clean; \
+	    rm -f bootstrap.txt; \
+	  fi; \
+	  $(MAKE) -f $(MAKEFILE) \
+	      CFLAGS="$(CONFCFLAGS)" LDFLAGS="$(CONFLDFLAGS)" \
+	      LIBS="$(CONFLIBS)" TARGET=$@ oscheck; \
+	else \
+	  $(MAKE) -f $(MAKEFILE) TARGET=$@ oscheck; \
+          ./mkc mkc.mkc; \
+	  touch bootstrap.txt; \
+	fi
 
 .PHONY: sanitize
 sanitize:
@@ -70,7 +85,7 @@ MKCOBJECTS = mkc_main.o \
 	mkc_error.o mkc_env.o mkc_util.o
 
 mkc: $(MKCOBJECTS)
-	$(CC) $(LDFLAGS) -o $@ $(MKCOBJECTS)
+	$(CC) $(LDFLAGS) -o $@ $(MKCOBJECTS) $(LIBS)
 
 # source
 
@@ -114,12 +129,12 @@ mkc_ast.o: include/mkc_asttoken.h include/mkc_error.h include/mkc_log.h
 mkc_ast.o:  include/mkc_option.h include/mkc_var.h
 mkc_ast.o: include/mkc_list.h include/mkc_check.h include/mkc_compiler.h
 mkc_ast.o: include/mkc_profile.h include/mkc_pvar.h include/mkc_context.h
-mkc_ast.o: include/mkc_def.h  
+mkc_ast.o: include/mkc_def.h
 mkc_ast.o: include/mkc_os_process.h include/mkc_process.h
 mkc_ast.o: include/mkc_string.h include/mkc_nodiscard.h
 mkc_asttoken.o: include/mkc_asttoken.h
 mkc_check.o: include/mkc_check.h include/mkc_compiler.h include/mkc_error.h
-mkc_check.o:  include/mkc_log.h 
+mkc_check.o:  include/mkc_log.h
 mkc_check.o: include/mkc_profile.h include/mkc_list.h include/mkc_option.h
 mkc_check.o: include/mkc_var.h include/mkc_pvar.h include/mkc_def.h
 mkc_check.o:   include/mkc_env.h
@@ -134,7 +149,7 @@ mkc_error.o:  include/mkc_error.h include/mkc_util.h
 mkc_fileop.o:   include/mkc_def.h
 mkc_fileop.o: include/mkc_error.h include/mkc_fileop.h
 mkc_fileop.o: include/mkc_nodiscard.h include/mkc_string.h
-mkc_grammar.o: mkc_grammar.h  
+mkc_grammar.o: mkc_grammar.h
 mkc_grammar.o: include/mkc_ast.h include/mkc_asttoken.h include/mkc_error.h
 mkc_grammar.o: include/mkc_log.h  include/mkc_option.h
 mkc_grammar.o: include/mkc_var.h include/mkc_list.h include/mkc_def.h
@@ -143,25 +158,25 @@ mkc_lex.o:   mkc_grammar.h
 mkc_lex.o:  include/mkc_ast.h
 mkc_lex.o: include/mkc_asttoken.h include/mkc_error.h include/mkc_log.h
 mkc_lex.o:  include/mkc_option.h include/mkc_var.h
-mkc_lex.o: include/mkc_list.h include/mkc_def.h 
+mkc_lex.o: include/mkc_list.h include/mkc_def.h
 mkc_lex.o:  include/mkc_fileop.h include/mkc_nodiscard.h
 mkc_list.o:   include/mkc_error.h
 mkc_list.o: include/mkc_list.h
-mkc_log.o: include/mkc_error.h include/mkc_fileop.h 
+mkc_log.o: include/mkc_error.h include/mkc_fileop.h
 mkc_log.o: include/mkc_nodiscard.h include/mkc_log.h
 mkc_main.o:  include/mkc_ast.h include/mkc_asttoken.h
-mkc_main.o: include/mkc_error.h include/mkc_log.h 
+mkc_main.o: include/mkc_error.h include/mkc_log.h
 mkc_main.o: include/mkc_option.h include/mkc_var.h include/mkc_list.h
 mkc_main.o: include/mkc_fileop.h include/mkc_nodiscard.h include/mkc_parse.h
 mkc_main.o: include/mkc_profile.h include/mkc_compiler.h include/mkc_util.h
 mkc_main.o: include/mkc_string.h
 mkc_os_process.o:  include/mkc_os_process.h
-mkc_os_process.o: include/mkc_util.h 
+mkc_os_process.o: include/mkc_util.h
 mkc_os_win_process.o:  include/mkc_def.h
 mkc_os_win_process.o: include/mkc_os_process.h include/mkc_string.h
 mkc_os_win_process.o: include/mkc_nodiscard.h include/mkc_util.h
 mkc_parse.o: include/mkc_ast.h include/mkc_asttoken.h include/mkc_error.h
-mkc_parse.o: include/mkc_log.h  
+mkc_parse.o: include/mkc_log.h
 mkc_parse.o: include/mkc_option.h include/mkc_var.h include/mkc_list.h
 mkc_parse.o: include/mkc_fileop.h include/mkc_nodiscard.h mkc_grammar.h
 mkc_parse.o:   include/mkc_def.h
@@ -171,7 +186,7 @@ mkc_process.o: include/mkc_asttoken.h include/mkc_check.h
 mkc_process.o: include/mkc_compiler.h include/mkc_error.h include/mkc_log.h
 mkc_process.o:  include/mkc_profile.h include/mkc_list.h
 mkc_process.o: include/mkc_option.h include/mkc_var.h include/mkc_pvar.h
-mkc_process.o: include/mkc_context.h include/mkc_def.h 
+mkc_process.o: include/mkc_context.h include/mkc_def.h
 mkc_process.o: include/mkc_fileop.h include/mkc_nodiscard.h
 mkc_process.o: include/mkc_process.h include/mkc_string.h include/mkc_util.h
 mkc_profile.o: include/mkc_compiler.h include/mkc_error.h include/mkc_list.h
@@ -181,7 +196,7 @@ mkc_profile.o: include/mkc_nodiscard.h
 mkc_pvar.o:   include/mkc_def.h
 mkc_pvar.o:   include/mkc_env.h
 mkc_pvar.o: include/mkc_error.h include/mkc_profile.h include/mkc_compiler.h
-mkc_pvar.o: include/mkc_list.h include/mkc_log.h 
+mkc_pvar.o: include/mkc_list.h include/mkc_log.h
 mkc_pvar.o: include/mkc_option.h include/mkc_var.h include/mkc_pvar.h
 mkc_pvar.o: include/mkc_string.h include/mkc_nodiscard.h
 mkc_string.o: include/mkc_string.h include/mkc_nodiscard.h

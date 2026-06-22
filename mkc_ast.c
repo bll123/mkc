@@ -133,17 +133,13 @@ typedef struct mkc_ast_chk_struct_member_t {
   mkc_astnode_t     *stmtblock;
 } mkc_ast_chk_struct_member_t;
 
-typedef struct mkc_ast_attr_context_t {
-  mkc_astnode_t     *context;
-} mkc_ast_attr_context_t;
-
-typedef struct mkc_ast_attr_name_t {
-  mkc_astnode_t     *nm;
-} mkc_ast_attr_name_t;
-
 typedef struct mkc_ast_attr_header_t {
   mkc_astnode_t     *hdrlist;
 } mkc_ast_attr_header_t;
+
+typedef struct mkc_ast_attribute_t {
+  mkc_astnode_t     *name;
+} mkc_ast_attribute_t;
 
 typedef struct mkc_ast_attr_compflag_t {
   mkc_astnode_t     *compflaglist;
@@ -153,33 +149,12 @@ typedef struct mkc_ast_attr_linkflag_t {
   mkc_astnode_t     *linkflaglist;
 } mkc_ast_attr_linkflag_t;
 
-typedef struct mkc_ast_attr_method_t {
-  mkc_astnode_t     *method;
-} mkc_ast_attr_method_t;
-
-typedef struct mkc_ast_attr_input_t {
-  mkc_astnode_t     *name;
-} mkc_ast_attr_input_t;
-
-typedef struct mkc_ast_attr_output_t {
-  mkc_astnode_t     *name;
-} mkc_ast_attr_output_t;
-
-typedef struct mkc_ast_attr_compiler_t {
-  mkc_astnode_t     *name;
-} mkc_ast_attr_compiler_t;
-
 typedef struct mkc_astnode_t {
   union {
+    mkc_ast_attribute_t         attribute;
     mkc_ast_attr_compflag_t     compflagattr;
-    mkc_ast_attr_compiler_t     compilerattr;
-    mkc_ast_attr_context_t      contextattr;
     mkc_ast_attr_header_t       hdrattr;
-    mkc_ast_attr_input_t        inputattr;
     mkc_ast_attr_linkflag_t     linkflagattr;
-    mkc_ast_attr_method_t       methodattr;
-    mkc_ast_attr_name_t         nameattr;
-    mkc_ast_attr_output_t       outputattr;
     mkc_ast_check_t             checkstmt;
     mkc_ast_check_flag_t        checkflag;
     mkc_ast_chk_package_t       chkpackage;
@@ -894,39 +869,24 @@ mkc_ast_mk_chk_struct_member (mkc_astmain_t *astmain,
   return astnode;
 }
 
+/* attributes */
+
 mkc_astnode_t *
-mkc_ast_mk_attr_name (mkc_astmain_t *astmain,
-    mkc_astnode_t *nm,
+mkc_ast_mk_attribute (mkc_astmain_t *astmain,
+    mkc_astnode_t *nm, mkc_astnode_token_t asttype,
     int32_t lineno, int colno)
 {
   mkc_astnode_t   *astnode;
 
   mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
-      "ast-mk: attr-name\n");
+      "ast-mk: attr-%s\n", typenames [asttype]);
 
-  astnode = mkc_astnode_init (astmain, MKC_T_ATTR_NAME, lineno, colno);
+  astnode = mkc_astnode_init (astmain, asttype, lineno, colno);
   if (astnode == NULL) {
     return NULL;
   }
 
-  astnode->nameattr.nm = nm;
-  return astnode;
-}
-
-mkc_astnode_t *
-mkc_ast_mk_attr_negate (mkc_astmain_t *astmain,
-    int32_t lineno, int colno)
-{
-  mkc_astnode_t *astnode;
-
-  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
-      "ast-mk: attr-negate\n");
-
-  astnode = mkc_astnode_init (astmain, MKC_T_ATTR_NEGATE, lineno, colno);
-  if (astnode == NULL) {
-    return NULL;
-  }
-
+  astnode->attribute.name = nm;
   return astnode;
 }
 
@@ -969,24 +929,6 @@ mkc_ast_mk_attr_compflags (mkc_astmain_t *astmain,
 }
 
 mkc_astnode_t *
-mkc_ast_mk_attr_context (mkc_astmain_t *astmain,
-    mkc_astnode_t *context, int32_t lineno, int colno)
-{
-  mkc_astnode_t   *astnode;
-
-  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
-      "ast-mk: attr-context\n");
-
-  astnode = mkc_astnode_init (astmain, MKC_T_ATTR_CONTEXT, lineno, colno);
-  if (astnode == NULL) {
-    return NULL;
-  }
-
-  astnode->contextattr.context = context;
-  return astnode;
-}
-
-mkc_astnode_t *
 mkc_ast_mk_attr_linkflags (mkc_astmain_t *astmain,
     mkc_astnode_t *linkflaglist,
     int32_t lineno, int colno)
@@ -1002,95 +944,6 @@ mkc_ast_mk_attr_linkflags (mkc_astmain_t *astmain,
   }
 
   astnode->linkflagattr.linkflaglist = linkflaglist;
-  return astnode;
-}
-
-mkc_astnode_t *
-mkc_ast_mk_attr_method (mkc_astmain_t *astmain,
-    mkc_astnode_t *method, int32_t lineno, int colno)
-{
-  mkc_astnode_t   *astnode;
-
-  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
-      "ast-mk: attr-method\n");
-
-  astnode = mkc_astnode_init (astmain, MKC_T_ATTR_METHOD, lineno, colno);
-  if (astnode == NULL) {
-    return NULL;
-  }
-
-  astnode->methodattr.method = method;
-  return astnode;
-}
-
-mkc_astnode_t *
-mkc_ast_mk_attr_input (mkc_astmain_t *astmain,
-    mkc_astnode_t *name, int32_t lineno, int colno)
-{
-  mkc_astnode_t   *astnode;
-
-  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
-      "ast-mk: attr-input\n");
-
-  astnode = mkc_astnode_init (astmain, MKC_T_ATTR_INPUT, lineno, colno);
-  if (astnode == NULL) {
-    return NULL;
-  }
-
-  astnode->inputattr.name = name;
-  return astnode;
-}
-
-mkc_astnode_t *
-mkc_ast_mk_attr_output (mkc_astmain_t *astmain,
-    mkc_astnode_t *name, int32_t lineno, int colno)
-{
-  mkc_astnode_t   *astnode;
-
-  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
-      "ast-mk: attr-output\n");
-
-  astnode = mkc_astnode_init (astmain, MKC_T_ATTR_OUTPUT, lineno, colno);
-  if (astnode == NULL) {
-    return NULL;
-  }
-
-  astnode->outputattr.name = name;
-  return astnode;
-}
-
-mkc_astnode_t *
-mkc_ast_mk_attr_compiler (mkc_astmain_t *astmain,
-    mkc_astnode_t *name, int32_t lineno, int colno)
-{
-  mkc_astnode_t   *astnode;
-
-  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
-      "ast-mk: attr-compiler\n");
-
-  astnode = mkc_astnode_init (astmain, MKC_T_ATTR_COMPILER, lineno, colno);
-  if (astnode == NULL) {
-    return NULL;
-  }
-
-  astnode->compilerattr.name = name;
-  return astnode;
-}
-
-mkc_astnode_t *
-mkc_ast_mk_attr_define_zero (mkc_astmain_t *astmain,
-    int32_t lineno, int colno)
-{
-  mkc_astnode_t   *astnode;
-
-  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
-      "ast-mk: attr-define-zero\n");
-
-  astnode = mkc_astnode_init (astmain, MKC_T_ATTR_DEFINE_ZERO, lineno, colno);
-  if (astnode == NULL) {
-    return NULL;
-  }
-
   return astnode;
 }
 
@@ -1455,14 +1308,32 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       break;
     }
 
-    case MKC_T_ATTR_NAME: {
+    case MKC_T_ATTR_COMPILER: {
       mkc_value_t   *valnm;
 
-      valnm = mkc_ast_get_value (astmain, astnode->nameattr.nm);
+      valnm = mkc_ast_get_value (astmain, astnode->attribute.name);
       if (mkc_error_chk_err (astmain->mkcerr)) {
         break;
       }
-      mkc_process_attr_name (astmain->process, valnm);
+      mkc_process_attr_compiler (astmain->process, valnm);
+      break;
+    }
+
+    case MKC_T_ATTR_CONTEXT:
+    case MKC_T_ATTR_DEFINE_ZERO:
+    case MKC_T_ATTR_INPUT:
+    case MKC_T_ATTR_METHOD:
+    case MKC_T_ATTR_NAME:
+    case MKC_T_ATTR_NEGATE:
+    case MKC_T_ATTR_OUTPUT:
+    case MKC_T_ATTR_PATH: {
+      mkc_value_t   *valnm;
+
+      valnm = mkc_ast_get_value (astmain, astnode->attribute.name);
+      if (mkc_error_chk_err (astmain->mkcerr)) {
+        break;
+      }
+      mkc_process_attribute (astmain->process, valnm, astnode->asttype);
       break;
     }
 
@@ -1488,17 +1359,6 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       break;
     }
 
-    case MKC_T_ATTR_CONTEXT: {
-      mkc_value_t   *context;
-
-      context = mkc_ast_get_value (astmain, astnode->contextattr.context);
-      if (mkc_error_chk_err (astmain->mkcerr)) {
-        break;
-      }
-      mkc_process_attr_context (astmain->process, context);
-      break;
-    }
-
     case MKC_T_ATTR_LINK_FLAGS: {
       mkc_value_t   *val;
 
@@ -1510,66 +1370,16 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       break;
     }
 
-    case MKC_T_ATTR_METHOD: {
-      mkc_value_t   *method;
-
-      method = mkc_ast_get_value (astmain, astnode->methodattr.method);
-      if (mkc_error_chk_err (astmain->mkcerr)) {
-        break;
-      }
-      mkc_process_attr_method (astmain->process, method);
-      break;
-    }
-
-    case MKC_T_ATTR_INPUT: {
-      mkc_value_t   *name;
-
-      name = mkc_ast_get_value (astmain, astnode->inputattr.name);
-      if (mkc_error_chk_err (astmain->mkcerr)) {
-        break;
-      }
-      mkc_process_attr_input (astmain->process, name);
-      break;
-    }
-
-    case MKC_T_ATTR_OUTPUT: {
-      mkc_value_t   *name;
-
-      name = mkc_ast_get_value (astmain, astnode->outputattr.name);
-      if (mkc_error_chk_err (astmain->mkcerr)) {
-        break;
-      }
-      mkc_process_attr_output (astmain->process, name);
-      break;
-    }
-
-    case MKC_T_ATTR_COMPILER: {
-      mkc_value_t   *name;
-
-      name = mkc_ast_get_value (astmain, astnode->compilerattr.name);
-      if (mkc_error_chk_err (astmain->mkcerr)) {
-        break;
-      }
-      mkc_process_attr_compiler (astmain->process, name);
-      break;
-    }
-
-    case MKC_T_ATTR_NEGATE: {
-      mkc_process_attr_negate (astmain->process);
-      break;
-    }
-
-    case MKC_T_ATTR_DEFINE_ZERO: {
-      mkc_process_attr_define_zero (astmain->process);
-      break;
-    }
-
     case MKC_T_CHK_COMP_FLAG:
     case MKC_T_CHK_LINK_FLAG: {
-      mkc_value_t   *val;
+      mkc_value_t     *val;
+      mkc_ctxt_val_t  ctxt = MKC_CONTEXT_CHECK;
 
+      if (astnode->asttype == MKC_T_CHK_COMP_FLAG) {
+        ctxt = MKC_CONTEXT_COMP_FLAG;
+      }
       if (astnode->checkflag.stmtblock != NULL) {
-        mkc_context_push (astmain->context, MKC_CONTEXT_CHECK, astmain->mkcerr);
+        mkc_context_push (astmain->context, ctxt, astmain->mkcerr);
         mkc_ast_process (astmain, astnode->checkflag.stmtblock, ifcond, loopcond, depth + 1);
         mkc_context_pop (astmain->context);
       }

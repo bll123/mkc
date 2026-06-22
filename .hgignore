@@ -5,6 +5,7 @@
 \.tar\.gz$
 \.zip$
 ~$
+^mkc_config\.h$
 ^mkc_files/
 ^mkc_lex\.c$
 ^mkc_lex\.h$
@@ -16,3 +17,4 @@
 ^web/lastwiki\.txt$
 ^w$
 ^ww$
+^z$

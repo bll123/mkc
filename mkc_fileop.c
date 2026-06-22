@@ -304,14 +304,14 @@ mkc_file_copy (const char *fname, const char *nfn, mkc_error_t *mkcerr)
 /* admin permission, or have the machine in developer mode */
 /* shell links would be fine probably, but creating them is a hassle */
 int
-mkc_link_copy (const char *fname, const char *nfn)
+mkc_link_copy (const char *fname, const char *nfn, mkc_error_t *mkcerr)
 {
   int       rc = -1;
 
 #if _lib_symlink || (MKC_BOOTSTRAP && ! _WIN32)
   rc = mkc_link_create (fname, nfn);
 #else
-  rc = mkc_file_copy (fname, nfn);
+  rc = mkc_file_copy (fname, nfn, mkcerr);
 #endif
   return rc;
 }

@@ -54,17 +54,10 @@ mkc_astnode_t * mkc_ast_mk_chk_package (mkc_astmain_t *astmain, mkc_astnode_t *v
 mkc_astnode_t * mkc_ast_mk_chk_struct_member (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *valb, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
 
 /* attribute statements */
+mkc_astnode_t * mkc_ast_mk_attribute (mkc_astmain_t *astmain, mkc_astnode_t *name, mkc_astnode_token_t asttype, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_attr_compflags (mkc_astmain_t *astmain, mkc_astnode_t *compflaglist, int32_t lineno, int colno);
-mkc_astnode_t * mkc_ast_mk_attr_compiler (mkc_astmain_t *astmain, mkc_astnode_t *name, int32_t lineno, int colno);
-mkc_astnode_t * mkc_ast_mk_attr_context (mkc_astmain_t *astmain, mkc_astnode_t *context, int32_t lineno, int colno);
-mkc_astnode_t * mkc_ast_mk_attr_define_zero (mkc_astmain_t *astmain, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_attr_header (mkc_astmain_t *astmain, mkc_astnode_t *hdrlist, int32_t lineno, int colno);
-mkc_astnode_t * mkc_ast_mk_attr_input (mkc_astmain_t *astmain, mkc_astnode_t *name, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_attr_linkflags (mkc_astmain_t *astmain, mkc_astnode_t *linkflaglist, int32_t lineno, int colno);
-mkc_astnode_t * mkc_ast_mk_attr_method (mkc_astmain_t *astmain, mkc_astnode_t *method, int32_t lineno, int colno);
-mkc_astnode_t * mkc_ast_mk_attr_name (mkc_astmain_t *astmain, mkc_astnode_t *nm, int32_t lineno, int colno);
-mkc_astnode_t * mkc_ast_mk_attr_negate (mkc_astmain_t *astmain, int32_t lineno, int colno);
-mkc_astnode_t * mkc_ast_mk_attr_output (mkc_astmain_t *astmain, mkc_astnode_t *name, int32_t lineno, int colno);
 
 mkc_astmain_t * mkc_ast_init (mkc_log_t *log, mkc_option_t *mkcoptions, mkc_error_t *mkcerr);
 int32_t mkc_ast_start (mkc_astmain_t *);

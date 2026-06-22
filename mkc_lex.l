@@ -167,6 +167,7 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 "name"                      { return T_ATTR_NAME; }
 "negate"                    { return T_ATTR_NEGATE; }
 "output"                    { return T_ATTR_OUTPUT; }
+"path"                      { return T_ATTR_PATH; }
 "source"                    { return T_ATTR_SOURCE; }
 
 ({DIGIT}+)          {

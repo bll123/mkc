@@ -1,7 +1,7 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
 check_package unknown;
-check_package zlib;
+check_package libpkgconf;
 
 if (${_package_unknown} == 0) {
   print '  ok u';
@@ -9,19 +9,19 @@ if (${_package_unknown} == 0) {
   print '  fail u';
 }
 
-if (${_package_zlib} == 1) {
-  print '  ok z';
+if (${_package_libpkgconf} == 1) {
+  print '  ok pc';
 } else {
-  print '  fail z';
+  print '  fail pc';
 }
-# zlib does not define any cflags
-if (${zlib_CFLAGS} eq '') {
-  print '  ok z';
+
+if (${libpkgconf_LIBS} ne '') {
+  print '  ok pc';
 } else {
-  print '  fail z';
+  print '  fail pc';
 }
-if (${zlib_LIBS} ne '') {
-  print '  ok z';
+if (${libpkgconf_LIBS} ne '') {
+  print '  ok pc';
 } else {
-  print '  fail z';
+  print '  fail pc';
 }

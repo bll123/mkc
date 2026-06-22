@@ -3,7 +3,7 @@
 MAKEFLAGS += --no-print-directory
 BOOTSTRAPMAKE = bootstrap.mk
 
-# if the bootstrap has been run, then the Makefile will be 
+# if the bootstrap has been run, then the Makefile will be
 # populated with the mkc generated output, and the mkc-all
 # target will exist
 .PHONY: all
@@ -32,6 +32,8 @@ distclean:
 .PHONY: realclean
 realclean:
 	@$(MAKE) clean
+	@-rm -f mkc_config.h
+	@-rm -f z
 
 .PHONY: clean
 clean:
