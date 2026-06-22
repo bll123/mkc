@@ -13,6 +13,7 @@ Check statements allow the following attribute statements:
 * name
 * compiler_flags
 * link_flags
+* path (package, link_flags)   not yet implemented
 
 ##### Setting Required Headers for a Check
 
@@ -59,6 +60,7 @@ statement.
 * [Check Define](SyntaxCheckDefine)
 * [Check Function](SyntaxCheckFunction)
 * [Check/Add Link Flag](SyntaxCheckLinkFlag)
+* [Check Package](SyntaxCheckPackage)
 * [Check Size](SyntaxCheckSize)
 * [Check Struct Member](SyntaxCheckStructMember)
 * [Check Type](SyntaxCheckType)

@@ -42,6 +42,7 @@ A profile may have an associated compiler.
       * [Check Define](SyntaxCheckDefine)
       * [Check Function](SyntaxCheckFunction)
       * [Check/Add Link Flag](SyntaxCheckLinkFlag)
+      * [Check Package](SyntaxCheckPackage)
       * [Check Size](SyntaxCheckSize)
       * [Check Struct Member](SyntaxCheckStructMember)
       * [Check Type](SyntaxCheckType)
