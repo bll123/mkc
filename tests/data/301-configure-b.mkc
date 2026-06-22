@@ -1,0 +1,8 @@
+check_size int32_t {
+  header stdint.h;
+}
+
+configure {
+  method auto;
+  define_zero;
+}

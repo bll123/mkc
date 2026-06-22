@@ -24,5 +24,3 @@ dotest ${ddir}/190-retest.mkc
 if [[ $rc -ne 0 ]]; then exit $rc; fi
 dodiff ${rdir}/$bnm-b.out ${odir}/$bnm-b.out
 testfin
-
-set +xv

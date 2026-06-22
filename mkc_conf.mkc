@@ -1,10 +1,4 @@
 
-// ### get the version from the version.txt file
-project {
-  name mkc;
-  compiler c;
-}
-
 check_package libpkgconf;
 
 check_function fork {
@@ -41,4 +35,9 @@ check_function _wstat64 {
 }
 check_function _wunlink {
   header io.h;
+}
+
+configure {
+  method auto;
+  define_zero;
 }

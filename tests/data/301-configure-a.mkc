@@ -1,0 +1,7 @@
+project {
+  name mkctest;
+  compiler c;
+}
+
+include tests/data/301-configure-b.mkc;
+

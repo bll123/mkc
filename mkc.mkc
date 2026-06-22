@@ -1,0 +1,8 @@
+
+project {
+  name mkc;
+  compiler c;
+}
+
+include mkc_conf.mkc;
+#include mkc_flags.mkc;

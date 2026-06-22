@@ -20,18 +20,18 @@ function dotest {
     prog=./mkc
   fi
   if [[ $ttype == sh ]]; then
-    prog=". "
+    prog="bash "
     args=""
   fi
 
   ${prog} ${args} ${tfile} > ${odir}/$bnm.out 2>>${LOG}
-  rc=$?
+  trc=$?
   if [[ $expfail == T ]]; then
-    if [[ $rc -eq 0 ]]; then
+    if [[ $trc -eq 0 ]]; then
       echo "   fail: test: $tfile"
     fi
   else
-    if [[ $rc -ne 0 ]]; then
+    if [[ $trc -ne 0 ]]; then
       echo "   fail: test: $tfile"
     fi
   fi
@@ -59,9 +59,9 @@ function dodiff {
   if [[ ${diff} == T ]]; then
     diff=T
     diff -q -w ${dfile} ${ofile} >>${LOG} 2>&1
-    rc=$?
+    trc=$?
 
-    if [[ $rc -ne 0 ]]; then
+    if [[ $trc -ne 0 ]]; then
       echo "   fail: diff: $tnm"
     else
       true

@@ -5,9 +5,10 @@
 
 . ./tests/testsetup.sh
 
-test -d ${odir} || mkdir -p ${odir}
-test -d ${MKCTMP} || mkdir -p ${MKCTMP}
 test -f ${LOG} && rm -f ${LOG}
+test -d ${MKCTMP} && rm -rf ${MKCTMP}
+test -d ${MKCTMP} || mkdir -p ${MKCTMP}
+test -d ${odir} || mkdir -p ${odir}
 
 pattern="*.[sm]*"
 while test $# -gt 0; do

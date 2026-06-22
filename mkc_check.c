@@ -2,11 +2,19 @@
  * Copyright 2026 Brad Lanam Pleasant Hill CA
  */
 
+#if ! MKC_BOOTSTRAP
+# include "mkc_config.h"
+#endif
+
 #include <stdio.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
+
+#if _package_libpkgconf
+# include <libpkgconf/libpkgconf.h>
+#endif
 
 #include "mkc_check.h"
 #include "mkc_compiler.h"
@@ -46,7 +54,7 @@ static void mkc_check_log_command (mkc_check_t *check, const char *tag);
 static mkc_err_code_t mkc_chk_env_var_set (mkc_check_t *check, const char *nm);
 static void mkc_check_append_arg (mkc_check_t *check, const char *arg);
 const char * mkc_check_get_compstr (mkc_check_t *check, mkc_compiler_t compiler, char *buff, size_t sz);
-#if _package_PKGCONF
+#if _package_libpkgconf
 static int mkc_chk_package_lib (mkc_check_t *check, const char *pkg);
 #endif
 static int mkc_chk_package_exec (mkc_check_t *check, const char *pkg);
@@ -408,7 +416,7 @@ mkc_chk_package (mkc_check_t *check,
 
   datafree (check->pkgname);
   check->pkgname = strdup (pkg);
-#if _pkg_PKGCONF
+#if _package_libpkgconf
   rc = mkc_chk_package_lib (check, pkg);
 #else
   rc = mkc_chk_package_exec (check, pkg);
@@ -943,3 +951,61 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
   mkc_chk_reset (check);
   return rc;
 }
+
+#if _package_libpkgconf
+
+static int
+mkc_chk_package_lib (mkc_check_t *check, const char *pkg)
+{
+  pkgconf_client_t    *pconfclient = NULL;
+  pkgconf_pkg_t       *pconfpkg = NULL;
+  pkgconf_fragment_t  pconflist;
+  char                tmpname [MKC_VNAME_MAX];
+  char                *tmp;
+  mkc_profidx_t       opidx;
+  int                 rc;
+
+  pconfclient = pkgconf_client_new (NULL, NULL, NULL);
+  if (pconfclient == NULL) {
+    return mkc_chk_package_exec (check, pkg);
+  }
+
+  opidx = mkc_profile_get_active (check->profiles);
+
+  pconfpkg = pkgconf_pkg_find (pconfclient, pkg);
+  if (pconfpkg == NULL) {
+    pkgconf_client_free (pclient);
+    return MKC_ERR_FAILURE;
+  }
+
+  rc = pkgconf_pkg_cflags (pconfclient, pconfpkg, &pconflist, -1);
+  if (rc != PKGCONF_PKG_ERRF_OK) {
+    pkgconf_client_free (pclient);
+    return MKC_ERR_FAILURE;
+  }
+
+  tmp = pkgconf_fragment_render (&pconflist);
+  snprintf (tmpname, sizeof (tmpname), "%s_CFLAGS", pkg);
+  mkc_pvar_set_str (check->pvar, tmpname, tmp, MKC_VCTXT_CHECK);
+  pkgconf_fragment_free (&pconflist);
+  free (tmp);
+
+  rc = pkgconf_pkg_libs (pconfclient, pconfpkg, &pconflist, -1);
+  if (rc != PKGCONF_PKG_ERRF_OK) {
+    pkgconf_client_free (pclient);
+    return MKC_ERR_FAILURE;
+  }
+
+  tmp = pkgconf_fragment_render (&pconflist);
+  snprintf (tmpname, sizeof (tmpname), "%s_LIBS", pkg);
+  mkc_pvar_set_str (check->pvar, tmpname, rbuff, MKC_VCTXT_CHECK);
+  pkgconf_fragment_free (&pconflist);
+  free (tmp);
+
+  pkgconf_client_free (pclient);
+  mkc_pvar_profile_set_idx (check->pvar, opidx);
+  mkc_chk_reset (check);
+  return rc;
+}
+
+#endif /* _package_libpkgconf */

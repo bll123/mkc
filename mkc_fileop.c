@@ -34,10 +34,6 @@
 #include "mkc_nodiscard.h"
 #include "mkc_string.h"
 
-#if _WIN32
-static void mkc_disppath (char *path, size_t sz);
-#endif
-
 MKC_NODISCARD
 FILE *
 mkc_fopen (const char *fname, const char *mode)
@@ -320,22 +316,7 @@ mkc_link_copy (const char *fname, const char *nfn)
   return rc;
 }
 
-#if _lib_symlink || (MKC_BOOTSTRAP && ! _WIN32)
-
-int
-mkc_link_create (const char *target, const char *linkpath)
-{
-  int rc;
-
-  rc = symlink (target, linkpath);
-  return rc;
-}
-
-#endif /* lib_symlink */
-
-#if _WIN32
-
-static void
+void
 mkc_disppath (char *path, size_t sz)
 {
   for (size_t i = 0; i < sz; ++i) {
@@ -349,4 +330,30 @@ mkc_disppath (char *path, size_t sz)
   return;
 }
 
-#endif
+void
+mkc_normalizepath (char *path, size_t sz)
+{
+  for (size_t i = 0; i < sz; ++i) {
+    if (path [i] == '\0') {
+      break;
+    }
+    if (path [i] == '\\') {
+      path [i] = '/';
+    }
+  }
+  return;
+}
+
+#if _lib_symlink || (MKC_BOOTSTRAP && ! _WIN32)
+
+int
+mkc_link_create (const char *target, const char *linkpath)
+{
+  int rc;
+
+  rc = symlink (target, linkpath);
+  return rc;
+}
+
+#endif /* lib_symlink */
+

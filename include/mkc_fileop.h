@@ -26,6 +26,9 @@ int64_t mkc_ftell (FILE *fh);
 int mkc_fseek (FILE *fh, int64_t offset, int whence);
 int mkc_file_copy (const char *fname, const char *nfn, mkc_error_t *mkcerr);
 int mkc_link_copy (const char *fname, const char *nfn);
+void mkc_disppath (char *path, size_t sz);
+void mkc_normalizepath (char *path, size_t sz);
+
 
 #if _lib_symlink || (MKC_BOOTSTRAP && ! _WIN32)
 

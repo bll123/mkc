@@ -127,6 +127,9 @@ typedef struct mkc_prog_chk_t {
   const char  * mkcvarname;
 } mkc_prog_chk_t;
 
+/* these are executables that are used by mkc */
+/* pkgconf/pkg-config are used if libpkgconf is not linked in */
+/* as is the case during the bootstrap process */
 static mkc_prog_chk_t proglist [] = {
   { "pkgconf",      mkcppkgconf },
   { "pkg-config",   mkcppkgconfig },
@@ -1951,7 +1954,6 @@ mkc_process_configure_auto (mkc_process_t *process, int defzero)
     tp = "project";
   }
   tp = stpecpy (projnm, projnm + sizeof (projnm), tp);
-  stpecpy (tp, projnm + sizeof (projnm), "_config");
 
   if (process->attr.output != NULL) {
     stpecpy (fname, fname + sizeof (fname), process->attr.output);
@@ -2126,6 +2128,7 @@ mkc_process_find_executables (mkc_process_t *process)
     char    *tmp;
 
     tmp = strdup (tpath);
+    mkc_normalizepath (tmp, strlen (tmp));
     mkc_list_append (pathlist, &tmp, sizeof (char *), &loc);
     tpath = mkc_strtok (NULL, pathdelim, &tokstr);
   }
