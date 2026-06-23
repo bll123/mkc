@@ -48,6 +48,7 @@ mkc_pvar_init (mkc_profile_t *profiles, mkc_log_t *log, mkc_error_t *mkcerr)
   pvar->log = log;
   pvar->profiles = profiles;
   pvar->pidx = MKC_PROF_NOT_FOUND;
+  pvar->fromcache = false;
 
   return pvar;
 }
@@ -135,8 +136,8 @@ mkc_pvar_name_alloc (mkc_pvar_t *pvar, const char *vname)
 }
 
 int
-mkc_pvar_set (mkc_pvar_t *pvar,
-    const char *vname, mkc_value_t *value, mkc_var_ctxt_t vctxt)
+mkc_pvar_set (mkc_pvar_t *pvar, const char *vname,
+    mkc_value_t *value, mkc_var_ctxt_t vctxt, int copyflag)
 {
   mkc_varlist_t   *varlist;
   int             rc = MKC_ERR_FAILURE;
@@ -147,7 +148,7 @@ mkc_pvar_set (mkc_pvar_t *pvar,
 
   varlist = mkc_profile_get_varlist (pvar->profiles, pvar->pidx);
   value->vctxt = vctxt;
-  rc = mkc_var_set (varlist, vname, value);
+  rc = mkc_var_set (varlist, vname, value, copyflag);
 
   return rc;
 }
@@ -162,7 +163,7 @@ mkc_pvar_set_integer (mkc_pvar_t *pvar,
   value.ival = ival;
   value.vtype = MKC_VT_INTEGER;
 
-  rc = mkc_pvar_set (pvar, vname, &value, vctxt);
+  rc = mkc_pvar_set (pvar, vname, &value, vctxt, MKC_VAR_NEW);
   return rc;
 }
 
@@ -176,7 +177,7 @@ mkc_pvar_set_str (mkc_pvar_t *pvar,
   value.sval = (char *) str;
   value.vtype = MKC_VT_STRING;
 
-  rc = mkc_pvar_set (pvar, vname, &value, vctxt);
+  rc = mkc_pvar_set (pvar, vname, &value, vctxt, MKC_VAR_NEW);
   return rc;
 }
 
@@ -190,7 +191,7 @@ mkc_pvar_set_list (mkc_pvar_t *pvar,
   value.list = list;
   value.vtype = MKC_VT_LIST;
 
-  rc = mkc_pvar_set (pvar, vname, &value, vctxt);
+  rc = mkc_pvar_set (pvar, vname, &value, vctxt, MKC_VAR_NEW);
   return rc;
 }
 
@@ -205,7 +206,7 @@ mkc_pvar_set_list_from_str (mkc_pvar_t *pvar,
   char          *tokstr;
   mkc_listidx_t loc;
 
-  tlist = mkc_list_init (MKC_LIST_UNSORTED, datafree, NULL, pvar->mkcerr);
+  tlist = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, pvar->mkcerr);
   p = mkc_strtok (str, " ", &tokstr);
   while (p != NULL) {
     char    *tp = NULL;
@@ -224,7 +225,7 @@ mkc_pvar_set_list_from_str (mkc_pvar_t *pvar,
 
   value.list = tlist;
   value.vtype = MKC_VT_LIST;
-  rc = mkc_pvar_set (pvar, vname, &value, vctxt);
+  rc = mkc_pvar_set (pvar, vname, &value, vctxt, MKC_VAR_NEW);
 
   return rc;
 }
@@ -612,6 +613,24 @@ mkc_pvar_is_list (mkc_pvar_t *pvar, const char *vname)
     return rc;
   }
   rc = mkc_var_is_list (varlist, vname);
+  return rc;
+}
+
+bool
+mkc_pvar_is_fromcache (mkc_pvar_t *pvar, const char *vname)
+{
+  mkc_varlist_t   *varlist;
+  bool            rc = false;
+
+  if (pvar == NULL) {
+    return rc;
+  }
+
+  varlist = mkc_profile_get_varlist (pvar->profiles, pvar->pidx);
+  if (varlist == NULL) {
+    return rc;
+  }
+  rc = mkc_var_is_fromcache (varlist, vname);
   return rc;
 }
 

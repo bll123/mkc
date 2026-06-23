@@ -44,6 +44,8 @@ typedef enum {
 enum {
   MKC_VAR_FOUND = MKC_LIST_FOUND,
   MKC_VAR_NOTFOUND = MKC_LIST_NOTFOUND,
+  MKC_VAR_COPY = 1,
+  MKC_VAR_NEW = 0,
 };
 
 typedef struct mkc_var_t mkc_var_t;
@@ -66,7 +68,7 @@ void mkc_var_set_fromcache (mkc_varlist_t *varlist, bool flag);
 const char *mkc_var_vctxt_str (mkc_var_ctxt_t vctxt);
 
 const char * mkc_var_name_alloc (mkc_varlist_t *varlist, const char *vname);
-int mkc_var_set (mkc_varlist_t *varlist, const char *vname, mkc_value_t *value);
+int mkc_var_set (mkc_varlist_t *varlist, const char *vname, mkc_value_t *value, int copyflag);
 void mkc_var_set_context (mkc_varlist_t *varlist, const char *vname, int vctxt);
 
 int32_t mkc_var_size (mkc_varlist_t *varlist);
@@ -77,6 +79,7 @@ mkc_value_t *mkc_var_get_value_by_idx (mkc_varlist_t *varlist, mkc_varidx_t vidx
 const char * mkc_var_get_name (mkc_varlist_t *varlist, mkc_varidx_t idx);
 bool mkc_var_is_defined (mkc_varlist_t *varlist, const char *vname);
 bool mkc_var_is_list (mkc_varlist_t *varlist, const char *vname);
+bool mkc_var_is_fromcache (mkc_varlist_t *varlist, const char *vname);
 
 void mkc_value_free (void *value);
 const char *mkc_value_to_str (mkc_value_t *value, char *buff, size_t sz);

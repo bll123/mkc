@@ -206,7 +206,7 @@ static int32_t  mkcnodenum = 0;
 
 static int32_t mkc_ast_process (mkc_astmain_t *, mkc_astnode_t *astnode, int32_t *ifcond, int32_t *loopcond, int depth);
 static mkc_astnode_t * mkc_astnode_init (mkc_astmain_t *astmain, int type, int32_t lineno, int colno);
-static void mkc_astnode_free (mkc_astmain_t *astmain, mkc_astnode_t *astnode);
+static void mkc_astnode_free (void *astnode);
 static mkc_value_t *mkc_ast_get_value (mkc_astmain_t *astmain, mkc_astnode_t *astnode);
 
 mkc_astmain_t *
@@ -278,7 +278,7 @@ mkc_ast_free (mkc_astmain_t *astmain)
 
   if (astmain->nodelist != NULL) {
     for (int32_t i = 0; i < astmain->sz; ++i) {
-      mkc_astnode_free (astmain, astmain->nodelist [i]);
+      mkc_astnode_free (astmain->nodelist [i]);
     }
     free (astmain->nodelist);
   }
@@ -287,6 +287,9 @@ mkc_ast_free (mkc_astmain_t *astmain)
   }
   if (astmain->profiles != NULL) {
     mkc_profile_free (astmain->profiles);
+  }
+  if (astmain->context != NULL) {
+    mkc_context_free (astmain->context);
   }
   free (astmain);
 }
@@ -309,6 +312,8 @@ mkc_ast_mk_value (mkc_astmain_t *astmain, int asttype, char *str, int32_t lineno
 
   astvalue = &astnode->value;
   value = &astvalue->value;
+  /* the context is unknown at this time */
+  value->vctxt = MKC_VCTXT_TEMP;
 
   mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
       "ast-mk-value: %s %s\n", typenames [asttype], str);
@@ -374,6 +379,7 @@ mkc_ast_mk_value_list (mkc_astmain_t *astmain,
     mkc_astnode_t     *astnode;
 
     astnode = mkc_astnode_init (astmain, MKC_T_VALUE, lineno, colno);
+    /* the values are already in an astnode, the values will be freed elsewhere */
     tlist = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, astmain->mkcerr);
     astvalue = &astnode->value;
     value = &astvalue->value;
@@ -396,9 +402,9 @@ mkc_ast_mk_stmtlist (mkc_astmain_t *astmain,
     mkc_astnode_t *stmtlist, mkc_astnode_t *vala,
     int32_t lineno, int colno)
 {
-  mkc_astnode_t     *astnode = NULL;
-  mkc_list_t    *tlist = NULL;
-  mkc_listidx_t loc;
+  mkc_astnode_t   *astnode = NULL;
+  mkc_list_t      *tlist = NULL;
+  mkc_listidx_t   loc;
 
   mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
       "ast-mk: stmt-list\n");
@@ -1051,7 +1057,8 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
 
       mkc_list_iter_start (astnode->stmtlist.stmtlist, &iteridx);
       while ((lidx = mkc_list_iter_next (astnode->stmtlist.stmtlist, &iteridx)) != MKC_ITER_FINISH) {
-        mkc_astnode_t   **listnode;
+        mkc_astnode_t   **plistnode;
+        mkc_astnode_t   *listnode;
 
         if (mkc_error_chk_err (astmain->mkcerr)) {
           break;
@@ -1064,16 +1071,21 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
           }
         }
 
-        listnode = mkc_list_get_by_idx (astnode->stmtlist.stmtlist, lidx);
-        if (listnode != NULL && *listnode != NULL) {
-          if ((*listnode)->asttype == MKC_T_LOOP_CONTINUE ||
-              (*listnode)->asttype == MKC_T_LOOP_BREAK) {
+        plistnode = mkc_list_get_by_idx (astnode->stmtlist.stmtlist, lidx);
+        listnode = *plistnode;
+
+        if (listnode != NULL) {
+          mkc_log_loc (astmain->log, MKC_LOG_AST_PROCESS, astnode->lineno, astnode->colno,
+              "%*sast-proc: stmt-list: %s\n", astmain->depth * 2, " ", typenames [listnode->asttype]);
+
+          if (listnode->asttype == MKC_T_LOOP_CONTINUE ||
+              listnode->asttype == MKC_T_LOOP_BREAK) {
             if (! mkc_context_check (astmain->context, MKC_CONTEXT_LOOP)) {
               mkc_error_set (astmain->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
               break;
             }
 
-            if ((*listnode)->asttype == MKC_T_LOOP_BREAK) {
+            if (listnode->asttype == MKC_T_LOOP_BREAK) {
               *loopcond = false;
             }
 
@@ -1082,7 +1094,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
             break;
           }
 
-          mkc_ast_process (astmain, *listnode, ifcond, loopcond, depth);
+          mkc_ast_process (astmain, listnode, ifcond, loopcond, depth);
         }
       }
       break;
@@ -1540,8 +1552,9 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       break;
     }
 
-    case MKC_T_OP_IS_LIST:
-    case MKC_T_OP_IS_DEFINED: {
+    case MKC_T_OP_IS_DEFINED:
+    case MKC_T_OP_IS_FROMCACHE:
+    case MKC_T_OP_IS_LIST: {
       mkc_ast_process (astmain, astnode->unary_op.vala, ifcond, loopcond, depth);
       if (astmain->value.vtype == MKC_VT_INTEGER ||
           astmain->value.vtype == MKC_VT_LIST ||
@@ -1606,8 +1619,10 @@ mkc_astnode_init (mkc_astmain_t *astmain, int type, int32_t lineno, int colno)
 }
 
 static void
-mkc_astnode_free (mkc_astmain_t *astmain, mkc_astnode_t *astnode)
+mkc_astnode_free (void *tastnode)
 {
+  mkc_astnode_t   *astnode = tastnode;
+
   if (astnode == NULL) {
     return;
   }
@@ -1616,7 +1631,7 @@ mkc_astnode_free (mkc_astmain_t *astmain, mkc_astnode_t *astnode)
     case MKC_T_VALUE: {
       mkc_value_t *value;
 
-      value = mkc_ast_get_value (astmain, astnode);
+      value = &astnode->value.value;
       if (value != NULL) {
         mkc_value_free (value);
       }
@@ -1650,3 +1665,4 @@ mkc_ast_get_value (mkc_astmain_t *astmain, mkc_astnode_t *astnode)
 
   return value;
 }
+

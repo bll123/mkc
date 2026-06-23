@@ -12,10 +12,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if _package_libpkgconf
-# include <libpkgconf/libpkgconf.h>
-#endif
-
 #include "mkc_check.h"
 #include "mkc_compiler.h"
 #include "mkc_def.h"
@@ -32,9 +28,6 @@
 static const char *MKC_INCLUDE_PATH = "include";
 
 typedef struct mkc_check_t {
-#if _package_libpkgconf
-  pkgconf_client_t  *pconfclient;
-#endif
   mkc_profile_t     * profiles;
   mkc_pvar_t        * pvar;
   mkc_error_t       * mkcerr;
@@ -59,10 +52,6 @@ static void mkc_check_log_command (mkc_check_t *check, const char *tag);
 static mkc_err_code_t mkc_chk_env_var_set (mkc_check_t *check, const char *nm);
 static void mkc_check_append_arg (mkc_check_t *check, const char *arg);
 const char * mkc_check_get_compstr (mkc_check_t *check, mkc_compiler_t compiler, char *buff, size_t sz);
-#if _package_libpkgconf
-static int mkc_chk_package_lib (mkc_check_t *check, const char *pkg);
-static bool pkgconftrace (const char *msg, const pkgconf_client_t *client, const void *data);
-#endif
 static int mkc_chk_package_exec (mkc_check_t *check, const char *pkg);
 
 mkc_check_t *
@@ -111,18 +100,6 @@ mkc_check_init (mkc_profile_t *profiles, mkc_pvar_t *pvar,
   }
   mkc_chk_reset (check);
 
-#if _package_libpkgconf
-  check->pconfclient = pkgconf_client_new (pkgconftrace, check,
-      pkgconf_cross_personality_default ());
-#if MKC_PKG_TRACE
-  pkgconf_client_set_trace_handler (check->pconfclient, pkgconftrace, check);
-#endif
-  if (check->pconfclient != NULL) {
-    pkgconf_client_dir_list_build (check->pconfclient,
-        pkgconf_cross_personality_default ());
-  }
-#endif
-
   return check;
 }
 
@@ -153,11 +130,6 @@ mkc_check_free (mkc_check_t *check)
   if (check->targv != NULL) {
     free (check->targv);
   }
-#if _package_libpkgconf
-  if (check->pconfclient != NULL) {
-    pkgconf_client_free (check->pconfclient);
-  }
-#endif
 
   free (check);
 }
@@ -441,11 +413,8 @@ mkc_chk_package (mkc_check_t *check,
 
   datafree (check->pkgname);
   check->pkgname = strdup (pkg);
-#if _package_libpkgconf
-  rc = mkc_chk_package_lib (check, pkg);
-#else
+  /* libpkgconf's api is far to complex to bother using. */
   rc = mkc_chk_package_exec (check, pkg);
-#endif
 
   mkc_pvar_profile_set_idx (check->pvar, opidx);
 
@@ -983,95 +952,3 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
   mkc_chk_reset (check);
   return rc;
 }
-
-#if _package_libpkgconf
-
-static int
-mkc_chk_package_lib (mkc_check_t *check, const char *pkg)
-{
-  pkgconf_pkg_t       *pconfpkg = NULL;
-  pkgconf_list_t      pconflist = PKGCONF_LIST_INITIALIZER;
-  pkgconf_list_t      pconflistempty = PKGCONF_LIST_INITIALIZER;
-  char                tmpname [MKC_VNAME_MAX];
-  char                opcpath [MKC_PATH_MAX];
-  char                *tmp;
-  mkc_profidx_t       opidx;
-  int                 rc;
-
-  if (check->pconfclient == NULL) {
-    /* if there was some sort of failure */
-    return mkc_chk_package_exec (check, pkg);
-  }
-
-  opidx = mkc_profile_get_active (check->profiles);
-
-  if (check->attr->path != NULL) {
-    char    npcpath [MKC_PATH_MAX];
-    char    *enpcpath = npcpath + sizeof (npcpath);
-    char    *p;
-
-    mkc_env_get ("PKG_CONFIG_PATH", opcpath, sizeof (opcpath));
-    p = stpecpy (npcpath, enpcpath, opcpath);
-    if (*npcpath) {
-      p = stpecpy (p, enpcpath, ":");
-    }
-    p = stpecpy (p, enpcpath, check->attr->path);
-    /* adding a path in pkgconf is ridiculously complex */
-    /* set the env-var and let the library do it */
-    mkc_env_set ("PKG_CONFIG_PATH", npcpath);
-  }
-  /* need to re-build the dir-list every time, as it is not */
-  /* known whether the pkg-config-path changed */
-  pkgconf_client_dir_list_build (check->pconfclient,
-        pkgconf_cross_personality_default ());
-
-  if (check->attr->path != NULL) {
-    mkc_env_set ("PKG_CONFIG_PATH", opcpath);
-  }
-
-  pconfpkg = pkgconf_pkg_find (check->pconfclient, pkg);
-  if (pconfpkg == NULL) {
-    return MKC_ERR_FAILURE;
-  }
-
-  rc = pkgconf_pkg_cflags (check->pconfclient, pconfpkg, &pconflist, -1);
-  if (rc != PKGCONF_PKG_ERRF_OK) {
-    return MKC_ERR_FAILURE;
-  }
-
-  tmp = pkgconf_fragment_render (&pconflist, false, NULL);
-  snprintf (tmpname, sizeof (tmpname), "%s_CFLAGS", pkg);
-  mkc_pvar_set_list_from_str (check->pvar, tmpname, tmp, MKC_VCTXT_CHECK);
-  pkgconf_fragment_free (&pconflist);
-  memcpy (&pconflist, &pconflistempty, sizeof (pkgconf_list_t));
-  free (tmp);
-
-  rc = pkgconf_pkg_libs (check->pconfclient, pconfpkg, &pconflist, -1);
-  if (rc != PKGCONF_PKG_ERRF_OK) {
-    return MKC_ERR_FAILURE;
-  }
-
-  tmp = pkgconf_fragment_render (&pconflist, false, NULL);
-  snprintf (tmpname, sizeof (tmpname), "%s_LIBS", pkg);
-  mkc_pvar_set_list_from_str (check->pvar, tmpname, tmp, MKC_VCTXT_CHECK);
-  pkgconf_fragment_free (&pconflist);
-  memcpy (&pconflist, &pconflistempty, sizeof (pkgconf_list_t));
-  free (tmp);
-
-  mkc_pvar_profile_set_idx (check->pvar, opidx);
-  mkc_chk_reset (check);
-  return rc;
-}
-
-static bool
-pkgconftrace (const char *msg,
-    const pkgconf_client_t *client, const void *data)
-{
-#if MKC_PKG_TRACE
-  mkc_message ("%s\n", msg);
-#endif
-  return true;
-}
-
-#endif /* _package_libpkgconf */
-

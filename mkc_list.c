@@ -300,6 +300,23 @@ mkc_list_iter_next (mkc_list_t *list, mkc_listidx_t *iteridx)
   return list->idxsort [*iteridx];
 }
 
+void
+mkc_list_ind_free (void *tdata)
+{
+  char    **data = tdata;
+  char    *tmp;
+
+  if (data == NULL) {
+    return;
+  }
+
+  tmp = *data;
+
+  if (tmp != NULL) {
+    free (tmp);
+  }
+}
+
 /* internal routines */
 
 /* loc points to the idxsort entry, not the dataidx */

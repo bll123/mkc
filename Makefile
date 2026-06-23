@@ -15,9 +15,13 @@ all:
 	  $(MAKE) bootstrap ; \
 	fi
 
-.PHONY:
+.PHONY: boostrap
 bootstrap:
 	@$(MAKE) -f $(BOOTSTRAPMAKE) all
+
+.PHONY: sanitize
+sanitize:
+	@$(MAKE) -f $(BOOTSTRAPMAKE) sanitize
 
 # remove the generated files
 .PHONY: distclean

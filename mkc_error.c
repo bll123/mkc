@@ -167,7 +167,7 @@ mkc_error_line_disp (char *buff, size_t sz, int32_t lineno, int colno)
     return NULL;
   }
 
-  snprintf (buff, sz, "%" PRId32 ":%d: ", lineno, colno);
+  snprintf (buff, sz, "[%" PRId32 ":%d]: ", lineno, colno);
 
   return buff;
 }

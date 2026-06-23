@@ -668,10 +668,7 @@ mkc_profile_entry_free (void *tentry)
     return;
   }
 
-  if (pentry->name != NULL) {
-    free (pentry->name);
-  }
-
+  datafree (pentry->name);
   if (pentry->varlist != NULL) {
     mkc_varlist_free (pentry->varlist);
   }

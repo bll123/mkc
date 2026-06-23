@@ -13,14 +13,18 @@
 #include "mkc_lex.h"
 #include "mkc_log.h"
 #include "mkc_parse.h"
+#include "mkc_string.h"
 
 typedef struct mkc_parse_t {
   /* temporary buffer variable */
   YY_BUFFER_STATE     buffer;
+  /* temporary for string scanning */
+  YY_BUFFER_STATE     obuffer;
   mkcyyscan_t         scanner;
   mkc_astmain_t       *astmain;
   mkc_error_t         *mkcerr;
   mkc_log_t           *log;
+  char                *filename;
 } mkc_parse_t;
 
 mkc_parse_t *
@@ -37,6 +41,9 @@ mkc_parse_init (mkc_astmain_t *astmain, mkc_log_t *log,
   parse->astmain = astmain;
   parse->log = log;
   parse->mkcerr = mkcerr;
+  parse->obuffer = NULL;
+  parse->buffer = NULL;
+  parse->filename = NULL;
 
   mkcyylex_init (&parse->scanner);
 
@@ -50,6 +57,7 @@ mkc_parse_free (mkc_parse_t *parse)
     return;
   }
 
+  datafree (parse->filename);
   mkcyylex_destroy (parse->scanner);
   free (parse);
 }
@@ -74,8 +82,6 @@ mkc_parse_start (mkc_parse_t *parse, FILE *fh)
 int
 mkc_parse_buffer (mkc_parse_t *parse, const char *str)
 {
-  YY_BUFFER_STATE     obuffer;
-
   if (parse == NULL) {
     return MKC_ERR_FAILURE;
   }
@@ -85,9 +91,11 @@ mkc_parse_buffer (mkc_parse_t *parse, const char *str)
   }
 
   /* https://stackoverflow.com/questions/20290427/flex-create-a-buffer-state-from-a-string-without-setting-it-as-the-active-buff */
-  obuffer = parse->buffer;
+  parse->obuffer = parse->buffer;
   parse->buffer = mkcyy_scan_string (str, parse->scanner);
-  mkcyy_switch_to_buffer (obuffer, parse->scanner);
+  if (parse->obuffer != NULL) {
+    mkcyy_switch_to_buffer (parse->obuffer, parse->scanner);
+  }
   mkcyypush_buffer_state (parse->buffer, parse->scanner);
 
   return MKC_OK;
@@ -112,3 +120,33 @@ mkc_parse_get_scanner (mkc_parse_t *parse)
 
   return parse->scanner;
 }
+
+void
+mkc_parse_set_filename (mkc_parse_t *parse, const char *fname)
+{
+  const char    *p;
+
+  if (parse == NULL) {
+    return;
+  }
+
+  datafree (parse->filename);
+  p = strrchr (fname, '/');
+  if (p != NULL) {
+    p += 1;
+    parse->filename = strdup (p);
+  } else {
+    parse->filename = strdup (fname);
+  }
+}
+
+const char *
+mkc_parse_get_filename (mkc_parse_t *parse)
+{
+  if (parse == NULL) {
+    return NULL;
+  }
+
+  return parse->filename;
+}
+

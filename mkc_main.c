@@ -21,6 +21,7 @@
 #endif
 
 #include "mkc_ast.h"
+#include "mkc_def.h"
 #include "mkc_error.h"
 #include "mkc_fileop.h"
 #include "mkc_log.h"
@@ -169,6 +170,10 @@ main (int argc, char *argv [])
   parse = mkc_parse_init (astmain, log, mkcerr);
   mkc_parse_debug (parse, debug);
 
+  if (! loadcache) {
+    mkc_message ("-- cache disabled by user\n");
+  }
+
   cachetm = mkc_file_modtime ("mkc_files/cache.mkc");
   mkctm = mkc_file_modtime (argcopy.utf8argv [fnidx]);
   if (mkctm >= cachetm) {
@@ -184,16 +189,28 @@ main (int argc, char *argv [])
   }
 
   if (loadcache) {
-    /* this is a much simpler way to handle the cache file */
-    /* excepting the weirdness of yy_scan_string replacing */
-    /* the current buffer (see mkc_parse.c) */
-    mkc_parse_buffer (parse, "include mkc_files/cache.mkc;");
+    const char    *fname = "mkc_files/cache.mkc";
+    char          cmd [MKC_PATH_MAX];
+
+    snprintf (cmd, sizeof (cmd), "include %s;", fname);
+
+    mkc_message ("-- loading cache\n");
+    mkc_parse_buffer (parse, cmd);
+
+    mkc_parse_set_filename (parse, fname);
+    mkc_log_set_disp_filename (log, fname);
     rc = mkc_parse (parse, mkc_parse_get_scanner (parse), astmain, mkcerr);
+
     mkc_parse_finish (parse);
   }
 
+  mkc_parse_set_filename (parse, argcopy.utf8argv [fnidx]);
+  mkc_log_set_disp_filename (log, argcopy.utf8argv [fnidx]);
   rc = mkc_parse (parse, mkc_parse_get_scanner (parse), astmain, mkcerr);
+
   mkc_parse_finish (parse);
+  mkc_parse_free (parse);
+
   if (mkc_error_chk_err (mkcerr)) {
     rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
     return rc;
@@ -210,8 +227,6 @@ main (int argc, char *argv [])
   } else {
     mkc_error_set (mkcerr, MKC_ERR_PARSE_FAILURE, 0, NULL);
   }
-
-  mkc_parse_free (parse);
 
   if (fh != stdin) {
     fclose (fh);

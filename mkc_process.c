@@ -410,6 +410,11 @@ mkc_process_unary_op (mkc_process_t *process, int type, mkc_value_t *vala)
       result = mkc_pvar_is_defined (process->pvar, tbuff);
       break;
     }
+    case MKC_T_OP_IS_FROMCACHE: {
+      mkc_pvar_value_get_str (process->pvar, vala, tbuff, sizeof (tbuff));
+      result = mkc_pvar_is_fromcache (process->pvar, tbuff);
+      break;
+    }
     case MKC_T_OP_IS_LIST: {
       mkc_pvar_value_get_str (process->pvar, vala, tbuff, sizeof (tbuff));
       result = mkc_pvar_is_list (process->pvar, tbuff);
@@ -657,6 +662,7 @@ mkc_process_stmt_set (mkc_process_t *process,
   mkc_value_t       *nvalue = NULL;
   mkc_err_code_t    trc;
   mkc_var_ctxt_t    vctxt = MKC_VCTXT_USER_DISABLE;
+  int               copyflag = MKC_VAR_NEW;
 
   if (process == NULL) {
     return MKC_OK;
@@ -689,6 +695,9 @@ mkc_process_stmt_set (mkc_process_t *process,
     if (tstr != NULL) {
       nvalue = mkc_process_get_value (process, tstr);
       value = nvalue;
+      if (value->vtype == MKC_VT_LIST) {
+        copyflag = MKC_VAR_COPY;
+      }
       free (tstr);
     }
   }
@@ -714,7 +723,7 @@ mkc_process_stmt_set (mkc_process_t *process,
     }
   }
 
-  trc = mkc_pvar_set (process->pvar, nm, value, vctxt);
+  trc = mkc_pvar_set (process->pvar, nm, value, vctxt, copyflag);
   if (trc == MKC_OK_CHANGE) {
     process->cacheinvalidated = true;
   }
@@ -922,6 +931,7 @@ mkc_process_attr_header (mkc_process_t *process, mkc_value_t *value)
   mkc_pvar_profile_set (process->pvar, MKC_PROF_INTERNAL_NAME,
       MKC_COMPILER_GENERAL);
   mkc_pvar_set_str (process->pvar, mkctesthdrlist, hdrtxt, MKC_VCTXT_TEMP);
+  free (hdrtxt);
 
   mkc_pvar_profile_set_idx (process->pvar, pidx);
 
@@ -2008,7 +2018,7 @@ mkc_process_set_defaults (mkc_process_t *process)
   }
 
   mkc_pvar_set_integer (process->pvar, mkcwhilelimit, 10000, MKC_VCTXT_MKC);
-  mkc_pvar_set_str (process->pvar, liblocname, "", MKC_VCTXT_MKC);
+  mkc_pvar_set_integer (process->pvar, liblocname, process->libloc, MKC_VCTXT_MKC);
 
   mkc_pvar_profile_set (process->pvar, MKC_PROF_GLOBAL_NAME, MKC_COMPILER_GENERAL);
   mkc_pvar_set_str (process->pvar, "BISON", "bison", MKC_VCTXT_ENV);
@@ -2230,7 +2240,8 @@ mkc_process_find_executables (mkc_process_t *process)
     pathdelim = ";";
   }
 
-  pathlist = mkc_list_init (MKC_LIST_UNSORTED, datafree, NULL, process->mkcerr);
+  pathlist = mkc_list_init (MKC_LIST_UNSORTED,
+      mkc_list_ind_free, NULL, process->mkcerr);
   if (mkc_error_chk_err (process->mkcerr)) {
     return;
   }
@@ -2258,10 +2269,6 @@ mkc_process_find_executables (mkc_process_t *process)
     tpath = mkc_strtok (NULL, pathdelim, &tokstr);
   }
 
-  mkc_pvar_profile_set (process->pvar,
-      MKC_PROF_INTERNAL_NAME, MKC_COMPILER_GENERAL);
-  mkc_pvar_set_list (process->pvar, mkcpathname, pathlist, MKC_VCTXT_MKC);
-
   chk = proglist;
   while (chk->program != NULL) {
     mkc_list_iter_start (pathlist, &iteridx);
@@ -2283,6 +2290,10 @@ mkc_process_find_executables (mkc_process_t *process)
     }
     chk += 1;
   }
+
+  mkc_pvar_profile_set (process->pvar,
+      MKC_PROF_INTERNAL_NAME, MKC_COMPILER_GENERAL);
+  mkc_pvar_set_list (process->pvar, mkcpathname, pathlist, MKC_VCTXT_MKC);
 
   free (tbuff);
   free (testpath);

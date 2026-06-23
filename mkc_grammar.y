@@ -65,6 +65,9 @@
 %token T_LEFT_PAREN           "("
 %token T_OP_AND               "&&"
 %token T_OP_DIVIDE            "/"
+%token T_OP_IS_DEFINED        "is_defined"
+%token T_OP_IS_FROMCACHE      "is_fromcache"
+%token T_OP_IS_LIST           "is_list"
 %token T_OP_MINUS             "-"
 %token T_OP_MODULO            "%"
 %token T_OP_MULTIPLY          "*"
@@ -84,8 +87,6 @@
 %token T_OP_STR_LE            "le"
 %token T_OP_STR_LT            "lt"
 %token T_OP_STR_NE            "ne"
-%token T_OP_IS_LIST           "is_list"
-%token T_OP_IS_DEFINED        "is_defined"
 %token T_RIGHT_BRACE          "}"
 %token T_RIGHT_BRACKET        "]"
 %token T_RIGHT_PAREN          ")"
@@ -191,7 +192,7 @@
 %left T_OP_MULTIPLY T_OP_DIVIDE T_OP_MODULO
 %nonassoc T_OP_RANGE
 %precedence UNARY
-%nonassoc T_OP_IS_LIST T_OP_IS_DEFINED
+%nonassoc T_OP_IS_LIST T_OP_IS_DEFINED T_OP_IS_FROMCACHE
 
 %%
 mkc[v]:
@@ -232,6 +233,11 @@ stmt[v]:
     {
       $v = NULL;
     }
+// internal statements
+  | loadcachestmt[a]
+    {
+      $v = $a;
+    }
 // statements
   | configurestmt[a]
     {
@@ -242,10 +248,6 @@ stmt[v]:
       $v = $a;
     }
   | includestmt[a]
-    {
-      $v = $a;
-    }
-  | loadcachestmt[a]
     {
       $v = $a;
     }
@@ -269,12 +271,13 @@ stmt[v]:
     {
       $v = $a;
     }
-// other
-  | attr[a]
+// checks
+  | checkcommand[a]
     {
       $v = $a;
     }
-  | checkcommand[a]
+// attributes and other statement internal to statement blocks
+  | attr[a]
     {
       $v = $a;
     }
@@ -564,6 +567,7 @@ includestmt[v]:
         YYABORT;
       }
       $v = mkc_ast_get_main (ast);
+      free ($a);
     }
   ;
 
@@ -993,14 +997,19 @@ expr[v]:
     {
       $v = $a;
     }
-  | T_OP_IS_LIST T_LEFT_PAREN varname[a] T_RIGHT_PAREN
-    {
-      $v = mkc_ast_mk_unary_op (ast, $a, MKC_T_OP_IS_LIST,
-          yylloc.first_line, yylloc.first_column);
-    }
   | T_OP_IS_DEFINED T_LEFT_PAREN varname[a] T_RIGHT_PAREN
     {
       $v = mkc_ast_mk_unary_op (ast, $a, MKC_T_OP_IS_DEFINED,
+          yylloc.first_line, yylloc.first_column);
+    }
+  | T_OP_IS_FROMCACHE T_LEFT_PAREN varname[a] T_RIGHT_PAREN
+    {
+      $v = mkc_ast_mk_unary_op (ast, $a, MKC_T_OP_IS_FROMCACHE,
+          yylloc.first_line, yylloc.first_column);
+    }
+  | T_OP_IS_LIST T_LEFT_PAREN varname[a] T_RIGHT_PAREN
+    {
+      $v = mkc_ast_mk_unary_op (ast, $a, MKC_T_OP_IS_LIST,
           yylloc.first_line, yylloc.first_column);
     }
   ;
@@ -1114,8 +1123,11 @@ mkcyyerror (MKCYYLTYPE* mkcyyllocp, mkcyyscan_t unused,
     mkc_parse_t *parse, mkc_astmain_t *ast, mkc_error_t *mkcerr,
     const char * msg)
 {
-  fprintf (stderr, "[%d:%d]: %s\n",
-      mkcyyllocp->first_line, mkcyyllocp->first_column, msg);
+  char    tmp [40];
+
+  fprintf (stderr, "%s:", mkc_parse_get_filename (parse));
+  mkc_error_line_disp (tmp, sizeof (tmp), mkcyyllocp->first_line, mkcyyllocp->first_column);
+  fprintf (stderr, "%s\n", msg);
 }
 
 int

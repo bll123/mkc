@@ -71,6 +71,6 @@ function dodiff {
 
 function testfin {
   if [[ -f ${mkclog} ]]; then
-    mv ${mkclog} ${MKCTMP}/log-${bnm}.txt
+    mv ${mkclog} ${MKCTMP}/${bnm}-log.txt
   fi
 }

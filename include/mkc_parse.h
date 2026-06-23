@@ -25,6 +25,8 @@ int mkc_parse_start (mkc_parse_t *parse, FILE *fh);
 int mkc_parse_buffer (mkc_parse_t *parse, const char *str);
 void mkc_parse_finish (mkc_parse_t *parse);
 void * mkc_parse_get_scanner (mkc_parse_t *parse);
+void mkc_parse_set_filename (mkc_parse_t *parse, const char *fname);
+const char * mkc_parse_get_filename (mkc_parse_t *parse);
 
 /* mkc_grammar.y */
 int mkc_parse (mkc_parse_t *parse, void *scanner, mkc_astmain_t *astmain, mkc_error_t *mkcerr);

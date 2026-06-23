@@ -1,7 +1,7 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
 check_package unknown;
-check_package libpkgconf;
+check_package zlib;
 
 if (${_package_unknown} == 0) {
   print '  ok u';
@@ -19,20 +19,20 @@ if (! is_defined (unknown_LIBS)) {
   print '  fail u';
 }
 
-if (${_package_libpkgconf} == 1) {
+if (${_package_zlib} == 1) {
   print '  ok pc';
 } else {
   print '  fail pc';
 }
 
-# libpkgconf_CFLAGS [ -I/usr/include/pkgconf  ]
-# libpkgconf_LIBS [ -L/usr/lib/x86_64-linux-gnu -lpkgconf  ]
-if (is_list (libpkgconf_CFLAGS)) {
+# zlib_CFLAGS [ ]
+# zlib_LIBS [ -lz ]
+if (is_list (zlib_CFLAGS)) {
   print '  ok pc';
 } else {
   print '  fail pc';
 }
-if (is_list (libpkgconf_LIBS)) {
+if (is_list (zlib_LIBS)) {
   print '  ok pc';
 } else {
   print '  fail pc';

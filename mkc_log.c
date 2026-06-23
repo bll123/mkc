@@ -14,10 +14,12 @@
 #include "mkc_error.h"
 #include "mkc_fileop.h"
 #include "mkc_log.h"
+#include "mkc_string.h"
 
 typedef struct mkc_log_t {
   FILE        * fh;
   char        * fname;
+  char        * dispfname;
   mkc_error_t * mkcerr;
   int32_t     logflag;
 } mkc_log_t;
@@ -35,6 +37,7 @@ mkc_log_init (mkc_error_t *mkcerr)
 
   log->fh = NULL;
   log->fname = NULL;
+  log->dispfname = NULL;
   log->mkcerr = mkcerr;
 
   return log;
@@ -77,10 +80,8 @@ mkc_log_free (mkc_log_t *log)
   if (log->fh != NULL) {
     fclose (log->fh);
   }
-  if (log->fname != NULL) {
-    free (log->fname);
-  }
-
+  datafree (log->fname);
+  datafree (log->dispfname);
   free (log);
 }
 
@@ -151,9 +152,30 @@ mkc_log_loc (mkc_log_t *log, int32_t logflag,
   }
 
   va_start (vap, fmt);
+  if (log->dispfname != NULL) {
+    fprintf (log->fh, "%s:", log->dispfname);
+  }
   mkc_error_line_disp (tbuff, sizeof (tbuff), lineno, col);
   fprintf (log->fh, "%s", tbuff);
   vfprintf (log->fh, fmt, vap);
   va_end (vap);
 }
 
+void
+mkc_log_set_disp_filename (mkc_log_t *log, const char *fname)
+{
+  const char    *p;
+
+  if (log == NULL) {
+    return;
+  }
+
+  datafree (log->dispfname);
+  p = strrchr (fname, '/');
+  if (p != NULL) {
+    p += 1;
+    log->dispfname = strdup (p);
+  } else {
+    log->dispfname = strdup (fname);
+  }
+}
