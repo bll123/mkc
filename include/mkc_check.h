@@ -17,9 +17,21 @@
 extern "C" {
 #endif
 
+typedef struct mkc_attribute_t {
+  char            * name;
+  char            * method;
+  char            * vcontext;
+  char            * input;
+  char            * output;
+  char            * path;
+  mkc_compiler_t  currcompiler;
+  int             define_zero;
+  bool            negate;
+} mkc_attribute_t;
+
 typedef struct mkc_check_t mkc_check_t;
 
-mkc_check_t *mkc_check_init (mkc_profile_t *profiles, mkc_pvar_t *pvar, mkc_log_t *log, mkc_profidx_t pixd_global_general, mkc_error_t *mkcerr);
+mkc_check_t *mkc_check_init (mkc_profile_t *profiles, mkc_pvar_t *pvar, mkc_attribute_t *attr, mkc_log_t *log, mkc_profidx_t pixd_global_general, mkc_error_t *mkcerr);
 void mkc_check_free (mkc_check_t *check);
 
 int mkc_create_dirs (void);

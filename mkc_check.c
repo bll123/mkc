@@ -28,6 +28,8 @@
 #include "mkc_string.h"
 #include "mkc_util.h"
 
+#define MKC_PKG_TRACE 0
+
 static const char *MKC_INCLUDE_PATH = "include";
 
 typedef struct mkc_check_t {
@@ -38,6 +40,7 @@ typedef struct mkc_check_t {
   mkc_pvar_t        * pvar;
   mkc_error_t       * mkcerr;
   mkc_log_t         * log;
+  mkc_attribute_t   * attr;
   char              ** cf;
   char              ** lf;
   const   char      ** targv;
@@ -65,7 +68,8 @@ static int mkc_chk_package_exec (mkc_check_t *check, const char *pkg);
 
 mkc_check_t *
 mkc_check_init (mkc_profile_t *profiles, mkc_pvar_t *pvar,
-    mkc_log_t *log, mkc_profidx_t pidx, mkc_error_t *mkcerr)
+    mkc_attribute_t *attr, mkc_log_t *log,
+    mkc_profidx_t pidx, mkc_error_t *mkcerr)
 {
   mkc_check_t   *check;
   mkc_profidx_t tpidx;
@@ -73,6 +77,7 @@ mkc_check_init (mkc_profile_t *profiles, mkc_pvar_t *pvar,
   check = malloc (sizeof (mkc_check_t));
   check->profiles = profiles;
   check->pvar = pvar;
+  check->attr = attr;
   check->mkcerr = mkcerr;
   check->log = log;
   check->pidx_global_general = pidx;
@@ -110,6 +115,9 @@ mkc_check_init (mkc_profile_t *profiles, mkc_pvar_t *pvar,
 #if _package_libpkgconf
   check->pconfclient = pkgconf_client_new (pkgconftrace, check,
       pkgconf_cross_personality_default ());
+#if MKC_PKG_TRACE
+  pkgconf_client_set_trace_handler (check->pconfclient, pkgconftrace, check);
+#endif
   if (check->pconfclient != NULL) {
     pkgconf_client_dir_list_build (check->pconfclient,
         pkgconf_cross_personality_default ());
@@ -883,9 +891,12 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
 
   check->targc = 0;
   mkc_check_append_arg (check, pkgconfpath);
+  if (check->attr->path != NULL) {
+    mkc_check_append_arg (check, "--with-path");
+    mkc_check_append_arg (check, check->attr->path);
+  }
   mkc_check_append_arg (check, "--exists");
   mkc_check_append_arg (check, pkg);
-// ### --with-path
   mkc_check_append_arg (check, NULL);
   if (mkc_error_chk_err (check->mkcerr)) {
     return MKC_ERR_FAILURE;
@@ -910,9 +921,12 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
 
   check->targc = 0;
   mkc_check_append_arg (check, pkgconfpath);
+  if (check->attr->path != NULL) {
+    mkc_check_append_arg (check, "--with-path");
+    mkc_check_append_arg (check, check->attr->path);
+  }
   mkc_check_append_arg (check, "--cflags");
   mkc_check_append_arg (check, pkg);
-// ### --with-path
   mkc_check_append_arg (check, NULL);
   if (mkc_error_chk_err (check->mkcerr)) {
     free (rbuff);
@@ -979,6 +993,7 @@ mkc_chk_package_lib (mkc_check_t *check, const char *pkg)
   pkgconf_list_t      pconflist = PKGCONF_LIST_INITIALIZER;
   pkgconf_list_t      pconflistempty = PKGCONF_LIST_INITIALIZER;
   char                tmpname [MKC_VNAME_MAX];
+  char                opcpath [MKC_PATH_MAX];
   char                *tmp;
   mkc_profidx_t       opidx;
   int                 rc;
@@ -990,7 +1005,29 @@ mkc_chk_package_lib (mkc_check_t *check, const char *pkg)
 
   opidx = mkc_profile_get_active (check->profiles);
 
-  // pkgconf_client_set_trace_handler (check->pconfclient, pkgconftrace, check);
+  if (check->attr->path != NULL) {
+    char    npcpath [MKC_PATH_MAX];
+    char    *enpcpath = npcpath + sizeof (npcpath);
+    char    *p;
+
+    mkc_env_get ("PKG_CONFIG_PATH", opcpath, sizeof (opcpath));
+    p = stpecpy (npcpath, enpcpath, opcpath);
+    if (*npcpath) {
+      p = stpecpy (p, enpcpath, ":");
+    }
+    p = stpecpy (p, enpcpath, check->attr->path);
+    /* adding a path in pkgconf is ridiculously complex */
+    /* set the env-var and let the library do it */
+    mkc_env_set ("PKG_CONFIG_PATH", npcpath);
+  }
+  /* need to re-build the dir-list every time, as it is not */
+  /* known whether the pkg-config-path changed */
+  pkgconf_client_dir_list_build (check->pconfclient,
+      pkgconf_cross_personality_default ());
+
+  if (check->attr->path != NULL) {
+    mkc_env_set ("PKG_CONFIG_PATH", opcpath);
+  }
 
   pconfpkg = pkgconf_pkg_find (check->pconfclient, pkg);
   if (pconfpkg == NULL) {
@@ -1003,7 +1040,6 @@ mkc_chk_package_lib (mkc_check_t *check, const char *pkg)
   }
 
   tmp = pkgconf_fragment_render (&pconflist, false, NULL);
-// ### need to create a list...
   snprintf (tmpname, sizeof (tmpname), "%s_CFLAGS", pkg);
   mkc_pvar_set_str (check->pvar, tmpname, tmp, MKC_VCTXT_CHECK);
   pkgconf_fragment_free (&pconflist);
@@ -1032,7 +1068,9 @@ static bool
 pkgconftrace (const char *msg,
     const pkgconf_client_t *client, const void *data)
 {
-//  mkc_message ("%s\n", msg);
+#if MKC_PKG_TRACE
+  mkc_message ("%s\n", msg);
+#endif
   return true;
 }
 

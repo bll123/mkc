@@ -33,18 +33,6 @@ enum {
   MKC_AUTO_SKIP_ZERO,
 };
 
-typedef struct mkc_attribute_t {
-  char            * name;
-  char            * method;
-  char            * vcontext;
-  char            * input;
-  char            * output;
-  char            * path;
-  mkc_compiler_t  currcompiler;
-  int             define_zero;
-  bool            negate;
-} mkc_attribute_t;
-
 typedef struct mkc_process_t {
   mkc_profile_t         * profiles;
   mkc_pvar_t            * pvar;
@@ -194,7 +182,8 @@ mkc_process_init (mkc_profile_t *profiles, mkc_log_t *log,
 
   pidx = mkc_profile_find (process->profiles,
       MKC_PROF_GLOBAL_NAME, MKC_COMPILER_GENERAL);
-  process->check = mkc_check_init (process->profiles, process->pvar, log, pidx, mkcerr);
+  process->check = mkc_check_init (process->profiles, process->pvar,
+     &process->attr, log, pidx, mkcerr);
   if (process->check == NULL) {
     mkc_process_free (process);
     return NULL;
@@ -233,6 +222,7 @@ mkc_process_free (mkc_process_t *process)
   datafree (process->attr.vcontext);
   datafree (process->attr.input);
   datafree (process->attr.output);
+  datafree (process->attr.path);
   free (process);
 }
 
@@ -763,6 +753,10 @@ mkc_process_attribute (mkc_process_t *process, mkc_value_t *valname,
       ctxt = MKC_CONTEXT_CONFIGURE;
       break;
     }
+    case MKC_T_ATTR_PATH: {
+      ctxt = MKC_CONTEXT_CHECK;
+      break;
+    }
     default: {
       mkc_error_set (process->mkcerr, MKC_ERR_UNHANDLED_VALUE, 0, NULL);
       fprintf (stderr, "ERR: process: unhandled attr %s\n", typenames [asttype]);
@@ -1189,7 +1183,7 @@ mkc_process_check (mkc_process_t *process, mkc_value_t *valconst,
     }
     case MKC_T_CHK_PACKAGE: {
       successtype = true;
-// ### package info should go into global/general
+// ### package info should go into global/general ???
       rc = mkc_chk_package (process->check, process->attr.currcompiler, txt);
       break;
     }

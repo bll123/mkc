@@ -541,6 +541,7 @@ directive[v]:
     }
   ;
 
+// ### this needs to be fixed to allow a 'pathname' type.
 includestmt[v]:
     T_STMT_INCLUDE T_ID_PATH_NAME[a] T_SEMICOLON
     {
@@ -777,7 +778,7 @@ output[v]:
   ;
 
 path[v]:
-    T_ATTR_PATH varvalue[a] T_SEMICOLON
+    T_ATTR_PATH pathname[a] T_SEMICOLON
     {
       $v = mkc_ast_mk_attribute (ast, $a, MKC_T_ATTR_PATH,
           yylloc.first_line, yylloc.first_column);
