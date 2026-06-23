@@ -15,7 +15,8 @@
 #include "mkc_parse.h"
 
 typedef struct mkc_parse_t {
-  YY_BUFFER_STATE     state;
+  /* temporary buffer variable */
+  YY_BUFFER_STATE     buffer;
   mkcyyscan_t         scanner;
   mkc_astmain_t       *astmain;
   mkc_error_t         *mkcerr;
@@ -53,16 +54,6 @@ mkc_parse_free (mkc_parse_t *parse)
   free (parse);
 }
 
-void
-mkc_parse_debug (mkc_parse_t *parse, bool debug)
-{
-  if (parse == NULL) {
-    return;
-  }
-
-  mkcyydebug = debug;
-}
-
 int
 mkc_parse_start (mkc_parse_t *parse, FILE *fh)
 {
@@ -74,8 +65,30 @@ mkc_parse_start (mkc_parse_t *parse, FILE *fh)
     return MKC_ERR_FAILURE;
   }
 
-  parse->state = mkcyy_create_buffer (fh, YY_BUF_SIZE, parse->scanner);
-  mkcyypush_buffer_state (parse->state, parse->scanner);
+  parse->buffer = mkcyy_create_buffer (fh, YY_BUF_SIZE, parse->scanner);
+  mkcyypush_buffer_state (parse->buffer, parse->scanner);
+
+  return MKC_OK;
+}
+
+int
+mkc_parse_buffer (mkc_parse_t *parse, const char *str)
+{
+  YY_BUFFER_STATE     obuffer;
+
+  if (parse == NULL) {
+    return MKC_ERR_FAILURE;
+  }
+  if (str == NULL) {
+    mkc_error_set (parse->mkcerr, MKC_ERR_NULL_ARGUMENT, 0, NULL);
+    return MKC_ERR_FAILURE;
+  }
+
+  /* https://stackoverflow.com/questions/20290427/flex-create-a-buffer-state-from-a-string-without-setting-it-as-the-active-buff */
+  obuffer = parse->buffer;
+  parse->buffer = mkcyy_scan_string (str, parse->scanner);
+  mkcyy_switch_to_buffer (obuffer, parse->scanner);
+  mkcyypush_buffer_state (parse->buffer, parse->scanner);
 
   return MKC_OK;
 }

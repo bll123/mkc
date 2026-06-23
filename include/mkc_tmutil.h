@@ -1,8 +1,8 @@
 /*
  * Copyright 2026 Brad Lanam Pleasant Hill CA
  */
-#ifndef INC_MKC_UTIL_H
-#define INC_MKC_UTIL_H
+#ifndef INC_MKC_TMUTIL_H
+#define INC_MKC_TMUTIL_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -20,10 +20,9 @@ typedef struct mstime_t {
 void mssleep (uint32_t ms);
 void mstimestart (mstime_t *mstm);
 time_t mstimeend (mstime_t *mstm);
-void datafree (void *data);
 
 #if defined (__cplusplus) || defined (c_plusplus)
 }
 #endif
 
-#endif /* INC_MKC_UTIL_H */
+#endif /* INC_MKC_TMUTIL_H */

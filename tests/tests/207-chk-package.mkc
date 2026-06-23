@@ -8,6 +8,16 @@ if (${_package_unknown} == 0) {
 } else {
   print '  fail u';
 }
+if (! is_defined (unknown_CFLAGS)) {
+  print '  ok u';
+} else {
+  print '  fail u';
+}
+if (! is_defined (unknown_LIBS)) {
+  print '  ok u';
+} else {
+  print '  fail u';
+}
 
 if (${_package_libpkgconf} == 1) {
   print '  ok pc';
@@ -15,12 +25,14 @@ if (${_package_libpkgconf} == 1) {
   print '  fail pc';
 }
 
-if (${libpkgconf_LIBS} ne '') {
+# libpkgconf_CFLAGS [ -I/usr/include/pkgconf  ]
+# libpkgconf_LIBS [ -L/usr/lib/x86_64-linux-gnu -lpkgconf  ]
+if (is_list (libpkgconf_CFLAGS)) {
   print '  ok pc';
 } else {
   print '  fail pc';
 }
-if (${libpkgconf_LIBS} ne '') {
+if (is_list (libpkgconf_LIBS)) {
   print '  ok pc';
 } else {
   print '  fail pc';

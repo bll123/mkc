@@ -84,6 +84,8 @@
 %token T_OP_STR_LE            "le"
 %token T_OP_STR_LT            "lt"
 %token T_OP_STR_NE            "ne"
+%token T_OP_IS_LIST           "is_list"
+%token T_OP_IS_DEFINED        "is_defined"
 %token T_RIGHT_BRACE          "}"
 %token T_RIGHT_BRACKET        "]"
 %token T_RIGHT_PAREN          ")"
@@ -101,6 +103,7 @@
 %token <sval> T_VARIABLE          "${...}"
 
 // keywords
+%token T_EXIT                 "exit"
 %token T_LOOP_BREAK           "break"
 %token T_LOOP_CONTINUE        "continue"
 %token T_STMT_ELSE            "else"
@@ -186,8 +189,9 @@
 %left T_OP_NUM_LT T_OP_NUM_LE T_OP_NUM_GT T_OP_NUM_GE T_OP_STR_LT T_OP_STR_LE T_OP_STR_GT T_OP_STR_GE
 %left T_OP_MINUS T_OP_PLUS
 %left T_OP_MULTIPLY T_OP_DIVIDE T_OP_MODULO
-%precedence UNARY
 %nonassoc T_OP_RANGE
+%precedence UNARY
+%nonassoc T_OP_IS_LIST T_OP_IS_DEFINED
 
 %%
 mkc[v]:
@@ -208,6 +212,10 @@ stmt[v]:
       $v = NULL;
     }
 // control statements
+  | T_EXIT[a] T_SEMICOLON
+    {
+      YYACCEPT;
+    }
   | ifstmt[a]
     {
       $v = $a;
@@ -610,14 +618,33 @@ setstmt[v]:
       $v = mkc_ast_mk_set (ast, $a, $b, $c,
           yylloc.first_line, yylloc.first_column);
     }
-  | T_STMT_SET varname[a] valuelist[b] T_SEMICOLON
+  | T_STMT_SET varname[a] valuelist[l] T_SEMICOLON
     {
+      $v = mkc_ast_mk_set (ast, $a, $l, NULL,
+          yylloc.first_line, yylloc.first_column);
+    }
+  | T_STMT_SET varname[a] T_LEFT_BRACKET varvalue[b] T_RIGHT_BRACKET T_SEMICOLON
+    {
+      $b = mkc_ast_mk_value_list (ast, NULL, $b,
+          yylloc.first_line, yylloc.first_column);
       $v = mkc_ast_mk_set (ast, $a, $b, NULL,
           yylloc.first_line, yylloc.first_column);
     }
   | T_STMT_SET varname[a] T_LEFT_BRACKET valuelist[l] T_RIGHT_BRACKET T_SEMICOLON
     {
       $v = mkc_ast_mk_set (ast, $a, $l, NULL,
+          yylloc.first_line, yylloc.first_column);
+    }
+  | T_STMT_SET varname[a] T_LEFT_BRACKET varvalue[b] T_RIGHT_BRACKET stmtblock[c]
+    {
+      $b = mkc_ast_mk_value_list (ast, NULL, $b,
+          yylloc.first_line, yylloc.first_column);
+      $v = mkc_ast_mk_set (ast, $a, $b, $c,
+          yylloc.first_line, yylloc.first_column);
+    }
+  | T_STMT_SET varname[a] T_LEFT_BRACKET valuelist[l] T_RIGHT_BRACKET stmtblock[c]
+    {
+      $v = mkc_ast_mk_set (ast, $a, $l, $c,
           yylloc.first_line, yylloc.first_column);
     }
   ;
@@ -966,6 +993,16 @@ expr[v]:
     {
       $v = $a;
     }
+  | T_OP_IS_LIST T_LEFT_PAREN varname[a] T_RIGHT_PAREN
+    {
+      $v = mkc_ast_mk_unary_op (ast, $a, MKC_T_OP_IS_LIST,
+          yylloc.first_line, yylloc.first_column);
+    }
+  | T_OP_IS_DEFINED T_LEFT_PAREN varname[a] T_RIGHT_PAREN
+    {
+      $v = mkc_ast_mk_unary_op (ast, $a, MKC_T_OP_IS_DEFINED,
+          yylloc.first_line, yylloc.first_column);
+    }
   ;
 
 pathname[v]:
@@ -1095,4 +1132,14 @@ mkc_parse (mkc_parse_t *parse, void *scanner,
     mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
   }
   return rc;
+}
+
+void
+mkc_parse_debug (mkc_parse_t *parse, bool debug)
+{
+  if (parse == NULL) {
+    return;
+  }
+
+  mkcyydebug = debug;
 }

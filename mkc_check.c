@@ -26,7 +26,6 @@
 #include "mkc_pvar.h"
 #include "mkc_os_process.h"
 #include "mkc_string.h"
-#include "mkc_util.h"
 
 #define MKC_PKG_TRACE 0
 
@@ -946,17 +945,19 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
     return rc;
   }
   if (retsz > 0) {
-    mkc_strtrim (rbuff, retsz);
     snprintf (tmpname, sizeof (tmpname), "%s_CFLAGS", pkg);
-    mkc_pvar_set_str (check->pvar, tmpname, rbuff, MKC_VCTXT_CHECK);
+    mkc_pvar_set_list_from_str (check->pvar, tmpname, rbuff, MKC_VCTXT_CHECK);
   }
 
   mkc_chk_reset (check);
   check->targc = 0;
   mkc_check_append_arg (check, pkgconfpath);
+  if (check->attr->path != NULL) {
+    mkc_check_append_arg (check, "--with-path");
+    mkc_check_append_arg (check, check->attr->path);
+  }
   mkc_check_append_arg (check, "--libs");
   mkc_check_append_arg (check, pkg);
-// ### --with-path
   mkc_check_append_arg (check, NULL);
   if (mkc_error_chk_err (check->mkcerr)) {
     free (rbuff);
@@ -973,9 +974,8 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
   mkc_log (check->log, MKC_LOG_CHECK, "pkg libs: %s\n", rbuff);
   mkc_log (check->log, MKC_LOG_CHECK, "  rc: %d\n", rc);
   if (retsz > 0) {
-    mkc_strtrim (rbuff, retsz);
     snprintf (tmpname, sizeof (tmpname), "%s_LIBS", pkg);
-    mkc_pvar_set_str (check->pvar, tmpname, rbuff, MKC_VCTXT_CHECK);
+    mkc_pvar_set_list_from_str (check->pvar, tmpname, rbuff, MKC_VCTXT_CHECK);
   }
 
   mkc_pvar_profile_set_idx (check->pvar, opidx);
@@ -1023,7 +1023,7 @@ mkc_chk_package_lib (mkc_check_t *check, const char *pkg)
   /* need to re-build the dir-list every time, as it is not */
   /* known whether the pkg-config-path changed */
   pkgconf_client_dir_list_build (check->pconfclient,
-      pkgconf_cross_personality_default ());
+        pkgconf_cross_personality_default ());
 
   if (check->attr->path != NULL) {
     mkc_env_set ("PKG_CONFIG_PATH", opcpath);
@@ -1041,7 +1041,7 @@ mkc_chk_package_lib (mkc_check_t *check, const char *pkg)
 
   tmp = pkgconf_fragment_render (&pconflist, false, NULL);
   snprintf (tmpname, sizeof (tmpname), "%s_CFLAGS", pkg);
-  mkc_pvar_set_str (check->pvar, tmpname, tmp, MKC_VCTXT_CHECK);
+  mkc_pvar_set_list_from_str (check->pvar, tmpname, tmp, MKC_VCTXT_CHECK);
   pkgconf_fragment_free (&pconflist);
   memcpy (&pconflist, &pconflistempty, sizeof (pkgconf_list_t));
   free (tmp);
@@ -1052,9 +1052,8 @@ mkc_chk_package_lib (mkc_check_t *check, const char *pkg)
   }
 
   tmp = pkgconf_fragment_render (&pconflist, false, NULL);
-// ### need to create a list...
   snprintf (tmpname, sizeof (tmpname), "%s_LIBS", pkg);
-  mkc_pvar_set_str (check->pvar, tmpname, tmp, MKC_VCTXT_CHECK);
+  mkc_pvar_set_list_from_str (check->pvar, tmpname, tmp, MKC_VCTXT_CHECK);
   pkgconf_fragment_free (&pconflist);
   memcpy (&pconflist, &pconflistempty, sizeof (pkgconf_list_t));
   free (tmp);

@@ -26,7 +26,7 @@
 #include "mkc_profile.h"
 #include "mkc_pvar.h"
 #include "mkc_string.h"
-#include "mkc_util.h"
+#include "mkc_tmutil.h"
 
 enum {
   MKC_AUTO_DEFINE_ZERO,
@@ -382,8 +382,9 @@ mkc_process_str_op (mkc_process_t *process, int type,
 int32_t
 mkc_process_unary_op (mkc_process_t *process, int type, mkc_value_t *vala)
 {
-  int32_t   result = 0;
-  int32_t   ivala;
+  int32_t     result = 0;
+  int32_t     ivala;
+  char        tbuff [MKC_VNAME_MAX];
 
   if (process == NULL) {
     return 0;
@@ -402,6 +403,16 @@ mkc_process_unary_op (mkc_process_t *process, int type, mkc_value_t *vala)
     }
     case MKC_T_OP_UNARY_PLUS: {
       result = ivala;
+      break;
+    }
+    case MKC_T_OP_IS_DEFINED: {
+      mkc_pvar_value_get_str (process->pvar, vala, tbuff, sizeof (tbuff));
+      result = mkc_pvar_is_defined (process->pvar, tbuff);
+      break;
+    }
+    case MKC_T_OP_IS_LIST: {
+      mkc_pvar_value_get_str (process->pvar, vala, tbuff, sizeof (tbuff));
+      result = mkc_pvar_is_list (process->pvar, tbuff);
       break;
     }
     default: {
@@ -1504,8 +1515,8 @@ mkc_process_save_cache (mkc_process_t *process)
 
     mkc_pvar_iter_start (pvar, &viter);
     while ((vidx = mkc_pvar_iter_next (pvar, &viter)) != MKC_ITER_FINISH) {
-      const char      *nm;
-      mkc_value_t     *value;
+      const char    *nm;
+      mkc_value_t   *value;
 
       nm = mkc_pvar_get_name (pvar, vidx);
 
@@ -1520,6 +1531,7 @@ mkc_process_save_cache (mkc_process_t *process)
         mkc_list_t    *list;
         mkc_listidx_t lidx;
         mkc_listidx_t iteridx;
+        const char    *vctxtstr = "";
 
         list = value->list;
         mkc_list_iter_start (list, &iteridx);
@@ -1543,7 +1555,8 @@ mkc_process_save_cache (mkc_process_t *process)
 // ### argh, will this be valid?
           }
         }
-        fprintf (fh, "];\n");
+        vctxtstr = mkc_var_vctxt_str (value->vctxt);
+        fprintf (fh, "] { context %s; }\n", vctxtstr);
         ++count;
         ++tcount;
       }
@@ -1676,7 +1689,7 @@ mkc_process_var_print (mkc_process_t *process, const char *pname)
           if (tvalue->vtype != MKC_VT_INVALID &&
               tvalue->vtype != MKC_VT_INTEGER &&
               tvalue->vtype != MKC_VT_LIST) {
-            fprintf (stdout, "%s ", tvalue->sval);
+            fprintf (stdout, "'%s' ", tvalue->sval);
           }
           if (tvalue->vtype == MKC_VT_LIST) {
 // ### don't know yet if this will be legal

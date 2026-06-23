@@ -12,7 +12,6 @@ all:
 	if [ $$rc -eq 0 ]; then \
 	  $(MAKE) mkc-all; \
 	else \
-	  echo "-- bootstrap mkc" ; \
 	  $(MAKE) bootstrap ; \
 	fi
 
@@ -34,6 +33,7 @@ realclean:
 	@$(MAKE) clean
 	@-rm -f mkc_config.h
 	@-rm -f z
+	@-rm -f bootstrap.txt
 
 .PHONY: clean
 clean:

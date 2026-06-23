@@ -26,8 +26,8 @@
 #include "mkc_log.h"
 #include "mkc_parse.h"
 #include "mkc_profile.h"
-#include "mkc_util.h"
 #include "mkc_string.h"
+#include "mkc_tmutil.h"
 
 typedef struct {
   int       nargc;
@@ -177,36 +177,21 @@ main (int argc, char *argv [])
     mkc_log (log, MKC_LOG_AST_PROCESS, "-- cache out of date\n");
   }
 
-  if (loadcache) {
-    FILE    *cachefh;
-
-    cachefh = mkc_fopen ("mkc_files/cache.mkc", "r");
-    if (cachefh != NULL) {
-      mkc_message ("-- loading cache\n");
-      mkc_log (log, MKC_LOG_AST_PROCESS, "-- loading cache\n");
-
-      mkc_parse_start (parse, cachefh);
-      if (mkc_error_chk_err (mkcerr)) {
-        rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
-        return rc;
-      }
-      rc = mkc_parse (parse, mkc_parse_get_scanner (parse), astmain, mkcerr);
-      mkc_parse_finish (parse);
-      fclose (cachefh);
-
-      if (mkc_error_chk_err (mkcerr)) {
-        rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
-        return rc;
-      }
-      mkc_log (log, MKC_LOG_AST_PROCESS, "cache load complete\n");
-    }
-  }
-
   mkc_parse_start (parse, fh);
   if (mkc_error_chk_err (mkcerr)) {
     rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
     return rc;
   }
+
+  if (loadcache) {
+    /* this is a much simpler way to handle the cache file */
+    /* excepting the weirdness of yy_scan_string replacing */
+    /* the current buffer (see mkc_parse.c) */
+    mkc_parse_buffer (parse, "include mkc_files/cache.mkc;");
+    rc = mkc_parse (parse, mkc_parse_get_scanner (parse), astmain, mkcerr);
+    mkc_parse_finish (parse);
+  }
+
   rc = mkc_parse (parse, mkc_parse_get_scanner (parse), astmain, mkcerr);
   mkc_parse_finish (parse);
   if (mkc_error_chk_err (mkcerr)) {

@@ -83,9 +83,9 @@ mkc_strtok (char *buff, const char *delim, char **tokstr)
   char    *tmp;
 
 #if _function_strtok_r
-  tmp = strtok_r (buff, ":", tokstr);
+  tmp = strtok_r (buff, delim, tokstr);
 #else
-  tmp = strtok (buff, ":");
+  tmp = strtok (buff, delim);
 #endif
 
   return tmp;
@@ -100,10 +100,19 @@ mkc_strtrim (char *buff, size_t sz)
     sz = strlen (buff);
   }
   p = buff + sz - 1;
-  while (p >= buff && (*p == '\n' || *p == '\r')) {
+  while (p >= buff && (*p == ' ' || *p == '\n' || *p == '\r')) {
     *p = '\0';
     --p;
   }
+}
+
+void
+datafree (void *data)
+{
+  if (data == NULL) {
+    return;
+  }
+  free (data);
 }
 
 #if defined (_WIN32)

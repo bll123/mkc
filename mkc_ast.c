@@ -1540,6 +1540,20 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       break;
     }
 
+    case MKC_T_OP_IS_LIST:
+    case MKC_T_OP_IS_DEFINED: {
+      mkc_ast_process (astmain, astnode->unary_op.vala, ifcond, loopcond, depth);
+      if (astmain->value.vtype == MKC_VT_INTEGER ||
+          astmain->value.vtype == MKC_VT_LIST ||
+          astmain->value.vtype == MKC_VT_INVALID) {
+        mkc_error_set (astmain->mkcerr, MKC_ERR_MISMATCHED_ARGUMENT, 0, NULL);
+        break;
+      }
+      astmain->value.ival = mkc_process_unary_op (astmain->process, astnode->asttype, &astmain->value);
+      astmain->value.vtype = MKC_VT_INTEGER;
+      break;
+    }
+
     default: {
       mkc_error_set (astmain->mkcerr, MKC_ERR_UNHANDLED_VALUE, 0, NULL);
       fprintf (stderr, "ERR: ast: unhandled value %s\n", typenames [astnode->asttype]);

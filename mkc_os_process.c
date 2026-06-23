@@ -26,7 +26,7 @@
 #endif
 
 #include "mkc_os_process.h"
-#include "mkc_util.h"
+#include "mkc_tmutil.h"
 
 #define OSPROCESS_DEBUG 0
 

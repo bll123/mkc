@@ -119,6 +119,8 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 "]"         { return T_RIGHT_BRACKET; }
 ")"         { return T_RIGHT_PAREN; }
 ";"         { return T_SEMICOLON; }
+"is_list"     { return T_OP_IS_LIST; }
+"is_defined"  { return T_OP_IS_DEFINED; }
 
 "true"|"TRUE"     { return T_VAL_TRUE; }
 "false"|"FALSE"   { return T_VAL_FALSE; }
@@ -126,6 +128,7 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 "break"     { return T_LOOP_BREAK; }
 "continue"  { return T_LOOP_CONTINUE; }
 "else"      { return T_STMT_ELSE; }
+"exit"      { return T_EXIT; }
 "foreach"   { return T_STMT_FOREACH; }
 "function"  { return T_STMT_FUNCTION; }
 "if"        { return T_STMT_IF; }

@@ -194,6 +194,41 @@ mkc_pvar_set_list (mkc_pvar_t *pvar,
   return rc;
 }
 
+int
+mkc_pvar_set_list_from_str (mkc_pvar_t *pvar,
+    const char *vname, char *str, mkc_var_ctxt_t vctxt)
+{
+  int           rc = MKC_ERR_FAILURE;
+  mkc_value_t   value;
+  mkc_list_t    *tlist = NULL;
+  char          *p;
+  char          *tokstr;
+  mkc_listidx_t loc;
+
+  tlist = mkc_list_init (MKC_LIST_UNSORTED, datafree, NULL, pvar->mkcerr);
+  p = mkc_strtok (str, " ", &tokstr);
+  while (p != NULL) {
+    char    *tp = NULL;
+
+    mkc_strtrim (p, 0);
+    tp = strdup (p);
+    if (tp == NULL) {
+      mkc_error_set (pvar->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+      return rc;
+    }
+    value.sval = tp;
+    value.vtype = MKC_VT_STRING;
+    mkc_list_set (tlist, &value, sizeof (mkc_value_t), &loc);
+    p = mkc_strtok (NULL, " ", &tokstr);
+  }
+
+  value.list = tlist;
+  value.vtype = MKC_VT_LIST;
+  rc = mkc_pvar_set (pvar, vname, &value, vctxt);
+
+  return rc;
+}
+
 void
 mkc_pvar_set_context (mkc_pvar_t *pvar, const char *vname, int vctxt)
 {
@@ -559,6 +594,24 @@ mkc_pvar_is_defined (mkc_pvar_t *pvar, const char *vname)
     return rc;
   }
   rc = mkc_var_is_defined (varlist, vname);
+  return rc;
+}
+
+bool
+mkc_pvar_is_list (mkc_pvar_t *pvar, const char *vname)
+{
+  mkc_varlist_t   *varlist;
+  bool            rc = false;
+
+  if (pvar == NULL) {
+    return rc;
+  }
+
+  varlist = mkc_profile_get_varlist (pvar->profiles, pvar->pidx);
+  if (varlist == NULL) {
+    return rc;
+  }
+  rc = mkc_var_is_list (varlist, vname);
   return rc;
 }
 

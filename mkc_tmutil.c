@@ -19,7 +19,7 @@
 # include <windows.h>
 #endif
 
-#include "mkc_util.h"
+#include "mkc_tmutil.h"
 
 void
 mssleep (uint32_t ms)
@@ -70,11 +70,3 @@ mstimeend (mstime_t *mstm)
   return m;
 }
 
-void
-datafree (void *data)
-{
-  if (data == NULL) {
-    return;
-  }
-  free (data);
-}

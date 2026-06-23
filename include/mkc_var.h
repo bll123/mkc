@@ -76,6 +76,7 @@ mkc_value_t *mkc_var_get_value (mkc_varlist_t *varlist, const char *vname);
 mkc_value_t *mkc_var_get_value_by_idx (mkc_varlist_t *varlist, mkc_varidx_t vidx);
 const char * mkc_var_get_name (mkc_varlist_t *varlist, mkc_varidx_t idx);
 bool mkc_var_is_defined (mkc_varlist_t *varlist, const char *vname);
+bool mkc_var_is_list (mkc_varlist_t *varlist, const char *vname);
 
 void mkc_value_free (void *value);
 const char *mkc_value_to_str (mkc_value_t *value, char *buff, size_t sz);
