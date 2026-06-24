@@ -779,7 +779,6 @@ mkc_pvar_substitute (mkc_pvar_t *pvar, const char *data, int depth)
 //fprintf (stderr, "%*stval: '%s'\n", depth * 2, "", tval);
         blen += tlen;
         buff = realloc (buff, blen);
-fprintf (stderr, "buff: %p\n", buff);
         bp = buff + blen - tlen - 1;
         memcpy (bp, tval, tlen);
 //fprintf (stderr, "%*sbuff-b: '%.*s'\n", depth * 2, "", (int) blen - 1, buff);

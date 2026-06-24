@@ -25,7 +25,7 @@
 #  include "mkc_fileop.h"
 #  include "mkc_list.h"
 #  include "mkc_parse.h"
-#  include "mkc_var.h"
+// #  include "mkc_var.h"
 
   typedef void *mkcyyscan_t;
 
@@ -51,7 +51,6 @@
   char          *sval;
   mkc_astnode_t *astnode;
   mkc_list_t    *list;
-  mkc_value_t   *value;
 }
 
 %lex-param {void *scanner}
@@ -215,7 +214,8 @@ stmt[v]:
 // control statements
   | T_EXIT[a] T_SEMICOLON
     {
-      YYACCEPT;
+      $v = mkc_ast_mk_exit (ast,
+          yylloc.first_line, yylloc.first_column);
     }
   | ifstmt[a]
     {
@@ -554,20 +554,25 @@ directive[v]:
 
 // ### this needs to be fixed to allow a 'pathname' type.
 includestmt[v]:
-    T_STMT_INCLUDE T_ID_PATH_NAME[a] T_SEMICOLON
+    T_STMT_INCLUDE pathname[a] T_SEMICOLON
     {
-      FILE            *fh;
-      int             rc;
+      const char  *fn;
 
-      fh = mkc_fopen ($a, "r");
-      mkc_parse_start (parse, fh);
-      rc = mkc_parse (parse, scanner, ast, mkcerr);
-      mkc_parse_finish (parse);
-      if (rc != 0) {
-        YYABORT;
+      fn = mkc_ast_get_str (ast, $a);
+      if (fn != NULL) {
+        FILE    *fh;
+        int     rc;
+
+        mkc_parse_set_filename (parse, fn);
+        fh = mkc_fopen (fn, "r");
+        mkc_parse_start (parse, fh);
+        rc = mkc_parse (parse, scanner, ast, mkcerr);
+        mkc_parse_finish (parse);
+        if (rc != 0) {
+          YYABORT;
+        }
       }
       $v = mkc_ast_get_main (ast);
-      free ($a);
     }
   ;
 

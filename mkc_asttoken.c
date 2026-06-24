@@ -62,6 +62,7 @@ char const * const typenames [MKC_T_MAX] = {
   [MKC_T_STMT_CONFIGURE] = "stmt_configure",
   [MKC_T_STMT_DEBUG] = "stmt_debug",
   [MKC_T_STMT_ELSEIF] = "stmt_elseif",
+  [MKC_T_STMT_EXIT] = "stmt_exit",
   [MKC_T_STMT_FOREACH] = "stmt_foreach",
   [MKC_T_STMT_FUNCTION] = "stmt_function",
   [MKC_T_STMT_IF] = "stmt_if",

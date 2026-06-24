@@ -138,6 +138,7 @@ mkc_parse_set_filename (mkc_parse_t *parse, const char *fname)
   } else {
     parse->filename = strdup (fname);
   }
+  mkc_log_set_disp_filename (parse->log, parse->filename);
 }
 
 const char *

@@ -699,7 +699,6 @@ mkc_process_stmt_set (mkc_process_t *process,
     if (tstr != NULL) {
       nvalue = mkc_process_get_value (process, tstr);
       value = nvalue;
-fprintf (stderr, "free: %p\n", tstr);
       free (tstr);
     }
   }
@@ -2079,6 +2078,7 @@ mkc_process_configure_auto (mkc_process_t *process, int defzero)
     tp = "project";
   }
   tp = stpecpy (projnm, projnm + sizeof (projnm), tp);
+  tp = stpecpy (tp, projnm + sizeof (projnm), "_config");
 
   if (process->attr.output != NULL) {
     stpecpy (fname, fname + sizeof (fname), process->attr.output);
@@ -2091,7 +2091,7 @@ mkc_process_configure_auto (mkc_process_t *process, int defzero)
       }
     }
   } else {
-    snprintf (fname, sizeof (fname), "%s_config.h", projnm);
+    snprintf (fname, sizeof (fname), "%s.h", projnm);
   }
 
   len = strlen (projnm);
