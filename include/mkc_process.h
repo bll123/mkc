@@ -38,6 +38,7 @@ void mkc_process_stmt_profile (mkc_process_t *process, mkc_value_t *valnm);
 void mkc_process_stmt_profile_post (mkc_process_t *process);
 void mkc_process_stmt_project (mkc_process_t *process);
 int mkc_process_stmt_set (mkc_process_t *process, mkc_value_t *valnm, mkc_value_t *value);
+void mkc_process_include (mkc_process_t *process, mkc_value_t *vala, char *tbuff, size_t sz);
 
 void mkc_process_attribute (mkc_process_t *process, mkc_value_t *name, mkc_astnode_token_t asttype);
 void mkc_process_attr_comp_flags (mkc_process_t *process, mkc_value_t *value);

@@ -37,6 +37,7 @@ mkc_astnode_t * mkc_ast_mk_main (mkc_astmain_t *astmain, mkc_astnode_t *stmtlist
 mkc_astnode_t * mkc_ast_mk_stmtlist (mkc_astmain_t *astmain, mkc_astnode_t *list, mkc_astnode_t *vala, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_while (mkc_astmain_t *astmain, mkc_astnode_t *expr, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_exit (mkc_astmain_t *astmain, int32_t lineno, int colno);
+void mkc_ast_process_include (mkc_astmain_t *astmain, mkc_astnode_t *vala, char *tbuff, size_t sz, int32_t lineno, int colno);
 
 mkc_astnode_t * mkc_ast_mk_configure (mkc_astmain_t *astmain, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
 mkc_astnode_t * mkc_ast_mk_debug (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *valb, int32_t lineno, int colno);
@@ -64,7 +65,6 @@ mkc_astmain_t * mkc_ast_init (mkc_log_t *log, mkc_option_t *mkcoptions, mkc_erro
 int32_t mkc_ast_start (mkc_astmain_t *);
 void mkc_ast_free (mkc_astmain_t *astmain);
 mkc_astnode_t * mkc_ast_get_main (mkc_astmain_t *astmain);
-const char * mkc_ast_get_str (mkc_astmain_t *astmain, mkc_astnode_t *astnode);
 
 #if defined (__cplusplus) || defined (c_plusplus)
 }

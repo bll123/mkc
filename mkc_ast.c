@@ -305,7 +305,7 @@ mkc_ast_mk_value (mkc_astmain_t *astmain, int asttype, char *str, int32_t lineno
   mkc_value_t      *value;
 
   mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
-      "ast-mk: main\n");
+      "ast-mk: mk-value\n");
 
   astnode = mkc_astnode_init (astmain, MKC_T_VALUE, lineno, colno);
   if (astnode == NULL) {
@@ -783,6 +783,22 @@ mkc_ast_mk_exit (mkc_astmain_t *astmain,
   return astnode;
 }
 
+void
+mkc_ast_process_include (mkc_astmain_t *astmain, mkc_astnode_t *vala,
+    char *tbuff, size_t sz,
+    int32_t lineno, int colno)
+{
+  mkc_value_t     *value = NULL;
+
+  if (vala->asttype != MKC_T_VALUE) {
+    return;
+  }
+
+  value = &vala->value.value;
+
+  mkc_process_include (astmain->process, value, tbuff, sz);
+}
+
 mkc_astnode_t *
 mkc_ast_mk_loop_control (mkc_astmain_t *astmain, mkc_astnode_token_t asttype,
     int32_t lineno, int colno)
@@ -1003,38 +1019,6 @@ mkc_ast_get_main (mkc_astmain_t *astmain)
   return astmain->mainnode;
 }
 
-const char *
-mkc_ast_get_str (mkc_astmain_t *astmain, mkc_astnode_t *astnode)
-{
-  const char      *str;
-  mkc_ast_value_t *astvalue;
-  mkc_value_t     *value;
-
-  if (astnode == NULL) {
-    return NULL;
-  }
-
-// ### this is a bit simplistic, needs to be fixed
-// to handle variables.
-// this routine is used by mkc_grammar.y to get a string
-// value for the 'include' statement.
-  if (astnode->asttype != MKC_T_VALUE) {
-    return NULL;
-  }
-
-  astvalue = &astnode->value;
-  value = &astvalue->value;
-
-  if (value->vtype == MKC_VT_INTEGER ||
-      value->vtype == MKC_VT_INVALID ||
-      value->vtype == MKC_VT_LIST) {
-    return NULL;
-  }
-
-  str = value->sval;
-  return str;
-}
-
 /* internal routines */
 
 /* depth is the indentation-depth */
@@ -1095,12 +1079,18 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       }
 
       {
-        char  tbuff [MKC_PATH_MAX];
+        char    *tbuff;
 
+        tbuff = malloc (MKC_PATH_MAX);
+        if (tbuff == NULL) {
+          mkc_error_set (astmain->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+          break;
+        }
         mkc_log_loc (astmain->log, MKC_LOG_AST,
             astnode->lineno, astnode->colno,
             "%*s%s\n", astmain->depth * 2, " ",
-            mkc_value_to_str (value, tbuff, sizeof (tbuff)));
+            mkc_value_to_str (value, tbuff, MKC_PATH_MAX));
+        free (tbuff);
       }
 
       memcpy (&astmain->value, value, sizeof (mkc_value_t));

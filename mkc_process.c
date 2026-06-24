@@ -733,6 +733,22 @@ mkc_process_stmt_set (mkc_process_t *process,
 }
 
 void
+mkc_process_include (mkc_process_t *process, mkc_value_t *vala,
+    char *tbuff, size_t sz)
+{
+  if (process == NULL) {
+    return;
+  }
+  if (vala == NULL) {
+    mkc_error_set (process->mkcerr, MKC_ERR_NULL_ARGUMENT, 0, NULL);
+    return;
+  }
+
+  *tbuff = '\0';
+  mkc_pvar_value_get_str (process->pvar, vala, tbuff, sz);
+}
+
+void
 mkc_process_attribute (mkc_process_t *process, mkc_value_t *valname,
     mkc_astnode_token_t asttype)
 {

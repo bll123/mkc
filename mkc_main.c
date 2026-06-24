@@ -182,7 +182,6 @@ main (int argc, char *argv [])
     mkc_log (log, MKC_LOG_AST_PROCESS, "-- cache out of date\n");
   }
 
-fprintf (stderr, "main: parse-start: %s\n", argcopy.utf8argv [fnidx]);
   mkc_parse_start (parse, fh);
   if (mkc_error_chk_err (mkcerr)) {
     rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
@@ -190,7 +189,6 @@ fprintf (stderr, "main: parse-start: %s\n", argcopy.utf8argv [fnidx]);
   }
 
   if (loadcache) {
-fprintf (stderr, "main: load-cache\n");
     const char    *fname = "mkc_files/cache.mkc";
     char          cmd [MKC_PATH_MAX];
 
@@ -206,9 +204,7 @@ fprintf (stderr, "main: load-cache\n");
   }
 
   mkc_parse_set_filename (parse, argcopy.utf8argv [fnidx]);
-fprintf (stderr, "main: call parse\n");
   rc = mkc_parse (parse, mkc_parse_get_scanner (parse), astmain, mkcerr);
-fprintf (stderr, "main: parse %d\n", rc);
 
   mkc_parse_finish (parse);
   mkc_parse_free (parse);

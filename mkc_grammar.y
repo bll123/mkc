@@ -552,24 +552,28 @@ directive[v]:
     }
   ;
 
-// ### this needs to be fixed to allow a 'pathname' type.
 includestmt[v]:
     T_STMT_INCLUDE pathname[a] T_SEMICOLON
     {
-      const char  *fn;
+      char    fn [MKC_PATH_MAX];
 
-      fn = mkc_ast_get_str (ast, $a);
-      if (fn != NULL) {
+      *fn = '\0';
+      mkc_ast_process_include (ast, $a, fn, sizeof (fn),
+          yylloc.first_line, yylloc.first_column);
+
+      if (*fn) {
         FILE    *fh;
         int     rc;
 
         mkc_parse_set_filename (parse, fn);
         fh = mkc_fopen (fn, "r");
-        mkc_parse_start (parse, fh);
-        rc = mkc_parse (parse, scanner, ast, mkcerr);
-        mkc_parse_finish (parse);
-        if (rc != 0) {
-          YYABORT;
+        if (fh != NULL) {
+          mkc_parse_start (parse, fh);
+          rc = mkc_parse (parse, scanner, ast, mkcerr);
+          mkc_parse_finish (parse);
+          if (rc != 0) {
+            YYABORT;
+          }
         }
       }
       $v = mkc_ast_get_main (ast);
