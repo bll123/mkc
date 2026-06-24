@@ -26,6 +26,7 @@
 #include "mkc_fileop.h"
 #include "mkc_log.h"
 #include "mkc_parse.h"
+#include "mkc_path.h"
 #include "mkc_profile.h"
 #include "mkc_string.h"
 #include "mkc_tmutil.h"
@@ -64,6 +65,8 @@ main (int argc, char *argv [])
   int             rc = 0;
   time_t          cachetm;
   time_t          mkctm;
+  char            logname [MKC_PATH_MAX];
+  char            cachename [MKC_PATH_MAX];
 
   static struct option mkc_cli_opts [] = {
     { "compiler",       required_argument,  NULL,   3, },
@@ -141,8 +144,9 @@ main (int argc, char *argv [])
   }
 
   log = mkc_log_init (mkcerr);
-//  mkc_log_open (log, "mkc_files/log-mkc.txt", MKC_LOG_NORMAL);
-  mkc_log_open (log, "mkc_files/log-mkc.txt", MKC_LOG_ALL);
+  mkc_path_build (MKC_PATH_MKC_FILES, logname, sizeof (logname), "log-mkc.txt", mkcerr);
+//  mkc_log_open (log, logname, MKC_LOG_NORMAL);
+  mkc_log_open (log, logname, MKC_LOG_ALL);
 
   fnidx = optind;
   if (fnidx >= argcopy.nargc) {
@@ -174,7 +178,9 @@ main (int argc, char *argv [])
     mkc_message ("-- cache disabled by user\n");
   }
 
-  cachetm = mkc_file_modtime ("mkc_files/cache.mkc");
+  mkc_path_build (MKC_PATH_MKC_FILES, cachename, sizeof (cachename), "cache.mkc", mkcerr);
+
+  cachetm = mkc_file_modtime (cachename);
   mkctm = mkc_file_modtime (argcopy.utf8argv [fnidx]);
   if (mkctm >= cachetm) {
     loadcache = false;
@@ -189,15 +195,14 @@ main (int argc, char *argv [])
   }
 
   if (loadcache) {
-    const char    *fname = "mkc_files/cache.mkc";
-    char          cmd [MKC_PATH_MAX];
+    char          cmd [MKC_PATH_MAX + 40];
 
-    snprintf (cmd, sizeof (cmd), "include '%s';", fname);
+    snprintf (cmd, sizeof (cmd), "include '%s';", cachename);
 
     mkc_message ("-- loading cache\n");
     mkc_parse_buffer (parse, cmd);
 
-    mkc_parse_set_filename (parse, fname);
+    mkc_parse_set_filename (parse, cachename);
     rc = mkc_parse (parse, mkc_parse_get_scanner (parse), astmain, mkcerr);
 
     mkc_parse_finish (parse);
