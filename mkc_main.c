@@ -132,6 +132,9 @@ main (int argc, char *argv [])
         break;
       }
       case 5: {
+        if (optarg != NULL) {
+          mkc_path_set_dir_mkc_files (argcopy.utf8argv [optind - 1]);
+        }
         break;
       }
       case 6: {

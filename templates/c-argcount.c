@@ -1,8 +1,8 @@
-/* this is a compile and execute test */
+/* this is a compile only test */
 /* the c-preprocessor output is processed to get the function arguments */
 
 /* clean up the argument list, remove all the extra stuff */
-#if _have_variadic_macros
+#if ${MKC_I_VARIADIC_MACRO}
 # define __asm__(...)
 #else
 # define __asm__(a)

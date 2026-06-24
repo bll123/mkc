@@ -18,6 +18,7 @@ char const * const typenames [MKC_T_MAX] = {
   [MKC_T_ATTR_OUTPUT] = "output",
   [MKC_T_ATTR_PATH] = "path",
   [MKC_T_ATTR_SOURCE] = "source",
+  [MKC_T_CHK_ARG_COUNT] = "arg_count",
   [MKC_T_CHK_COMP_FLAG] = "compiler_flag",
   [MKC_T_CHK_CONST] = "constant",
   [MKC_T_CHK_DEFINE] = "define",

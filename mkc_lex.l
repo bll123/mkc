@@ -147,6 +147,7 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 "option"      { return T_STMT_OPTION; }
 "project"     { return T_STMT_PROJECT; }
 
+"check_arg_count"           { return T_CHK_ARG_COUNT; }
 "check_compile_flag"        { return T_CHK_COMP_FLAG; }
 "check_constant"            { return T_CHK_CONST; }
 "check_define"              { return T_CHK_DEFINE; }

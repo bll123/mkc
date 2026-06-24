@@ -1193,6 +1193,11 @@ mkc_process_check (mkc_process_t *process, mkc_value_t *valconst,
   tmp = mkc_pvar_name_alloc (pvar, tnm);
 
   switch (iasttype) {
+    case MKC_T_CHK_ARG_COUNT: {
+      valtype = true;
+      rc = mkc_chk_arg_count (process->check, process->attr.currcompiler, txt);
+      break;
+    }
     case MKC_T_CHK_CONST: {
       successtype = true;
       rc = mkc_chk_const (process->check, process->attr.currcompiler, txt);
@@ -2256,7 +2261,7 @@ mkc_process_find_executables (mkc_process_t *process)
     return;
   }
 
-  tbuff = malloc (MKC_LARGE_BUFF_SZ);
+  tbuff = malloc (MKC_SMALL_BUFF_SZ);
   if (tbuff == NULL) {
     mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
     return;
@@ -2267,7 +2272,7 @@ mkc_process_find_executables (mkc_process_t *process)
     return;
   }
 
-  mkc_env_get ("PATH", tbuff, MKC_LARGE_BUFF_SZ);
+  mkc_env_get ("PATH", tbuff, MKC_SMALL_BUFF_SZ);
 
   tpath = mkc_strtok (tbuff, pathdelim, &tokstr);
   while (tpath != NULL) {

@@ -126,6 +126,7 @@
 %token T_STMT_PRINT           "print"
 %token T_STMT_PROFILE         "profile"
 
+%token T_CHK_ARG_COUNT        "check_arg_count"
 %token T_CHK_COMP_FLAG        "check_compile_flag"
 %token T_CHK_CONST            "check_const"
 %token T_CHK_DEFINE           "check_define"
@@ -176,7 +177,7 @@
 %type <astnode> includestmt profilestmt markstmt
 // checks
 %type <astnode> checkcommand chkcompflag chklinkflag
-%type <astnode> chksize chktype chkstructmember
+%type <astnode> chksize chktype chkstructmember chkargcount
 %type <astnode> chkfunction chkdefine chkconst chkpackage
 // attributes
 %type <astnode> attr attrname source header compilerflags linkflags negate
@@ -356,7 +357,11 @@ loopcontrol[v]:
   ;
 
 checkcommand[v]:
-    chkcompflag[a]
+    chkargcount[a]
+    {
+      $v = $a;
+    }
+  | chkcompflag[a]
     {
       $v = $a;
     }
@@ -663,6 +668,14 @@ setstmt[v]:
   ;
 
 // checks
+
+chkargcount[v]:
+    T_CHK_ARG_COUNT varvalue[a] stmtblock_or_semi[b]
+    {
+      $v = mkc_ast_mk_check (ast, $a, $b, MKC_T_CHK_ARG_COUNT,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
 
 chkcompflag[v]:
     T_ADD_COMP_FLAG varvalue[a] stmtblock_or_semi[b]

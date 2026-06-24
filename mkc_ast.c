@@ -1463,6 +1463,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       break;
     }
 
+    case MKC_T_CHK_ARG_COUNT:
     case MKC_T_CHK_CONST:
     case MKC_T_CHK_DEFINE:
     case MKC_T_CHK_FUNCTION:
