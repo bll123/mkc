@@ -13,27 +13,16 @@ No escapes are implemented.
 
     set junk 'string value';
 
+Unless you are embedding a variable, it is recommended that single
+quoted string be used as they are more efficient.
+
 ##### Double Quoted
 
 The only recognized escape is __\\"__.
 
     set junk "my stuff";
 
-##### Values
-
-Variable values are enclosed with ${...}
-
-    set aaa 123;
-    set bbb ${aaa};
-
-##### Environment variables
-
-    set home $ENV{HOME};
-
-##### Embedded values
-
-Double quoted strings may contain embedded values.
-At this time, the only escape that is implemented is \\".
+Double quoted strings may contain embedded variables.
 
     set j "string value";
     set k "c-compiler: ${CC}";
@@ -41,6 +30,35 @@ At this time, the only escape that is implemented is \\".
     set a 1;
     set b1 c;
     set m "b${a}: ${b${a}}";
+
+##### Path Names
+
+Path names may be left unquoted.  Path names with
+embedded spaces must be quoted.
+
+    check_size int64_t {
+      header stdint.h;
+      header /opt/local/include/stuff.h;
+    }
+
+##### Values
+
+Variable values are enclosed with braces ${...}.  Variables names may
+contain other variables.
+
+    set aaa 123;
+    set bbb ${aaa};
+    set a 1;
+    set b 2;
+    set c 3;
+    set d1 4;
+    set d2 5;
+    set d3 6;
+    set stuff ${d${b}};
+
+##### Environment variables
+
+    set home $ENV{HOME};
 
 #### Lists
 

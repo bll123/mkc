@@ -1,0 +1,66 @@
+[Wiki Home](Home)
+
+[TOC]
+
+### Overview
+
+__mkc__ is build configuration tool.  It will create a configuration
+file based on the requested checks, generate makefiles for the project,
+build the project, and install the project.
+
+See [Status](Status) for the current status and goals.
+
+##### Definitions
+
+__profile__: A profile is a namespace for variables and attributes.
+_mkc_ defines the __internal__, __global__ and __release__ profiles.
+
+A user profile can have any name.  The usual names might be
+__release__ and __debug__.
+
+A profile may have an associated compiler.
+
+__attribute__: An attribute associated with a particular statement or
+target.
+
+__target__: An executable or library or other target that will be
+built or processed.
+
+Every target has its own profile for attributes and variables.
+
+<br>References: [Syntax: Profile](SyntaxProfile.txt)
+
+##### Running __mkc__
+
+    mkc myproject.mkc
+
+If some checks fail, and you want to re-check without removing the
+cache, use the __&#8209;&#8209;retest__ command line argument.
+
+    mkc --retest myproject.mkc
+
+To select a different profile, use the __&#8209;&#8209;profile__
+command line argument.
+
+    mkc --profile debug myproject.mkc
+
+##### __mkc__ command line arguments
+
+* --compiler <compiler>
+  Select the default compiler.
+* --mkc-dir <mkc-dir>
+  Not implemented.
+* --no-cache
+  Run mkc without using the cache.
+* --parsedebug
+  Turn on bison parser debugging.
+* --prefix <prefix>
+  Not implemented.
+* --profile <profile>
+  Select the profile to use.
+* --retest
+  The cache will be loaded, but checks that failed will be re-run.
+
+
+
+[Wiki Home](Home)

@@ -6,22 +6,16 @@
     profile <profile-name> { <statement-list> };
 
 if _profile-name_ is active, then the statements in _statement-list_
-will be run.
+will be run.  The profile is selected on the command line using the
+__&#8209;&#8209;profile__ argument.
 
 _profile-name_ is usually a user-defined name.
 _mkc_ defined names are __internal__, __global__ and __release__.
 
-The following pattern sets the profile for all actions following the
-profile statement.  Be aware that this will override any profile set
-on the command line.  This pattern is used for debugging and
-testing.
-
-    profile <profile-name>;
-
 When a variable is used, _mkc_ will check the profiles in the
 following order:
 
-* local variables
+* local variables (foreach, functions)
 * target / compiler
 * target
 * user-profile / compiler
@@ -30,7 +24,7 @@ following order:
 * global
 * internal
 
-##### Allowed Attributes
+##### Attributes
 
 * [compiler](SyntaxCompiler)
 

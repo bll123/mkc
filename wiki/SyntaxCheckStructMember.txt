@@ -12,6 +12,18 @@ Checks to see if _member-name_ exists in _struct-name_.
 Generated Name: Prefix __\_member\___
 <br>Example: _member_struct_stat_st_mode
 
+##### Examples
+
+    check_struct_member 'struct stat' st_mode {
+      header sys/stat.h;
+    }
+
+##### Attributes
+
+* [header](SyntaxHeader)
+* [name](SyntaxName)
+* [compiler_flags](SyntaxCompileFlag)
+
 [Wiki Home](Home)
 <br>[Syntax](Syntax)
 <br>[Checks](SyntaxCheck)

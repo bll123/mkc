@@ -12,6 +12,19 @@ Checks if _type-name_ exists.
 Generated Name: Prefix __\_type\___
 <br>Example: _type_uid_t
 
+##### Examples
+
+    check_type int64_t;
+    check_type uid_t {
+      header unistd.h;
+    }
+
+##### Attributes
+
+* [compiler_flags](SyntaxCompileFlag)
+* [header](SyntaxHeader)
+* [name](SyntaxName)
+
 [Wiki Home](Home)
 <br>[Syntax](Syntax)
 <br>[Checks](SyntaxCheck)

@@ -9,33 +9,19 @@
     // comments may start with //
     # or with #
 
-##### Definitions
-
-__target__: An executable or library or other target that will be
-built or processed.
-
-__profile__: A profile is a namespace for variables and attributes.
-_mkc_ defines the __internal__, __global__ and __release__ profiles.
-
-A user profile can have any name.  The usual names might be
-__release__ and __debug__.
-
-Every target has its own profile with its own attributes and variables.
-
-A profile may have an associated compiler.
-<br>References: [Syntax: Profile](SyntaxProfile.txt)
-
 ##### Statements
 
-  * [Project Statement](SyntaxProject)
-  * [Profile Statement](SyntaxProfile)
-  * [Set Statement](SyntaxSet)
   * [Values and Variables](SyntaxVariable)
-  * [Flow Control Statements](SyntaxControl)
   * [Expressions](SyntaxExpression)
-  * [Include](SyntaxInclude)
-  * [Print](SyntaxPrint)
-  * [Directives](SyntaxDirective)
+  * Statements
+      * [Flow Control Statements](SyntaxControl)
+        if, exit, while, foreach
+      * [Include](SyntaxInclude)
+      * [Print](SyntaxPrint)
+      * [Project Statement](SyntaxProject)
+      * [Profile Statement](SyntaxProfile)
+      * [Set Statement](SyntaxSet)
+      * [Directives](SyntaxDirective)
   * [Check Statements](SyntaxCheck)
       * [Check/Add Compiler Flag](SyntaxCheckCompilerFlag)
       * [Check Constant](SyntaxCheckConstant)
@@ -55,5 +41,6 @@ A profile may have an associated compiler.
       * [Method](SyntaxMethod)
       * [Name](SyntaxName)
       * [Output](SyntaxOutput)
+      * [Path](SyntaxPath)
 
 [Wiki Home](Home)

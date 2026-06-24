@@ -14,6 +14,26 @@ found.
 Generated Name: Prefix __\_function\___
 <br>Example: _function_statvfs
 
+##### Examples
+
+    check_function malloc;
+    check_function fstat {
+      header sys/stat.h;
+    }
+    if (! MKC_SYS_WINDOWS) {
+      check_function MAX {
+        header sys/param.h;
+        name _function_max;
+      }
+    }
+
+##### Attributes
+
+* [header](SyntaxHeader)
+* [name](SyntaxName)
+* [compiler_flags](SyntaxCompileFlag)
+* [link_flags](SyntaxLinkFlag)
+
 [Wiki Home](Home)
 <br>[Syntax](Syntax)
 <br>[Checks](SyntaxCheck)

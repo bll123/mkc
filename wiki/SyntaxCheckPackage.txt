@@ -11,9 +11,22 @@ Checks if package _package-name_ exists.  If it does exist,
 the _package_\_CFLAGS and _package_\_LIBS variables are also set.
 
 Generated Name: Prefix __\_package\___
-<br>Example: _package_zlib
-<br>zlib_CFLAGS
-<br>zlib_LIBS
+<br>Example: _package_zlib 1
+<br>zlib_CFLAGS [ ]
+<br>zlib_LIBS [ '-lz' ]
+
+##### Examples
+
+  check_package zlib;
+  check_package di {
+    path "$ENV{HOME}/local/lib/pkgconfig";
+  }
+
+##### Attributes
+
+* [name](SyntaxName)
+  __name__ only affects the boolean package name.
+* [path](SyntaxPath)
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

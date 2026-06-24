@@ -12,6 +12,18 @@ Checks if _constant-name_ exists and is numeric.
 Generated Name: Prefix __\_constant\___
 <br>Example: _constant_EPERM
 
+##### Examples
+
+    check_constant EPERM {
+      header errno.h;
+    }
+
+##### Attributes
+
+* [header](SyntaxHeader)
+* [name](SyntaxName)
+* [compiler_flags](SyntaxCompileFlag)
+
 [Wiki Home](Home)
 <br>[Syntax](Syntax)
 <br>[Checks](SyntaxCheck)

@@ -12,6 +12,18 @@ Checks if _macro-name_ exists as a macro.
 Generated Name: Prefix __\_define\___
 <br>Example: _define_EPERM
 
+##### Examples
+
+    check_define MAX {
+      header sys/param.h;
+    }
+
+##### Attributes
+
+* [header](SyntaxHeader)
+* [name](SyntaxName)
+* [compiler_flags](SyntaxCompileFlag)
+
 [Wiki Home](Home)
 <br>[Syntax](Syntax)
 <br>[Checks](SyntaxCheck)

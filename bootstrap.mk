@@ -74,7 +74,7 @@ oscheck:
 
 .PHONY: windows-all
 windows-all:
-	@$(MAKE) -f $(MAKEFILE) MKCOBJOSWIN="$(WINOBJ)" real-all
+	@$(MAKE) -f $(MAKEFILE) MKC_MORE_OBJ="$(WINOBJ)" real-all
 
 .PHONY: other-all
 other-all:
@@ -88,7 +88,7 @@ MKCOBJECTS = mkc_main.o mkc_grammar.o \
 	mkc_process.o mkc_context.o \
         mkc_check.o mkc_asttoken.o \
 	mkc_pvar.o mkc_os_process.o \
-	$(MKCOBJOSWIN) \
+	$(MKC_MORE_OBJ) \
         mkc_profile.o mkc_env.o mkc_tmutil.o \
         mkc_var.o mkc_log.o \
         mkc_compiler.o mkc_list.o \

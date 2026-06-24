@@ -9,6 +9,7 @@ Includes a _mkc_ configuration file and processes it.
 
 ##### Examples
 
+    include baseconfig.mkc;
     include 'cflags.mkc';
 
 [Wiki Home](Home)

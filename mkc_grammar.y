@@ -601,7 +601,7 @@ printstmt[v]:
   ;
 
 profilestmt[v]:
-    T_STMT_PROFILE varname[a] stmtblock_or_semi[b]
+    T_STMT_PROFILE varname[a] stmtblock[b]
     {
       $v = mkc_ast_mk_profile (ast, $a, $b,
           yylloc.first_line, yylloc.first_column);

@@ -5,38 +5,45 @@
 
 ### Syntax: Control Statements
 
-#### if Statements
+##### if Statements
 
-    if (_expr_) {
-      _statement-list_
+    if (<expr>) {
+      <statement-list>
     }
 
-    if (_expr_) {
-      _statement-list_
+    if (<expr>) {
+      <statement-list>
     } else {
-      _statement-list_
+      <statement-list>
     }
 
-    if (_expr_) {
-      _statement-list_
-    } else if (_expr_) {
-      _statement-list_
+    if (<expr>) {
+      <statement-list>
+    } else if (<expr>) {
+      <statement-list>
     }
 
-    if (_expr_) {
-      _statement-list_
-    } else if (_expr_) {
-      _statement-list_
-    } else if (_expr_) {
-      _statement-list_
+    if (<expr>) {
+      <statement-list>
+    } else if (<expr>) {
+      <statement-list>
+    } else if (<expr>) {
+      <statement-list>
     } else {
-      _statement-list_
+      <statement-list>
     }
 
-#### while statement
+##### exit statement
 
-    while (_expr_) {
-      _statement-list_
+Stops processing.  Used when debugging a .mkc configuration file.
+All statements after the __exit__ statement are ignored.
+
+    exit;
+
+##### while statement
+
+    while (<expr>) {
+      <statement-list>
     }
 
 __break__ and __continue__ statements may appear in while loops.
@@ -44,7 +51,15 @@ __break__ and __continue__ statements may appear in while loops.
     break;
     continue;
 
-#### foreach statement (not yet implemented)
+##### foreach statement (not yet implemented)
+
+    foreach <var-name> <list> {
+      <statement-list>
+    }
+
+    foreach <var-name> <integer-value-1>..<integer-value-2> {
+      <statement-list>
+    }
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

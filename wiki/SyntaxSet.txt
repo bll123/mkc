@@ -3,7 +3,8 @@
 
 ### Syntax: set
 
-Variable names may contain any valid UTF-8 character.
+Variable names may contain any valid UTF-8 character.  There are no
+validity checks to exclude unusual UTF-8 characters.
 
 Variable names may not contain spaces.
 
@@ -18,6 +19,23 @@ a variable, an expression, or a list.
 This form of __set__ is used internally by the cache to set the context.
 _context_ may be one of _check_, _env_, _flag_, _mkc_, _temp_,
 _disable_, _enable_.
+
+##### Examples
+
+    set a 1;
+    set b 'hello';
+    set c 'world';
+    set d "${b} ${c}";
+    set h $ENV{HOME};
+    print ${d};
+
+##### Attributes
+
+* context
+
+##### References
+
+[Syntax: Variables](SyntaxVariable)
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

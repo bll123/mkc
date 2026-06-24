@@ -15,11 +15,11 @@ CFLAGS for the current profile.
 Because _gcc_ will not create a warning or error when a compiler flag
 is prefixed with '-Wno-', it is necessary to check the compiler flag
 without the '-Wno-' prefix.  To do this, append a statement block to
-the check, and add the _negate;_ statement.
+the check, and add the __negate__ attribute.
 
 But be aware that some warning flags such as
 '-Wno-poison-system-directories' for MacOS/clang do not have an
-opposite and cannot be tested with the negate attribute.
+opposite and cannot be tested with the __negate__ attribute.
 
 Generated Name: Prefix: __cf\___
 <br>The leading '-' or '-W' is removed from the name.
@@ -29,7 +29,19 @@ Generated Name: Prefix: __cf\___
 
     add-compile-flag '-DNO_DEPRECATED';
 
-Adds a compiler flag without any check.
+Adds a compiler flag without any check for validity.
+
+##### Examples
+
+    check_compile_flag '-Wall';
+    check_compile_flag '-Wformat';
+
+##### Attributes
+
+* [header](SyntaxHeader)
+* [name](SyntaxName)
+* negate
+* [compiler_flags](SyntaxCompileFlag)
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

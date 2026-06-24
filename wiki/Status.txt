@@ -2,14 +2,16 @@
 
 ### Status
 
-##### 2026-6-22 pre-alpha
+##### 2026-6-24 pre-alpha
 
 Basic syntax is working.  I believe I have figured a decent
 syntax to handle the profiles/targets and their attributes.
 
 Just working through everything, cleaning up, adding more checks.
 The current goal is to get the configuration step all working,
-and get all the infrastructure needed for a release done.
+and get all the infrastructure needed for a pre-release done.
+
+The expected first pre-release will only create a configuration file.
 
 ##### Goals
 
@@ -28,27 +30,32 @@ and get all the infrastructure needed for a release done.
     * Check for link flags. (partial)
     * Check for headers.
       Mostly not needed for modern systems.
-    * Check for library functions.
-    * Check for defines.
+      (not yet implemented)
+    * Check for library functions. (c: complete)
+    * Check for defines. (complete)
     * Check for types. (complete)
-    * Check for structure members.
+    * Check for structure members. (complete)
     * Check size of types. (complete)
     * Be able to name the checks. (complete)
-    * Configure a file.
+    * Configure a file. (complete)
     * Very simple file support (variable=something).
       This is also useful for pkg-config files.
-    * Test this with the
-      [_libmp4tag_](https://sourceforge.net/projects/libmp4tag/)
-      package.
+      (not yet implemented)
+    * Package support (via pkg-config files).  (complete)
+    * Variable cache. The usual invalidation problem.
+      complete, but could use more tests for invalidation.
+    * Test with the [libmp4tag](https://sourceforge.net/projects/libmp4tag/) package.
     * Test with _mkc_.
 * Phase 2
-    * Package support (via pkg-config files or .cmake files).
     * Test with _di_.
       _di_ checks a __lot__ of stuff.  Many checks will be missing.
       Start adding these checks in.
     * Test with _mkc_.
+    * Test with _libmp4tag_.
 * Phase 3
-    * Variable cache. The usual invalidation problem.
+    * Generate Makefiles
+      This will be difficult.
+    * Handle sub-directories
 * Phase 4
     * Build executables.
     * Build shared libraries.
@@ -57,17 +64,15 @@ and get all the infrastructure needed for a release done.
     * Test with _mkc_.
     * At this point, an alpha release could be made.
 * Phase 5
-    * Generate Makefiles
-      This will be difficult.
     * Installation process.
     * Test with _libmp4tag_.
     * Test with _di_.
     * Test with _mkc_.
     * alpha release.
 * Phase 6
-    * Be able to include other _mkc_ configuration files.
     * Test with _BallroomDJ 4_.
     * Test with _libmp4tag_.
+    * Test with _di_.
     * Test with _mkc_.
     * beta release.
 

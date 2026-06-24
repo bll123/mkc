@@ -8,5 +8,9 @@
 _value_ may be an integer, quoted string, single quoted string,
 environment variable or a variable;
 
+##### References
+
+[Syntax: Variables](SyntaxVariable)
+
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

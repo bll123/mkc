@@ -21,6 +21,18 @@ Generated Name: Prefix: __lf\___
 
 Adds a link flag without any check.
 
+##### Examples
+
+    check_link_flag '-fPIC';
+    check_link_flag '-lintl';
+
+##### Attributes
+
+* [header](SyntaxHeader)
+* [name](SyntaxName)
+* [compiler_flags](SyntaxCompileFlag)
+* [link_flags](SyntaxLinkFlag)
+
 [Wiki Home](Home)
 <br>[Syntax](Syntax)
 <br>[Checks](SyntaxCheck)

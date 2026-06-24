@@ -23,6 +23,11 @@ check_size 'DIR *' {
   header dirent.h;
 }
 
+check_size 'DIR *' {
+  name  chke;
+  header 'dirent.h';
+}
+
 if (${chka} != 0) {
   print '  ok chka';
 } else {
@@ -45,4 +50,10 @@ if (${chkd} != 0) {
   print '  ok chkd';
 } else {
   print '  fail chkd';
+}
+
+if (${chke} != 0) {
+  print '  ok chke';
+} else {
+  print '  fail chke';
 }

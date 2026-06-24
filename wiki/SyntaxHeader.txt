@@ -11,5 +11,12 @@ The headers specified will be added to the check.
 The __header__ attribute is used with a [check](SyntaxCheck)
 statement.
 
+Multiple __header__ attribute statements may be included.
+
+##### Examples
+
+    header sys/statvfs.h;
+    header stdint.h stdbool.h;
+
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

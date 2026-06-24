@@ -10,19 +10,17 @@ The _project_ statement defines attributes for the project.
 The name of the project is defined with the [name](SyntaxName) attribute.
 The default compiler is defined with the [compiler](SyntaxCompiler) attribute.
 
-##### Allowed Attributes
-
-The _project_ statement allows the following attribute statements:
-
-* [name](SyntaxName) (required)
-* [compiler](SyntaxCompiler)
-
 ##### Examples
 
     project {
       name mkc;
       compiler c;
     }
+
+##### Attributes
+
+* [name](SyntaxName) (required)
+* [compiler](SyntaxCompiler)
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

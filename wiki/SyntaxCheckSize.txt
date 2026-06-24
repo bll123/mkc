@@ -13,6 +13,19 @@ size of the type or zero if the type does not exist.
 Generated Name: Prefix __\_size\___
 <br>Example: _size_int64_t
 
+##### Examples
+
+    check_size int64_t {
+      header stdint.h;
+    }
+
+##### Attributes
+
+* [header](SyntaxHeader)
+* [name](SyntaxName)
+* [compiler_flags](SyntaxCompileFlag)
+* [link_flags](SyntaxLinkFlag)
+
 [Wiki Home](Home)
 <br>[Syntax](Syntax)
 <br>[Checks](SyntaxCheck)

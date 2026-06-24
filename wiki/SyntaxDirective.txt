@@ -3,9 +3,10 @@
 
 ### Syntax: Directives
 
-#### Internal Debugging
+##### Internal Debugging
 
     mkcdebug printvar <profile>;    # user defined profile
+    mkcdebug printvar release;
     mkcdebug printvar global;
     mkcdebug printvar internal;
     mkcdebug printvar internalall;  # including variables used internally

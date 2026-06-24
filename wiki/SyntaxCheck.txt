@@ -7,13 +7,14 @@
 
 ##### Allowed Attributes
 
-Check statements allow the following attribute statements:
+Check statements may allow the following attribute statements:
 
-* header
-* name
-* compiler_flags
-* link_flags
-* path (package, link_flags)   not yet implemented
+* [compiler_flags](SyntaxCompileFlag)
+* [header](SyntaxHeader)
+* [link_flags](SyntaxLinkFlag)
+* [name](SyntaxName)
+* negate
+* [path](SyntaxPath)
 
 ##### Setting Required Headers for a Check
 

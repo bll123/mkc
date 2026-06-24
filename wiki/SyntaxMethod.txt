@@ -9,7 +9,7 @@ used in the [configure](SyntaxConfigure) statement.
     method <method>;
 
 For a [configure](SyntaxConfigure) statement, _method_ may be one of
-_auto_, _auto-nozero_, or _manual_.
+_auto_ or _manual_.
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

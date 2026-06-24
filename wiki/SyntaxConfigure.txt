@@ -11,12 +11,10 @@ If the _method_ attribute is _auto_, the
 filename will be automatically generated based on the project name:
 _project_\_config.h .
 
-If the _method_ attribute is _manual_, the input file should
-contain
+If the __method__ attribute is _manual_, the input file is processed
+and all variable names are substituted.
 
-##### Allowed Attributes
-
-The __configure__ statement allows the following attribute statements:
+##### Attributes
 
 * [method](SyntaxMethod) (required)
 * [input](SyntaxInput) (required for manual method)
@@ -35,15 +33,20 @@ The __configure__ statement allows the following attribute statements:
 
     configure {
       method auto;
-      # the _define\_zero_ attribute will output defines if the
+      # the define_zero attribute will output defines if the
       # check failed.
       define_zero;
     }
 
 mkctest_config.h:
 
+    #ifndef INC_MKCTEST_CONFIG_H
+    #define INC_MKCTEST_CONFIG_H
+
     #define _function_malloc 1
     #define _function_junk 0
+
+    #endif /* INC_MKCTEST_CONFIG_H */
 
 ###### Example 2:
 
@@ -61,7 +64,12 @@ mkctest_config.h:
 
 myconfig.h:
 
+    #ifndef INC_MYCONFIG_H
+    #define INC_MYCONFIG_H
+
     #define _function_malloc 1
+
+    #endif /* INC_MYCONFIG_H */
 
 ###### Example 3:
 
@@ -76,14 +84,23 @@ myconfig.h:
 
 config.h.in:
 
+    #ifndef INC_CONFIG_H
+    #define INC_CONFIG_H
+
     #define HAVE_MALLOC ${_function_malloc}
     #define SHLIBEXT ${MKC_SHARED_LIBRARY_EXTENSION}
 
+    #endif /* INC_CONFIG_H */
+
 config.h:
+
+    #ifndef INC_CONFIG_H
+    #define INC_CONFIG_H
 
     #define HAVE_MALLOC 1
     #define SHLIBEXT ".so"
 
+    #endif /* INC_CONFIG_H */
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)
