@@ -1,7 +1,5 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
-profile global;
-
 # environment variables
 set a $ENV{PATH};
 if (${a} ne '' && ${a} ne '$ENV{PATH}') {

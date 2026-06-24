@@ -12,15 +12,15 @@ the _package_\_CFLAGS and _package_\_LIBS variables are also set.
 
 Generated Name: Prefix __\_package\___
 <br>Example: _package_zlib 1
-<br>zlib_CFLAGS [ ]
-<br>zlib_LIBS [ '-lz' ]
+<br>zlib_CFLAGS \[ \]
+<br>zlib_LIBS \[ '-lz' \]
 
 ##### Examples
 
-  check_package zlib;
-  check_package di {
-    path "$ENV{HOME}/local/lib/pkgconfig";
-  }
+    check_package zlib;
+    check_package di {
+      path "$ENV{HOME}/local/lib/pkgconfig";
+    }
 
 ##### Attributes
 

@@ -40,8 +40,6 @@ profile internal {
   set i 9;
 }
 
-profile release;
-
 if (${a} == 1) {
   # global
   print '  ok 1';

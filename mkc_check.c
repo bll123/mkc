@@ -909,6 +909,7 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
     return rc;
   }
   if (retsz > 0) {
+    mkc_strtrim (rbuff, retsz);
     snprintf (tmpname, sizeof (tmpname), "%s_CFLAGS", pkg);
     mkc_pvar_set_list_from_str (check->pvar, tmpname, rbuff, MKC_VCTXT_CHECK);
   }
@@ -936,6 +937,7 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
   mkc_log (check->log, MKC_LOG_CHECK, "pkg libs: %s\n", rbuff);
   mkc_log (check->log, MKC_LOG_CHECK, "  rc: %d\n", rc);
   if (retsz > 0) {
+    mkc_strtrim (rbuff, retsz);
     snprintf (tmpname, sizeof (tmpname), "%s_LIBS", pkg);
     mkc_pvar_set_list_from_str (check->pvar, tmpname, rbuff, MKC_VCTXT_CHECK);
   }
