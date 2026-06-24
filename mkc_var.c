@@ -170,7 +170,7 @@ mkc_var_name_alloc (mkc_varlist_t *varlist, const char *vname)
 
 int
 mkc_var_set (mkc_varlist_t *varlist,
-    const char *vname, mkc_value_t *value, int copyflag)
+    const char *vname, mkc_value_t *value)
 {
   mkc_err_code_t  rc = MKC_OK;
   mkc_var_t       *var;
@@ -228,11 +228,7 @@ mkc_var_set (mkc_varlist_t *varlist,
     tvalue->ival = value->ival;
   }
   if (nvtype == MKC_VT_LIST) {
-    if (copyflag == MKC_VAR_COPY) {
-      tvalue->list = mkc_var_list_copy (varlist, value->list);
-    } else {
-      tvalue->list = value->list;
-    }
+    tvalue->list = mkc_var_list_copy (varlist, value->list);
   }
 
   return rc;

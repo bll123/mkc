@@ -137,7 +137,7 @@ mkc_pvar_name_alloc (mkc_pvar_t *pvar, const char *vname)
 
 int
 mkc_pvar_set (mkc_pvar_t *pvar, const char *vname,
-    mkc_value_t *value, mkc_var_ctxt_t vctxt, int copyflag)
+    mkc_value_t *value, mkc_var_ctxt_t vctxt)
 {
   mkc_varlist_t   *varlist;
   int             rc = MKC_ERR_FAILURE;
@@ -148,7 +148,7 @@ mkc_pvar_set (mkc_pvar_t *pvar, const char *vname,
 
   varlist = mkc_profile_get_varlist (pvar->profiles, pvar->pidx);
   value->vctxt = vctxt;
-  rc = mkc_var_set (varlist, vname, value, copyflag);
+  rc = mkc_var_set (varlist, vname, value);
 
   return rc;
 }
@@ -163,7 +163,7 @@ mkc_pvar_set_integer (mkc_pvar_t *pvar,
   value.ival = ival;
   value.vtype = MKC_VT_INTEGER;
 
-  rc = mkc_pvar_set (pvar, vname, &value, vctxt, MKC_VAR_NEW);
+  rc = mkc_pvar_set (pvar, vname, &value, vctxt);
   return rc;
 }
 
@@ -177,7 +177,7 @@ mkc_pvar_set_str (mkc_pvar_t *pvar,
   value.sval = (char *) str;
   value.vtype = MKC_VT_STRING;
 
-  rc = mkc_pvar_set (pvar, vname, &value, vctxt, MKC_VAR_NEW);
+  rc = mkc_pvar_set (pvar, vname, &value, vctxt);
   return rc;
 }
 
@@ -191,7 +191,7 @@ mkc_pvar_set_list (mkc_pvar_t *pvar,
   value.list = list;
   value.vtype = MKC_VT_LIST;
 
-  rc = mkc_pvar_set (pvar, vname, &value, vctxt, MKC_VAR_NEW);
+  rc = mkc_pvar_set (pvar, vname, &value, vctxt);
   return rc;
 }
 
@@ -209,15 +209,12 @@ mkc_pvar_set_list_from_str (mkc_pvar_t *pvar,
   tlist = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, pvar->mkcerr);
   p = mkc_strtok (str, " ", &tokstr);
   while (p != NULL) {
-    char    *tp = NULL;
+    if (mkc_error_chk_err (pvar->mkcerr)) {
+      return MKC_ERR_FAILURE;
+    }
 
     mkc_strtrim (p, 0);
-    tp = strdup (p);
-    if (tp == NULL) {
-      mkc_error_set (pvar->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-      return rc;
-    }
-    value.sval = tp;
+    value.sval = p;
     value.vtype = MKC_VT_STRING;
     mkc_list_set (tlist, &value, sizeof (mkc_value_t), &loc);
     p = mkc_strtok (NULL, " ", &tokstr);
@@ -225,7 +222,10 @@ mkc_pvar_set_list_from_str (mkc_pvar_t *pvar,
 
   value.list = tlist;
   value.vtype = MKC_VT_LIST;
-  rc = mkc_pvar_set (pvar, vname, &value, vctxt, MKC_VAR_NEW);
+  rc = mkc_pvar_set (pvar, vname, &value, vctxt);
+
+  /* var-set has made a copy of the list */
+  mkc_list_free (tlist);
 
   return rc;
 }
@@ -709,6 +709,7 @@ mkc_pvar_substitute (mkc_pvar_t *pvar, const char *data, int depth)
       if (brpl == NULL) {
         mkc_error_set (pvar->mkcerr, MKC_ERR_UNBALANCED_BRACES, 0, NULL);
         fprintf (stderr, "ERROR: unbalanced braces '%s'\n", data);
+        datafree (buff);
         return NULL;
       }
     } else {
@@ -778,6 +779,7 @@ mkc_pvar_substitute (mkc_pvar_t *pvar, const char *data, int depth)
 //fprintf (stderr, "%*stval: '%s'\n", depth * 2, "", tval);
         blen += tlen;
         buff = realloc (buff, blen);
+fprintf (stderr, "buff: %p\n", buff);
         bp = buff + blen - tlen - 1;
         memcpy (bp, tval, tlen);
 //fprintf (stderr, "%*sbuff-b: '%.*s'\n", depth * 2, "", (int) blen - 1, buff);

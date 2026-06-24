@@ -4,4 +4,3 @@ project {
 }
 
 include tests/data/301-configure-b.mkc;
-

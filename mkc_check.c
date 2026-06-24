@@ -121,15 +121,10 @@ mkc_check_free (mkc_check_t *check)
     }
   }
 
-  if (check->cf != NULL) {
-    free (check->cf);
-  }
-  if (check->lf != NULL) {
-    free (check->lf);
-  }
-  if (check->targv != NULL) {
-    free (check->targv);
-  }
+  datafree (check->cf);
+  datafree (check->lf);
+  datafree (check->targv);
+  datafree (check->pkgname);
 
   free (check);
 }
@@ -934,8 +929,6 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
     return MKC_ERR_FAILURE;
   }
 
-  rsz = MKC_SMALL_BUFF_SZ;
-  rbuff = malloc (rsz);
   mkc_check_log_command (check, "pkg-libs");
 
   rc = mkc_os_process_pipe (check->targv,
@@ -950,5 +943,6 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
   mkc_pvar_profile_set_idx (check->pvar, opidx);
 
   mkc_chk_reset (check);
+  free (rbuff);
   return rc;
 }

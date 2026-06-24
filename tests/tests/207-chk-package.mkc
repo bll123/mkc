@@ -20,20 +20,20 @@ if (! is_defined (unknown_LIBS)) {
 }
 
 if (${_package_zlib} == 1) {
-  print '  ok pc';
+  print '  ok z';
 } else {
-  print '  fail pc';
+  print '  fail z';
 }
 
 # zlib_CFLAGS [ ]
 # zlib_LIBS [ -lz ]
 if (is_list (zlib_CFLAGS)) {
-  print '  ok pc';
+  print '  ok z';
 } else {
-  print '  fail pc';
+  print '  fail z';
 }
 if (is_list (zlib_LIBS)) {
-  print '  ok pc';
+  print '  ok z';
 } else {
-  print '  fail pc';
+  print '  fail z';
 }

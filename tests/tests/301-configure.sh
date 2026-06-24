@@ -45,6 +45,7 @@ function chk301 {
   fi
 }
 
+rm -f mkctest_config.h project_config.h 2>/dev/null
 
 # basic test to make sure mkctest_config.h is created
 dotest ${ddir}/301-configure.mkc

@@ -27,7 +27,7 @@ int mkc_pvar_profile_set_idx (mkc_pvar_t *pvar, mkc_profidx_t pidx);
 void mkc_pvar_set_fromcache (mkc_pvar_t *pvar, bool flag);
 
 const char *mkc_pvar_name_alloc (mkc_pvar_t *pvar, const char *vname);
-int mkc_pvar_set (mkc_pvar_t *pvar, const char *vname, mkc_value_t *value, mkc_var_ctxt_t vctxt, int copyflag);
+int mkc_pvar_set (mkc_pvar_t *pvar, const char *vname, mkc_value_t *value, mkc_var_ctxt_t vctxt);
 int mkc_pvar_set_integer (mkc_pvar_t *pvar, const char *vname, int32_t ival, mkc_var_ctxt_t vctxt);
 int mkc_pvar_set_str (mkc_pvar_t *pvar, const char *vname, const char *str, mkc_var_ctxt_t vctxt);
 int mkc_pvar_set_list (mkc_pvar_t *pvar, const char *vname, mkc_list_t *list, mkc_var_ctxt_t vctxt);

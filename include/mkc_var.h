@@ -44,8 +44,6 @@ typedef enum {
 enum {
   MKC_VAR_FOUND = MKC_LIST_FOUND,
   MKC_VAR_NOTFOUND = MKC_LIST_NOTFOUND,
-  MKC_VAR_COPY = 1,
-  MKC_VAR_NEW = 0,
 };
 
 typedef struct mkc_var_t mkc_var_t;
@@ -68,7 +66,7 @@ void mkc_var_set_fromcache (mkc_varlist_t *varlist, bool flag);
 const char *mkc_var_vctxt_str (mkc_var_ctxt_t vctxt);
 
 const char * mkc_var_name_alloc (mkc_varlist_t *varlist, const char *vname);
-int mkc_var_set (mkc_varlist_t *varlist, const char *vname, mkc_value_t *value, int copyflag);
+int mkc_var_set (mkc_varlist_t *varlist, const char *vname, mkc_value_t *value);
 void mkc_var_set_context (mkc_varlist_t *varlist, const char *vname, int vctxt);
 
 int32_t mkc_var_size (mkc_varlist_t *varlist);
