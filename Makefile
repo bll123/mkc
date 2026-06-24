@@ -3,6 +3,10 @@
 MAKEFLAGS += --no-print-directory
 BOOTSTRAPMAKE = bootstrap.mk
 
+INST_BIN_DIR = $(DESTDIR)$(PREFIX)/bin
+INST_TMPL_DIR = $(DESTDIR)$(PREFIX)/share/mkc/templates
+INST_SHR_INC_DIR = $(DESTDIR)$(PREFIX)/share/mkc/include
+
 # if the bootstrap has been run, then the Makefile will be
 # populated with the mkc generated output, and the mkc-all
 # target will exist
@@ -15,7 +19,7 @@ all:
 	  $(MAKE) bootstrap ; \
 	fi
 
-.PHONY: boostrap
+.PHONY: bootstrap
 bootstrap:
 	@$(MAKE) -f $(BOOTSTRAPMAKE) all
 
@@ -58,7 +62,7 @@ tclean:
 
 # depend for bootstrap makefile
 
-.PHONY:depend
+.PHONY: depend
 depend:
 	@if [ -f mkc_config.h ]; then \
 	  echo "mkc_config.h exists. aborting." ; \
@@ -70,5 +74,17 @@ depend:
 	        -e '/^[a-z][a-z_]*\.o:[ ]*$$/ d' \
 	        > $(BOOTSTRAPMAKE).n
 	mv $(BOOTSTRAPMAKE).n $(BOOTSTRAPMAKE)
+
+.PHONY: test-install
+test-install:
+	@if [ "$(PREFIX)" = "" ]; then echo "No prefix set"; exit 1; fi
+	@$(MAKE) tclean
+	mkdir -p $(INST_BIN_DIR)
+	mkdir -p $(INST_TMPL_DIR)
+	mkdir -p $(INST_SHR_INC_DIR)
+	cp -f mkc $(INST_BIN_DIR)
+	cp include/mkc_def.h $(INST_SHR_INC_DIR)
+	cp include/mkc_compiler.h $(INST_SHR_INC_DIR)
+	cp templates/* $(INST_TMPL_DIR)
 
 # MKC DO NOT DELETE
