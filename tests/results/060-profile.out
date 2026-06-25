@@ -1,9 +1,8 @@
 == profiles
-  development c
-  development c++
+  default c
+  default c++
   internal general
-  release c
-== development c
+== default c
   a d-c
-== development c++
+== default c++
   b d-c++

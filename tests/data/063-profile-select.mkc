@@ -10,4 +10,4 @@ project {
 set a 1;
 
 mkcdebug printvar debug;
-mkcdebug printvar development;
+mkcdebug printvar default;

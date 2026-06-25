@@ -1,11 +1,11 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
 # basic tests putting variables into different profiles
-profile development {
+profile default {
   compiler c;
   set a 'd-c';
 }
-profile development {
+profile default {
   compiler c++;
   set b 'd-c++';
 }

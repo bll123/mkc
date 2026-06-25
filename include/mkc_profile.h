@@ -34,8 +34,7 @@ enum {
 };
 
 extern char const * const MKC_PROF_INTERNAL_NAME;
-extern char const * const MKC_PROF_DEVELOPMENT_NAME;
-extern char const * const MKC_PROF_RELEASE_NAME;
+extern char const * const MKC_PROF_DEFAULT_NAME;
 extern char const * const mkcpathpkgconf;
 extern char const * const mkcpathpkgconfig;
 

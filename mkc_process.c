@@ -485,6 +485,7 @@ mkc_process_stmt_profile (mkc_process_t *process, mkc_value_t *valnm)
     pidx = mkc_profile_create (process->profiles, nm, tcompiler, MKC_PROF_TYPE_USER);
   }
 
+fprintf (stderr, "stmt-prof: set-idx: %d\n", pidx);
   mkc_pvar_profile_set_idx (process->pvar, pidx);
 }
 
@@ -494,6 +495,7 @@ mkc_process_stmt_profile_post (mkc_process_t *process)
   mkc_profidx_t   pidx;
 
   pidx = mkc_profile_pop (process->profiles);
+fprintf (stderr, "stmt-prof: post: set-idx: %d\n", pidx);
   mkc_profile_set_active (process->profiles, pidx);
   process->attr.currcompiler = process->dfltcompiler;
 }
@@ -640,6 +642,7 @@ mkc_process_stmt_mark (mkc_process_t *process,
 
   mkc_pvar_value_get_str (process->pvar, vala, nm, sizeof (nm));
   mkc_pvar_value_get_str (process->pvar, valb, val, sizeof (val));
+fprintf (stderr, "mark: %s %s\n", nm, val);
   if (*nm == '\0') {
     mkc_error_set (process->mkcerr, MKC_ERR_INVALID_ARGUMENT, 0, NULL);
     mkc_process_attr_clear (process);
@@ -647,9 +650,11 @@ mkc_process_stmt_mark (mkc_process_t *process,
   }
   if (strcmp (val, "disable-output") == 0 ||
       strcmp (val, "disable") == 0) {
+fprintf (stderr, "  disable\n");
     mkc_pvar_set_context (process->pvar, nm, MKC_VCTXT_USER_DISABLE);
   } else if (strcmp (val, "enable-output") == 0 ||
       strcmp (val, "enable") == 0) {
+fprintf (stderr, "  enable\n");
     mkc_pvar_set_context (process->pvar, nm, MKC_VCTXT_USER_ENABLE);
   } else {
     mkc_error_set (process->mkcerr, MKC_ERR_PROC_INVALID_MARK, 0, NULL);
@@ -1894,6 +1899,8 @@ mkc_process_int_checks (mkc_process_t *process)
         "-- mkc internal setup: %s\n", tbuff);
   }
 
+  mkc_log (process->log, MKC_LOG_CHECK, "== end internal checks\n");
+
   return MKC_OK;
 }
 
@@ -2037,8 +2044,10 @@ mkc_process_configure_auto (mkc_process_t *process, int defzero)
     if (mkc_pvar_profile_set_idx (process->pvar, pidx) == MKC_PROF_NOT_FOUND) {
       continue;
     }
+fprintf (stderr, "iter: %s %d\n", mkc_profile_get_name (profiles, pidx), mkc_profile_get_compiler (profiles, pidx));
 
     if (mkc_pvar_size (process->pvar) == 0) {
+fprintf (stderr, "  no data\n");
       continue;
     }
 
@@ -2048,9 +2057,11 @@ mkc_process_configure_auto (mkc_process_t *process, int defzero)
       mkc_value_t     *value;
 
       nm = mkc_pvar_get_name (pvar, vidx);
+fprintf (stderr, "  v-iter: %s %d\n", nm, vidx);
       value = mkc_pvar_get_by_idx (pvar, vidx);
       if (value->vctxt != MKC_VCTXT_CHECK &&
           value->vctxt != MKC_VCTXT_USER_ENABLE) {
+fprintf (stderr, "    wrong context\n");
         continue;
       }
 

@@ -21,7 +21,6 @@ check_function other;
 mark _function_malloc disable-output;
 
 profile internal {
-  # for the purposes of this tests, pick a variable with a static value
   mark MKC_SYS_UNKNOWN enable-output;
 }
 

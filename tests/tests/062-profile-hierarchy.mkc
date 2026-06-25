@@ -1,7 +1,7 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
 # profile hierarchy
-# only development/internal at this testing level
+# only default/internal at this testing level
 
 project {
   name mkctest;
@@ -11,16 +11,16 @@ project {
 set d 4;
 set c 3;
 
-profile development {
+profile default {
   set f 6;
   set e 5;
 }
-profile development {
+profile default {
   compiler c;
   set h 8;
   set g 7;
 }
-profile development {
+profile default {
   compiler c++;
   set m 13;
   set l 12;
@@ -30,27 +30,27 @@ profile internal {
 }
 
 if (${c} == 3) {
-  # development c
+  # default c
   print '  ok 3';
 }
 if (${d} == 4) {
-  # development c
+  # default c
   print '  ok 4';
 }
 if (${e} == 5) {
-  # development c
+  # default c
   print '  ok 5';
 }
 if (${f} == 6) {
-  # development c
+  # default c
   print '  ok 6';
 }
 if (${g} == 7) {
-  # development c
+  # default c
   print '  ok 7';
 }
 if (${h} == 8) {
-  # development c
+  # default c
   print '  ok 8';
 }
 if (${i} == 9) {
@@ -58,12 +58,12 @@ if (${i} == 9) {
   print '  ok 9';
 }
 if (${l} == 12) {
-  # development c++
+  # default c++
   # will not print, as the compiler is set to 'c'
   print '  ng 12';
 }
 if (${m} == 13) {
-  # development c++
+  # default c++
   # will not print, as the compiler is set to 'c'
   print '  ng 13';
 }

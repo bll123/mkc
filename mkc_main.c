@@ -95,7 +95,7 @@ main (int argc, char *argv [])
   }
 #endif
 
-  mkcoptions.dfltprof = MKC_PROF_DEVELOPMENT_NAME;
+  mkcoptions.dfltprof = MKC_PROF_DEFAULT_NAME;
   mkcoptions.compilertxt = NULL;
   mkcoptions.mkcfile_dir = NULL;
   mkcoptions.stage = NULL;

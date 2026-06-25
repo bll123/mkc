@@ -4,13 +4,13 @@
   ok 6
   ok 7
   ok 8
-== development c
+== default c
   c 3
   d 4
   e 5
   f 6
   g 7
   h 8
-== development c++
+== default c++
   l 12
   m 13

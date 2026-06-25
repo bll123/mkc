@@ -44,8 +44,7 @@ typedef struct mkc_profile_t {
 } mkc_profile_t;
 
 char const * const MKC_PROF_INTERNAL_NAME = "internal";
-char const * const MKC_PROF_DEVELOPMENT_NAME = "development";
-char const * const MKC_PROF_RELEASE_NAME = "release";
+char const * const MKC_PROF_DEFAULT_NAME = "default";
 char const * const mkcpathpkgconf = "MKC_PATH_PKGCONF";
 char const * const mkcpathpkgconfig = "MKC_PATH_PKG_CONFIG";
 
@@ -91,9 +90,7 @@ mkc_profile_init (mkc_log_t *log, mkc_error_t *mkcerr, mkc_option_t *mkcoptions)
 
   mkc_profile_create (profiles, MKC_PROF_INTERNAL_NAME,
       MKC_COMPILER_GENERAL, MKC_PROF_TYPE_INTERNAL);
-  pidx = mkc_profile_create (profiles, MKC_PROF_RELEASE_NAME,
-      profiles->dfltcompiler, MKC_PROF_TYPE_USER);
-  pidx = mkc_profile_create (profiles, MKC_PROF_DEVELOPMENT_NAME,
+  pidx = mkc_profile_create (profiles, MKC_PROF_DEFAULT_NAME,
       profiles->dfltcompiler, MKC_PROF_TYPE_USER);
 
   pidx = mkc_profile_find (profiles,

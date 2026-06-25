@@ -1306,11 +1306,13 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
         break;
       }
 
+fprintf (stderr, "ast: stmt-prof: %s\n", valnm->sval);
       mkc_process_stmt_profile (astmain->process, valnm);
       mkc_context_push (astmain->context, MKC_CONTEXT_PROFILE, astmain->mkcerr);
       mkc_ast_process (astmain, astnode->profilestmt.stmtblock, ifcond, loopcond, depth + 1);
       mkc_context_pop (astmain->context);
       mkc_process_stmt_profile_post (astmain->process);
+fprintf (stderr, "ast: stmt-prof fin: %s\n", valnm->sval);
       break;
     }
 
