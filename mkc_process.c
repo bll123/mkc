@@ -993,9 +993,8 @@ mkc_process_attr_compiler (mkc_process_t *process, mkc_value_t *name)
   }
 
   /* the compiler attribute is only allowed in */
-  /* project and profile statements */
-  if (! mkc_context_check (process->context,
-      MKC_CONTEXT_PROJECT | MKC_CONTEXT_PROFILE)) {
+  /* profile statements */
+  if (! mkc_context_check (process->context, MKC_CONTEXT_PROFILE)) {
     mkc_error_set (process->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
     return;
   }

@@ -2,7 +2,6 @@
 
 project {
   name mkctest;
-  compiler c;
 }
 
 check_size int32_t {

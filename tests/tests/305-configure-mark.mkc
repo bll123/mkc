@@ -2,7 +2,6 @@
 
 project {
   name mkctest;
-  compiler c;
 }
 
 # these go into the current profile

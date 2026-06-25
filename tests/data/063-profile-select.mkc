@@ -4,7 +4,6 @@
 
 project {
   name mkctest;
-  compiler c;
 }
 
 set a 1;
