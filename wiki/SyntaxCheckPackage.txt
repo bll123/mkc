@@ -4,11 +4,15 @@
 
 ### Check Package
 
-    check_package <package-name>;
-    check_package <package-name> { <attribute-statements> }
+    check_package '<package-name>';
+    check_package '<package-name>' { <attribute-statements> }
 
 Checks if package _package-name_ exists.  If it does exist,
 the _package_\_CFLAGS and _package_\_LIBS variables are also set.
+
+The __name__ attribute has special treatment for packages.  The
+__name__ attribute will replace the _package-name_ in the variable
+names.
 
 Generated Name: Prefix __\_package\___
 <br>Example: _package_zlib 1
@@ -22,10 +26,17 @@ Generated Name: Prefix __\_package\___
       path "$ENV{HOME}/local/lib/pkgconfig";
     }
 
+    # variables: _package_glib_2_0, glib_2_0_CFLAGS, glib_2_0_LIBS
+    check_package glib-2.0;
+
+    # variables: _package_glib, glib_CFLAGS, glib_LIBS
+    check_package glib-2.0 {
+      name glib;
+    }
+
 ##### Attributes
 
 * [name](SyntaxName)
-  __name__ only affects the boolean package name.
 * [path](SyntaxPath)
 
 [Wiki Home](Home)

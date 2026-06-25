@@ -198,23 +198,23 @@ main (int argc, char *argv [])
   }
 
   if (loadcache) {
-    char          cmd [MKC_PATH_MAX + 40];
+    FILE    *cfh;
 
-    snprintf (cmd, sizeof (cmd), "include '%s';", cachename);
+    cfh = mkc_fopen (cachename, "r");
+    if (cfh == NULL) {
+      mkc_error_set (mkcerr, MKC_ERR_FILE_NOT_FOUND, errno, cachename);
+      rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
+      return rc;
+    }
 
     mkc_message ("-- loading cache\n");
-    mkc_parse_buffer (parse, cmd);
-
+    mkc_parse_start (parse, cfh);
     mkc_parse_set_filename (parse, cachename);
-    rc = mkc_parse (parse, mkc_parse_get_scanner (parse), astmain, mkcerr);
-
-    mkc_parse_finish (parse);
   }
 
   mkc_parse_set_filename (parse, argcopy.utf8argv [fnidx]);
   rc = mkc_parse (parse, mkc_parse_get_scanner (parse), astmain, mkcerr);
 
-  mkc_parse_finish (parse);
   mkc_parse_free (parse);
 
   if (mkc_error_chk_err (mkcerr)) {

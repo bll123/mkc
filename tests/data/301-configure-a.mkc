@@ -1,6 +1,8 @@
+# Copyright 2026 Brad Lanam Pleasant Hill CA
+
 project {
   name mkctest;
   compiler c;
 }
 
-include tests/data/301-configure-b.mkc;
+include 'tests/data/301-configure-b.mkc';

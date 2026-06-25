@@ -79,38 +79,6 @@ mkc_parse_start (mkc_parse_t *parse, FILE *fh)
   return MKC_OK;
 }
 
-int
-mkc_parse_buffer (mkc_parse_t *parse, const char *str)
-{
-  if (parse == NULL) {
-    return MKC_ERR_FAILURE;
-  }
-  if (str == NULL) {
-    mkc_error_set (parse->mkcerr, MKC_ERR_NULL_ARGUMENT, 0, NULL);
-    return MKC_ERR_FAILURE;
-  }
-
-  /* https://stackoverflow.com/questions/20290427/flex-create-a-buffer-state-from-a-string-without-setting-it-as-the-active-buff */
-  parse->obuffer = parse->buffer;
-  parse->buffer = mkcyy_scan_string (str, parse->scanner);
-  if (parse->obuffer != NULL) {
-    mkcyy_switch_to_buffer (parse->obuffer, parse->scanner);
-  }
-  mkcyypush_buffer_state (parse->buffer, parse->scanner);
-
-  return MKC_OK;
-}
-
-void
-mkc_parse_finish (mkc_parse_t *parse)
-{
-  if (parse == NULL) {
-    return;
-  }
-
-  mkcyypop_buffer_state (parse->scanner);
-}
-
 void *
 mkc_parse_get_scanner (mkc_parse_t *parse)
 {

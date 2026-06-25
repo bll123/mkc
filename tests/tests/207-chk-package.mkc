@@ -2,6 +2,9 @@
 
 check_package unknown;
 check_package zlib;
+check_package zlib {
+  name z;
+}
 
 if (${_package_unknown} == 0) {
   print '  ok u';
@@ -20,19 +23,42 @@ if (! is_defined (unknown_LIBS)) {
 }
 
 if (${_package_zlib} == 1) {
+  print '  ok zlib';
+} else {
+  print '  fail zlib';
+}
+
+set a ${zlib_CFLAGS};
+set b ${zlib_LIBS};
+# zlib_CFLAGS [ ]
+# zlib_LIBS [ -lz ]
+if (is_list (a)) {
+  print '  ok zlib';
+} else {
+  print '  fail zlib';
+}
+if (is_list (b)) {
+  print '  ok zlib';
+} else {
+  print '  fail zlib';
+}
+
+if (${_package_z} == 1) {
   print '  ok z';
 } else {
   print '  fail z';
 }
 
-# zlib_CFLAGS [ ]
-# zlib_LIBS [ -lz ]
-if (is_list (zlib_CFLAGS)) {
+set a ${z_CFLAGS};
+set b ${z_LIBS};
+# z_CFLAGS [ ]
+# z_LIBS [ -lz ]
+if (is_list (a)) {
   print '  ok z';
 } else {
   print '  fail z';
 }
-if (is_list (zlib_LIBS)) {
+if (is_list (b)) {
   print '  ok z';
 } else {
   print '  fail z';

@@ -167,14 +167,14 @@
 
 %type <astnode> funcargs
 
-%type <astnode> mkc stmtblock_or_semi stmtblock stmtlist stmt
+%type <astnode> stmtblock_or_semi stmtblock stmtlist stmt
 %type <astnode> directive
 // program control
 %type <astnode> ifexpr ifstmt elseif elseclause
 %type <astnode> foreachstmt whilestmt function loopcontrol
 // commands
 %type <astnode> printstmt setstmt configurestmt projectstmt loadcachestmt
-%type <astnode> includestmt profilestmt markstmt
+%type <astnode> profilestmt markstmt
 // checks
 %type <astnode> checkcommand chkcompflag chklinkflag
 %type <astnode> chksize chktype chkstructmember chkargcount
@@ -195,14 +195,11 @@
 %nonassoc T_OP_IS_LIST T_OP_IS_DEFINED T_OP_IS_FROMCACHE
 
 %%
-mkc[v]:
+mkc:
     %empty
-    {
-      $v = NULL;
-    }
   | stmtlist[a]
     {
-      $v = mkc_ast_mk_main (ast, $a,
+      mkc_ast_mk_main (ast, $a,
           yylloc.first_line, yylloc.first_column);
     }
   ;
@@ -248,9 +245,9 @@ stmt[v]:
     {
       $v = $a;
     }
-  | includestmt[a]
+  | includestmt
     {
-      $v = $a;
+      $v = NULL;
     }
   | markstmt[a]
     {
@@ -557,7 +554,7 @@ directive[v]:
     }
   ;
 
-includestmt[v]:
+includestmt:
     T_STMT_INCLUDE pathname[a] T_SEMICOLON
     {
       char    fn [MKC_PATH_MAX];
@@ -565,23 +562,18 @@ includestmt[v]:
       *fn = '\0';
       mkc_ast_process_include (ast, $a, fn, sizeof (fn),
           yylloc.first_line, yylloc.first_column);
+fprintf (stderr, "g: inc: %s\n", fn);
 
       if (*fn) {
         FILE    *fh;
-        int     rc;
 
         mkc_parse_set_filename (parse, fn);
         fh = mkc_fopen (fn, "r");
         if (fh != NULL) {
+fprintf (stderr, "g: inc: open ok\n");
           mkc_parse_start (parse, fh);
-          rc = mkc_parse (parse, scanner, ast, mkcerr);
-          mkc_parse_finish (parse);
-          if (rc != 0) {
-            YYABORT;
-          }
         }
       }
-      $v = mkc_ast_get_main (ast);
     }
   ;
 

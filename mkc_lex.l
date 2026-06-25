@@ -9,9 +9,6 @@
 
 #  include "mkc_grammar.h"
 
-//  #pragma clang diagnostic push
-//  #pragma clang diagnostic ignored "-Wunused-but-set-variable"
-
   /* no idea if this is the right way to work around this */
 #  define YYSTYPE MKCYYSTYPE
 #  define YYLTYPE MKCYYLTYPE
@@ -228,6 +225,13 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
         "unrecognized symbol", yytext
         );
     exit (0);
+  }
+
+<<EOF>> {
+    yypop_buffer_state (yyscanner);
+    if (! YY_CURRENT_BUFFER) {
+      yyterminate ();
+    }
   }
 
 %%

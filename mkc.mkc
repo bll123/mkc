@@ -6,6 +6,10 @@ project {
 
 # configure
 
+check_package 'glib-2.0' {
+  name glib;
+}
+
 check_function fork {
   header unistd.h;
 }

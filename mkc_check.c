@@ -38,6 +38,7 @@ typedef struct mkc_check_t {
   char              * pkgname;
   mkc_profidx_t     pidx_internal;
   mkc_profidx_t     pidx_global_general;
+  mkc_profidx_t     pidx_global_comp;
   int               cfcount;
   int               cfallocsz;
   int               lfcount;
@@ -67,12 +68,15 @@ mkc_check_init (mkc_profile_t *profiles, mkc_pvar_t *pvar,
   check->attr = attr;
   check->mkcerr = mkcerr;
   check->log = log;
-  check->pidx_global_general = pidx;
   check->pkgname = NULL;
 
   tpidx = mkc_profile_find (check->profiles,
       MKC_PROF_INTERNAL_NAME, MKC_COMPILER_GENERAL);
   check->pidx_internal = tpidx;
+  tpidx = mkc_profile_find (check->profiles,
+      MKC_PROF_GLOBAL_NAME, MKC_COMPILER_GENERAL);
+  check->pidx_global_general = tpidx;
+  check->pidx_global_comp = pidx;
 
   check->cf = NULL;
   check->cfcount = 0;
@@ -458,17 +462,13 @@ mkc_chk_package (mkc_check_t *check,
     mkc_compiler_t compiler, const char *pkg)
 {
   int             rc = MKC_ERR_FAILURE;
-  mkc_profidx_t   opidx;
 
   mkc_log (check->log, MKC_LOG_CHECK, "== chk: package: %s\n", pkg);
-  opidx = mkc_profile_get_active (check->profiles);
 
   datafree (check->pkgname);
   check->pkgname = strdup (pkg);
   /* libpkgconf's api is far to complex to bother using. */
   rc = mkc_chk_package_exec (check, pkg);
-
-  mkc_pvar_profile_set_idx (check->pvar, opidx);
 
   mkc_chk_reset (check);
   return rc;
@@ -910,13 +910,10 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
   mkc_value_t   *value;
   char          pkgconfpath [MKC_PATH_MAX];
   char          tmpname [MKC_VNAME_MAX];
-  mkc_profidx_t opidx;
   char          *rbuff;
   size_t        rsz;
   size_t        retsz;
   int           rc;
-
-  opidx = mkc_profile_get_active (check->profiles);
 
   *pkgconfpath = '\0';
   value = mkc_pvar_get_by_profidx (check->pvar, mkcpathpkgconf, check->pidx_internal);
@@ -989,8 +986,15 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
     return rc;
   }
   if (retsz > 0) {
+    const char  *tmp;
+
+    tmp = pkg;
+    if (check->attr->name != NULL) {
+      tmp = check->attr->name;
+    }
     mkc_strtrim (rbuff, retsz);
-    snprintf (tmpname, sizeof (tmpname), "%s_CFLAGS", pkg);
+    snprintf (tmpname, sizeof (tmpname), "%s_CFLAGS", tmp);
+    mkc_strclean (tmpname, 0);
     mkc_pvar_set_list_from_str (check->pvar, tmpname, rbuff, MKC_VCTXT_CHECK);
   }
 
@@ -1017,12 +1021,17 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
   mkc_log (check->log, MKC_LOG_CHECK, "pkg libs: %s\n", rbuff);
   mkc_log (check->log, MKC_LOG_CHECK, "  rc: %d\n", rc);
   if (retsz > 0) {
+    const char  *tmp;
+
+    tmp = pkg;
+    if (check->attr->name != NULL) {
+      tmp = check->attr->name;
+    }
     mkc_strtrim (rbuff, retsz);
-    snprintf (tmpname, sizeof (tmpname), "%s_LIBS", pkg);
+    snprintf (tmpname, sizeof (tmpname), "%s_LIBS", tmp);
+    mkc_strclean (tmpname, 0);
     mkc_pvar_set_list_from_str (check->pvar, tmpname, rbuff, MKC_VCTXT_CHECK);
   }
-
-  mkc_pvar_profile_set_idx (check->pvar, opidx);
 
   mkc_chk_reset (check);
   free (rbuff);

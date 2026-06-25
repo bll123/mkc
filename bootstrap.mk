@@ -50,7 +50,7 @@ all:
           if [ $$rc -ne 0 ]; then \
 	    exit $$rc; \
 	  fi; \
-	  ./mkc mkc.mkc; \
+	  ./mkc --no-cache mkc.mkc; \
 	  rc=$$?; \
           if [ $$rc -ne 0 ]; then \
 	    exit $$rc; \

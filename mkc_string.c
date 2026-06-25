@@ -107,6 +107,19 @@ mkc_strtrim (char *buff, size_t sz)
 }
 
 void
+mkc_strclean (char *buff, size_t sz)
+{
+  if (sz == 0) {
+    sz = strlen (buff);
+  }
+  for (size_t i = 0; i < sz; ++i) {
+    if (! isalnum (buff [i])) {
+      buff [i] = '_';
+    }
+  }
+}
+
+void
 datafree (void *data)
 {
   if (data == NULL) {
