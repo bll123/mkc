@@ -1,0 +1,78 @@
+[Wiki Home](Home)
+
+[TOC]
+
+### Profiles
+
+##### Working with Profiles
+
+The current working profile is selected on the command line, and all
+checks that are not within a profile statement will go into the
+currently selected profile.
+
+The profile statement should only be used when a check
+should only be in a particular profile. e.g.
+
+    profile optimized {
+      add_compiler_flag '-O3';
+    }
+
+##### Example
+
+test.mkc:
+
+    project { name test; }
+
+    # int64_t appears within the currently selected profile
+    check_size int64_t { header stdint.h; }
+
+    profile debug {
+      # _size_int8_t only appears for the debug profile.
+      check_size int8_t { header stdint.h; }
+    }
+    profile release {
+      # _size_int32_t only appears for the release profile.
+      check_size int32_t { header stdint.h; }
+    }
+
+    configure {
+      method auto;
+    }
+
+command line:
+
+Note the default profile.
+
+    $ mkc --profile debug test.mkc
+    -- default profile: debug c
+    ...
+    -- check size: int64_t : 8
+    -- check size: int8_t : 1
+    ...
+
+test_config.h:
+
+    ...
+    #define _size_int64_t 8
+    #define _size_int8_t 1
+    ...
+
+command line:
+
+Note the default profile.
+
+    $ mkc test.mkc
+    -- default profile: release c
+    ...
+    -- check size: int64_t : 8
+    -- check size: int32_t : 4
+    ...
+
+test_config.h:
+
+    ...
+    #define _size_int32_t 4
+    #define _size_int64_t 8
+    ...
+
+[Wiki Home](Home)

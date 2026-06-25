@@ -63,8 +63,6 @@ main (int argc, char *argv [])
   bool            loadcache = true;
   bool            debug = false;
   int             rc = 0;
-  time_t          cachetm;
-  time_t          mkctm;
   char            logname [MKC_PATH_MAX];
   char            cachename [MKC_PATH_MAX];
 
@@ -97,7 +95,7 @@ main (int argc, char *argv [])
   }
 #endif
 
-  mkcoptions.dfltprof = MKC_PROF_RELEASE_NAME;
+  mkcoptions.dfltprof = MKC_PROF_DEVELOPMENT_NAME;
   mkcoptions.compilertxt = NULL;
   mkcoptions.mkcfile_dir = NULL;
   mkcoptions.stage = NULL;
@@ -183,12 +181,17 @@ main (int argc, char *argv [])
 
   mkc_path_build (MKC_PATH_MKC_FILES, cachename, sizeof (cachename), "cache.mkc", mkcerr);
 
-  cachetm = mkc_file_modtime (cachename);
-  mkctm = mkc_file_modtime (argcopy.utf8argv [fnidx]);
-  if (mkctm >= cachetm) {
-    loadcache = false;
-    mkc_message ("-- cache out of date\n");
-    mkc_log (log, MKC_LOG_AST_PROCESS, "-- cache out of date\n");
+  if (loadcache) {
+    time_t    cachetm;
+    time_t    mkctm;
+
+    cachetm = mkc_file_modtime (cachename);
+    mkctm = mkc_file_modtime (argcopy.utf8argv [fnidx]);
+    if (mkctm >= cachetm) {
+      loadcache = false;
+      mkc_message ("-- cache out of date\n");
+      mkc_log (log, MKC_LOG_AST_PROCESS, "-- cache out of date\n");
+    }
   }
 
   mkc_parse_start (parse, fh);

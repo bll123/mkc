@@ -1,6 +1,5 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
-# also tests putting the variables into the global/any profile
 set fff "111";
 set ddd '222';
 set iii '333';
@@ -16,4 +15,4 @@ set v_2 'b';
 # set a variable to another variable.
 # check for memory issues.
 set AAA ${fff};
-mkcdebug printvar release;
+mkcdebug printvar test;

@@ -23,7 +23,6 @@ typedef struct mkc_profile_t mkc_profile_t;
 
 typedef enum {
   MKC_PROF_TYPE_INTERNAL,
-  MKC_PROF_TYPE_GLOBAL,
   MKC_PROF_TYPE_USER,
   MKC_PROF_TYPE_TARGET,
   MKC_PROF_TYPE_LOCAL,
@@ -34,8 +33,8 @@ enum {
   MKC_PROF_NOT_FOUND = -2,
 };
 
-extern char const * const MKC_PROF_GLOBAL_NAME;
 extern char const * const MKC_PROF_INTERNAL_NAME;
+extern char const * const MKC_PROF_DEVELOPMENT_NAME;
 extern char const * const MKC_PROF_RELEASE_NAME;
 extern char const * const mkcpathpkgconf;
 extern char const * const mkcpathpkgconfig;

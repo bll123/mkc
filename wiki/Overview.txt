@@ -15,13 +15,15 @@ See [Status](Status) for the current status and goals.
 __profile__: A profile is a namespace for variables and attributes.
 _mkc_ defines the __internal__, __global__ and __release__ profiles.
 
+References: [Profiles](Profiles.txt)
+
 A user profile can have any name.  The usual names might be
 __release__ and __debug__.
 
 A profile may have an associated compiler.
 
 __attribute__: An attribute associated with a particular statement or
-target.
+target.  An attribute might be a name, a set of compiler flags, etc.
 
 __target__: An executable or library or other target that will be
 built or processed.

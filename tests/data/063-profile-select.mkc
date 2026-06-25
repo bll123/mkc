@@ -1,0 +1,13 @@
+# Copyright 2026 Brad Lanam Pleasant Hill CA
+
+# profile select
+
+project {
+  name mkctest;
+  compiler c;
+}
+
+set a 1;
+
+mkcdebug printvar debug;
+mkcdebug printvar development;

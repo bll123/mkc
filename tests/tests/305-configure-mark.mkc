@@ -5,21 +5,20 @@ project {
   compiler c;
 }
 
-profile global {
-  compiler c;
+# these go into the current profile
+check_function fprintf;
+check_function malloc;
 
-  check_function malloc;
-  check_function fstat {
-    header sys/stat.h;
-  }
-  check_function sqrt {
-    header math.h;
-    link_flags '-lm';
-  }
-  check_function other;
-
-  mark _function_malloc disable-output;
+check_function fstat {
+  header sys/stat.h;
 }
+check_function sqrt {
+  header math.h;
+  link_flags '-lm';
+}
+check_function other;
+
+mark _function_malloc disable-output;
 
 profile internal {
   # for the purposes of this tests, pick a variable with a static value

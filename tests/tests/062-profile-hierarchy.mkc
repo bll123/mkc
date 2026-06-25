@@ -1,37 +1,26 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
 # profile hierarchy
-# only release/global/internal at this testing level
+# only development/internal at this testing level
 
 project {
   name mkctest;
   compiler c;
 }
 
-profile global {
-  set b 2;
-  set a 1;
-}
-profile global {
-  compiler c;
-  set d 4;
-  set c 3;
-}
-profile global {
-  compiler c++;
-  set k 11;
-  set j 10;
-}
-profile release {
+set d 4;
+set c 3;
+
+profile development {
   set f 6;
   set e 5;
 }
-profile release {
+profile development {
   compiler c;
   set h 8;
   set g 7;
 }
-profile release {
+profile development {
   compiler c++;
   set m 13;
   set l 12;
@@ -40,62 +29,43 @@ profile internal {
   set i 9;
 }
 
-if (${a} == 1) {
-  # global
-  print '  ok 1';
-}
-if (${b} == 2) {
-  # global
-  print '  ok 2';
-}
 if (${c} == 3) {
-  # global c
+  # development c
   print '  ok 3';
 }
 if (${d} == 4) {
-  # global c
+  # development c
   print '  ok 4';
 }
 if (${e} == 5) {
-  # release c
+  # development c
   print '  ok 5';
 }
 if (${f} == 6) {
-  # release c
+  # development c
   print '  ok 6';
 }
 if (${g} == 7) {
-  # release c
+  # development c
   print '  ok 7';
 }
 if (${h} == 8) {
-  # release c
+  # development c
   print '  ok 8';
 }
 if (${i} == 9) {
   # internal
   print '  ok 9';
 }
-if (${j} == 10) {
-  # global c++
-  # will not print, as the compiler is set to 'c'
-  print '  ng 10';
-}
-if (${k} == 10) {
-  # global c++
-  # will not print, as the compiler is set to 'c'
-  print '  ng 11';
-}
 if (${l} == 12) {
-  # release c++
+  # development c++
   # will not print, as the compiler is set to 'c'
   print '  ng 12';
 }
 if (${m} == 13) {
-  # release c++
+  # development c++
   # will not print, as the compiler is set to 'c'
   print '  ng 13';
 }
 
 mkcdebug printvar test;
-mkcdebug printvar release;

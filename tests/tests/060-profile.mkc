@@ -1,39 +1,21 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
 # basic tests putting variables into different profiles
-profile global {
-  set d 'g-general';
-}
-profile global {
+profile development {
   compiler c;
-  set c 'g-c';
+  set a 'd-c';
+}
+profile development {
+  compiler c++;
+  set b 'd-c++';
 }
 profile release {
   compiler c;
-  set k 'r-c';
-}
-profile global {
-  compiler c++;
-  set b 'g-c++';
-}
-profile global {
-  set f 'g-general';
-}
-profile global {
-  compiler c;
-  set e 'g-c';
-}
-profile global {
-  compiler c++;
-  set f 'g-c++';
-}
-profile release {
-  compiler c++;
-  set h 'r-c++';
+  set c 'r-c';
 }
 profile debug {
   compiler c++;
-  set i 'd-c++';
+  set d 'dbg-c++';
 }
 
 mkcdebug printprof;

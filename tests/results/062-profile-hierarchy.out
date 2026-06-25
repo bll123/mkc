@@ -1,26 +1,16 @@
-  ok 1
-  ok 2
   ok 3
   ok 4
   ok 5
   ok 6
   ok 7
   ok 8
-  ok 9
-== global c
-  a 1
-  b 2
+== development c
   c 3
   d 4
-== global c++
-  j 10
-  k 11
-== global general
-== release c
   e 5
   f 6
   g 7
   h 8
-== release c++
+== development c++
   l 12
   m 13

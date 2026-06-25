@@ -57,8 +57,8 @@ mkc_path_build (mkc_path_t pathtype, char *buff, size_t sz,
     return;
   }
 
-  p = stpecpy (p, buff + sz, "/");
   if (filename != NULL && *filename) {
+    p = stpecpy (p, buff + sz, "/");
     p = stpecpy (p, buff + sz, filename);
   }
 }

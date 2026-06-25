@@ -562,7 +562,6 @@ includestmt:
       *fn = '\0';
       mkc_ast_process_include (ast, $a, fn, sizeof (fn),
           yylloc.first_line, yylloc.first_column);
-fprintf (stderr, "g: inc: %s\n", fn);
 
       if (*fn) {
         FILE    *fh;
@@ -570,7 +569,6 @@ fprintf (stderr, "g: inc: %s\n", fn);
         mkc_parse_set_filename (parse, fn);
         fh = mkc_fopen (fn, "r");
         if (fh != NULL) {
-fprintf (stderr, "g: inc: open ok\n");
           mkc_parse_start (parse, fh);
         }
       }
@@ -765,7 +763,7 @@ compiler[v]:
 context[v]:
     T_ATTR_CONTEXT varvalue[a] T_SEMICOLON
     {
-      $v = mkc_ast_mk_attribute (ast, NULL, MKC_T_ATTR_CONTEXT,
+      $v = mkc_ast_mk_attribute (ast, $a, MKC_T_ATTR_CONTEXT,
           yylloc.first_line, yylloc.first_column);
     }
   ;

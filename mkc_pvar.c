@@ -291,11 +291,7 @@ mkc_pvar_iter_next (mkc_pvar_t *pvar, mkc_varidx_t *iteridx)
 /* the search hierarchy: */
 /*    local-variables */
 /*    template              compiler */
-/*    template              general */
 /*    current-user-profile  compiler */
-/*    current-user-profile  general */
-/*    global                compiler */
-/*    global                general */
 /*    internal */
 mkc_value_t *
 mkc_pvar_get_by_profile (mkc_pvar_t *pvar, const char *nm)

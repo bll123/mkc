@@ -7,4 +7,4 @@ check_compile_flag    '-Wsomething-bad';
 # check_compile_flag    '-Wno-stuff';
 check_compile_flag    '-Wno-stuff-b' { negate; }
 
-mkcdebug printvar release;
+mkcdebug printvar test;

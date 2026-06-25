@@ -1,25 +1,9 @@
 == profiles
-  global bison
-  global c
-  global c++
-  global flex
-  global general
-  global objc
-  global unknown
+  development c
+  development c++
   internal general
   release c
-  release c++
-  release general
-== global c
-  c g-c
-  d g-general
-  e g-c
-  f g-general
-== global c++
-  b g-c++
-  f g-c++
-== global general
-== release c
-  k r-c
-== release c++
-  h r-c++
+== development c
+  a d-c
+== development c++
+  b d-c++

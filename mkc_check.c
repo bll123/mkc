@@ -37,8 +37,7 @@ typedef struct mkc_check_t {
   const   char      ** targv;
   char              * pkgname;
   mkc_profidx_t     pidx_internal;
-  mkc_profidx_t     pidx_global_general;
-  mkc_profidx_t     pidx_global_comp;
+  mkc_profidx_t     pidx_dflt_comp;
   int               cfcount;
   int               cfallocsz;
   int               lfcount;
@@ -47,7 +46,7 @@ typedef struct mkc_check_t {
   int               targvallocsz;
 } mkc_check_t;
 
-static void mkc_check_file_sub_copy (mkc_check_t *check, char *tbuff, size_t sz, const char *fname, const char *sfx);
+static void mkc_check_file_sub_copy (mkc_check_t *check, char *tbuff, size_t sz, const char *fname, const char *origsfx, const char *sfx);
 static void mkc_check_log_command (mkc_check_t *check, const char *tag);
 static mkc_err_code_t mkc_chk_env_var_set (mkc_check_t *check, const char *nm);
 static void mkc_check_append_arg (mkc_check_t *check, const char *arg);
@@ -73,10 +72,7 @@ mkc_check_init (mkc_profile_t *profiles, mkc_pvar_t *pvar,
   tpidx = mkc_profile_find (check->profiles,
       MKC_PROF_INTERNAL_NAME, MKC_COMPILER_GENERAL);
   check->pidx_internal = tpidx;
-  tpidx = mkc_profile_find (check->profiles,
-      MKC_PROF_GLOBAL_NAME, MKC_COMPILER_GENERAL);
-  check->pidx_global_general = tpidx;
-  check->pidx_global_comp = pidx;
+  check->pidx_dflt_comp = pidx;
 
   check->cf = NULL;
   check->cfcount = 0;
@@ -347,7 +343,7 @@ mkc_chk_arg_count (mkc_check_t *check, mkc_compiler_t compiler,
   mkc_profidx_t   opidx;
   char            *rbuff;
   size_t          rsz = MKC_LARGE_BUFF_SZ;
-  const char      *flags [3];
+  const char      *flags [2];
   int             fcount = 0;
 
   mkc_log (check->log, MKC_LOG_CHECK, "== chk: arg_count: %s\n", funcname);
@@ -366,7 +362,6 @@ mkc_chk_arg_count (mkc_check_t *check, mkc_compiler_t compiler,
   flags [fcount++] = "-E";
   flags [fcount++] = NULL;
   rc = mkc_compile_only (check, compiler, "c-argcount", flags, rbuff, rsz);
-fprintf (stderr, "rbuff:\n%s\n", rbuff);
 
   mkc_chk_reset (check);
   return rc;
@@ -512,8 +507,7 @@ mkc_chk_size (mkc_check_t *check,
 
   mkc_pvar_profile_set_idx (check->pvar, opidx);
 
-  rc = mkc_compile_run (check, compiler,
-        "c-size", NULL, NULL, 0);
+  rc = mkc_compile_run (check, compiler, "c-size", NULL, NULL, 0);
   if (rc < 0) {
     rc = 0;
   }
@@ -614,7 +608,8 @@ mkc_compile_only (mkc_check_t *check, mkc_compiler_t compiler,
 
   mkc_check_get_compstr (check, compiler, compstr, sizeof (compstr));
   sfx = mkc_compiler_get_suffix (compiler);
-  mkc_check_file_sub_copy (check, tbuff, sizeof (tbuff), fname, sfx);
+// ### will need to be fixed, the original suffix may change
+  mkc_check_file_sub_copy (check, tbuff, sizeof (tbuff), fname, ".c", sfx);
 
   check->targc = 0;
   mkc_check_append_arg (check, compstr);
@@ -805,16 +800,17 @@ mkc_compile_run (mkc_check_t *check,
 static void
 mkc_check_file_sub_copy (mkc_check_t *check,
     char *tbuff, size_t sz,
-    const char *fname, const char *sfx)
+    const char *fname, const char *origsfx, const char *sfx)
 {
+  char    tfn [MKC_VNAME_MAX];
   char    fbuff [MKC_PATH_MAX];
-  char    outfile [MKC_PATH_MAX];
   char    *data;
   char    *ndata;
   FILE    *fh;
   size_t  fsz;
 
-  snprintf (fbuff, sizeof (fbuff), "templates/%s.c", fname);
+  snprintf (tfn, sizeof (tfn), "%s%s", fname, origsfx);
+  mkc_path_build (MKC_PATH_MKC_TEMPLATES, fbuff, sizeof (fbuff), tfn, check->mkcerr);
   data = mkc_read_file (fbuff, &fsz, check->mkcerr);
   if (mkc_error_chk_err (check->mkcerr)) {
     return;
@@ -825,9 +821,8 @@ mkc_check_file_sub_copy (mkc_check_t *check,
   mkc_log (check->log, MKC_LOG_CHECK, "---\n");
   free (data);
 
-  snprintf (tbuff, sz, "%s%s", fname, sfx);
-  mkc_path_build (MKC_PATH_MKC_TMP, outfile, sizeof (outfile), tbuff, check->mkcerr);
-  stpecpy (tbuff, tbuff + sz, outfile);
+  snprintf (tfn, sizeof (tfn), "%s%s", fname, sfx);
+  mkc_path_build (MKC_PATH_MKC_TMP, tbuff, sz, tfn, check->mkcerr);
 
   fh = mkc_fopen (tbuff, "wb");
   fwrite (ndata, strlen (ndata), 1, fh);
@@ -899,7 +894,7 @@ mkc_check_get_compstr (mkc_check_t *check, mkc_compiler_t compiler,
   mkc_value_t   *value;
 
   envstr = mkc_compiler_get_env_name (compiler);
-  value = mkc_pvar_get_by_profidx (check->pvar, envstr, check->pidx_global_general);
+  value = mkc_pvar_get_by_profidx (check->pvar, envstr, check->pidx_internal);
   mkc_pvar_value_get_str (check->pvar, value, buff, sz);
   return buff;
 }
