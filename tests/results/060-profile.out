@@ -1,8 +1,10 @@
 == profiles
   default c
   default c++
+  default general
   internal general
 == default c
   a d-c
 == default c++
   b d-c++
+== default general

@@ -1,7 +1,6 @@
 
 project {
   name mkc;
-  compiler c;
 }
 
 # configure

@@ -5,13 +5,13 @@
 
 project {
   name mkctest;
-  compiler c;
 }
 
 set d 4;
 set c 3;
 
 profile default {
+  compiler general;
   set f 6;
   set e 5;
 }

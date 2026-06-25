@@ -68,7 +68,7 @@ mkc_profile_init (mkc_log_t *log, mkc_error_t *mkcerr, mkc_option_t *mkcoptions)
   profiles->localstacksz = 0;
   profiles->mkcerr = mkcerr;
   profiles->log = log;
-  profiles->dfltcompiler = MKC_COMPILER_C;
+  profiles->dfltcompiler = MKC_COMPILER_GENERAL;
   profiles->mkcoptions = mkcoptions;
 
   if (mkcoptions->compilertxt != NULL) {
@@ -90,9 +90,12 @@ mkc_profile_init (mkc_log_t *log, mkc_error_t *mkcerr, mkc_option_t *mkcoptions)
 
   mkc_profile_create (profiles, MKC_PROF_INTERNAL_NAME,
       MKC_COMPILER_GENERAL, MKC_PROF_TYPE_INTERNAL);
+  /* this will create default/general */
   pidx = mkc_profile_create (profiles, MKC_PROF_DEFAULT_NAME,
       profiles->dfltcompiler, MKC_PROF_TYPE_USER);
 
+  /* now make sure the user's profile selection/compiler exists */
+  /* this will be the active profile */
   pidx = mkc_profile_find (profiles,
       mkcoptions->dfltprof, profiles->dfltcompiler);
   if (pidx == MKC_PROF_NOT_FOUND) {
@@ -188,6 +191,17 @@ mkc_profile_create (mkc_profile_t *profiles, const char *pname,
 
   if (profiles == NULL) {
     return MKC_ERR_FAILURE;
+  }
+
+  /* make sure the general category for this profile exists */
+  if (compiler != MKC_COMPILER_GENERAL) {
+    mkc_profidx_t   pidx;
+
+    pidx = mkc_profile_find (profiles, pname, MKC_COMPILER_GENERAL);
+    if (pidx == MKC_PROF_NOT_FOUND) {
+      pidx = mkc_profile_create (profiles, pname,
+          MKC_COMPILER_GENERAL, type);
+    }
   }
 
   tentry.name = strdup (pname);
@@ -508,14 +522,15 @@ mkc_profile_local_reset (mkc_profile_t *profiles)
 /* returns the next profile in the hierarchy (that exists) */
 /*    local variable stack */
 /*    target / compiler */
-/*    user-profile / compiler (dev, release, etc.) */
+/*    current-user-profile / compiler */
+/*    current-user-profile / general */
 /*    internal */
 int
 mkc_profile_next (mkc_profile_t *profiles, mkc_compiler_t origcompiler)
 {
-  mkc_prof_entry_t  *pentry;
+  mkc_prof_entry_t  * pentry;
   mkc_profidx_t     pidx;
-  mkc_compiler_t   compiler;
+  mkc_compiler_t    compiler;
   mkc_prof_type_t   type;
 
   if (profiles == NULL) {
@@ -527,57 +542,58 @@ mkc_profile_next (mkc_profile_t *profiles, mkc_compiler_t origcompiler)
   compiler = pentry->compiler;
   type = pentry->type;
 
+  if (type == MKC_PROF_TYPE_INTERNAL) {
+    return MKC_PROF_NOT_FOUND;
+  }
+
   if (profiles->localidx < profiles->localstacksz) {
     pidx = profiles->localstack [profiles->localidx];
     profiles->localidx += 1;
     return pidx;
   }
 
-  pidx = MKC_PROF_NOT_FOUND;
-  while (pidx == MKC_PROF_NOT_FOUND) {
-    if (mkc_error_chk_err (profiles->mkcerr)) {
+  if (compiler != MKC_COMPILER_GENERAL) {
+    /* if the compiler is not set to general, check the */
+    /* profile with the same name, with compiler-general set */
+    pidx = mkc_profile_find (profiles, pentry->name,
+        MKC_COMPILER_GENERAL);
+    return pidx;
+  }
+
+  /* reset the compiler back to the original */
+  compiler = origcompiler;
+
+  /* set the type for the next iteration through the while loop */
+
+  switch (type) {
+    case MKC_PROF_TYPE_INVALID: {
+      mkc_error_set (profiles->mkcerr, MKC_ERR_INVALID_PROFILE, 0, NULL);
       break;
     }
-
-    /* reset the compiler back to the original */
-    compiler = origcompiler;
-
-    /* set the type for the next iteration through the while loop */
-
-    switch (type) {
-      case MKC_PROF_TYPE_INVALID: {
-        mkc_error_set (profiles->mkcerr, MKC_ERR_INVALID_PROFILE, 0, NULL);
-        break;
-      }
-      case MKC_PROF_TYPE_LOCAL: {
-        break;
-      }
-      case MKC_PROF_TYPE_TARGET: {
-        const char  *userprof = "ng";
-
-        userprof = mkc_profile_get_name (profiles, profiles->user_idx);
-        pidx = mkc_profile_find (profiles, userprof, compiler);
-        type = MKC_PROF_TYPE_USER;
-        break;
-      }
-      case MKC_PROF_TYPE_USER: {
-        pidx = mkc_profile_find (profiles,
-            MKC_PROF_INTERNAL_NAME, MKC_COMPILER_GENERAL);
-        type = MKC_PROF_TYPE_INTERNAL;
-        break;
-      }
-      case MKC_PROF_TYPE_INTERNAL: {
-        break;
-      }
-    } /* switch on the profile type */
-
-    if (type == MKC_PROF_TYPE_INTERNAL) {
+    case MKC_PROF_TYPE_LOCAL: {
       break;
     }
+    case MKC_PROF_TYPE_TARGET: {
+      const char  *userprof = "ng";
 
-    if (pidx >= 0) {
-      pentry = mkc_list_get_by_idx (profiles->list, pidx);
+      userprof = mkc_profile_get_name (profiles, profiles->user_idx);
+      pidx = mkc_profile_find (profiles, userprof, compiler);
+      type = MKC_PROF_TYPE_USER;
+      break;
     }
+    case MKC_PROF_TYPE_USER: {
+      pidx = mkc_profile_find (profiles,
+          MKC_PROF_INTERNAL_NAME, MKC_COMPILER_GENERAL);
+      type = MKC_PROF_TYPE_INTERNAL;
+      break;
+    }
+    case MKC_PROF_TYPE_INTERNAL: {
+      break;
+    }
+  } /* switch on the profile type */
+
+  if (pidx >= 0) {
+    pentry = mkc_list_get_by_idx (profiles->list, pidx);
   }
 
   return pidx;
