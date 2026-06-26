@@ -119,7 +119,6 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 ";"         { return T_SEMICOLON; }
 "is_list"       { return T_OP_IS_LIST; }
 "is_defined"    { return T_OP_IS_DEFINED; }
-"is_fromcache"  { return T_OP_IS_FROMCACHE; }
 
 "true"|"TRUE"     { return T_VAL_TRUE; }
 "false"|"FALSE"   { return T_VAL_FALSE; }

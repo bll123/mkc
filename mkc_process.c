@@ -408,11 +408,6 @@ mkc_process_unary_op (mkc_process_t *process, int type, mkc_value_t *vala)
       result = mkc_pvar_is_defined (process->pvar, tbuff);
       break;
     }
-    case MKC_T_OP_IS_FROMCACHE: {
-      mkc_pvar_value_get_str (process->pvar, vala, tbuff, sizeof (tbuff));
-      result = mkc_pvar_is_fromcache (process->pvar, tbuff);
-      break;
-    }
     case MKC_T_OP_IS_LIST: {
       mkc_pvar_value_get_str (process->pvar, vala, tbuff, sizeof (tbuff));
       result = mkc_pvar_is_list (process->pvar, tbuff);
@@ -483,7 +478,7 @@ mkc_process_stmt_profile (mkc_process_t *process, mkc_value_t *valnm)
   pidx = mkc_profile_find (process->profiles, nm, tcompiler);
   if (pidx == MKC_PROF_NOT_FOUND) {
     pidx = mkc_profile_create (process->profiles, nm,
-        tcompiler, MKC_PROF_TYPE_USER);
+        tcompiler, MKC_PROF_TYPE_CURRENT);
   }
 
   mkc_pvar_profile_set_idx (process->pvar, pidx);
@@ -1018,7 +1013,8 @@ mkc_process_attr_compiler (mkc_process_t *process, mkc_value_t *name)
 
   pidx = mkc_profile_find (process->profiles, profnm, process->attr.currcompiler);
   if (pidx == MKC_PROF_NOT_FOUND) {
-    pidx = mkc_profile_create (process->profiles, profnm, process->attr.currcompiler, MKC_PROF_TYPE_USER);
+    pidx = mkc_profile_create (process->profiles, profnm,
+        process->attr.currcompiler, MKC_PROF_TYPE_CURRENT);
   }
 
   mkc_pvar_profile_set_idx (process->pvar, pidx);
@@ -1390,7 +1386,6 @@ mkc_process_save_cache (mkc_process_t *process)
     return;
   }
   opidx = mkc_profile_get_active (process->profiles);
-fprintf (stderr, "opidx: %d\n", opidx);
 
   /* version 1 */
   fprintf (fh, "load_cache 1 {\n");
@@ -1418,7 +1413,6 @@ fprintf (stderr, "opidx: %d\n", opidx);
       continue;
     }
 
-fprintf (stderr, "pidx: %d\n", pidx);
     if (pidx == opidx) {
       indent = "";
     } else {
@@ -2178,7 +2172,7 @@ mkc_process_find_executables (mkc_process_t *process)
     char    *tmp;
 
     tmp = strdup (tpath);
-    mkc_normalizepath (tmp, strlen (tmp));
+    mkc_normalize_path (tmp, strlen (tmp));
     mkc_list_append (pathlist, &tmp, sizeof (char *), &loc);
     tpath = mkc_strtok (NULL, pathdelim, &tokstr);
   }

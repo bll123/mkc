@@ -3,7 +3,7 @@
  *    (from libmp4tag)
  */
 
-#if ! MKC_BOOTSTRAP
+#ifndef MKC_BOOTSTRAP
 # include "mkc_config.h"
 #endif
 
@@ -262,9 +262,9 @@ mkc_file_copy (const char *fname, const char *nfn, mkc_error_t *mkcerr)
   char      tnfn [MKC_PATH_MAX];
 
   stpecpy (tfname, tfname + sizeof (tfname), fname);
-  mkc_disppath (tfname, sizeof (tfname));
+  mkc_display_path (tfname, sizeof (tfname));
   stpecpy (tnfn, tnfn + sizeof (tnfn), nfn);
-  mkc_disppath (tnfn, sizeof (tnfn));
+  mkc_display_path (tnfn, sizeof (tnfn));
   {
     wchar_t   *wtfname;
     wchar_t   *wtnfn;
@@ -317,8 +317,10 @@ mkc_link_copy (const char *fname, const char *nfn, mkc_error_t *mkcerr)
 }
 
 void
-mkc_disppath (char *path, size_t sz)
+mkc_display_path (char *path, size_t sz)
 {
+  /* a no-op on unix systems */
+#if _WIN32
   for (size_t i = 0; i < sz; ++i) {
     if (path [i] == '\0') {
       break;
@@ -327,11 +329,12 @@ mkc_disppath (char *path, size_t sz)
       path [i] = '\\';
     }
   }
+#endif
   return;
 }
 
 void
-mkc_normalizepath (char *path, size_t sz)
+mkc_normalize_path (char *path, size_t sz)
 {
   for (size_t i = 0; i < sz; ++i) {
     if (path [i] == '\0') {
@@ -344,7 +347,7 @@ mkc_normalizepath (char *path, size_t sz)
   return;
 }
 
-#if _lib_symlink || (MKC_BOOTSTRAP && ! _WIN32)
+#if _function_symlink || (MKC_BOOTSTRAP && ! _WIN32)
 
 int
 mkc_link_create (const char *target, const char *linkpath)
@@ -357,3 +360,39 @@ mkc_link_create (const char *target, const char *linkpath)
 
 #endif /* lib_symlink */
 
+bool
+mkc_is_directory (const char *fname)
+{
+  int   rc;
+  bool  brc = 0;
+
+#if _lib__wstat64
+  {
+    struct __stat64  statbuf;
+    wchar_t       *tfname = NULL;
+
+    tfname = mkc_towide (fname);
+    rc = _wstat64 (tfname, &statbuf);
+    if (rc == 0 && (statbuf.st_mode & S_IFMT) != S_IFDIR) {
+      rc = -1;
+    }
+    free (tfname);
+  }
+#else
+  {
+    struct stat   statbuf;
+
+    memset (&statbuf, '\0', sizeof (struct stat));
+    rc = stat (fname, &statbuf);
+    if (rc == 0 && (statbuf.st_mode & S_IFMT) != S_IFDIR) {
+      rc = -1;
+    }
+  }
+#endif
+  /* had some trouble with the optimizer, so spell out the values */
+  if (rc == 0) {
+    brc = 1;
+  }
+
+  return brc;
+}

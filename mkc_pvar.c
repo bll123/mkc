@@ -231,18 +231,19 @@ mkc_pvar_set_list_from_str (mkc_pvar_t *pvar,
 }
 
 void
-mkc_pvar_set_context (mkc_pvar_t *pvar, const char *vname, int vctxt)
+mkc_pvar_set_context (mkc_pvar_t *pvar, const char *vname,
+    mkc_var_ctxt_t vctxt)
 {
-  mkc_varlist_t   *varlist;
-  mkc_profidx_t   pidx;
+  mkc_value_t   *value;
 
   if (pvar == NULL || vname == NULL) {
     return;
   }
 
-  pidx = mkc_profile_get_active (pvar->profiles);
-  varlist = mkc_profile_get_varlist (pvar->profiles, pidx);
-  mkc_var_set_context (varlist, vname, vctxt);
+  value = mkc_pvar_get_by_profile (pvar, vname);
+  if (value != NULL) {
+    value->vctxt = vctxt;
+  }
 }
 
 int32_t
@@ -298,9 +299,9 @@ mkc_pvar_iter_next (mkc_pvar_t *pvar, mkc_varidx_t *iteridx)
 /* get-by-profile searches the profile hierarchy for the variable name */
 /* the search hierarchy: */
 /*    local-variables */
-/*    template              compiler */
-/*    current-user-profile  compiler */
-/*    current-user-profile  general */
+/*    template         compiler */
+/*    current-profile  compiler */
+/*    current-profile  general */
 /*    internal */
 mkc_value_t *
 mkc_pvar_get_by_profile (mkc_pvar_t *pvar, const char *nm)
@@ -308,8 +309,8 @@ mkc_pvar_get_by_profile (mkc_pvar_t *pvar, const char *nm)
   mkc_profidx_t   opidx;
   mkc_profidx_t   pidx;
   mkc_compiler_t  origcompiler;
-  bool            done = false;
   mkc_value_t     *value = NULL;
+  mkc_profiter_t  profiter;
 
   if (pvar == NULL) {
     return NULL;
@@ -320,36 +321,31 @@ mkc_pvar_get_by_profile (mkc_pvar_t *pvar, const char *nm)
   }
 
   opidx = mkc_profile_get_active (pvar->profiles);
-  mkc_profile_local_reset (pvar->profiles);
+  origcompiler = mkc_profile_get_compiler (pvar->profiles, opidx);
 
-  pidx = mkc_profile_get_active (pvar->profiles);
-  origcompiler = mkc_profile_get_compiler (pvar->profiles, pidx);
+// ### this isn't correct, the compiler to pass should be the
+// specific compiler
+  mkc_profile_iter_hierarchy_start (pvar->profiles,
+      origcompiler, &profiter);
 
-  while (! done) {
+  while ((pidx = mkc_profile_iter_hierarchy_next (
+      pvar->profiles, &profiter)) != MKC_PROF_NOT_FOUND) {
     mkc_var_type_t    vtype = MKC_VT_INVALID;
 
     value = mkc_pvar_get_value_by_profidx (pvar, nm, pidx);
-    if (value != NULL) {
-      vtype = value->vtype;
+    if (value == NULL) {
+      continue;
     }
 
+    vtype = value->vtype;
     if (vtype == MKC_VT_LIST ||
         vtype == MKC_VT_INTEGER ||
         vtype == MKC_VT_STRING) {
-      done = true;
       break;
     }
-
-    pidx = mkc_profile_next (pvar->profiles, origcompiler);
-    if (pidx < 0) {
-      break;
-    }
-
-    mkc_pvar_profile_set_idx (pvar, pidx);
   }
 
   mkc_pvar_profile_set_idx (pvar, opidx);
-
   return value;
 }
 
@@ -595,60 +591,38 @@ mkc_pvar_value_get_str (mkc_pvar_t *pvar,
 bool
 mkc_pvar_is_defined (mkc_pvar_t *pvar, const char *vname)
 {
-  mkc_varlist_t   *varlist;
+  mkc_value_t     *value;
   bool            rc = false;
-  mkc_profidx_t   pidx;
 
   if (pvar == NULL) {
     return rc;
   }
 
-  pidx = mkc_profile_get_active (pvar->profiles);
-  varlist = mkc_profile_get_varlist (pvar->profiles, pidx);
-  if (varlist == NULL) {
+  value = mkc_pvar_get_by_profile (pvar, vname);
+  if (value == NULL) {
     return rc;
   }
-  rc = mkc_var_is_defined (varlist, vname);
   return rc;
 }
 
 bool
 mkc_pvar_is_list (mkc_pvar_t *pvar, const char *vname)
 {
-  mkc_varlist_t   *varlist;
+  mkc_value_t     *value;
   bool            rc = false;
-  mkc_profidx_t   pidx;
 
   if (pvar == NULL) {
     return rc;
   }
 
-  pidx = mkc_profile_get_active (pvar->profiles);
-  varlist = mkc_profile_get_varlist (pvar->profiles, pidx);
-  if (varlist == NULL) {
-    return rc;
-  }
-  rc = mkc_var_is_list (varlist, vname);
-  return rc;
-}
-
-bool
-mkc_pvar_is_fromcache (mkc_pvar_t *pvar, const char *vname)
-{
-  mkc_varlist_t   *varlist;
-  bool            rc = false;
-  mkc_profidx_t   pidx;
-
-  if (pvar == NULL) {
+  value = mkc_pvar_get_by_profile (pvar, vname);
+  if (value == NULL) {
     return rc;
   }
 
-  pidx = mkc_profile_get_active (pvar->profiles);
-  varlist = mkc_profile_get_varlist (pvar->profiles, pidx);
-  if (varlist == NULL) {
-    return rc;
+  if (value->vtype == MKC_VT_LIST) {
+    rc = true;
   }
-  rc = mkc_var_is_fromcache (varlist, vname);
   return rc;
 }
 

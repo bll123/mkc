@@ -2,7 +2,7 @@
  * Copyright 2026 Brad Lanam Pleasant Hill CA
  */
 
-#if ! MKC_BOOTSTRAP
+#ifndef MKC_BOOTSTRAP
 # include "mkc_config.h"
 #endif
 
@@ -22,6 +22,7 @@
 
 #include "mkc_ast.h"
 #include "mkc_def.h"
+#include "mkc_env.h"
 #include "mkc_error.h"
 #include "mkc_fileop.h"
 #include "mkc_log.h"
@@ -36,22 +37,19 @@ typedef struct {
   char      **utf8argv;
 } argcopy_t;
 
+static void copyargs (argcopy_t *argcopy, int argc, char *argv [], mkc_error_t *mkcerr);
 static void cleanargs (argcopy_t *argcopy);
-mkc_err_code_t mkc_cleanup (mkc_astmain_t *astmain, argcopy_t *argcopy, mkc_log_t *log, mkc_error_t *error);
+static mkc_err_code_t mkc_cleanup (mkc_astmain_t *astmain, argcopy_t *argcopy, mkc_log_t *log, mkc_error_t *error);
 
 int
 main (int argc, char *argv [])
 {
   argcopy_t       argcopy;
-#if _lib_GetCommandLineW || (MKC_BOOTSTRAP && _WIN32)
-  wchar_t         **wargv;
-  int             targc;
-#endif
+  mkc_option_t    mkcoptions;
   int             c;
   int             option_index;
   int             fnidx;
   mkc_parse_t     * parse = NULL;
-  mkc_option_t    mkcoptions;
   FILE            * fh = NULL;
   mkc_astmain_t   * astmain = NULL;
   mkc_error_t     * mkcerr = NULL;
@@ -59,55 +57,62 @@ main (int argc, char *argv [])
   mstime_t        starttm;
   mstime_t        proctm;
   time_t          etm;
-  char            tbuff [40];
   bool            loadcache = true;
   bool            debug = false;
   int             rc = 0;
   char            logname [MKC_PATH_MAX];
   char            cachename [MKC_PATH_MAX];
+  char            tbuff [MKC_PATH_MAX];
 
   static struct option mkc_cli_opts [] = {
-    { "compiler",       required_argument,  NULL,   3, },
-    { "mkc-dir",        required_argument,  NULL,   5, },
-    { "no-cache",       no_argument,        NULL,   1, },
-    { "parsedebug",     no_argument,        NULL,   2, },
-    { "prefix",         required_argument,  NULL,   6, },
-    { "profile",        required_argument,  NULL,   'p' },
-    { "retest",         no_argument,        NULL,   'r', },
-    { NULL,             no_argument,        NULL,   0, },
+    { "compiler",             required_argument,  NULL, 3   },
+    { "mkc-dir",              required_argument,  NULL, 5   },
+    { "no-cache",             no_argument,        NULL, 1   },
+    { "parsedebug",           no_argument,        NULL, 2   },
+    { "prefix",               required_argument,  NULL, 6   },
+    { "profile",              required_argument,  NULL, 'p' },
+    { "retest",               no_argument,        NULL, 'r' },
+    { "set-default-profile",  required_argument,  NULL, 7   },
+    { NULL,                   no_argument,        NULL, 0   },
   };
 
   mkcerr = mkc_error_init ();
-  argcopy.nargc = argc;
-  argcopy.utf8argv = NULL;
-  if (argc > 0) {
-    argcopy.utf8argv = malloc (sizeof (char *) * argc);
+  copyargs (&argcopy, argc, argv, mkcerr);
+  if (mkc_error_chk_err (mkcerr)) {
+    rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
+    return rc;
   }
-#if _lib_GetCommandLineW || (MKC_BOOTSTRAP && _WIN32)
-  wargv = CommandLineToArgvW (GetCommandLineW(), &targc);
-  for (int i = 0; i < argcopy.nargc; ++i) {
-    argcopy.utf8argv [i] = mkc_fromwide (wargv [i]);
-  }
-  LocalFree (wargv);
-#else
-  for (int i = 0; i < argcopy.nargc; ++i) {
-    argcopy.utf8argv [i] = strdup (argv [i]);
-  }
-#endif
 
-  mkcoptions.dfltprof = MKC_PROF_DEFAULT_NAME;
+#if _WIN32
+  mkc_env_get ("USERPROFILE", tbuff, sizeof (tbuff));
+  mkc_normalize_path (tbuff, sizeof (tbuff));
+#else
+  mkc_env_get ("HOME", tbuff, sizeof (tbuff));
+#endif
+  mkc_path_set_dir (MKC_DIR_HOME, tbuff);
+
+  mkcoptions.dfltprofile = strdup (MKC_PROF_DEFAULT_NAME);
   mkcoptions.compilertxt = NULL;
-  mkcoptions.mkcfile_dir = NULL;
   mkcoptions.stage = NULL;
   mkcoptions.prefix = NULL;
   mkcoptions.retest = false;
+
+  mkc_path_build (MKC_PATH_CONFIG, tbuff, sizeof (tbuff),
+      "defaultprofile.txt", mkcerr);
+  fh = mkc_fopen (tbuff, "r");
+  if (fh != NULL) {
+    *tbuff = '\0';
+    fgets (tbuff, sizeof (tbuff), fh);
+    mkcoptions.dfltprofile = strdup (tbuff);
+    fclose (fh);
+  }
 
   while ((c = getopt_long_only (argcopy.nargc, argcopy.utf8argv,
       "p:r", mkc_cli_opts, &option_index)) != -1) {
     switch (c) {
       case 'p': {
         if (optarg != NULL) {
-          mkcoptions.dfltprof = argcopy.utf8argv [optind - 1];
+          mkcoptions.dfltprofile = strdup (argcopy.utf8argv [optind - 1]);
         }
         break;
       }
@@ -131,11 +136,27 @@ main (int argc, char *argv [])
       }
       case 5: {
         if (optarg != NULL) {
-          mkc_path_set_dir_mkc_files (argcopy.utf8argv [optind - 1]);
+          mkc_path_set_dir (MKC_DIR_MKC_FILES, argcopy.utf8argv [optind - 1]);
         }
         break;
       }
       case 6: {
+        break;
+      }
+      case 7: {
+        if (optarg != NULL) {
+          FILE  *fh;
+
+          mkc_path_build (MKC_PATH_CONFIG, tbuff, sizeof (tbuff),
+              "defaultprofile.txt", mkcerr);
+          fh = mkc_fopen (tbuff, "w");
+          if (fh != NULL) {
+            fprintf (fh, "%s", argcopy.utf8argv [optind - 1]);
+            fclose (fh);
+          }
+          rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
+          return rc;
+        }
         break;
       }
       default: {
@@ -145,7 +166,8 @@ main (int argc, char *argv [])
   }
 
   log = mkc_log_init (mkcerr);
-  mkc_path_build (MKC_PATH_MKC_FILES, logname, sizeof (logname), "log-mkc.txt", mkcerr);
+  mkc_path_build (MKC_PATH_MKC_FILES, logname, sizeof (logname),
+      "log-mkc.txt", mkcerr);
 //  mkc_log_open (log, logname, MKC_LOG_NORMAL);
   mkc_log_open (log, logname, MKC_LOG_ALL);
 
@@ -251,10 +273,43 @@ main (int argc, char *argv [])
   mkc_log (log, MKC_LOG_STATISTICS, "-- total time: %s\n", tbuff);
 
   rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
+  datafree (mkcoptions.dfltprofile);
   return rc;
 }
 
 /* internal routines */
+
+static void
+copyargs (argcopy_t *argcopy, int argc, char *argv [], mkc_error_t *mkcerr)
+{
+#if _lib_GetCommandLineW || (MKC_BOOTSTRAP && _WIN32)
+  wchar_t         **wargv;
+  int             targc;
+#endif
+
+  argcopy->nargc = argc;
+  argcopy->utf8argv = NULL;
+  if (argc > 0) {
+    argcopy->utf8argv = malloc (sizeof (char *) * argc);
+    if (argcopy->utf8argv == NULL) {
+      mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    }
+  }
+#if _lib_GetCommandLineW || (MKC_BOOTSTRAP && _WIN32)
+  wargv = CommandLineToArgvW (GetCommandLineW(), &targc);
+  for (int i = 0; i < argcopy->nargc; ++i) {
+    argcopy->utf8argv [i] = mkc_fromwide (wargv [i]);
+  }
+  LocalFree (wargv);
+#else
+  for (int i = 0; i < argcopy->nargc; ++i) {
+    argcopy->utf8argv [i] = strdup (argv [i]);
+    if (argcopy->utf8argv [i] == NULL) {
+      mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    }
+  }
+#endif
+}
 
 static void
 cleanargs (argcopy_t *argcopy)
@@ -270,7 +325,7 @@ cleanargs (argcopy_t *argcopy)
   }
 }
 
-mkc_err_code_t
+static mkc_err_code_t
 mkc_cleanup (mkc_astmain_t *astmain, argcopy_t *argcopy,
     mkc_log_t *log, mkc_error_t *mkcerr)
 {

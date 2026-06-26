@@ -65,7 +65,6 @@
 %token T_OP_AND               "&&"
 %token T_OP_DIVIDE            "/"
 %token T_OP_IS_DEFINED        "is_defined"
-%token T_OP_IS_FROMCACHE      "is_fromcache"
 %token T_OP_IS_LIST           "is_list"
 %token T_OP_MINUS             "-"
 %token T_OP_MODULO            "%"
@@ -192,7 +191,7 @@
 %left T_OP_MULTIPLY T_OP_DIVIDE T_OP_MODULO
 %nonassoc T_OP_RANGE
 %precedence UNARY
-%nonassoc T_OP_IS_LIST T_OP_IS_DEFINED T_OP_IS_FROMCACHE
+%nonassoc T_OP_IS_LIST T_OP_IS_DEFINED
 
 %%
 mkc:
@@ -1012,11 +1011,6 @@ expr[v]:
   | T_OP_IS_DEFINED T_LEFT_PAREN varname[a] T_RIGHT_PAREN
     {
       $v = mkc_ast_mk_unary_op (ast, $a, MKC_T_OP_IS_DEFINED,
-          yylloc.first_line, yylloc.first_column);
-    }
-  | T_OP_IS_FROMCACHE T_LEFT_PAREN varname[a] T_RIGHT_PAREN
-    {
-      $v = mkc_ast_mk_unary_op (ast, $a, MKC_T_OP_IS_FROMCACHE,
           yylloc.first_line, yylloc.first_column);
     }
   | T_OP_IS_LIST T_LEFT_PAREN varname[a] T_RIGHT_PAREN

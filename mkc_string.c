@@ -2,7 +2,7 @@
  * Copyright 2026 Brad Lanam Pleasant Hill CA
  */
 
-#if ! MKC_BOOTSTRAP
+#ifndef MKC_BOOTSTRAP
 # include "mkc_config.h"
 #endif
 
@@ -30,12 +30,12 @@ stpecpy (char *dst, char *end, const char *restrict src)
 {
   char  *p;
 
-#if defined STEPCPY_DEBUG
+#if STEPCPY_DEBUG
   if (end - dst == sizeof (char *)) {
     fprintf (stderr, "WARN: stpecpy: length set to sizeof (char *)\n");
   }
 #endif
-#if defined (STPECPY_DEBUG)
+#if STPECPY_DEBUG
   if (dst == NULL) {
     fprintf (stderr, "ERR: stpecpy: null destination\n");
   }
@@ -104,6 +104,25 @@ mkc_strtrim (char *buff, size_t sz)
     *p = '\0';
     --p;
   }
+}
+
+void
+mkc_trim_char (char *s, unsigned char c)
+{
+  ssize_t     len;
+
+  if (s == NULL) {
+    return;
+  }
+
+  len = strlen (s);
+  --len;
+  while (len >= 0 && s [len] == c) {
+    s [len] = '\0';
+    --len;
+  }
+
+  return;
 }
 
 void

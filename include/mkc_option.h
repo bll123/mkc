@@ -11,9 +11,8 @@ extern "C" {
 #endif
 
 typedef struct mkc_option_t {
-  const char  * dfltprof;
+  char        * dfltprofile;
   const char  * compilertxt;
-  const char  * mkcfile_dir;
   const char  * stage;
   const char  * prefix;
   bool        retest;

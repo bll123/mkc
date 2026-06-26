@@ -1613,7 +1613,6 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
     }
 
     case MKC_T_OP_IS_DEFINED:
-    case MKC_T_OP_IS_FROMCACHE:
     case MKC_T_OP_IS_LIST: {
       mkc_ast_process (astmain, astnode->unary_op.vala, ifcond, loopcond, depth);
       if (astmain->value.vtype == MKC_VT_INTEGER ||

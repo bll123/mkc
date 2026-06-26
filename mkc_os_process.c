@@ -3,7 +3,7 @@
  *  (from ballroomdj4)
  */
 
-#if ! MKC_BOOTSTRAP
+#ifndef MKC_BOOTSTRAP
 # include "mkc_config.h"
 #endif
 

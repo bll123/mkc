@@ -2,7 +2,7 @@
  * Copyright 2026 Brad Lanam Pleasant Hill CA
  */
 
-#if ! MKC_BOOTSTRAP
+#ifndef MKC_BOOTSTRAP
 # include "mkc_config.h"
 #endif
 
@@ -14,43 +14,61 @@
 
 #include "mkc_def.h"
 #include "mkc_error.h"
+#include "mkc_fileop.h"
 #include "mkc_path.h"
 #include "mkc_string.h"
 
-#if ! defined (MKC_DIR_SHARE)
-  // #define MKC_DIR_SHARE "mkc"
-  /* this works for development, not for a mkc/ dir included with a project */
-  #define MKC_DIR_SHARE "."
-#endif
-
 /* this works for development, not for a mkc/ dir included with a project */
 /* mkc/mkc_files */
-static char mkc_dir_mkc_files [MKC_PATH_MAX] = "mkc_files";
+static char mkc_dirs [MKC_DIR_MAX][MKC_PATH_MAX] = {
+  [MKC_DIR_HOME] = "",
+  [MKC_DIR_MKC_FILES] = "",
+  [MKC_DIR_SHARE] = "",
+};
 
 void
 mkc_path_build (mkc_path_t pathtype, char *buff, size_t sz,
     char *filename, mkc_error_t *mkcerr)
 {
-  char    *p = NULL;
+  char        *p = NULL;
+  mkc_dir_t   dir;
 
-  if (pathtype == MKC_PATH_SHARE) {
+  dir = MKC_DIR_MKC_FILES;
+  if (*mkc_dirs [dir] == '\0') {
+    /* development */
+    stpecpy (mkc_dirs [dir], mkc_dirs [dir] + MKC_PATH_MAX, "mkc_files");
+  }
+  dir = MKC_DIR_SHARE;
+  if (*mkc_dirs [dir] == '\0') {
+    /* development */
+    stpecpy (mkc_dirs [dir], mkc_dirs [dir] + MKC_PATH_MAX, ".");
+  }
+
+  if (pathtype == MKC_PATH_CONFIG) {
+#if _WIN32
+    snprintf (buff, sz, "%s/AppData/Roaming/mkc", mkc_dirs [MKC_DIR_HOME]);
+#else
+    snprintf (buff, sz, "%s/.config/mkc", mkc_dirs [MKC_DIR_HOME]);
+#endif
+    p = buff + strlen (buff);
+  } else if (pathtype == MKC_PATH_SHARE) {
     /* the system share directory */
-    p = stpecpy (buff, buff + sz, MKC_DIR_SHARE);
+    p = stpecpy (buff, buff + sz, mkc_dirs [MKC_DIR_SHARE]);
   } else if (pathtype == MKC_PATH_MKC_FILES) {
     /* the mkc_files/ directory; this can be changed at run-time */
-    p = stpecpy (buff, buff + sz, mkc_dir_mkc_files);
+    p = stpecpy (buff, buff + sz, mkc_dirs [MKC_DIR_MKC_FILES]);
   } else if (pathtype == MKC_PATH_MKC_TEMPLATES) {
     /* this directory has the language templates for the checks */
-    p = stpecpy (buff, buff + sz, MKC_DIR_SHARE);
+    p = stpecpy (buff, buff + sz, mkc_dirs [MKC_DIR_SHARE]);
     p = stpecpy (p, buff + sz, "/templates");
   } else if (pathtype == MKC_PATH_MKC_TMP) {
     /* the tmp/ directory in mkc_files/ */
-    p = stpecpy (buff, buff + sz, mkc_dir_mkc_files);
+    p = stpecpy (buff, buff + sz, mkc_dirs [MKC_DIR_MKC_FILES]);
     p = stpecpy (p, buff + sz, "/tmp");
   } else if (pathtype == MKC_PATH_MKC_INCLUDE) {
     /* this directory has the mkc_def.h and mkc_compiler.h files in it, */
     /* used by the various checks */
-    p = stpecpy (buff, buff + sz, MKC_DIR_SHARE);
+    p = stpecpy (buff, buff + sz, mkc_dirs [MKC_DIR_SHARE]);
     p = stpecpy (p, buff + sz, "/include");
   } else {
     mkc_error_set (mkcerr, MKC_ERR_INVALID_ARGUMENT, 0, NULL);
@@ -64,7 +82,8 @@ mkc_path_build (mkc_path_t pathtype, char *buff, size_t sz,
 }
 
 void
-mkc_path_set_dir_mkc_files (const char *path)
+mkc_path_set_dir (mkc_dir_t dir, const char *path)
 {
-  stpecpy (mkc_dir_mkc_files, mkc_dir_mkc_files + sizeof (mkc_dir_mkc_files), path);
+  stpecpy (mkc_dirs [dir], mkc_dirs [dir] + MKC_PATH_MAX, path);
+  mkc_normalize_path (mkc_dirs [dir], MKC_PATH_MAX);
 }

@@ -22,16 +22,26 @@ typedef mkc_listidx_t mkc_profidx_t;
 typedef struct mkc_profile_t mkc_profile_t;
 
 typedef enum {
-  MKC_PROF_TYPE_INTERNAL,
-  MKC_PROF_TYPE_USER,
-  MKC_PROF_TYPE_TARGET,
-  MKC_PROF_TYPE_LOCAL,
   MKC_PROF_TYPE_INVALID,
+  MKC_PROF_TYPE_LOCAL,
+  MKC_PROF_TYPE_TARGET,
+  MKC_PROF_TYPE_CURRENT,
+  MKC_PROF_TYPE_INTERNAL,
 } mkc_prof_type_t;
 
 enum {
   MKC_PROF_NOT_FOUND = -2,
 };
+
+typedef struct mkc_profiter_t {
+  /* this is the name of the user-profile */
+  const char      *pname;
+  mkc_profidx_t   origpidx;
+  mkc_profidx_t   pidx;
+  mkc_compiler_t  compiler;
+  mkc_prof_type_t ptype;
+  int             localidx;
+} mkc_profiter_t;
 
 extern char const * const MKC_PROF_INTERNAL_NAME;
 extern char const * const MKC_PROF_DEFAULT_NAME;
@@ -65,8 +75,10 @@ mkc_profidx_t mkc_profile_pop (mkc_profile_t *profiles);
 void mkc_profile_set_active (mkc_profile_t *profiles, mkc_profidx_t pidx);
 mkc_profidx_t mkc_profile_get_active (mkc_profile_t *profiles);
 
+void mkc_profile_iter_hierarchy_start (mkc_profile_t *profiles, mkc_compiler_t compiler, mkc_profiter_t *profiter);
+int mkc_profile_iter_hierarchy_next (mkc_profile_t *profiles, mkc_profiter_t *profiter);
+
 void mkc_profile_local_reset (mkc_profile_t *profiles);
-mkc_profidx_t mkc_profile_next (mkc_profile_t *profiles, mkc_compiler_t origcompiler);
 const char * mkc_profile_curr_disp (mkc_profile_t *profiles, char *buff, size_t sz);
 
 bool mkc_profile_is_current (mkc_profile_t *profiles, const char *name);

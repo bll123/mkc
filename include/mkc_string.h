@@ -14,6 +14,7 @@ char * stpecpy (char *dst, char *end, const char *restrict src);
 void mkc_strupper (char *buff);
 char * mkc_strtok (char *buff, const char *delim, char **tokstr);
 void mkc_strtrim (char *buff, size_t sz);
+void mkc_trim_char (char *buff, unsigned char c);
 void mkc_strclean (char *buff, size_t sz);
 void datafree (void *data);
 

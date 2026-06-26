@@ -396,29 +396,6 @@ mkc_var_is_list (mkc_varlist_t *varlist, const char *vname)
   return rc;
 }
 
-bool
-mkc_var_is_fromcache (mkc_varlist_t *varlist, const char *vname)
-{
-  mkc_varidx_t    vidx;
-  mkc_listidx_t   loc = MKC_LIST_NOTFOUND;
-  bool            rc = false;
-
-  vidx = mkc_var_find (varlist, vname, &loc);
-  if (vidx != MKC_VAR_NOTFOUND) {
-    mkc_var_t   *var;
-
-    var = mkc_list_get_by_idx (varlist->list, vidx);
-    if (var == NULL) {
-      return rc;
-    }
-    if (var->fromcache) {
-      rc = true;
-    }
-  }
-
-  return rc;
-}
-
 void
 mkc_value_free (void *tvalue)
 {

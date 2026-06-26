@@ -37,7 +37,7 @@ typedef struct mkc_profile_t {
   mkc_profidx_t     localstack [MKC_PROF_STACK_MAX];
   mkc_profidx_t     stack [MKC_PROF_STACK_MAX];
   mkc_profidx_t     active_idx;
-  mkc_profidx_t     user_idx;
+  mkc_profidx_t     current_idx;
   int               stacksz;
   int               localidx;
   int               localstacksz;
@@ -92,30 +92,32 @@ mkc_profile_init (mkc_log_t *log, mkc_error_t *mkcerr, mkc_option_t *mkcoptions)
       MKC_COMPILER_GENERAL, MKC_PROF_TYPE_INTERNAL);
   /* this will create default/general */
   pidx = mkc_profile_create (profiles, MKC_PROF_DEFAULT_NAME,
-      profiles->dfltcompiler, MKC_PROF_TYPE_USER);
+      profiles->dfltcompiler, MKC_PROF_TYPE_CURRENT);
 
-  /* now make sure the user's profile selection/compiler exists */
+  /* now make sure the current/compiler exists */
   /* this will be the active profile */
+  /* the default-compiler is quite possibly 'general', */
+  /* and a compiler-specific profile may not be created */
   pidx = mkc_profile_find (profiles,
-      mkcoptions->dfltprof, profiles->dfltcompiler);
+      mkcoptions->dfltprofile, profiles->dfltcompiler);
   if (pidx == MKC_PROF_NOT_FOUND) {
-    pidx = mkc_profile_create (profiles, mkcoptions->dfltprof,
-          profiles->dfltcompiler, MKC_PROF_TYPE_USER);
+    pidx = mkc_profile_create (profiles, mkcoptions->dfltprofile,
+          profiles->dfltcompiler, MKC_PROF_TYPE_CURRENT);
   }
 
-  if (mkc_profile_get_type (profiles, pidx) != MKC_PROF_TYPE_USER) {
+  if (mkc_profile_get_type (profiles, pidx) != MKC_PROF_TYPE_CURRENT) {
     mkc_error_set (mkcerr, MKC_ERR_INVALID_PROFILE, 0, NULL);
     mkc_profile_free (profiles);
     return NULL;
   }
 
-  mkc_message ("-- default profile: %s %s\n", mkcoptions->dfltprof,
+  mkc_message ("-- default profile: %s %s\n", mkcoptions->dfltprofile,
       mkc_compiler_get_name (profiles->dfltcompiler));
   mkc_log (log, MKC_LOG_PROFILE, "== default profile: %s %s\n",
-      mkcoptions->dfltprof, mkc_compiler_get_name (profiles->dfltcompiler));
+      mkcoptions->dfltprofile, mkc_compiler_get_name (profiles->dfltcompiler));
 
   profiles->active_idx = pidx;
-  profiles->user_idx = pidx;
+  profiles->current_idx = pidx;
 
   return profiles;
 }
@@ -461,11 +463,11 @@ mkc_profile_pop (mkc_profile_t *profiles)
       "profile: pop (%d)\n", profiles->active_idx);
 
   pentry = mkc_list_get_by_idx (profiles->list, profiles->active_idx);
-  if (pentry->type == MKC_PROF_TYPE_USER) {
+  if (pentry->type == MKC_PROF_TYPE_CURRENT) {
     mkc_log (profiles->log, MKC_LOG_PROFILE,
-        "profile: user: %s %s (%d)\n", pentry->name,
+        "profile: current: %s %s (%d)\n", pentry->name,
         mkc_compiler_get_name (pentry->compiler), profiles->active_idx);
-    profiles->user_idx = profiles->active_idx;
+    profiles->current_idx = profiles->active_idx;
   }
 
   return profiles->active_idx;
@@ -487,11 +489,11 @@ mkc_profile_set_active (mkc_profile_t *profiles, mkc_profidx_t pidx)
 
   profiles->active_idx = pidx;
   pentry = mkc_list_get_by_idx (profiles->list, pidx);
-  if (pentry->type == MKC_PROF_TYPE_USER) {
+  if (pentry->type == MKC_PROF_TYPE_CURRENT) {
     mkc_log (profiles->log, MKC_LOG_PROFILE,
-        "profile: user: %s %s (%d)\n", pentry->name,
+        "profile: current: %s %s (%d)\n", pentry->name,
         mkc_compiler_get_name (pentry->compiler), pidx);
-    profiles->user_idx = pidx;
+    profiles->current_idx = pidx;
   }
 
   mkc_log (profiles->log, MKC_LOG_PROFILE,
@@ -519,6 +521,31 @@ mkc_profile_local_reset (mkc_profile_t *profiles)
   profiles->localidx = 0;
 }
 
+void
+mkc_profile_iter_hierarchy_start (mkc_profile_t *profiles,
+    mkc_compiler_t compiler, mkc_profiter_t *profiter)
+{
+  mkc_profidx_t     pidx;
+  mkc_prof_entry_t  * pentry;
+
+  if (profiles == NULL || profiter == NULL) {
+    return;
+  }
+
+  /* note that current active profile is one of */
+  /* target/compiler, current/compiler, or current/general */
+  pidx = mkc_profile_get_active (profiles);
+  pentry = mkc_list_get_by_idx (profiles->list, pidx);
+
+  profiter->pname = mkc_profile_get_name (profiles, profiles->current_idx);
+  profiter->origpidx = pidx;
+  /* for the compiler, use the specified compiler, not the active compiler */
+  profiter->compiler = compiler;
+  profiter->ptype = pentry->type;
+  profiter->pidx = MKC_PROF_NOT_FOUND;
+  profiter->localidx = 0;
+}
+
 /* returns the next profile in the hierarchy (that exists) */
 /*    local variable stack */
 /*    target / compiler */
@@ -526,75 +553,95 @@ mkc_profile_local_reset (mkc_profile_t *profiles)
 /*    current-user-profile / general */
 /*    internal */
 int
-mkc_profile_next (mkc_profile_t *profiles, mkc_compiler_t origcompiler)
+mkc_profile_iter_hierarchy_next (mkc_profile_t *profiles,
+    mkc_profiter_t *profiter)
 {
-  mkc_prof_entry_t  * pentry;
   mkc_profidx_t     pidx;
-  mkc_compiler_t    compiler;
-  mkc_prof_type_t   type;
 
-  if (profiles == NULL) {
+  if (profiles == NULL || profiter == NULL) {
     return MKC_ERR_FAILURE;
   }
 
-  pidx = profiles->active_idx;
-  pentry = mkc_list_get_by_idx (profiles->list, pidx);
-  compiler = pentry->compiler;
-  type = pentry->type;
-
-  if (type == MKC_PROF_TYPE_INTERNAL) {
-    return MKC_PROF_NOT_FOUND;
-  }
-
   if (profiles->localidx < profiles->localstacksz) {
-    pidx = profiles->localstack [profiles->localidx];
-    profiles->localidx += 1;
+    pidx = profiles->localstack [profiter->localidx];
+    profiter->localidx += 1;
     return pidx;
   }
 
-  if (compiler != MKC_COMPILER_GENERAL) {
+  pidx = profiter->pidx;
+  if (pidx == MKC_PROF_NOT_FOUND) {
+    /* the first time, the active profile is one of */
+    /* target/compiler, user/compiler or user/general */
+    /* if a target type profile, use the target */
+    /* otherwise, use current/compiler */
+    /* note that a current/compiler profile may not exist */
+
+    if (profiter->ptype == MKC_PROF_TYPE_TARGET) {
+      pidx = profiter->origpidx;
+      profiter->pidx = pidx;
+      return pidx;
+    }
+
+    /* find the most specific user profile */
+    pidx = mkc_profile_find (profiles, profiter->pname, profiter->compiler);
+    /* this is the situation where the profile may not exist */
+    if (pidx == MKC_PROF_NOT_FOUND) {
+      pidx = mkc_profile_find (profiles, profiter->pname, MKC_COMPILER_GENERAL);
+      profiter->compiler = MKC_COMPILER_GENERAL;
+    }
+
+    profiter->ptype = MKC_PROF_TYPE_CURRENT;
+    profiter->pidx = pidx;
+    return pidx;
+  }
+
+  if (profiter->ptype == MKC_PROF_TYPE_CURRENT &&
+      profiter->compiler != MKC_COMPILER_GENERAL) {
     /* if the compiler is not set to general, check the */
-    /* profile with the same name, with compiler-general set */
-    pidx = mkc_profile_find (profiles, pentry->name,
-        MKC_COMPILER_GENERAL);
+    /* profile with the same name, with the compiler set to general */
+    /* note that this profile always exists */
+    pidx = mkc_profile_find (profiles, profiter->pname, MKC_COMPILER_GENERAL);
     return pidx;
   }
 
-  /* reset the compiler back to the original */
-  compiler = origcompiler;
+  /* check the profile type, and locate the profile */
+  /* for the next type in the hierarchy */
 
-  /* set the type for the next iteration through the while loop */
-
-  switch (type) {
+  switch (profiter->ptype) {
     case MKC_PROF_TYPE_INVALID: {
       mkc_error_set (profiles->mkcerr, MKC_ERR_INVALID_PROFILE, 0, NULL);
       break;
     }
     case MKC_PROF_TYPE_LOCAL: {
+      /* local-type already handled above */
       break;
     }
     case MKC_PROF_TYPE_TARGET: {
-      const char  *userprof = "ng";
+      /* find the profile using the current profile name */
+      pidx = mkc_profile_find (profiles, profiter->pname, profiter->compiler);
 
-      userprof = mkc_profile_get_name (profiles, profiles->user_idx);
-      pidx = mkc_profile_find (profiles, userprof, compiler);
-      type = MKC_PROF_TYPE_USER;
+      /* this is the one situation where the next profile may not exist */
+      if (pidx == MKC_PROF_NOT_FOUND) {
+        pidx = mkc_profile_find (profiles, profiter->pname, MKC_COMPILER_GENERAL);
+        profiter->compiler = MKC_COMPILER_GENERAL;
+      }
+
+      profiter->ptype = MKC_PROF_TYPE_CURRENT;
+      profiter->pidx = pidx;
       break;
     }
-    case MKC_PROF_TYPE_USER: {
-      pidx = mkc_profile_find (profiles,
+    case MKC_PROF_TYPE_CURRENT: {
+      profiter->pidx = mkc_profile_find (profiles,
           MKC_PROF_INTERNAL_NAME, MKC_COMPILER_GENERAL);
-      type = MKC_PROF_TYPE_INTERNAL;
+      profiter->ptype = MKC_PROF_TYPE_INTERNAL;
+      pidx = profiter->pidx;
       break;
     }
     case MKC_PROF_TYPE_INTERNAL: {
+      pidx = MKC_PROF_NOT_FOUND;
       break;
     }
   } /* switch on the profile type */
-
-  if (pidx >= 0) {
-    pentry = mkc_list_get_by_idx (profiles->list, pidx);
-  }
 
   return pidx;
 }
@@ -638,7 +685,7 @@ mkc_profile_is_current (mkc_profile_t *profiles, const char *reqnm)
     }
   }
 
-  currnm = mkc_profile_get_name (profiles, profiles->user_idx);
+  currnm = mkc_profile_get_name (profiles, profiles->current_idx);
 
   if (strcmp (currnm, reqnm) == 0) {
     return true;

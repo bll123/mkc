@@ -32,7 +32,7 @@ int mkc_pvar_set_integer (mkc_pvar_t *pvar, const char *vname, int32_t ival, mkc
 int mkc_pvar_set_str (mkc_pvar_t *pvar, const char *vname, const char *str, mkc_var_ctxt_t vctxt);
 int mkc_pvar_set_list (mkc_pvar_t *pvar, const char *vname, mkc_list_t *list, mkc_var_ctxt_t vctxt);
 int mkc_pvar_set_list_from_str (mkc_pvar_t *pvar, const char *vname, char *str, mkc_var_ctxt_t vctxt);
-void mkc_pvar_set_context (mkc_pvar_t *pvar, const char *vname, int vctxt);
+void mkc_pvar_set_context (mkc_pvar_t *pvar, const char *vname, mkc_var_ctxt_t vctxt);
 
 mkc_varidx_t mkc_pvar_get_prof_idx (mkc_pvar_t *pvar, const char *vname);
 
@@ -57,7 +57,6 @@ int32_t mkc_pvar_value_get_integer (mkc_pvar_t *pvar, mkc_value_t *value);
 void mkc_pvar_value_get_str (mkc_pvar_t *pvar, mkc_value_t *value, char *buff, size_t sz);
 bool mkc_pvar_is_defined (mkc_pvar_t *pvar, const char *vname);
 bool mkc_pvar_is_list (mkc_pvar_t *pvar, const char *vname);
-bool mkc_pvar_is_fromcache (mkc_pvar_t *pvar, const char *vname);
 char * mkc_pvar_substitute (mkc_pvar_t *pvar, const char *vname, int depth);
 
 #if defined (__cplusplus) || defined (c_plusplus)
