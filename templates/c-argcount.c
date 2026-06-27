@@ -18,6 +18,8 @@
 #define __THROW
 #define __const const
 #define extern
+#define __wur
+#define __extension__
 
 #include <stdio.h>
 #include <stddef.h>

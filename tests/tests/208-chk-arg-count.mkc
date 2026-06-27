@@ -1,0 +1,80 @@
+
+check_arg_count chk_v {
+  compiler_flags '-Itests/data';
+  header 208-chk-arg-count.h;
+}
+check_arg_count chk_a {
+  compiler_flags '-Itests/data';
+  header 208-chk-arg-count.h;
+}
+check_arg_count chk_b {
+  compiler_flags '-Itests/data';
+  header 208-chk-arg-count.h;
+}
+check_arg_count chk_c {
+  compiler_flags '-Itests/data';
+  header 208-chk-arg-count.h;
+}
+check_arg_count chk_d {
+  compiler_flags '-Itests/data';
+  header 208-chk-arg-count.h;
+}
+check_arg_count chk_e {
+  compiler_flags '-Itests/data';
+  header 208-chk-arg-count.h;
+}
+
+# some real-world routines
+
+check_arg_count stat {
+  header sys/stat.h;
+}
+check_arg_count fprintf;
+check_arg_count atoll;
+
+if (${_arg_count_chk_v} == 1) {
+  print '  ok v';
+} else {
+  print '  fail v';
+}
+if (${_arg_count_chk_a} == 1) {
+  print '  ok a';
+} else {
+  print '  fail a';
+}
+if (${_arg_count_chk_b} == 2) {
+  print '  ok b';
+} else {
+  print '  fail b';
+}
+if (${_arg_count_chk_c} == 3) {
+  print '  ok c';
+} else {
+  print '  fail c';
+}
+if (${_arg_count_chk_d} == 3) {
+  print '  ok d';
+} else {
+  print '  fail d';
+}
+if (${_arg_count_chk_e} == 3) {
+  print '  ok e';
+} else {
+  print '  fail e';
+}
+
+if (${_arg_count_stat} == 2) {
+  print '  ok stat';
+} else {
+  print '  fail stat';
+}
+if (${_arg_count_fprintf} == 3) {
+  print '  ok fprintf';
+} else {
+  print '  fail fprintf';
+}
+if (${_arg_count_atoll} == 1) {
+  print '  ok atoll';
+} else {
+  print '  fail atoll';
+}

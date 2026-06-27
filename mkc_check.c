@@ -360,7 +360,7 @@ mkc_chk_arg_count (mkc_check_t *check, mkc_compiler_t compiler,
   char            *rbuff;
   size_t          rsz = MKC_LARGE_BUFF_SZ;
   const char      *flags [2];
-  char            tbuff [MKC_VNAME_MAX];
+  char            pattern [MKC_VNAME_MAX];
   int             fcount = 0;
   char            **match;
   int             matchcount = 0;
@@ -387,11 +387,18 @@ mkc_chk_arg_count (mkc_check_t *check, mkc_compiler_t compiler,
   /*      ;   */
 
 #if _have_regex
-  if (check->rxargcount == NULL) {
-    snprintf (tbuff, sizeof (tbuff),
-        "([ \t]+%s[ \t]\\([^)]*\\)[ \t\r\n]*;)", funcname);
-    check->rxargcount = mkc_regex_init (tbuff, check->mkcerr);
+  if (check->rxcomma == NULL) {
     check->rxcomma = mkc_regex_init ("(,)", check->mkcerr);
+  }
+
+  /* the function name changes, the pattern must be re-built */
+  snprintf (pattern, sizeof (pattern),
+      "([ \t\\*]+%s[ \t]\\([^)]*\\)[ \t\r\n]*;)", funcname);
+  mkc_log (check->log, MKC_LOG_CHECK, "  arg-count: pattern: %s\n", pattern);
+  check->rxargcount = mkc_regex_init (pattern, check->mkcerr);
+
+  if (check->rxargcount == NULL) {
+    return 0;
   }
 
   match = mkc_regex_get (check->rxargcount, rbuff);
@@ -400,26 +407,32 @@ mkc_chk_arg_count (mkc_check_t *check, mkc_compiler_t compiler,
   while (match [matchcount] != NULL) {
     ++matchcount;
   }
+  mkc_log (check->log, MKC_LOG_CHECK, "  arg-count: matches: %d\n", matchcount);
   if (matchcount == 3) {
     const char  *tmatch;
     char        **cmatch;
+    int         ccount = 0;
 
     /* now count the number of commas */
     tmatch = match [1];
+    mkc_log (check->log, MKC_LOG_CHECK, "  arg-count: match: %s\n", tmatch);
     cmatch = mkc_regex_get (check->rxcomma, tmatch);
     matchcount = 0;
     while (cmatch [matchcount] != NULL) {
+      if (strcmp (cmatch [matchcount], ",") == 0) {
+        ++ccount;
+      }
       ++matchcount;
     }
+    mkc_log (check->log, MKC_LOG_CHECK, "  arg-count: commas: %d\n", matchcount);
 
-    /* the match return includes the before and trailing strings, */
-    /* subtract 2 */
-    /* add 1 for the number of arguments */
-    rc = matchcount - 2 + 1;
+    rc = ccount + 1;
     mkc_regex_get_free (cmatch);
   }
 
   mkc_regex_get_free (match);
+  mkc_regex_free (check->rxargcount);
+  check->rxargcount = NULL;
 #endif
 
   mkc_chk_reset (check);
@@ -432,7 +445,7 @@ mkc_chk_compiler_flag (mkc_check_t *check,
     const char *flag, bool negate)
 {
   int               rc;
-  char              tbuff [100];
+  char              tbuff [MKC_VNAME_MAX];
   char              *rbuff;
   size_t            rsz;
   static const char *negprefix = "-Wno-";
@@ -707,8 +720,12 @@ mkc_compile_only (mkc_check_t *check, mkc_compiler_t compiler,
       OS_PROC_WAIT | OS_PROC_NOWINDOW, rbuff, rsz, &retsz);
 
   if (retsz > 0) {
-    mkc_log (check->log, MKC_LOG_CHECK, "--- compile log\n");
-    mkc_log (check->log, MKC_LOG_CHECK, "%s\n", rbuff);
+    mkc_log (check->log, MKC_LOG_CHECK, "--- compile log (%zd)\n", retsz);
+    if (retsz < 2000) {
+      mkc_log (check->log, MKC_LOG_CHECK, "%s\n", rbuff);
+    } else {
+      mkc_log (check->log, MKC_LOG_CHECK_VERBOSE, "%s\n", rbuff);
+    }
     mkc_log (check->log, MKC_LOG_CHECK, "---\n");
   }
   mkc_log (check->log, MKC_LOG_CHECK, "  rc: %d\n", rc);

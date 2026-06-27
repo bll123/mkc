@@ -133,6 +133,7 @@ mkc_path.o: mkc_path.c
 mkc_process.o: mkc_process.c
 mkc_profile.o: mkc_profile.c
 mkc_pvar.o: mkc_pvar.c
+mkc_regex.o: mkc_regex.c
 mkc_string.o: mkc_string.c
 mkc_tmutil.o: mkc_tmutil.c
 mkc_var.o: mkc_var.c

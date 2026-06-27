@@ -593,17 +593,16 @@ bool
 mkc_pvar_is_defined (mkc_pvar_t *pvar, const char *vname)
 {
   mkc_value_t     *value;
-  bool            rc = false;
 
   if (pvar == NULL) {
-    return rc;
+    return false;
   }
 
   value = mkc_pvar_get_by_profile (pvar, vname);
   if (value == NULL) {
-    return rc;
+    return false;
   }
-  return rc;
+  return true;
 }
 
 bool
