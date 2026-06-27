@@ -5,6 +5,7 @@
 
 project {
   name mkctest;
+  compiler c;
 }
 
 set d 4;
@@ -20,6 +21,11 @@ profile default {
   set h 8;
   set g 7;
 }
+profile debug {
+  compiler c;
+  set a 1;
+  set b 2;
+}
 profile default {
   compiler c++;
   set m 13;
@@ -29,6 +35,14 @@ profile internal {
   set i 9;
 }
 
+if (is_defined (a)) {
+  print '  fail a';
+  exit 1;
+}
+if (is_defined (b)) {
+  print '  fail b';
+  exit 1;
+}
 if (${c} == 3) {
   # default c
   print '  ok 3';
@@ -54,18 +68,21 @@ if (${h} == 8) {
   print '  ok 8';
 }
 if (${i} == 9) {
-  # internal
+  # internal general
   print '  ok 9';
 }
-if (${l} == 12) {
+
+if (is_defined (l)) {
   # default c++
   # will not print, as the compiler is set to 'c'
   print '  ng 12';
+  exit 1;
 }
-if (${m} == 13) {
+if (is_defined (m)) {
   # default c++
   # will not print, as the compiler is set to 'c'
   print '  ng 13';
+  exit 1;
 }
 
 mkcdebug printvar test;

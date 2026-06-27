@@ -17,7 +17,7 @@ if (${_type_int} == 1) {
 } else {
   print '  fail int';
 }
-if (${_have_stat} == 1 && ${_type_struct_stat} == 0) {
+if (${_have_stat} == 1 && ! is_defined (_type_struct_stat)) {
   print '  ok';
 } else {
   print '  fail struct stat';

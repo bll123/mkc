@@ -309,7 +309,6 @@ mkc_pvar_get_by_profile (mkc_pvar_t *pvar, const char *nm)
 {
   mkc_profidx_t   opidx;
   mkc_profidx_t   pidx;
-  mkc_compiler_t  origcompiler;
   mkc_value_t     *value = NULL;
   mkc_profiter_t  profiter;
 
@@ -322,12 +321,8 @@ mkc_pvar_get_by_profile (mkc_pvar_t *pvar, const char *nm)
   }
 
   opidx = mkc_profile_get_active (pvar->profiles);
-  origcompiler = mkc_profile_get_compiler (pvar->profiles, opidx);
 
-// ### this isn't correct, the compiler to pass should be the
-// specific compiler
-  mkc_profile_iter_hierarchy_start (pvar->profiles,
-      origcompiler, &profiter);
+  mkc_profile_iter_hierarchy_start (pvar->profiles, &profiter);
 
   while ((pidx = mkc_profile_iter_hierarchy_next (
       pvar->profiles, &profiter)) != MKC_PROF_NOT_FOUND) {
@@ -440,8 +435,8 @@ mkc_pvar_get_variable_integer (mkc_pvar_t *pvar, mkc_value_t *value)
 
   tvalue = mkc_pvar_get_variable_value (pvar, value->sval);
   if (tvalue == NULL) {
-    ival = 0;
-    return ival;
+    mkc_error_set (pvar->mkcerr, MKC_ERR_UNKNOWN_VARIABLE, 0, NULL);
+    return 0;
   }
   if (tvalue->vtype == MKC_VT_STRING) {
     ival = atol (tvalue->sval);
@@ -473,6 +468,7 @@ mkc_pvar_get_variable_str (mkc_pvar_t *pvar, mkc_value_t *value,
   tvalue = mkc_pvar_get_variable_value (pvar, value->sval);
 
   if (tvalue == NULL) {
+    mkc_error_set (pvar->mkcerr, MKC_ERR_UNKNOWN_VARIABLE, 0, NULL);
     return;
   }
 
@@ -519,19 +515,9 @@ mkc_pvar_value_get_integer (mkc_pvar_t *pvar, mkc_value_t *value)
   int32_t     ival = 0;
 
   if (value->vtype == MKC_VT_INVALID) {
-    mkc_error_set (pvar->mkcerr, MKC_ERR_INVALID_VALUE, 0, NULL);
+    mkc_error_set (pvar->mkcerr, MKC_ERR_UNKNOWN_VARIABLE, 0, NULL);
   } else if (value->vtype == MKC_VT_INTEGER) {
     ival = value->ival;
-  } else if (value->vtype == MKC_VT_STATIC_STRING) {
-// ### conversion from string to integer is not necessary
-//  these could be removed, and just generate an error.
-    ival = atol (value->sval);
-  } else if (value->vtype == MKC_VT_QUOTED_STRING) {
-    char    *tbuff;
-
-    tbuff = mkc_pvar_substitute (pvar, value->sval, 0);
-    ival = atol (tbuff);
-    free (tbuff);
   } else if (value->vtype == MKC_VT_LIST) {
     mkc_error_set (pvar->mkcerr, MKC_ERR_MISMATCHED_ARGUMENT, 0, NULL);
     return 0;
@@ -542,10 +528,10 @@ mkc_pvar_value_get_integer (mkc_pvar_t *pvar, mkc_value_t *value)
     ival = atol (tbuff);
   } else if (value->vtype == MKC_VT_VARIABLE) {
     ival = mkc_pvar_get_variable_integer (pvar, value);
-  } else if (value->vtype == MKC_VT_STRING) {
-// ### conversion from string to integer is not necessary
-//  these could be removed, and just generate an error.
-    ival = atol (value->sval);
+  } else if (value->vtype == MKC_VT_STRING ||
+      value->vtype == MKC_VT_STATIC_STRING ||
+      value->vtype == MKC_VT_QUOTED_STRING) {
+    mkc_error_set (pvar->mkcerr, MKC_ERR_INVALID_VALUE, 0, NULL);
   } else {
     mkc_error_set (pvar->mkcerr, MKC_ERR_UNHANDLED_VALUE, 0, NULL);
     fprintf (stderr, "ERR: unhandled value: %d\n", value->vtype);
@@ -562,8 +548,10 @@ mkc_pvar_value_get_str (mkc_pvar_t *pvar,
   *buff = '\0';
 
   if (value->vtype == MKC_VT_INVALID) {
-    mkc_error_set (pvar->mkcerr, MKC_ERR_INVALID_VALUE, 0, NULL);
+    mkc_error_set (pvar->mkcerr, MKC_ERR_UNKNOWN_VARIABLE, 0, NULL);
   } else if (value->vtype == MKC_VT_INTEGER) {
+    /* integers must be converted to strings, */
+    /* so that substitutions can be done in a quoted string */
     snprintf (buff, sz, "%d", value->ival);
   } else if (value->vtype == MKC_VT_STRING) {
     stpecpy (buff, buff + sz, value->sval);

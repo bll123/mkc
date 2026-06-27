@@ -1,0 +1,17 @@
+# Copyright 2026 Brad Lanam Pleasant Hill CA
+
+set a 1;
+set b 'b';
+
+if (${a} == 1) {
+  print '  ok a';
+}
+if (${b} eq 'b') {
+  print '  ok b';
+}
+if (is_defined (c) == 0) {
+  print '  ok c';
+}
+if (${c} == 0) {
+  print '  fail c';
+}

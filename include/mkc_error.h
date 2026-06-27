@@ -47,6 +47,8 @@ typedef enum {
   MKC_ERR_UNBALANCED_BRACES,
   /* a serious internal error */
   MKC_ERR_UNHANDLED_VALUE,
+  MKC_ERR_UNKNOWN_VARIABLE,
+  MKC_ERR_USER_EXIT,
   MKC_ERR_WHILE_LIMIT_EXCEEDED,
 } mkc_err_code_t;
 

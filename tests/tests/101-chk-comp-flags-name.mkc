@@ -6,6 +6,6 @@ check_compile_flag    '-Werror' {
 if (${HAVE_CF_ERROR} ne '') {
   print '  ok';
 }
-if (${cf_error} ne '') {
+if (is_defined (cf_error)) {
   print '  fail';
 }

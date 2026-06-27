@@ -39,7 +39,6 @@ typedef struct mkc_profiter_t {
   const char      *pname;
   mkc_profidx_t   origpidx;
   mkc_profidx_t   pidx;
-  mkc_compiler_t  compiler;
   mkc_prof_type_t ptype;
   int             localidx;
 } mkc_profiter_t;
@@ -76,7 +75,7 @@ mkc_profidx_t mkc_profile_pop (mkc_profile_t *profiles);
 void mkc_profile_set_active (mkc_profile_t *profiles, mkc_profidx_t pidx);
 mkc_profidx_t mkc_profile_get_active (mkc_profile_t *profiles);
 
-void mkc_profile_iter_hierarchy_start (mkc_profile_t *profiles, mkc_compiler_t compiler, mkc_profiter_t *profiter);
+void mkc_profile_iter_hierarchy_start (mkc_profile_t *profiles, mkc_profiter_t *profiter);
 int mkc_profile_iter_hierarchy_next (mkc_profile_t *profiles, mkc_profiter_t *profiter);
 
 void mkc_profile_local_reset (mkc_profile_t *profiles);

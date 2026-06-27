@@ -58,6 +58,10 @@ typedef struct mkc_ast_debug_t {
   mkc_astnode_t       *dbgb;
 } mkc_ast_debug_t;
 
+typedef struct mkc_ast_exit_t {
+  mkc_astnode_t       *vala;
+} mkc_ast_exit_t;
+
 typedef struct mkc_ast_conf_t {
   mkc_astnode_t       *stmtblock;
   bool                definezero;
@@ -163,6 +167,7 @@ typedef struct mkc_astnode_t {
     mkc_ast_conf_t              confstmt;
     mkc_ast_debug_t             debugstmt;
     mkc_ast_elseif_t            elseif;
+    mkc_ast_exit_t              exitstmt;
     mkc_ast_foreach_t           foreachstmt;
     mkc_ast_if_t                ifstmt;
     mkc_ast_list_t              list;
@@ -790,10 +795,10 @@ mkc_ast_mk_while (mkc_astmain_t *astmain,
 
 MKC_NODISCARD
 mkc_astnode_t *
-mkc_ast_mk_exit (mkc_astmain_t *astmain,
+mkc_ast_mk_exit (mkc_astmain_t *astmain, mkc_astnode_t *vala,
     int32_t lineno, int colno)
 {
-  mkc_astnode_t   *astnode;
+  mkc_astnode_t     *astnode;
 
   mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
       "ast-mk: exit\n");
@@ -802,6 +807,8 @@ mkc_ast_mk_exit (mkc_astmain_t *astmain,
   if (astnode == NULL) {
     return NULL;
   }
+
+  astnode->exitstmt.vala = vala;
 
   return astnode;
 }
@@ -1070,12 +1077,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
     astmain->maxrdepth = astmain->rdepth;
   }
 
-  if (astmain->stopprocess) {
-    astmain->rdepth -= 1;
-    return MKC_OK;
-  }
-
-  if (mkc_error_chk_err (astmain->mkcerr)) {
+  if (mkc_error_chk_err (astmain->mkcerr) || astmain->stopprocess) {
     mkc_log (astmain->log, MKC_LOG_AST_PROCESS,
         "ast-proc: error: %d\n", mkc_error_value (astmain->mkcerr));
     /* an error occurred, stop processing */
@@ -1229,6 +1231,15 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
     }
 
     case MKC_T_STMT_EXIT: {
+      mkc_value_t   *value;
+      int           exitcode;
+
+      value = mkc_ast_get_value (astmain, astnode->exitstmt.vala);
+      exitcode = 0;
+      if (value->vtype == MKC_VT_INTEGER) {
+        exitcode = value->ival;
+      }
+      mkc_error_set (astmain->mkcerr, MKC_ERR_USER_EXIT, exitcode, NULL);
       astmain->stopprocess = true;
       break;
     }
@@ -1758,4 +1769,3 @@ mkc_ast_get_value (mkc_astmain_t *astmain, mkc_astnode_t *astnode)
 
   return value;
 }
-

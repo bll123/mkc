@@ -46,6 +46,8 @@ static char const * const mkcerrormsg [] = {
   [MKC_ERR_UNBALANCED_BRACES] = "unbalanced braces",
   /* unhandled-value is a serious internal error */
   [MKC_ERR_UNHANDLED_VALUE] = "unhandled value",
+  [MKC_ERR_UNKNOWN_VARIABLE] = "unknown variable",
+  [MKC_ERR_USER_EXIT] = "user exit",
   [MKC_ERR_WHILE_LIMIT_EXCEEDED] = "while limit exceeded",
 };
 
@@ -152,7 +154,11 @@ mkc_error_print (mkc_error_t *mkcerr)
     fprintf (stderr, "%s", tbuff);
   }
   fprintf (stderr, "error: %s", mkcerrormsg [mkcerr->err]);
-  if (mkcerr->syserr != 0) {
+  if (mkcerr->err == MKC_ERR_USER_EXIT) {
+    fprintf (stderr, " (%d)", mkcerr->syserr);
+  }
+  if (mkcerr->err != MKC_ERR_USER_EXIT &&
+      mkcerr->syserr != 0) {
     fprintf (stderr, "; %s", strerror (mkcerr->syserr));
   }
   if (mkcerr->str != NULL) {

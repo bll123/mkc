@@ -209,9 +209,9 @@ stmt[v]:
       $v = NULL;
     }
 // control statements
-  | T_EXIT[a] T_SEMICOLON
+  | T_EXIT[a] integer[b] T_SEMICOLON
     {
-      $v = mkc_ast_mk_exit (ast,
+      $v = mkc_ast_mk_exit (ast, $b,
           yylloc.first_line, yylloc.first_column);
     }
   | ifstmt[a]

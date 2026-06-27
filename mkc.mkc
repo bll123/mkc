@@ -63,7 +63,7 @@ configure {
   define_zero;
 }
 
-exit;
+exit 0;
 
 # generate
 

@@ -8,7 +8,7 @@ check_function fstat {
 
 # windows has 'max' defined, unix-like systems have 'MAX' in sys/param.h
 # these are both macros
-if (MKC_SYS_WINDOWS) {
+if (${MKC_SYS_WINDOWS}) {
   check_function max {
     name _function_max;
   }

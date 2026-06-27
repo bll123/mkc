@@ -37,7 +37,7 @@ MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_loop_control (mkc_astmain_t *astmain, m
 mkc_astnode_t * mkc_ast_mk_main (mkc_astmain_t *astmain, mkc_astnode_t *stmtlist, int32_t lineno, int colno);
 MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_stmtlist (mkc_astmain_t *astmain, mkc_astnode_t *list, mkc_astnode_t *vala, int32_t lineno, int colno);
 MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_while (mkc_astmain_t *astmain, mkc_astnode_t *expr, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
-MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_exit (mkc_astmain_t *astmain, int32_t lineno, int colno);
+MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_exit (mkc_astmain_t *astmain, mkc_astnode_t *vala, int32_t lineno, int colno);
 void mkc_ast_process_include (mkc_astmain_t *astmain, mkc_astnode_t *vala, char *tbuff, size_t sz, int32_t lineno, int colno);
 
 MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_configure (mkc_astmain_t *astmain, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
