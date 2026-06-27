@@ -18,14 +18,24 @@ check_define EPERM {
   header errno.h;
 }
 
+check_define ABC {
+  compiler_flags '-DABC="hello world"';
+}
+
 if (${_def_max} == 1) {
-  print '  ok';
+  print '  ok max';
 } else {
   print '  fail max';
 }
 
 if (${_define_EPERM} == 1) {
-  print '  ok';
+  print '  ok EPERM';
 } else {
   print '  fail eperm';
+}
+
+if (${_define_ABC} == 1) {
+  print '  ok ABC';
+} else {
+  print '  fail ABC';
 }

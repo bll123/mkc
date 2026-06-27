@@ -1,0 +1,39 @@
+# Copyright 2026 Brad Lanam Pleasant Hill CA
+
+# checks the compiler_flags attribute, uses check_size to test it.
+
+check_size 'chk_a' {
+  header 201-attr-comp-flags.h;
+  compiler_flags '-Itests/data';
+}
+
+# this will fail, as the flags are not a single argument.
+check_size 'chk_a' {
+  name chk_b;
+  header 201-attr-comp-flags.h;
+  compiler_flags '-I tests/data';
+}
+
+check_size 'chk_a' {
+  name chk_c;
+  header 201-attr-comp-flags.h;
+  compiler_flags '-I' 'tests/data';
+}
+
+if (${_size_chk_a} == 4) {
+  print '  ok a';
+} else {
+  print '  fail a';
+}
+
+if (${chk_b} == 0) {
+  print '  ok b';
+} else {
+  print '  fail b';
+}
+
+if (${chk_c} == 4) {
+  print '  ok c';
+} else {
+  print '  fail c';
+}

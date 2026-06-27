@@ -1,6 +1,6 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
-# checks the header statement, uses check_size to test it.
+# checks the header attribute, uses check_size to test it.
 
 check_size 'DIR *' {
   name  chka;

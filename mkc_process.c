@@ -1105,16 +1105,16 @@ mkc_process_check (mkc_process_t *process, mkc_value_t *valconst,
 
   if (successtype) {
     mkc_pvar_set_integer (pvar, tmp, rc == 0 ? true : false, MKC_VCTXT_CHECK);
-    mkc_message ("-- check %s: %s - %s\n",
-        typenames [asttype], txt, mkc_success_msg (rc));
-    mkc_log (process->log, MKC_LOG_CHECK, "-- check %s: %s - %s\n",
-        typenames [asttype], txt, mkc_success_msg (rc));
+    mkc_message ("-- check %s: %s : %s - %s\n",
+        typenames [asttype], txt, tmp, mkc_success_msg (rc));
+    mkc_log (process->log, MKC_LOG_CHECK, "-- check %s: %s : %s - %s\n",
+        typenames [asttype], txt, tmp, mkc_success_msg (rc));
   }
   if (valtype) {
     mkc_pvar_set_integer (pvar, tmp, rc, MKC_VCTXT_CHECK);
-    mkc_message ("-- check %s: %s : %d\n", typenames [asttype], txt, rc);
+    mkc_message ("-- check %s: %s : %s : %d\n", typenames [asttype], txt, tmp, rc);
     mkc_log (process->log, MKC_LOG_CHECK,
-        "-- check %s: %s : %d\n", typenames [asttype], txt, rc);
+        "-- check %s: %s : %s : %d\n", typenames [asttype], txt, tmp, rc);
   }
 
   mkc_process_attr_clear (process);
@@ -2118,7 +2118,7 @@ mkc_process_chk_cache (mkc_process_t *process,
       }
     }
 
-    mkc_message ("-- cached: %s\n", disp);
+    mkc_message ("-- cached: %s : %s\n", disp, nm);
     rc = true;
   }
 

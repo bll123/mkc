@@ -1,27 +1,27 @@
 
 check_arg_count chk_v {
   compiler_flags '-Itests/data';
-  header 208-chk-arg-count.h;
+  header 218-chk-arg-count.h;
 }
 check_arg_count chk_a {
   compiler_flags '-Itests/data';
-  header 208-chk-arg-count.h;
+  header 218-chk-arg-count.h;
 }
 check_arg_count chk_b {
   compiler_flags '-Itests/data';
-  header 208-chk-arg-count.h;
+  header 218-chk-arg-count.h;
 }
 check_arg_count chk_c {
   compiler_flags '-Itests/data';
-  header 208-chk-arg-count.h;
+  header 218-chk-arg-count.h;
 }
 check_arg_count chk_d {
   compiler_flags '-Itests/data';
-  header 208-chk-arg-count.h;
+  header 218-chk-arg-count.h;
 }
 check_arg_count chk_e {
   compiler_flags '-Itests/data';
-  header 208-chk-arg-count.h;
+  header 218-chk-arg-count.h;
 }
 
 # some real-world routines
