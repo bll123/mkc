@@ -14,8 +14,8 @@ enum {
   DIROP_ONLY_IF_EMPTY   = (1 << 0),
 };
 
-int   mkc_dir_make (const char *dirname);
-bool  mkc_dir_delete (const char *dir, int flags);
+int   mkc_dirop_make (const char *dirname);
+bool  mkc_dirop_delete (const char *dir, int flags);
 
 #if defined (__cplusplus) || defined (c_plusplus)
 } /* extern C */

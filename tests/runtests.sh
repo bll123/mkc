@@ -5,6 +5,33 @@
 
 . ./tests/testsetup.sh
 
+systype=$(uname -m)
+case ${systype} in
+  Linux)
+    tag=linux
+    ;;
+  Darwin)
+    tag=macos
+    ;;
+  MINGW64*|CYGWIN*)
+    tag=win64
+    ;;
+  MINGW32*)
+    echo "Platform not supported"
+    exit 1
+    ;;
+esac
+
+if [[ $tag == win64 ]]; then
+  MKCDFLTPROF="$USERPROFILE/AppData/Roaming/mkc/defaultprofile.txt"
+else
+  MKCDFLTPROF="$HOME/.config/mkc/defaultprofile.txt"
+fi
+
+if [[ -f ${MKCDFLTPROF} ]]; then
+  mv ${MKCDFLTPROF} ${MKCDFLTPROF}.keep
+fi
+
 test -f ${LOG} && rm -f ${LOG}
 test -d ${MKCTMP} && rm -rf ${MKCTMP}
 test -d ${MKCTMP} || mkdir -p ${MKCTMP}
@@ -67,3 +94,7 @@ for tnm in ${tdir}/${pattern}; do
     fi
   fi
 done
+
+if [[ -f ${MKCDFLTPROF}.keep ]]; then
+  mv ${MKCDFLTPROF}.keep ${MKCDFLTPROF}
+fi

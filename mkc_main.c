@@ -22,6 +22,7 @@
 
 #include "mkc_ast.h"
 #include "mkc_def.h"
+#include "mkc_dirop.h"
 #include "mkc_env.h"
 #include "mkc_error.h"
 #include "mkc_fileop.h"
@@ -40,6 +41,7 @@ typedef struct {
 static void copyargs (argcopy_t *argcopy, int argc, char *argv [], mkc_error_t *mkcerr);
 static void cleanargs (argcopy_t *argcopy);
 static mkc_err_code_t mkc_cleanup (mkc_astmain_t *astmain, argcopy_t *argcopy, mkc_log_t *log, mkc_error_t *error);
+static int mkc_main_set_dflt_profile (const char *profnm, mkc_error_t *mkcerr);
 
 int
 main (int argc, char *argv [])
@@ -145,17 +147,9 @@ main (int argc, char *argv [])
       }
       case 7: {
         if (optarg != NULL) {
-          FILE  *fh;
-
-          mkc_path_build (MKC_PATH_CONFIG, tbuff, sizeof (tbuff),
-              "defaultprofile.txt", mkcerr);
-          fh = mkc_fopen (tbuff, "w");
-          if (fh != NULL) {
-            fprintf (fh, "%s", argcopy.utf8argv [optind - 1]);
-            fclose (fh);
-          }
+          rc = mkc_main_set_dflt_profile (argcopy.utf8argv [optind - 1], mkcerr);
           rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
-          return rc;
+          exit (rc);
         }
         break;
       }
@@ -338,5 +332,29 @@ mkc_cleanup (mkc_astmain_t *astmain, argcopy_t *argcopy,
   rc = mkc_error_value (mkcerr);
   mkc_error_free (mkcerr);
 
+  return rc;
+}
+
+static int
+mkc_main_set_dflt_profile (const char *profnm, mkc_error_t *mkcerr)
+{
+  FILE  *fh;
+  char  tbuff [MKC_PATH_MAX];
+  int   rc = 0;
+
+  mkc_path_build (MKC_PATH_CONFIG, tbuff, sizeof (tbuff), NULL, mkcerr);
+  if (! mkc_is_directory (tbuff)) {
+    rc = mkc_dirop_make (tbuff);
+    if (rc != 0) {
+      return rc;
+    }
+  }
+  mkc_path_build (MKC_PATH_CONFIG, tbuff, sizeof (tbuff),
+      "defaultprofile.txt", mkcerr);
+  fh = mkc_fopen (tbuff, "w");
+  if (fh != NULL) {
+    fprintf (fh, "%s", profnm);
+    fclose (fh);
+  }
   return rc;
 }
