@@ -45,9 +45,18 @@ check_function _wunlink {
   header io.h;
 }
 
+check_arg_count mkdir {
+  header sys/stat.h;
+}
 check_define S_IRWXU {
   header sys/stat.h;
 }
+
+set _have_regex false;
+if (${_package_glib}) {
+  set _have_regex true;
+}
+mark _have_regex enable-output;
 
 configure {
   method auto;

@@ -20,6 +20,7 @@ typedef struct mkc_context_t {
   int             idx;
 } mkc_context_t;
 
+MKC_NODISCARD
 mkc_context_t *
 mkc_context_init (mkc_error_t *mkcerr)
 {

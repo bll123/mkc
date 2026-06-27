@@ -51,6 +51,7 @@ char const * const mkcpathpkgconfig = "MKC_PATH_PKG_CONFIG";
 static void mkc_profile_entry_free (void *pentry);
 static int mkc_profile_compare (void *tentrya, void *tentryb);
 
+MKC_NODISCARD
 mkc_profile_t *
 mkc_profile_init (mkc_log_t *log, mkc_error_t *mkcerr, mkc_option_t *mkcoptions)
 {

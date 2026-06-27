@@ -31,6 +31,7 @@ typedef struct mkc_list_t {
 
 static int mkc_list_binary_search (mkc_list_t *list, void *data, mkc_listidx_t *loc);
 
+MKC_NODISCARD
 mkc_list_t *
 mkc_list_init (mkc_list_type_t type, mkc_list_free_t freefunc,
     mkc_list_compare_t compare, mkc_error_t *mkcerr)

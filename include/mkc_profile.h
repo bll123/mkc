@@ -11,6 +11,7 @@
 #include "mkc_error.h"
 #include "mkc_list.h"
 #include "mkc_log.h"
+#include "mkc_nodiscard.h"
 #include "mkc_option.h"
 #include "mkc_var.h"
 
@@ -48,7 +49,7 @@ extern char const * const MKC_PROF_DEFAULT_NAME;
 extern char const * const mkcpathpkgconf;
 extern char const * const mkcpathpkgconfig;
 
-mkc_profile_t * mkc_profile_init (mkc_log_t *log, mkc_error_t *mkcerr, mkc_option_t *mkcoptions);
+MKC_NODISCARD mkc_profile_t * mkc_profile_init (mkc_log_t *log, mkc_error_t *mkcerr, mkc_option_t *mkcoptions);
 void mkc_profile_free (mkc_profile_t *profiles);
 int mkc_profile_clear (mkc_profile_t *profiles, mkc_profidx_t pidx);
 mkc_compiler_t mkc_profile_get_dflt_compiler (mkc_profile_t *profiles);

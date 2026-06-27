@@ -9,6 +9,7 @@
 #include <time.h>
 
 #include "mkc_error.h"
+#include "mkc_nodiscard.h"
 
 #if defined (__cplusplus) || defined (c_plusplus)
 extern "C" {
@@ -34,7 +35,7 @@ enum {
 
 typedef struct mkc_log_t mkc_log_t;
 
-mkc_log_t * mkc_log_init (mkc_error_t *mkcerr);
+MKC_NODISCARD mkc_log_t * mkc_log_init (mkc_error_t *mkcerr);
 void mkc_log_open (mkc_log_t *log, const char *fname, int32_t logflag);
 void mkc_log_free (mkc_log_t *log);
 

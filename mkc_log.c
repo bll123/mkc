@@ -24,6 +24,7 @@ typedef struct mkc_log_t {
   int32_t     logflag;
 } mkc_log_t;
 
+MKC_NODISCARD
 mkc_log_t *
 mkc_log_init (mkc_error_t *mkcerr)
 {

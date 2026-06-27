@@ -5,6 +5,7 @@
 #define INC_MKC_CONTEXT_H
 
 #include "mkc_error.h"
+#include "mkc_nodiscard.h"
 
 #if defined (__cplusplus) || defined (c_plusplus)
 extern "C" {
@@ -24,7 +25,7 @@ typedef enum {
 
 typedef struct mkc_context_t mkc_context_t;
 
-mkc_context_t *mkc_context_init (mkc_error_t *mkcerr);
+MKC_NODISCARD mkc_context_t *mkc_context_init (mkc_error_t *mkcerr);
 void mkc_context_free (mkc_context_t *context);
 void mkc_context_push (mkc_context_t *context, mkc_ctxt_val_t ctxtval, mkc_error_t *mkcerr);
 void mkc_context_pop (mkc_context_t *context);

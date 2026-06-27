@@ -27,6 +27,7 @@ typedef struct mkc_pvar_t {
 
 static mkc_value_t * mkc_pvar_get_value_by_profidx (mkc_pvar_t *pvar, const char *vname, mkc_profidx_t pidx);
 
+MKC_NODISCARD
 mkc_pvar_t *
 mkc_pvar_init (mkc_profile_t *profiles, mkc_log_t *log, mkc_error_t *mkcerr)
 {

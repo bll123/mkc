@@ -27,6 +27,7 @@ typedef struct mkc_parse_t {
   char                *filename;
 } mkc_parse_t;
 
+MKC_NODISCARD
 mkc_parse_t *
 mkc_parse_init (mkc_astmain_t *astmain, mkc_log_t *log,
     mkc_error_t *mkcerr)

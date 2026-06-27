@@ -11,6 +11,7 @@
 #include "mkc_error.h"
 #include "mkc_list.h"
 #include "mkc_log.h"
+#include "mkc_nodiscard.h"
 
 #if defined (__cplusplus) || defined (c_plusplus)
 extern "C" {
@@ -60,7 +61,7 @@ typedef struct mkc_value_t {
   mkc_var_ctxt_t  vctxt;
 } mkc_value_t;
 
-mkc_varlist_t *mkc_varlist_init (mkc_log_t *log, mkc_error_t *mkcerr);
+MKC_NODISCARD mkc_varlist_t *mkc_varlist_init (mkc_log_t *log, mkc_error_t *mkcerr);
 void mkc_varlist_free (mkc_varlist_t *varlist);
 void mkc_var_set_fromcache (mkc_varlist_t *varlist, bool flag);
 const char *mkc_var_vctxt_str (mkc_var_ctxt_t vctxt);

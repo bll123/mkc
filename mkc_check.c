@@ -22,6 +22,7 @@
 #include "mkc_pvar.h"
 #include "mkc_os_process.h"
 #include "mkc_path.h"
+#include "mkc_regex.h"
 #include "mkc_string.h"
 
 #define MKC_PKG_TRACE 0
@@ -36,6 +37,8 @@ typedef struct mkc_check_t {
   char              ** lf;
   const   char      ** targv;
   char              * pkgname;
+  mkc_regex_t       * rxargcount;
+  mkc_regex_t       * rxcomma;
   mkc_profidx_t     pidx_internal;
   mkc_profidx_t     pidx_dflt_comp;
   int               cfcount;
@@ -53,6 +56,7 @@ static void mkc_check_append_arg (mkc_check_t *check, const char *arg);
 const char * mkc_check_get_compstr (mkc_check_t *check, mkc_compiler_t compiler, char *buff, size_t sz);
 static int mkc_chk_package_exec (mkc_check_t *check, const char *pkg);
 
+MKC_NODISCARD
 mkc_check_t *
 mkc_check_init (mkc_profile_t *profiles, mkc_pvar_t *pvar,
     mkc_attribute_t *attr, mkc_log_t *log,
@@ -68,6 +72,8 @@ mkc_check_init (mkc_profile_t *profiles, mkc_pvar_t *pvar,
   check->mkcerr = mkcerr;
   check->log = log;
   check->pkgname = NULL;
+  check->rxargcount = NULL;
+  check->rxcomma = NULL;
 
   tpidx = mkc_profile_find (check->profiles,
       MKC_PROF_INTERNAL_NAME, MKC_COMPILER_GENERAL);
@@ -124,6 +130,16 @@ mkc_check_free (mkc_check_t *check)
   datafree (check->lf);
   datafree (check->targv);
   datafree (check->pkgname);
+  if (check->rxargcount != NULL) {
+#if _have_regex
+    mkc_regex_free (check->rxargcount);
+#endif
+  }
+  if (check->rxcomma != NULL) {
+#if _have_regex
+    mkc_regex_free (check->rxcomma);
+#endif
+  }
 
   free (check);
 }
@@ -339,12 +355,15 @@ int
 mkc_chk_arg_count (mkc_check_t *check, mkc_compiler_t compiler,
     const char *funcname)
 {
-  int             rc;
+  int             rc = 0;
   mkc_profidx_t   opidx;
   char            *rbuff;
   size_t          rsz = MKC_LARGE_BUFF_SZ;
   const char      *flags [2];
+  char            tbuff [MKC_VNAME_MAX];
   int             fcount = 0;
+  char            **match;
+  int             matchcount = 0;
 
   mkc_log (check->log, MKC_LOG_CHECK, "== chk: arg_count: %s\n", funcname);
   opidx = mkc_profile_get_active (check->profiles);
@@ -362,6 +381,46 @@ mkc_chk_arg_count (mkc_check_t *check, mkc_compiler_t compiler,
   flags [fcount++] = "-E";
   flags [fcount++] = NULL;
   rc = mkc_compile_only (check, compiler, "c-argcount", flags, rbuff, rsz);
+//fprintf (stderr, "rbuff: %zd\n%s\n", rsz, rbuff);
+
+  /*  int mkdir (const char *__path, __mode_t __mode) */
+  /*      ;   */
+
+#if _have_regex
+  if (check->rxargcount == NULL) {
+    snprintf (tbuff, sizeof (tbuff),
+        "([ \t]+%s[ \t]\\([^)]*\\)[ \t\r\n]*;)", funcname);
+    check->rxargcount = mkc_regex_init (tbuff, check->mkcerr);
+    check->rxcomma = mkc_regex_init ("(,)", check->mkcerr);
+  }
+
+  match = mkc_regex_get (check->rxargcount, rbuff);
+  /* match[1] will contain the string if matched */
+  matchcount = 0;
+  while (match [matchcount] != NULL) {
+    ++matchcount;
+  }
+  if (matchcount == 3) {
+    const char  *tmatch;
+    char        **cmatch;
+
+    /* now count the number of commas */
+    tmatch = match [1];
+    cmatch = mkc_regex_get (check->rxcomma, tmatch);
+    matchcount = 0;
+    while (cmatch [matchcount] != NULL) {
+      ++matchcount;
+    }
+
+    /* the match return includes the before and trailing strings, */
+    /* subtract 2 */
+    /* add 1 for the number of arguments */
+    rc = matchcount - 2 + 1;
+    mkc_regex_get_free (cmatch);
+  }
+
+  mkc_regex_get_free (match);
+#endif
 
   mkc_chk_reset (check);
   return rc;

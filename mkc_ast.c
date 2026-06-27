@@ -17,6 +17,7 @@
 #include "mkc_error.h"
 #include "mkc_log.h"
 #include "mkc_list.h"
+#include "mkc_nodiscard.h"
 #include "mkc_option.h"
 #include "mkc_os_process.h"
 #include "mkc_process.h"
@@ -206,10 +207,11 @@ typedef struct mkc_astmain_t {
 static int32_t  mkcnodenum = 0;
 
 static int32_t mkc_ast_process (mkc_astmain_t *, mkc_astnode_t *astnode, int32_t *ifcond, int32_t *loopcond, int depth);
-static mkc_astnode_t * mkc_astnode_init (mkc_astmain_t *astmain, int type, int32_t lineno, int colno);
+MKC_NODISCARD static mkc_astnode_t * mkc_astnode_init (mkc_astmain_t *astmain, int type, int32_t lineno, int colno);
 static void mkc_astnode_free (void *astnode);
 static mkc_value_t *mkc_ast_get_value (mkc_astmain_t *astmain, mkc_astnode_t *astnode);
 
+MKC_NODISCARD
 mkc_astmain_t *
 mkc_ast_init (mkc_log_t *log, mkc_option_t *mkcoptions, mkc_error_t *mkcerr)
 {
@@ -297,6 +299,7 @@ mkc_ast_free (mkc_astmain_t *astmain)
 }
 
 /* for basic values, numbers, strings, variables */
+MKC_NODISCARD
 mkc_astnode_t *
 mkc_ast_mk_value (mkc_astmain_t *astmain, int asttype, char *str, int32_t lineno, int colno)
 {
@@ -365,6 +368,7 @@ mkc_ast_mk_value (mkc_astmain_t *astmain, int asttype, char *str, int32_t lineno
   return astnode;
 }
 
+MKC_NODISCARD
 mkc_astnode_t *
 mkc_ast_mk_value_list (mkc_astmain_t *astmain,
     mkc_astnode_t *listnode, mkc_astnode_t *vala, int32_t lineno, int colno)
@@ -399,6 +403,7 @@ mkc_ast_mk_value_list (mkc_astmain_t *astmain,
   return listnode;
 }
 
+MKC_NODISCARD
 mkc_astnode_t *
 mkc_ast_mk_stmtlist (mkc_astmain_t *astmain,
     mkc_astnode_t *stmtlist, mkc_astnode_t *vala,
@@ -428,6 +433,7 @@ mkc_ast_mk_stmtlist (mkc_astmain_t *astmain,
   return stmtlist;
 }
 
+MKC_NODISCARD
 mkc_astnode_t *
 mkc_ast_mk_op (mkc_astmain_t *astmain,
       mkc_astnode_t *vala, int op, mkc_astnode_t *valb,
@@ -449,6 +455,7 @@ mkc_ast_mk_op (mkc_astmain_t *astmain,
   return astnode;
 }
 
+MKC_NODISCARD
 mkc_astnode_t *
 mkc_ast_mk_unary_op (mkc_astmain_t *astmain,
     mkc_astnode_t *vala, int op,
@@ -469,6 +476,7 @@ mkc_ast_mk_unary_op (mkc_astmain_t *astmain,
   return astnode;
 }
 
+MKC_NODISCARD
 mkc_astnode_t *
 mkc_ast_mk_range (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *valb, int32_t lineno, int colno)
 {
@@ -477,6 +485,7 @@ mkc_ast_mk_range (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *va
   return NULL;
 }
 
+MKC_NODISCARD
 mkc_astnode_t *
 mkc_ast_mk_print (mkc_astmain_t *astmain,
     mkc_astnode_t *vala,
@@ -497,6 +506,7 @@ mkc_ast_mk_print (mkc_astmain_t *astmain,
   return astnode;
 }
 
+MKC_NODISCARD
 mkc_astnode_t *
 mkc_ast_mk_debug (mkc_astmain_t *astmain,
     mkc_astnode_t *vala, mkc_astnode_t *valb,
@@ -518,6 +528,7 @@ mkc_ast_mk_debug (mkc_astmain_t *astmain,
   return astnode;
 }
 
+MKC_NODISCARD
 mkc_astnode_t *
 mkc_ast_mk_configure (mkc_astmain_t *astmain, mkc_astnode_t *stmtblock,
     int32_t lineno, int colno)
@@ -537,6 +548,7 @@ mkc_ast_mk_configure (mkc_astmain_t *astmain, mkc_astnode_t *stmtblock,
   return astnode;
 }
 
+MKC_NODISCARD
 mkc_astnode_t *
 mkc_ast_mk_project (mkc_astmain_t *astmain, mkc_astnode_t *stmtblock,
     int32_t lineno, int colno)
@@ -556,6 +568,7 @@ mkc_ast_mk_project (mkc_astmain_t *astmain, mkc_astnode_t *stmtblock,
   return astnode;
 }
 
+MKC_NODISCARD
 mkc_astnode_t *
 mkc_ast_mk_loadcache (mkc_astmain_t *astmain,
     mkc_astnode_t *version, mkc_astnode_t *stmtblock,
@@ -577,6 +590,7 @@ mkc_ast_mk_loadcache (mkc_astmain_t *astmain,
   return astnode;
 }
 
+MKC_NODISCARD
 mkc_astnode_t *
 mkc_ast_mk_mark (mkc_astmain_t *astmain,
     mkc_astnode_t *vala, mkc_astnode_t *valb,
@@ -598,6 +612,7 @@ mkc_ast_mk_mark (mkc_astmain_t *astmain,
   return astnode;
 }
 
+MKC_NODISCARD
 mkc_astnode_t *
 mkc_ast_mk_set (mkc_astmain_t *astmain,
     mkc_astnode_t *nm, mkc_astnode_t *vala, mkc_astnode_t *stmtblock,
@@ -620,6 +635,7 @@ mkc_ast_mk_set (mkc_astmain_t *astmain,
   return astnode;
 }
 
+MKC_NODISCARD
 mkc_astnode_t *
 mkc_ast_mk_profile (mkc_astmain_t *astmain,
     mkc_astnode_t *nm, mkc_astnode_t *stmtblock,
@@ -641,6 +657,7 @@ mkc_ast_mk_profile (mkc_astmain_t *astmain,
   return astnode;
 }
 
+MKC_NODISCARD
 mkc_astnode_t *
 mkc_ast_mk_if (mkc_astmain_t *astmain,
     mkc_astnode_t *expr, mkc_astnode_t *stmtblock,
@@ -666,6 +683,7 @@ mkc_ast_mk_if (mkc_astmain_t *astmain,
   return astnode;
 }
 
+MKC_NODISCARD
 mkc_astnode_t *
 mkc_ast_mk_elseif (mkc_astmain_t *astmain,
     mkc_astnode_t *expr, mkc_astnode_t *stmtblock,
@@ -687,6 +705,7 @@ mkc_ast_mk_elseif (mkc_astmain_t *astmain,
   return astnode;
 }
 
+MKC_NODISCARD
 mkc_astnode_t *
 mkc_ast_mk_else (mkc_astmain_t *astmain,
     mkc_astnode_t *ifstmt, mkc_astnode_t *stmtblock,
@@ -699,6 +718,7 @@ mkc_ast_mk_else (mkc_astmain_t *astmain,
   return ifstmt;
 }
 
+MKC_NODISCARD
 mkc_astnode_t *
 mkc_ast_mk_foreach (mkc_astmain_t *astmain,
     mkc_astnode_t *nm, mkc_astnode_t *list, mkc_astnode_t *stmtblock,
@@ -722,6 +742,7 @@ mkc_ast_mk_foreach (mkc_astmain_t *astmain,
   return astnode;
 }
 
+MKC_NODISCARD
 mkc_astnode_t *
 mkc_ast_mk_foreach_range (mkc_astmain_t *astmain,
     mkc_astnode_t *nm, mkc_astnode_t *range, mkc_astnode_t *stmtblock,
@@ -745,6 +766,7 @@ mkc_ast_mk_foreach_range (mkc_astmain_t *astmain,
   return astnode;
 }
 
+MKC_NODISCARD
 mkc_astnode_t *
 mkc_ast_mk_while (mkc_astmain_t *astmain,
     mkc_astnode_t *expr, mkc_astnode_t *stmtblock,
@@ -766,6 +788,7 @@ mkc_ast_mk_while (mkc_astmain_t *astmain,
   return astnode;
 }
 
+MKC_NODISCARD
 mkc_astnode_t *
 mkc_ast_mk_exit (mkc_astmain_t *astmain,
     int32_t lineno, int colno)
@@ -799,6 +822,7 @@ mkc_ast_process_include (mkc_astmain_t *astmain, mkc_astnode_t *vala,
   mkc_process_include (astmain->process, value, tbuff, sz);
 }
 
+MKC_NODISCARD
 mkc_astnode_t *
 mkc_ast_mk_loop_control (mkc_astmain_t *astmain, mkc_astnode_token_t asttype,
     int32_t lineno, int colno)
@@ -816,6 +840,7 @@ mkc_ast_mk_loop_control (mkc_astmain_t *astmain, mkc_astnode_token_t asttype,
   return astnode;
 }
 
+MKC_NODISCARD
 mkc_astnode_t *
 mkc_ast_mk_function (mkc_astmain_t *astmain,
     mkc_astnode_t *nm, mkc_astnode_t *arglist, mkc_astnode_t *stmtblock,
@@ -827,6 +852,7 @@ mkc_ast_mk_function (mkc_astmain_t *astmain,
   return NULL;
 }
 
+MKC_NODISCARD
 mkc_astnode_t *
 mkc_ast_mk_check (mkc_astmain_t *astmain,
     mkc_astnode_t *vala, mkc_astnode_t *stmtblock, mkc_astnode_token_t asttype,
@@ -847,6 +873,7 @@ mkc_ast_mk_check (mkc_astmain_t *astmain,
   return astnode;
 }
 
+MKC_NODISCARD
 mkc_astnode_t *
 mkc_ast_mk_check_flag (mkc_astmain_t *astmain,
     mkc_astnode_t *vala, mkc_astnode_t *stmtblock,
@@ -869,6 +896,7 @@ mkc_ast_mk_check_flag (mkc_astmain_t *astmain,
   return astnode;
 }
 
+MKC_NODISCARD
 mkc_astnode_t *
 mkc_ast_mk_chk_package (mkc_astmain_t *astmain,
     mkc_astnode_t *vala, mkc_astnode_t *stmtblock,
@@ -889,6 +917,7 @@ mkc_ast_mk_chk_package (mkc_astmain_t *astmain,
   return astnode;
 }
 
+MKC_NODISCARD
 mkc_astnode_t *
 mkc_ast_mk_chk_struct_member (mkc_astmain_t *astmain,
     mkc_astnode_t *vala, mkc_astnode_t *valb, mkc_astnode_t *stmtblock,
@@ -912,6 +941,7 @@ mkc_ast_mk_chk_struct_member (mkc_astmain_t *astmain,
 
 /* attributes */
 
+MKC_NODISCARD
 mkc_astnode_t *
 mkc_ast_mk_attribute (mkc_astmain_t *astmain,
     mkc_astnode_t *nm, mkc_astnode_token_t asttype,
@@ -931,6 +961,7 @@ mkc_ast_mk_attribute (mkc_astmain_t *astmain,
   return astnode;
 }
 
+MKC_NODISCARD
 mkc_astnode_t *
 mkc_ast_mk_attr_header (mkc_astmain_t *astmain,
     mkc_astnode_t *hdrlist,
@@ -950,6 +981,7 @@ mkc_ast_mk_attr_header (mkc_astmain_t *astmain,
   return astnode;
 }
 
+MKC_NODISCARD
 mkc_astnode_t *
 mkc_ast_mk_attr_compflags (mkc_astmain_t *astmain,
     mkc_astnode_t *compflaglist,
@@ -969,6 +1001,7 @@ mkc_ast_mk_attr_compflags (mkc_astmain_t *astmain,
   return astnode;
 }
 
+MKC_NODISCARD
 mkc_astnode_t *
 mkc_ast_mk_attr_linkflags (mkc_astmain_t *astmain,
     mkc_astnode_t *linkflaglist,
@@ -1643,6 +1676,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
   return astmain->value.ival;
 }
 
+MKC_NODISCARD
 static mkc_astnode_t *
 mkc_astnode_init (mkc_astmain_t *astmain, int type, int32_t lineno, int colno)
 {

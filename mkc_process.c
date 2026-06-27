@@ -136,6 +136,7 @@ static void mkc_process_configure_auto (mkc_process_t *process, int defzero);
 static bool mkc_process_chk_cache (mkc_process_t *process, const char *disp, const char *nm);
 static void mkc_process_find_executables (mkc_process_t *process);
 
+MKC_NODISCARD
 mkc_process_t *
 mkc_process_init (mkc_profile_t *profiles, mkc_log_t *log,
     mkc_context_t *context, mkc_option_t *mkcoptions, mkc_error_t *mkcerr)

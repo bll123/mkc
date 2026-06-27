@@ -74,6 +74,7 @@ mkc_var_is_string_type (mkc_value_t *value)
   return false;
 }
 
+MKC_NODISCARD
 mkc_varlist_t *
 mkc_varlist_init (mkc_log_t *log, mkc_error_t *mkcerr)
 {

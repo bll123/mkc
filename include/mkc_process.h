@@ -11,6 +11,7 @@
 #include "mkc_error.h"
 #include "mkc_list.h"
 #include "mkc_log.h"
+#include "mkc_nodiscard.h"
 #include "mkc_option.h"
 #include "mkc_profile.h"
 #include "mkc_var.h"
@@ -21,7 +22,7 @@ extern "C" {
 
 typedef struct mkc_process_t mkc_process_t;
 
-mkc_process_t *mkc_process_init (mkc_profile_t *profiles, mkc_log_t *log, mkc_context_t *context, mkc_option_t *mkcoptions, mkc_error_t *mkcerr);
+MKC_NODISCARD mkc_process_t *mkc_process_init (mkc_profile_t *profiles, mkc_log_t *log, mkc_context_t *context, mkc_option_t *mkcoptions, mkc_error_t *mkcerr);
 void mkc_process_free (mkc_process_t *process);
 
 int32_t mkc_process_condition (mkc_process_t *process, mkc_value_t *value);

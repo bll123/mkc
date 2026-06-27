@@ -9,6 +9,7 @@
 
 #include "mkc_error.h"
 #include "mkc_list.h"
+#include "mkc_nodiscard.h"
 
 #if defined (__cplusplus) || defined (c_plusplus)
 extern "C" {
@@ -31,7 +32,7 @@ typedef int32_t mkc_listidx_t;
 typedef void (*mkc_list_free_t) (void *data);
 typedef int (*mkc_list_compare_t) (void *ditema, void *ditemb);
 
-mkc_list_t * mkc_list_init (mkc_list_type_t type, mkc_list_free_t freefunc, mkc_list_compare_t compare, mkc_error_t *mkcerr);
+MKC_NODISCARD mkc_list_t * mkc_list_init (mkc_list_type_t type, mkc_list_free_t freefunc, mkc_list_compare_t compare, mkc_error_t *mkcerr);
 void mkc_list_free (mkc_list_t *list);
 mkc_listidx_t mkc_list_size (mkc_list_t *list);
 void * mkc_list_set (mkc_list_t *list, void *data, size_t sz, mkc_listidx_t *loc);

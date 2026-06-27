@@ -8,6 +8,8 @@
 #include <stddef.h>
 #include <stdbool.h>
 
+#include "mkc_nodiscard.h"
+
 #if defined (__cplusplus) || defined (c_plusplus)
 extern "C" {
 #endif
@@ -39,6 +41,7 @@ typedef enum {
   MKC_ERR_PROC_NO_METHOD,
   MKC_ERR_PROC_NO_NAME,
   MKC_ERR_PROC_NO_OUTPUT,
+  MKC_ERR_REGEX_PATTERN_FAIL,
   MKC_ERR_SEARCH_UNSORTED_LIST,
   MKC_ERR_STMT_NOT_ALLOWED,
   MKC_ERR_UNBALANCED_BRACES,
@@ -49,7 +52,7 @@ typedef enum {
 
 typedef struct mkc_error_t mkc_error_t;
 
-mkc_error_t *mkc_error_init (void);
+MKC_NODISCARD mkc_error_t *mkc_error_init (void);
 void mkc_error_free (mkc_error_t *mkcerr);
 void mkc_error_set (mkc_error_t *mkcerr, mkc_err_code_t err, int32_t syserr, const char *str);
 void mkc_error_set_line_col (mkc_error_t *mkcerr, int32_t lineno, int colno);
