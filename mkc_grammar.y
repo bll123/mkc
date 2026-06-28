@@ -136,6 +136,7 @@
 %token T_CHK_SIZE             "check_size"
 %token T_CHK_STRUCT_MEMBER    "check_struct_member"
 %token T_CHK_TYPE             "check_type"
+%token T_CHK_SHELL_EXTRACT    "shell_extract"
 
 %token T_ADD_COMP_FLAG        "add_compile_flag"
 %token T_ADD_LINK_FLAG        "add_link_flag"
@@ -178,9 +179,10 @@
 %type <astnode> checkcommand chkcompflag chklinkflag
 %type <astnode> chksize chktype chkstructmember chkargcount
 %type <astnode> chkfunction chkdefine chkconst chkpackage
+%type <astnode> chkshellcmd
 // attributes
 %type <astnode> attr attrname source header compilerflags linkflags negate
-%type <astnode> method input output compiler define_zero context path
+%type <astnode> method input output compiler define_zero context attrpath
 
 // precedence rules: the lowest precedence comes first
 %left T_OP_OR
@@ -329,7 +331,7 @@ attr[v]:
     {
       $v = $a;
     }
-  | path[a]
+  | attrpath[a]
     {
       $v = $a;
     }
@@ -390,6 +392,10 @@ checkcommand[v]:
       $v = $a;
     }
   | chkfunction[a]
+    {
+      $v = $a;
+    }
+  | chkshellcmd[a]
     {
       $v = $a;
     }
@@ -748,6 +754,14 @@ chkfunction[v]:
     }
   ;
 
+chkshellcmd[v]:
+    T_CHK_SHELL_EXTRACT pathname[a] T_SEMICOLON
+    {
+      $v = mkc_ast_mk_check (ast, $a, NULL, MKC_T_CHK_SHELL_EXTRACT,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
 // attributes
 
 compiler[v]:
@@ -819,7 +833,7 @@ output[v]:
     }
   ;
 
-path[v]:
+attrpath[v]:
     T_ATTR_PATH pathname[a] T_SEMICOLON
     {
       $v = mkc_ast_mk_attribute (ast, $a, MKC_T_ATTR_PATH,

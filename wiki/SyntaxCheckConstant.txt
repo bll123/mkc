@@ -10,7 +10,7 @@
 Checks if _constant-name_ exists and is numeric.
 
 Generated Name: Prefix __\_constant\___
-<br>Example: _constant_EPERM
+<br>Example: \_constant\_EPERM
 
 ##### Examples
 

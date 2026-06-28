@@ -1507,6 +1507,17 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       break;
     }
 
+    case MKC_T_CHK_SHELL_EXTRACT: {
+      mkc_value_t   *val;
+
+      val = mkc_ast_get_value (astmain, astnode->checkstmt.vala);
+      if (mkc_error_chk_err (astmain->mkcerr)) {
+        break;
+      }
+      mkc_process_chk_shell_extract (astmain->process, val);
+      break;
+    }
+
     case MKC_T_CHK_ARG_COUNT:
     case MKC_T_CHK_CONST:
     case MKC_T_CHK_DEFINE:

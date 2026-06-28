@@ -1,0 +1,5 @@
+# Copyright 2026 Brad Lanam Pleasant Hill CA
+
+print '  ok';
+exit 1;
+print 'ignored';

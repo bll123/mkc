@@ -1,0 +1,7 @@
+# Copyright 2026 Brad Lanam Pleasant Hill CA
+
+a="abc123"
+b="def\"456"
+c=ghi
+d=${a}
+e="${a}"

@@ -36,9 +36,12 @@
 ##### exit statement
 
 Stops processing.  Used when debugging a .mkc configuration file.
-All statements after the __exit__ statement are ignored.
+Statements after the __exit__ will be checked for syntax, but will not
+be executed.
 
-    exit;
+    exit <return-value>;
+
+_return-value_ is an integer value.
 
 ##### while statement
 

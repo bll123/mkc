@@ -13,7 +13,7 @@ Check statements may allow the following attribute statements:
 * [header](SyntaxHeader)
 * [link_flags](SyntaxLinkFlag)
 * [name](SyntaxName)
-* negate
+* [negate](SyntaxCheckCompilerFlag)
 * [path](SyntaxPath)
 
 ##### Setting Required Headers for a Check
@@ -56,6 +56,7 @@ statement.
 
 ##### Checks
 
+* [Check Argument Count](SyntaxCheckArgCount)
 * [Check/Add Compiler Flag](SyntaxCheckCompilerFlag)
 * [Check Constant](SyntaxCheckConstant)
 * [Check Define](SyntaxCheckDefine)
@@ -63,6 +64,7 @@ statement.
 * [Check/Add Link Flag](SyntaxCheckLinkFlag)
 * [Check Package](SyntaxCheckPackage)
 * [Check Size](SyntaxCheckSize)
+* [Check Shell Extract](SyntaxCheckShell)
 * [Check Struct Member](SyntaxCheckStructMember)
 * [Check Type](SyntaxCheckType)
 

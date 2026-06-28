@@ -1,0 +1,31 @@
+[Wiki Home](Home)
+<br>[Syntax](Syntax)
+<br>[Checks](SyntaxCheck)
+
+### Check Size
+
+Checks the number of arguments a function requires.  This check does
+not work on macros.
+
+    check_arg_count <function-name>;
+    check_arg_count <function-name> { <attribute-statements> }
+
+Generated Name: Prefix: __\_arg\_count\___
+<br>Example: \_arg\_count\_mkdir 2
+
+##### Examples
+
+    check_arg_count mkdir {
+      header sys/stat.h;
+    }
+
+##### Attributes
+
+* [header](SyntaxHeader)
+* [name](SyntaxName)
+* [compiler_flags](SyntaxCompileFlag)
+* [link_flags](SyntaxLinkFlag)
+
+[Wiki Home](Home)
+<br>[Syntax](Syntax)
+<br>[Checks](SyntaxCheck)

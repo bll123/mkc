@@ -17,11 +17,21 @@ should only be in a particular profile. e.g.
       add_compiler_flag '-O3';
     }
 
+A check or variable may be made compiler specific by using the
+[compiler](SyntaxAttrCompiler) attribute.
+
+    profile optimized {
+      compiler c;
+      add_compiler_flag '-O3';
+    }
+
 ##### Example
 
 test.mkc:
 
-    project { name test; }
+    project {
+      name test;
+    }
 
     # int64_t appears within the currently selected profile
     check_size int64_t { header stdint.h; }
@@ -44,7 +54,7 @@ command line:
 Note the default profile.
 
     $ mkc --profile debug test.mkc
-    -- default profile: debug c
+    -- default profile: debug general
     ...
     -- check size: int64_t : 8
     -- check size: int8_t : 1
@@ -62,7 +72,7 @@ command line:
 Note the default profile.
 
     $ mkc test.mkc
-    -- default profile: release c
+    -- default profile: default general
     ...
     -- check size: int64_t : 8
     -- check size: int32_t : 4

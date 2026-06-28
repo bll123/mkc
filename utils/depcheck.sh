@@ -29,7 +29,8 @@ grc=0
 echo "## checking for missing copyright"
 
 for fn in *.y *.l *.c *.mk include/*.h \
-    tests/tests/*.mkc tests/*.sh tests/tests/*.sh; do
+    tests/tests/*.mkc tests/*.sh tests/tests/*.sh \
+    tests/data/*.mkc tests/data/*.txt tests/data/*.h; do
   case $fn in
     *000-empty.mkc)
       continue;

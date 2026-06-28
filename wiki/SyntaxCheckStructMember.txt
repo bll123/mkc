@@ -4,13 +4,13 @@
 
 ### Check Struct Member
 
+Checks to see if _member-name_ exists in _struct-name_.
+
     check_struct_member <struct-name> <member-name>;
     check_struct_member <struct-name> <member-name> { <attribute-statements> }
 
-Checks to see if _member-name_ exists in _struct-name_.
-
-Generated Name: Prefix __\_member\___
-<br>Example: _member_struct_stat_st_mode
+Generated Name: Prefix: __\_member\___
+<br>Example: \_member\_struct\_stat\_st\_mode
 
 ##### Examples
 

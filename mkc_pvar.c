@@ -26,6 +26,7 @@ typedef struct mkc_pvar_t {
 } mkc_pvar_t;
 
 static mkc_value_t * mkc_pvar_get_value_by_profidx (mkc_pvar_t *pvar, const char *vname, mkc_profidx_t pidx);
+void mkc_pvar_sub_escapes (char *buff, size_t blen);
 
 MKC_NODISCARD
 mkc_pvar_t *
@@ -493,7 +494,7 @@ mkc_pvar_get_variable_value (mkc_pvar_t *pvar, const char *str)
   char        *tstr;
   mkc_value_t *value;
 
-  tstr = mkc_pvar_substitute (pvar, str, 0);
+  tstr = mkc_pvar_substitute (pvar, str, true, 0);
   value = mkc_pvar_get_by_profile (pvar, tstr);
   free (tstr);
   return value;
@@ -560,7 +561,7 @@ mkc_pvar_value_get_str (mkc_pvar_t *pvar,
   } else if (value->vtype == MKC_VT_QUOTED_STRING) {
     char    *tbuff;
 
-    tbuff = mkc_pvar_substitute (pvar, value->sval, 0);
+    tbuff = mkc_pvar_substitute (pvar, value->sval, true, 0);
     stpecpy (buff, buff + sz, tbuff);
     free (tbuff);
   } else if (value->vtype == MKC_VT_LIST) {
@@ -618,7 +619,8 @@ mkc_pvar_is_list (mkc_pvar_t *pvar, const char *vname)
 /* if the string is a variable, the final substitution is done */
 /* by the caller by calling mkc_pvar_get_by_profile () */
 char *
-mkc_pvar_substitute (mkc_pvar_t *pvar, const char *data, int depth)
+mkc_pvar_substitute (mkc_pvar_t *pvar, const char *data,
+    bool subescapeflag, int depth)
 {
   size_t        len;
   char          *buff = NULL;
@@ -659,6 +661,9 @@ mkc_pvar_substitute (mkc_pvar_t *pvar, const char *data, int depth)
   if (srcp == endp) {
     buff = malloc (blen);
     *buff = '\0';
+    if (subescapeflag) {
+      mkc_pvar_sub_escapes (buff, blen);
+    }
     return buff;
   }
 
@@ -731,7 +736,7 @@ mkc_pvar_substitute (mkc_pvar_t *pvar, const char *data, int depth)
 //fprintf (stderr, "%*ssubstr-len: %zd\n", depth * 2, "", tlen);
       substr [tlen] = '\0';
 //fprintf (stderr, "%*ssubstr: '%s'\n", depth * 2, "", substr);
-      tstr = mkc_pvar_substitute (pvar, substr, depth + 1);
+      tstr = mkc_pvar_substitute (pvar, substr, true, depth + 1);
       free (substr);
 //fprintf (stderr, "%*ststr: '%s'\n", depth * 2, "", tstr);
 
@@ -780,6 +785,9 @@ mkc_pvar_substitute (mkc_pvar_t *pvar, const char *data, int depth)
   }
 
 //fprintf (stderr, "%*sbuff-fin: '%s'\n", depth * 2, "", buff);
+  if (subescapeflag) {
+    mkc_pvar_sub_escapes (buff, blen);
+  }
   return buff;
 }
 
@@ -799,3 +807,34 @@ mkc_pvar_get_value_by_profidx (mkc_pvar_t *pvar,
   return value;
 }
 
+void
+mkc_pvar_sub_escapes (char *buff, size_t blen)
+{
+  char  *sp = buff;
+  char  *dp = buff;
+
+  for (size_t i = 0; i < blen; ++i) {
+    if (*sp == '\\') {
+      bool  found = false;
+      ++sp;
+      switch (*sp) {
+        case 'b': { *dp = '\b'; found = true; break; }
+        case 'f': { *dp = '\f'; found = true; break; }
+        case 'n': { *dp = '\n'; found = true; break; }
+        case 'r': { *dp = '\r'; found = true; break; }
+        case 't': { *dp = '\t'; found = true; break; }
+        case 'v': { *dp = '\v'; found = true; break; }
+      }
+      if (found) {
+        ++dp;
+        continue;
+      }
+      /* otherwise, fall through, and the escaped character requires */
+      /* no conversion */
+    }
+
+    *dp = *sp;
+    ++sp;
+    ++dp;
+  }
+}

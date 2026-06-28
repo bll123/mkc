@@ -4,13 +4,13 @@
 
 ### Check Define
 
+Checks if _macro-name_ exists as a macro.
+
     check_define <macro-name>;
     check_define <macro-name> { <attribute-statements> }
 
-Checks if _macro-name_ exists as a macro.
-
-Generated Name: Prefix __\_define\___
-<br>Example: _define_EPERM
+Generated Name: Prefix: __\_define\___
+<br>Example: \_define\_EPERM
 
 ##### Examples
 

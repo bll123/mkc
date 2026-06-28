@@ -3,10 +3,10 @@
 
 ### Syntax: name (attribute)
 
-    name <new-name>;
-
 The __name__ attribute is an attribute for [check](SyntaxCheck)
 statements and for [project](SyntaxProject) statements.
+
+    name <new-name>;
 
 For [check](SyntaxCheck) statements, the __name__ attribute replaces
 the generated name of the check with _new-name_.

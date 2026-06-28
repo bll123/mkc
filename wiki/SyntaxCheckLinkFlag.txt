@@ -13,7 +13,7 @@ LDFLAGS for the current profile.
 
 Generated Name: Prefix: __lf\___
 <br>Any leading '-' or '-W' is removed from the name.
-<br>Example: _lf_fsanitize_address
+<br>Example: \_lf\_fsanitize_address
 
 ##### Adding a Link Flag
 

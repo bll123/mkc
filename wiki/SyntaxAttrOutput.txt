@@ -1,12 +1,12 @@
 [Wiki Home](Home)
 <br>[Syntax](Syntax)
 
-### Syntax: input (attribute)
+### Syntax: output (attribute)
 
-    input <path>;
-
-The __input__ attribute is used to specify an input file.
+The __output__ attribute is used to define an output file.
 It is used in the [configure](SyntaxConfigure) statement.
+
+    output <path>;
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

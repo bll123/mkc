@@ -1,3 +1,4 @@
+/* Copyright 2026 Brad Lanam Pleasant Hill CA */
 
 typedef struct _some_t _some_t;
 

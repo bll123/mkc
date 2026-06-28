@@ -14,8 +14,8 @@ The __name__ attribute has special treatment for packages.  The
 __name__ attribute will replace the _package-name_ in the variable
 names.
 
-Generated Name: Prefix __\_package\___
-<br>Example: _package_zlib 1
+Generated Name: Prefix: __\_package\___
+<br>Example: \_package\_zlib 1
 <br>zlib_CFLAGS \[ \]
 <br>zlib_LIBS \[ '-lz' \]
 

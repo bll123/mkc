@@ -389,6 +389,9 @@ mkc_chk_arg_count (mkc_check_t *check, mkc_compiler_t compiler,
 #if _have_regex
   if (check->rxcomma == NULL) {
     check->rxcomma = mkc_regex_init ("(,)", check->mkcerr);
+    if (mkc_error_chk_err (check->mkcerr)) {
+      return MKC_ERR_FAILURE;
+    }
   }
 
   /* the function name changes, the pattern must be re-built */
@@ -396,9 +399,8 @@ mkc_chk_arg_count (mkc_check_t *check, mkc_compiler_t compiler,
       "([ \t\\*]+%s[ \t]\\([^)]*\\)[ \t\r\n]*;)", funcname);
   mkc_log (check->log, MKC_LOG_CHECK, "  arg-count: pattern: %s\n", pattern);
   check->rxargcount = mkc_regex_init (pattern, check->mkcerr);
-
-  if (check->rxargcount == NULL) {
-    return 0;
+  if (mkc_error_chk_err (check->mkcerr)) {
+    return MKC_ERR_FAILURE;
   }
 
   match = mkc_regex_get (check->rxargcount, rbuff);
@@ -891,7 +893,7 @@ mkc_check_file_sub_copy (mkc_check_t *check,
   if (mkc_error_chk_err (check->mkcerr)) {
     return;
   }
-  ndata = mkc_pvar_substitute (check->pvar, data, 0);
+  ndata = mkc_pvar_substitute (check->pvar, data, false, 0);
   mkc_log (check->log, MKC_LOG_CHECK, "--- code:\n");
   mkc_log (check->log, MKC_LOG_CHECK, "%s\n", ndata);
   mkc_log (check->log, MKC_LOG_CHECK, "---\n");

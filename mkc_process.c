@@ -25,6 +25,7 @@
 #include "mkc_process.h"
 #include "mkc_profile.h"
 #include "mkc_pvar.h"
+#include "mkc_regex.h"
 #include "mkc_string.h"
 #include "mkc_tmutil.h"
 
@@ -42,6 +43,7 @@ typedef struct mkc_process_t {
   mkc_log_t             * log;
   mkc_option_t          * mkcoptions;
   char                  * projectname;
+  mkc_regex_t           * rxshellvar;
   mkc_attribute_t       attr;
   // internal
   mkc_compiler_t        dfltcompiler;
@@ -157,6 +159,7 @@ mkc_process_init (mkc_profile_t *profiles, mkc_log_t *log,
   process->check = NULL;
   process->pvar = NULL;
   process->projectname = NULL;
+  process->rxshellvar = NULL;
   process->attr.name = NULL;
   process->attr.method = NULL;
   process->attr.vcontext = NULL;
@@ -222,6 +225,9 @@ mkc_process_free (mkc_process_t *process)
   }
   datafree (process->projectname);
   mkc_process_attr_clear (process);
+  if (process->rxshellvar != NULL) {
+    mkc_regex_free (process->rxshellvar);
+  }
   free (process);
 }
 
@@ -706,7 +712,7 @@ mkc_process_stmt_set (mkc_process_t *process,
     char    *tstr;
 
     /* substitution must be run on the variable before the value is fetched */
-    tstr = mkc_pvar_substitute (process->pvar, value->sval, 0);
+    tstr = mkc_pvar_substitute (process->pvar, value->sval, true, 0);
     if (tstr != NULL) {
       nvalue = mkc_process_get_value (process, tstr);
       value = nvalue;
@@ -1348,6 +1354,111 @@ mkc_process_chk_struct_member (mkc_process_t *process,
 }
 
 void
+mkc_process_chk_shell_extract (mkc_process_t *process, mkc_value_t *valpath)
+{
+  char        *path;
+  FILE        *fh;
+  char        buff [MKC_VNAME_MAX];
+  char        varname [MKC_VNAME_MAX];
+  char        *varvalue;
+  char        *tvalue;
+
+  if (process == NULL) {
+    return;
+  }
+
+  path = malloc (MKC_PATH_MAX);
+  if (path == NULL) {
+    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return;
+  }
+
+  mkc_pvar_value_get_str (process->pvar, valpath, path, MKC_PATH_MAX);
+
+  fh = mkc_fopen (path, "r");
+  if (fh == NULL) {
+    return;
+  }
+
+  if (process->rxshellvar == NULL) {
+    process->rxshellvar = mkc_regex_init (
+      "^[ \t]*([[:alnum:]_])+=((\"(([^\"\\\\]|\\\\.)*)\")|([^ \t\r\n]*))$", process->mkcerr);
+    /*  0: entire string */
+    /*  1: var-name */
+    /*  2: "..." or ... */
+    /*  3: "..." */
+    /*  4: ... (inside of quotes) */
+    /*  5: letter (inside of quotes) */
+    /*  6: ... (no quotes) */
+    if (mkc_error_chk_err (process->mkcerr)) {
+      return;
+    }
+  }
+
+  varvalue = malloc (MKC_PATH_MAX);
+  if (varvalue == NULL) {
+    free (path);
+    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return;
+  }
+
+  while (fgets (buff, sizeof (buff), fh) != NULL) {
+    char      **match;
+    int       matchcount;
+
+    if (mkc_error_chk_err (process->mkcerr)) {
+      break;
+    }
+
+    mkc_strtrim (buff, sizeof (buff));
+
+    match = mkc_regex_get (process->rxshellvar, buff);
+    matchcount = 0;
+    while (match [matchcount] != NULL) {
+      ++matchcount;
+    }
+
+    *varname = '\0';
+    *varvalue = '\0';
+
+    if (matchcount != 7 && matchcount != 8) {
+      continue;
+    }
+
+    stpecpy (varname, varname + sizeof (varname), match [1]);
+    if (*(match [4]) != '\0') {
+      /* quoted value */
+      /* when matched, match [6] contains the trailing data */
+      stpecpy (varvalue, varvalue + MKC_PATH_MAX, match [4]);
+    } else {
+      /* simple value */
+      stpecpy (varvalue, varvalue + MKC_PATH_MAX, match [6]);
+    }
+
+    tvalue = mkc_pvar_substitute (process->pvar, varvalue, true, 0);
+    if (tvalue == NULL) {
+      continue;
+    }
+
+    mkc_pvar_set_str (process->pvar, varname, tvalue, MKC_VCTXT_CHECK);
+
+    mkc_message ("-- shell extract %s %s\n", varname, tvalue);
+    mkc_log (process->log, MKC_LOG_CHECK, "-- shell extract %s %s\n",
+        varname, tvalue);
+
+    mkc_regex_get_free (match);
+    free (tvalue);
+  }
+
+  fclose (fh);
+  free (path);
+  free (varvalue);
+
+  mkc_process_attr_clear (process);
+  return;
+}
+
+void
 mkc_process_local_set (mkc_process_t *process, const char *nm,
     const char *sval, mkc_profidx_t pidx)
 {
@@ -1974,7 +2085,7 @@ mkc_process_configure_manual (mkc_process_t *process)
     mkc_error_set (process->mkcerr, MKC_ERR_FILE_NOT_FOUND, errno, process->attr.input);
     return;
   }
-  ndata = mkc_pvar_substitute (process->pvar, data, 0);
+  ndata = mkc_pvar_substitute (process->pvar, data, true, 0);
   free (data);
   fh = mkc_fopen (process->attr.output, "wb");
   if (fh == NULL) {

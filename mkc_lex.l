@@ -79,7 +79,6 @@ VAR_UG              {VAR_ALNUM}|{U2}|{U3}|{U4}
 VAR_INNER_UG        {VAR_INNER}|{U2}|{U3}|{U4}
 PATH_UG             {PATH_ALNUM}|{U2}|{U3}|{U4}
 
-CHAR_NOT_DOUBLE_QUOTE [^"\r\n]
 CHAR_NOT_SINGLE_QUOTE [^'\r\n]
 DOUBLE_QUOTE          ["]
 SINGLE_QUOTE          [']
@@ -154,6 +153,7 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 "check_size"                { return T_CHK_SIZE; }
 "check_struct_member"       { return T_CHK_STRUCT_MEMBER; }
 "check_type"                { return T_CHK_TYPE; }
+"check_shell_extract"       { return T_CHK_SHELL_EXTRACT; }
 
 "add_compile_flag"          { return T_ADD_COMP_FLAG; }
 "add_link_flag"             { return T_ADD_LINK_FLAG; }
@@ -187,14 +187,14 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
     return T_ID_PATH_NAME;
   }
 
-{DOUBLE_QUOTE}(({CHAR_NOT_DOUBLE_QUOTE}|\\{DOUBLE_QUOTE})*){DOUBLE_QUOTE} {
+{DOUBLE_QUOTE}(([^"\\\r\n]|\\.)*){DOUBLE_QUOTE} {
     yytext [yyleng - 1] = '\0';
     yyleng -= 2;
     yylval->sval = strdup (yytext + 1);
     return T_VAL_QUOTED_STRING;
   }
 
-{SINGLE_QUOTE}({CHAR_NOT_SINGLE_QUOTE}*){SINGLE_QUOTE} {
+{SINGLE_QUOTE}([^'\\\r\n]*){SINGLE_QUOTE} {
     yytext [yyleng - 1] = '\0';
     yyleng -= 2;
     yylval->sval = strdup (yytext + 1);

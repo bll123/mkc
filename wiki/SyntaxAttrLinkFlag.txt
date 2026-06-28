@@ -3,10 +3,10 @@
 
 ### Syntax: Link Flags (attribute)
 
-    link_flags '-flag' ['-flag' ...];
-
 The __link\_flags__ attribute is used for a [check](SyntaxCheck)
 statement.
+
+    link_flags '-flag' ['-flag' ...];
 
 The flags specified will be added to the check.
 

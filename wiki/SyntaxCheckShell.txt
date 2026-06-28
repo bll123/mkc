@@ -1,0 +1,31 @@
+[Wiki Home](Home)
+<br>[Syntax](Syntax)
+<br>[Checks](SyntaxCheck)
+
+### Check Shell Extract
+
+Sets variables from a shell script.  Only variable assignments are
+processed.  Substitution is done, but environment variables are not
+recognized.
+
+2026-6-28 Only recognizes ${var}, not $var.
+
+    check_shell_extract <shell-script>;
+
+##### Examples
+
+    check_shell_extract VERSION;
+
+VERSION:
+
+    VERSION=1.2.3
+    BUILD_NUMBER=1249
+    DIR=mydir/${VERSION}
+
+##### Attributes
+
+No attributes may be specified.
+
+[Wiki Home](Home)
+<br>[Syntax](Syntax)
+<br>[Checks](SyntaxCheck)

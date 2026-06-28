@@ -5,12 +5,15 @@
 
     profile <profile-name> { <statement-list> };
 
-if _profile-name_ is active, then the statements in _statement-list_
+If _profile-name_ is active, then the statements in _statement-list_
 will be run.  The profile is selected on the command line using the
 __&#8209;&#8209;profile__ argument.
 
-_profile-name_ is usually a user-defined name.
-_mkc_ defined names are __internal__, __global__ and __release__.
+If the __compiler__ attribute is specified, then any variables that
+are set and any checks will be added to the compiler specific profile.
+
+_profile-name_ is usually a user-defined name. _mkc_ defined names are
+__internal__ and __default__.
 
 When a variable is used, _mkc_ will check the profiles in the
 following order:

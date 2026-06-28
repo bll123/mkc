@@ -1,0 +1,11 @@
+# Copyright 2026 Brad Lanam Pleasant Hill CA
+
+# test double quoted string with escapes
+print "quote-mark\"";
+print "backspace\b";
+print "formfeed\f";
+print "newline\n";
+print "return\r";
+print "tab\t";
+print "vtab\v";
+print "backslash\\";

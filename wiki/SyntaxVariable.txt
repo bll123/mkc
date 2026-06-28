@@ -18,7 +18,9 @@ quoted string be used as they are more efficient.
 
 ##### Double Quoted
 
-The only recognized escape is __\\"__.
+Single-character escapes are recognized (bfnrtv"). A backslash before
+any other character will return that character. Octal, hex and unicode
+escapes are not recognized.
 
     set junk "my stuff";
 

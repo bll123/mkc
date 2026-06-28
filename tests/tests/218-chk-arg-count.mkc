@@ -1,3 +1,4 @@
+# Copyright 2026 Brad Lanam Pleasant Hill CA
 
 check_arg_count chk_v {
   compiler_flags '-Itests/data';

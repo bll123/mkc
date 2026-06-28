@@ -1,0 +1,29 @@
+# Copyright 2026 Brad Lanam Pleasant Hill CA
+
+check_shell_extract 'tests/data/219-chk-shell-extract.txt';
+
+if (${a} eq "abc123") {
+  print '  ok a';
+} else {
+  print '  fail a';
+}
+if (${b} eq "def\"456") {
+  print '  ok b';
+} else {
+  print '  fail b';
+}
+if (${c} eq "ghi") {
+  print '  ok c';
+} else {
+  print '  fail c';
+}
+if (${d} eq "abc123") {
+  print '  ok d';
+} else {
+  print '  fail d';
+}
+if (${e} eq "abc123") {
+  print '  ok e';
+} else {
+  print '  fail e';
+}

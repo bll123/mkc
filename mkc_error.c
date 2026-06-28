@@ -147,6 +147,11 @@ mkc_error_print (mkc_error_t *mkcerr)
   if (mkcerr->err == MKC_OK) {
     return;
   }
+  if (mkcerr->err == MKC_ERR_USER_EXIT && mkcerr->syserr == 0) {
+    fprintf (stderr, "-- %s\n", mkcerrormsg [mkcerr->err]);
+    return;
+  }
+
   if (mkcerr->lineno != 0) {
     char    tbuff [40];
 
@@ -183,9 +188,14 @@ mkc_error_line_disp (char *buff, size_t sz, int32_t lineno, int colno)
 mkc_err_code_t
 mkc_error_value (mkc_error_t *mkcerr)
 {
+  int     rc;
+
   if (mkcerr == NULL) {
     return MKC_ERR_INVALID_ARGUMENT;
   }
-
-  return mkcerr->err;
+  rc = mkcerr->err;
+  if (rc == MKC_ERR_USER_EXIT) {
+    rc = mkcerr->syserr;
+  }
+  return rc;
 }
