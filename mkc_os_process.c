@@ -43,7 +43,7 @@ static int mkc_os_process_wait (int wstatus);
 
 /* identical on linux and mac os */
 /* most anything not windows */
-#if _function_fork || (MKC_BOOTSTRAP && ! _WIN32)
+#if _function_fork || (MKC_BOOTSTRAP && ! MKC_SYS_WIN)
 
 /* handles redirection to a file */
 pid_t
@@ -119,7 +119,7 @@ mkc_os_process_start (const char *targv[], int flags, char *outfname)
 
 /* identical on linux and mac os */
 /* most anything not windows */
-#if _function_fork || (MKC_BOOTSTRAP && ! _WIN32)
+#if _function_fork || (MKC_BOOTSTRAP && ! MKC_SYS_WIN)
 
 /* creates a pipe for re-direction and grabs the output */
 int

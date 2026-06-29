@@ -397,7 +397,7 @@ mkc_chk_arg_count (mkc_check_t *check, mkc_compiler_t compiler,
 
   /* the function name changes, the pattern must be re-built */
   snprintf (pattern, sizeof (pattern),
-      "([ \t\\*]+%s[ \t]\\([^)]*\\)[ \t\r\n]*;)", funcname);
+      "([ \t*]+%s[ \t]*\\([^)]*\\)[ \t\r\n]*;)", funcname);
   mkc_log (check->log, MKC_LOG_CHECK, "  arg-count: pattern: %s\n", pattern);
   check->rxargcount = mkc_regex_init (pattern, check->mkcerr);
   if (mkc_error_chk_err (check->mkcerr)) {

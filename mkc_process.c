@@ -57,6 +57,8 @@ typedef struct mkc_process_t {
   mkc_log_t             * log;
   mkc_option_t          * mkcoptions;
   char                  * projectname;
+  const char            * objext;
+  const char            * exeext;
   mkc_regex_t           * rxshellvar;
   mkc_list_t            * user_rx_list;
   mkc_attribute_t       attr;
@@ -176,6 +178,8 @@ mkc_process_init (mkc_profile_t *profiles, mkc_log_t *log,
   process->mkcoptions = mkcoptions;
   process->check = NULL;
   process->pvar = NULL;
+  process->objext = ".o";
+  process->exeext = "";
   process->projectname = NULL;
   process->rxshellvar = NULL;
   process->user_rx_list = mkc_list_init (MKC_LIST_SORTED,
@@ -224,6 +228,8 @@ mkc_process_init (mkc_profile_t *profiles, mkc_log_t *log,
     mkc_process_free (process);
     return NULL;
   }
+
+  mkc_process_find_executables (process);
 
   mkc_pvar_profile_set_idx (process->pvar, pidx);
 
@@ -1997,12 +2003,12 @@ mkc_process_int_checks (mkc_process_t *process)
 
   mkc_pvar_profile_set_idx (process->pvar, process->pidx_internal);
 
-  mkc_pvar_set_str (process->pvar, objext, ".o", MKC_VCTXT_MKC);
-  mkc_pvar_set_str (process->pvar, exeext, "", MKC_VCTXT_MKC);
   if (process->systype == MKC_SYS_WINDOWS) {
-    mkc_pvar_set_str (process->pvar, objext, ".obj", MKC_VCTXT_MKC);
-    mkc_pvar_set_str (process->pvar, exeext, ".exe", MKC_VCTXT_MKC);
+    process->objext = ".obj";
+    process->exeext = ".exe";
   }
+  mkc_pvar_set_str (process->pvar, objext, process->objext, MKC_VCTXT_MKC);
+  mkc_pvar_set_str (process->pvar, exeext, process->exeext, MKC_VCTXT_MKC);
 
   /* shared library extension : internal */
 
@@ -2125,8 +2131,6 @@ mkc_process_set_defaults (mkc_process_t *process)
       MKC_VCTXT_MKC);
 
   mkc_pvar_profile_set_idx (process->pvar, process->pidx_curr_comp);
-
-  mkc_process_find_executables (process);
 }
 
 static void
@@ -2165,7 +2169,6 @@ mkc_process_configure_auto (mkc_process_t *process, int defzero)
   mkc_profidx_t   opidx;
   mkc_profidx_t   pidx;
   FILE            *fh;
-  int             tcount = 0;
   char            fname [MKC_PATH_MAX];
   char            *tp;
   char            projnm [MKC_VNAME_MAX];
@@ -2220,7 +2223,6 @@ mkc_process_configure_auto (mkc_process_t *process, int defzero)
     mkc_varidx_t    viter;
     mkc_varidx_t    vidx;
     mkc_pvar_t      *pvar;
-    int             count = 0;
 
     if (mkc_error_chk_err (process->mkcerr)) {
       break;
@@ -2247,17 +2249,11 @@ mkc_process_configure_auto (mkc_process_t *process, int defzero)
         continue;
       }
 
-      if (value->vtype == MKC_VT_LIST) {
-        ++count;
-        ++tcount;
-      }
       if (value->vtype == MKC_VT_STRING) {
         const char  *val;
 
         val = value->sval;
         fprintf (fh, "#define %s \"%s\"\n", nm, val);
-        ++count;
-        ++tcount;
       }
       if (value->vtype == MKC_VT_INTEGER) {
         int32_t     ival;
@@ -2266,8 +2262,6 @@ mkc_process_configure_auto (mkc_process_t *process, int defzero)
         if (defzero == MKC_AUTO_DEFINE_ZERO || ival != 0) {
           fprintf (fh, "#define %s %d\n", nm, ival);
         }
-        ++count;
-        ++tcount;
       }
     }
   }
@@ -2373,6 +2367,7 @@ mkc_process_find_executables (mkc_process_t *process)
       p = stpecpy (testpath, testpath + MKC_PATH_MAX, tpath);
       p = stpecpy (p, testpath + MKC_PATH_MAX, "/");
       p = stpecpy (p, testpath + MKC_PATH_MAX, chk->program);
+      p = stpecpy (p, testpath + MKC_PATH_MAX, process->exeext);
 
       /* using file-size as an existence check */
       if (mkc_file_size (testpath) > 0) {

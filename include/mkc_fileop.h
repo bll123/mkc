@@ -29,7 +29,7 @@ int mkc_link_copy (const char *fname, const char *nfn, mkc_error_t *mkcerr);
 void mkc_display_path (char *path, size_t sz);
 void mkc_normalize_path (char *path, size_t sz);
 
-#if _function_symlink || (MKC_BOOTSTRAP && ! _WIN32)
+#if _function_symlink || (MKC_BOOTSTRAP && ! MKC_SYS_WIN)
 int mkc_link_create (const char *target, const char *linkpath);
 #endif /* _function_symlink*/
 

@@ -30,10 +30,10 @@ mssleep (uint32_t ms)
 
 /* on windows, nanosleep is within the libwinpthread msys2 library which */
 /* is not wanted. So use the Windows API Sleep() function */
-#if _lib_Sleep || (MKC_BOOTSTRAP && _WIN32)
+#if _function_Sleep || (MKC_BOOTSTRAP && MKC_SYS_WIN)
   Sleep ((DWORD) ms);
 #endif
-#if (! _lib_Sleep && _lib_nanosleep) || (MKC_BOOTSTRAP && ! _WIN32)
+#if (! _function_Sleep && _function_nanosleep) || (MKC_BOOTSTRAP && ! MKC_SYS_WIN)
   struct timespec   ts;
   struct timespec   rem;
 

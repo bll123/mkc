@@ -40,7 +40,7 @@ mkc_fopen (const char *fname, const char *mode)
 {
   FILE          *fh = NULL;
 
-#if defined (_WIN32)
+#if defined (MKC_SYS_WIN)
   {
     wchar_t       *tfname = NULL;
     wchar_t       *tmode = NULL;
@@ -67,7 +67,7 @@ mkc_file_modtime (const char *fname)
 {
   time_t      tm = 0;
 
-#if _lib__wstat64 || (MKC_BOOTSTRAP && _WIN32)
+#if _function__wstat64 || (MKC_BOOTSTRAP && MKC_SYS_WIN)
   {
     struct __stat64  statbuf;
     wchar_t       *tfname = NULL;
@@ -102,7 +102,7 @@ mkc_file_size (const char *fname)
 {
   ssize_t       sz = -1;
 
-#if _lib__wstat64 || (MKC_BOOTSTRAP && _WIN32)
+#if _function__wstat64 || (MKC_BOOTSTRAP && MKC_SYS_WIN)
   {
     struct __stat64  statbuf;
     wchar_t       *tfname = NULL;
@@ -179,7 +179,7 @@ int
 mkc_file_delete (const char *fname)
 {
   int     rc = -1;
-#if _lib__wunlink || (MKC_BOOTSTRAP && _WIN32)
+#if _function__wunlink || (MKC_BOOTSTRAP && MKC_SYS_WIN)
   wchar_t *tname;
 #endif
 
@@ -187,7 +187,7 @@ mkc_file_delete (const char *fname)
     return MKC_ERR_NULL_ARGUMENT;
   }
 
-#if _lib__wunlink || (MKC_BOOTSTRAP && _WIN32)
+#if _function__wunlink || (MKC_BOOTSTRAP && MKC_SYS_WIN)
   tname = mkc_towide (fname);
   if (tname != NULL) {
     rc = _wunlink (tname);
@@ -208,7 +208,7 @@ mkc_file_move (const char *fname, const char *nfn)
     return rc;
   }
 
-#if _lib__wrename || (MKC_BOOTSTRAP && _WIN32)
+#if _function__wrename || (MKC_BOOTSTRAP && MKC_SYS_WIN)
   /*
    * Windows won't rename to an existing file, but does
    * not return an error.
@@ -235,7 +235,7 @@ mkc_file_move (const char *fname, const char *nfn)
 int64_t
 mkc_ftell (FILE *fh)
 {
-#if _lib_ftello
+#if _function_ftello
   return ftello (fh);
 #else
   return ftell (fh);
@@ -245,7 +245,7 @@ mkc_ftell (FILE *fh)
 int
 mkc_fseek (FILE *fh, int64_t offset, int whence)
 {
-#if _lib_fseeko
+#if _function_fseeko
   return fseeko (fh, offset, whence);
 #else
   return fseek (fh, (long) offset, whence);
@@ -257,7 +257,7 @@ mkc_file_copy (const char *fname, const char *nfn, mkc_error_t *mkcerr)
 {
   int     rc = -1;
 
-#if _lib_CopyFileW || (MKC_BOOTSTRAP && defined _WIN32)
+#if _function_CopyFileW || (MKC_BOOTSTRAP && defined MKC_SYS_WIN)
   char      tfname [MKC_PATH_MAX];
   char      tnfn [MKC_PATH_MAX];
 
@@ -308,7 +308,7 @@ mkc_link_copy (const char *fname, const char *nfn, mkc_error_t *mkcerr)
 {
   int       rc = -1;
 
-#if _lib_symlink || (MKC_BOOTSTRAP && ! _WIN32)
+#if _function_symlink || (MKC_BOOTSTRAP && ! MKC_SYS_WIN)
   rc = mkc_link_create (fname, nfn);
 #else
   rc = mkc_file_copy (fname, nfn, mkcerr);
@@ -320,7 +320,7 @@ void
 mkc_display_path (char *path, size_t sz)
 {
   /* a no-op on unix systems */
-#if _WIN32
+#if MKC_SYS_WIN
   for (size_t i = 0; i < sz; ++i) {
     if (path [i] == '\0') {
       break;
@@ -347,7 +347,7 @@ mkc_normalize_path (char *path, size_t sz)
   return;
 }
 
-#if _function_symlink || (MKC_BOOTSTRAP && ! _WIN32)
+#if _function_symlink || (MKC_BOOTSTRAP && ! MKC_SYS_WIN)
 
 int
 mkc_link_create (const char *target, const char *linkpath)
@@ -366,7 +366,7 @@ mkc_is_directory (const char *fname)
   int   rc;
   bool  brc = 0;
 
-#if _lib__wstat64
+#if _function__wstat64
   {
     struct __stat64  statbuf;
     wchar_t       *tfname = NULL;

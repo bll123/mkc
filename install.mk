@@ -27,11 +27,11 @@ oscheck:
 
 .PHONY: windows-install
 windows-install:
-	$(MAKE) -f $(MAKEFILE) real-$(TARGET)
+	$(MAKE) -f $(MAKEFILE) EXEEXT=".exe" real-$(TARGET)
 
 .PHONY: other-install
 other-install:
-	$(MAKE) -f $(MAKEFILE) real-$(TARGET)
+	$(MAKE) -f $(MAKEFILE) EXEEXT="" real-$(TARGET)
 
 .PHONY: real-install
 real-install:
@@ -39,7 +39,7 @@ real-install:
 	test -d $(INST_SHARE_INC) || mkdir -p $(INST_SHARE_INC)
 	test -d $(INST_SHARE_TMPL) || mkdir -p $(INST_SHARE_TMPL)
 	test -d $(INST_SHARE_EXAMPLES) || mkdir -p $(INST_SHARE_EXAMPLES)
-	$(CP) mkc $(INST_BIN)
+	$(CP) mkc$(EXEEXT) $(INST_BIN)
 	$(CP) include/mkc_compiler.h $(INST_SHARE_INC)
 	$(CP) include/mkc_def.h $(INST_SHARE_INC)
 	$(CP) -r templates $(INST_SHARE)

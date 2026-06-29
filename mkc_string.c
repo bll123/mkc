@@ -147,7 +147,7 @@ datafree (void *data)
   free (data);
 }
 
-#if defined (_WIN32)
+#if _function_MultiByteToWideChar || (MKC_BOOTSTRAP && MKC_SYS_WIN)
 
 MKC_NODISCARD
 wchar_t *
@@ -166,6 +166,10 @@ mkc_towide (const char *buff)
   return tbuff;
 }
 
+#endif /* _function_MultiByteToWideChar */
+
+#if _function_WideCharToMultiByte || (MKC_BOOTSTRAP && MKC_SYS_WIN)
+
 MKC_NODISCARD
 char *
 mkc_fromwide (const wchar_t *buff)
@@ -183,5 +187,5 @@ mkc_fromwide (const wchar_t *buff)
   return tbuff;
 }
 
-#endif /* _WIN32 */
+#endif /* _function_WideCharToMultiByte */
 

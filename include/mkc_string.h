@@ -18,12 +18,16 @@ void mkc_trim_char (char *buff, unsigned char c);
 void mkc_strclean (char *buff, size_t sz);
 void datafree (void *data);
 
-#if defined (_WIN32)
+#if defined (MKC_SYS_WIN)
 
+#if _function_MultiByteToWideChar || (MKC_BOOTSTRAP && MKC_SYS_WIN)
 MKC_NODISCARD wchar_t * mkc_towide (const char *buff);
+#endif
+#if _function_WideCharToMultiByte || (MKC_BOOTSTRAP && MKC_SYS_WIN)
 MKC_NODISCARD char * mkc_fromwide (const wchar_t *buff);
+#endif
 
-#endif /* _WIN32 */
+#endif /* MKC_SYS_WIN */
 
 #if defined (__cplusplus) || defined (c_plusplus)
 }

@@ -101,7 +101,7 @@ mkc_dirop_delete (const char *dirname, int flags, mkc_error_t *mkcerr)
   /* in case the dir is actually a link... */
   mkc_file_delete (dirname);
 
-#if _lib_RemoveDirectoryW
+#if _function_RemoveDirectoryW
   {
     wchar_t       * tdirname;
 

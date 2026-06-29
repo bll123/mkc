@@ -41,7 +41,7 @@ mkc_path_build (mkc_path_t pathtype, char *buff, size_t sz,
   switch (pathtype) {
     case MKC_PATH_CONFIG: {
       p = stpecpy (buff, buff + sz, mkc_dirs [MKC_DIR_HOME]);
-#if _WIN32
+#if MKC_SYS_WIN
       p = stpecpy (p, buff + sz, "/AppData/Roaming/mkc");
 #else
       p = stpecpy (p, buff + sz, "/.config/mkc");
@@ -129,13 +129,12 @@ mkc_path_init (void)
   /* this is a special case for development purposes */
   p = stpecpy (tbuff, tbuff + sizeof (tbuff), mkc_dirs [MKC_DIR_EXEC]);
   p = stpecpy (p, tbuff + sizeof (tbuff), "/dev");
-fprintf (stderr, "path: chk: %s\n", tbuff);
   if (mkc_is_directory (tbuff)) {
     isdev = true;
   }
 
   if (isdev) {
-    /* development */
+    /* development only */
     stpecpy (mkc_dirs [dir], mkc_dirs [dir] + MKC_PATH_MAX, "mkc_files");
   }
   if (*mkc_dirs [dir] == '\0' && ! isdev) {

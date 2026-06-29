@@ -4,12 +4,16 @@
 /* clean up the argument list, remove all the extra stuff */
 #if ${MKC_I_VARIADIC_MACRO}
 # define __asm__(...)
+# define __nonnull__(...)
+# define __nonnull(...)
 #else
 # define __asm__(a)
+# define __nonnull__(a)
+# define __nonnull(a)
 #endif
+#define _Nonnull(a)
 #define __asm(a)
 #define __attribute__(a)
-#define __nonnull__(a,b)
 #define __restrict
 #define __restrict__
 #if defined(__THROW)

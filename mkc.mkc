@@ -29,24 +29,30 @@ check_function fork {
 check_function nanosleep {
   header time.h;
 }
+check_function setenv;
 check_function symlink {
   header unistd.h;
 }
 
 # windows functions
 check_function GetCommandLineW {
+  compiler_flags '-DNOCRYPT=1' '-DNOGDI=1';
   header windows.h;
 }
 check_function CopyFileW {
+  compiler_flags '-DWIN32_LEAN_AND_MEAN=1';
   header windows.h;
 }
 check_function Sleep {
+  compiler_flags '-DWIN32_LEAN_AND_MEAN=1';
   header windows.h;
 }
 check_function _wgetenv_s {
+  compiler_flags '-DWIN32_LEAN_AND_MEAN=1';
   header windows.h;
 }
 check_function _wputenv_s {
+  compiler_flags '-DWIN32_LEAN_AND_MEAN=1';
   header windows.h;
 }
 check_function _wrename {
@@ -57,6 +63,14 @@ check_function _wstat64 {
 }
 check_function _wunlink {
   header io.h;
+}
+check_function MultiByteToWideChar {
+  compiler_flags '-DWIN32_LEAN_AND_MEAN=1';
+  header windows.h;
+}
+check_function WideCharToMultiByte {
+  compiler_flags '-DWIN32_LEAN_AND_MEAN=1';
+  header windows.h;
 }
 
 # mkdir() differs on unix and windows

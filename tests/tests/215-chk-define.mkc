@@ -1,10 +1,10 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
 
-# windows has 'max' defined, unix-like systems have 'MAX' in sys/param.h
+# windows has '__max' defined, unix-like systems have 'MAX' in sys/param.h
 # these are both macros
 if (${MKC_SYS_WINDOWS}) {
-  check_define max {
+  check_define __max {
     name _def_max;
   }
 } else {

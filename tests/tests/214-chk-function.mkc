@@ -6,10 +6,10 @@ check_function fstat {
   header sys/stat.h;
 }
 
-# windows has 'max' defined, unix-like systems have 'MAX' in sys/param.h
+# windows has '__max' defined, unix-like systems have 'MAX' in sys/param.h
 # these are both macros
 if (${MKC_SYS_WINDOWS}) {
-  check_function max {
+  check_function __max {
     name _function_max;
   }
 } else {

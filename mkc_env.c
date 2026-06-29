@@ -21,7 +21,7 @@
 void
 mkc_env_get (const char *name, char *buff, size_t sz)
 {
-#if _lib__wgetenv_s || (MKC_BOOTSTRAP && _WIN32)
+#if _function__wgetenv_s || (MKC_BOOTSTRAP && MKC_SYS_WIN)
   wchar_t     *wname;
   wchar_t     *wenv;
   char        *tenv;
@@ -55,7 +55,7 @@ mkc_env_set (const char *name, const char *value)
 {
   int     rc;
 
-#if _lib__wputenv_s || (MKC_BOOTSTRAP && _WIN32)
+#if _function__wputenv_s || (MKC_BOOTSTRAP && MKC_SYS_WIN)
   {
     wchar_t *wname;
     wchar_t *wvalue;
@@ -66,7 +66,7 @@ mkc_env_set (const char *name, const char *value)
     free (wname);
     free (wvalue);
   }
-#elif _lib_setenv
+#elif _function_setenv
   /* setenv is better */
   if (value != NULL && *value) {
     rc = setenv (name, value, 1);

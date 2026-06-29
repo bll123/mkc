@@ -280,7 +280,7 @@ main (int argc, char *argv [])
 static void
 copyargs (argcopy_t *argcopy, int argc, char *argv [], mkc_error_t *mkcerr)
 {
-#if _lib_GetCommandLineW || (MKC_BOOTSTRAP && _WIN32)
+#if _function_GetCommandLineW || (MKC_BOOTSTRAP && MKC_SYS_WIN)
   wchar_t         **wargv;
   int             targc;
 #endif
@@ -293,7 +293,7 @@ copyargs (argcopy_t *argcopy, int argc, char *argv [], mkc_error_t *mkcerr)
       mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
     }
   }
-#if _lib_GetCommandLineW || (MKC_BOOTSTRAP && _WIN32)
+#if _function_GetCommandLineW || (MKC_BOOTSTRAP && MKC_SYS_WIN)
   wargv = CommandLineToArgvW (GetCommandLineW(), &targc);
   for (int i = 0; i < argcopy->nargc; ++i) {
     argcopy->utf8argv [i] = mkc_fromwide (wargv [i]);
@@ -368,7 +368,7 @@ mkc_main_set_home (void)
 {
   char    tbuff [MKC_PATH_MAX];
 
-#if _WIN32
+#if MKC_SYS_WIN
   mkc_env_get ("USERPROFILE", tbuff, sizeof (tbuff));
   mkc_normalize_path (tbuff, sizeof (tbuff));
 #else
@@ -384,6 +384,7 @@ mkc_main_set_exec_path (argcopy_t *argcopy)
   char    *p;
 
   stpecpy (tbuff, tbuff + sizeof (tbuff), argcopy->utf8argv [0]);
+  mkc_normalize_path (tbuff, sizeof (tbuff));
   p = strrchr (tbuff, '/');
   if (p != NULL) {
     *p = '\0';

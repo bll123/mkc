@@ -132,7 +132,10 @@ oscheck:
 
 .PHONY: windows-all
 windows-all:
-	@$(MAKE) -f $(MAKEFILE) MKC_WIN_OBJ="$(WINOBJ)" real-all
+	@# _WIN32 does not seem to be defined under cygwin
+	@$(MAKE) -f $(MAKEFILE) \
+	    CFLAGS="$(CFLAGS) -DMKC_SYS_WIN=1" \
+	    MKC_WIN_OBJ="$(WINOBJ)" real-all
 
 .PHONY: other-all
 other-all:
@@ -203,7 +206,7 @@ mkc_log.o: mkc_log.c
 mkc_main.o: mkc_main.c
 mkc_osdir.o: mkc_osdir.c
 mkc_os_process.o: mkc_os_process.c
-mkc_os_win_process.o: mkc_os_winprocess.c
+mkc_os_win_process.o: mkc_os_win_process.c
 mkc_parse.o: mkc_parse.c mkc_grammar.h mkc_lex.h
 mkc_path.o: mkc_path.c
 mkc_process.o: mkc_process.c

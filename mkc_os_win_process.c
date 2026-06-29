@@ -20,7 +20,7 @@
 #include "mkc_def.h"
 #include "mkc_os_process.h"
 #include "mkc_string.h"
-#include "mkc_util.h"
+#include "mkc_tmutil.h"
 
 pid_t
 mkc_os_process_start (const char *targv[], int flags, char *outfname)

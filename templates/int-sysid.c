@@ -1,14 +1,15 @@
 #include <stddef.h>
+#include <stdlib.h>
 
 #include "mkc_def.h"
 
 int
 main (void)
 {
-#if defined (__MSYS_ID__)
+#if defined (__MINGW32__) && ! defined (__CYGWIN__)
   return MKC_SYS_ID_MSYS2;
 #endif
-#if defined (__CYGWIN__) && ! defined (__MSYS_ID__)
+#if defined (__CYGWIN__)
   return MKC_SYS_ID_CYGWIN;
 #endif
 #if defined (__FreeBSD__)

@@ -45,7 +45,7 @@ mkc_osdir_open (const char *dirname)
   dirh->dirname = NULL;
   dirh->dh = NULL;
 
-#if _lib_FindFirstFileW
+#if _function_FindFirstFileW
   {
     size_t        len = 0;
     char          *p;
@@ -73,7 +73,7 @@ char *
 mkc_osdir_iterate (dirhandle_t *dirh)
 {
   char      *fname = NULL;
-#if _lib_FindFirstFileW
+#if _function_FindFirstFileW
   WIN32_FIND_DATAW filedata;
   BOOL             rc;
 #else
@@ -84,7 +84,7 @@ mkc_osdir_iterate (dirhandle_t *dirh)
     return NULL;
   }
 
-#if _lib_FindFirstFileW
+#if _function_FindFirstFileW
   if (dirh->dhandle == INVALID_HANDLE_VALUE) {
     wchar_t         *wdirname;
 
@@ -125,7 +125,7 @@ mkc_osdir_close (dirhandle_t *dirh)
     return;
   }
 
-#if _lib_FindFirstFileW
+#if _function_FindFirstFileW
   if (dirh->dhandle != INVALID_HANDLE_VALUE) {
     FindClose (dirh->dhandle);
   }
