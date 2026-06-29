@@ -71,8 +71,8 @@ command line:
 
 Note the default profile.
 
-    $ mkc test.mkc
-    -- default profile: default general
+    $ mkc --profile release test.mkc
+    -- default profile: release general
     ...
     -- check size: int64_t : 8
     -- check size: int32_t : 4

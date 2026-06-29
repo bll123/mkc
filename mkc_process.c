@@ -117,10 +117,6 @@ static char const * const mkctesthdrlist = "MKC_TV_TEST_HEADER_LIST";
 static char const * const mkcwhilelimit = "MKC_TV_WHILE_LIMIT";
 static char const * const mkctempvarpfx = "MKC_TV_";
 static size_t mkctvpfxlen = 0;
-static char const * const mkcisystype = "MKC_I_SYSTYPE";
-static char const * const mkcisysid = "MKC_I_SYSID";
-static char const * const mkcicompid = "MKC_I_COMPID";
-static char const * const mkcihdrmodern = "MKC_I_HEADER_MODERN";
 static char const * const mkcivarmacro = "MKC_I_VARIADIC_MACRO";
 static char const * const mkcprojectname = "MKC_PROJECT_NAME";
 static char const * const mkcpathname = "MKC_PATH";
@@ -1764,7 +1760,6 @@ mkc_process_var_print (mkc_process_t *process, const char *pname)
             strcmp (nm, "OBJC") == 0 ||
             strcmp (nm, "BISON") == 0 ||
             strcmp (nm, "FLEX") == 0 ||
-            strcmp (nm, mkcihdrmodern) == 0 ||
             strcmp (nm, mkcivarmacro) == 0) {
           continue;
         }
@@ -1953,9 +1948,7 @@ mkc_process_int_checks (mkc_process_t *process)
   if (rc >= 0) {
     process->compid = rc;
   }
-  mkc_log (process->log, MKC_LOG_GENERAL, "%s: %d\n", mkcicompid, process->compid);
-
-  mkc_pvar_set_integer (process->pvar, mkcicompid, process->compid, MKC_VCTXT_MKC);
+  mkc_log (process->log, MKC_LOG_GENERAL, "%s: %d\n", "compiler-id", process->compid);
 
   for (mkc_compiler_id_t i = 0; i < MKC_COMP_ID_MAX; ++i) {
     if (process->compid == i) {
@@ -1972,9 +1965,7 @@ mkc_process_int_checks (mkc_process_t *process)
   if (rc != 0) {
     process->headertype = MKC_HEADER_LEGACY;
   }
-  mkc_log (process->log, MKC_LOG_GENERAL, "%s: %d\n", mkcihdrmodern, process->headertype);
-
-  mkc_pvar_set_integer (process->pvar, mkcihdrmodern, process->headertype, MKC_VCTXT_MKC);
+  mkc_log (process->log, MKC_LOG_GENERAL, "%s: %d\n", "header-type", process->headertype);
 
   /* system type : internal */
 
@@ -1984,9 +1975,8 @@ mkc_process_int_checks (mkc_process_t *process)
   if (rc >= 0) {
     process->systype = rc;
   }
-  mkc_log (process->log, MKC_LOG_GENERAL, "%s: %d\n", mkcisystype, process->systype);
+  mkc_log (process->log, MKC_LOG_GENERAL, "%s: %d\n", "system-type", process->systype);
 
-  mkc_pvar_set_integer (process->pvar, mkcisystype, process->systype, MKC_VCTXT_MKC);
   for (mkc_system_type_t i = 0; i < MKC_SYS_MAX; ++i) {
     if (process->systype == i) {
       mkc_pvar_set_integer (process->pvar, sysnames [i], true, MKC_VCTXT_MKC);
@@ -2035,9 +2025,8 @@ mkc_process_int_checks (mkc_process_t *process)
   if (rc >= 0) {
     process->sysid = rc;
   }
-  mkc_log (process->log, MKC_LOG_GENERAL, "%s: %d\n", mkcisysid, process->sysid);
+  mkc_log (process->log, MKC_LOG_GENERAL, "%s: %d\n", "system-id", process->sysid);
 
-  mkc_pvar_set_integer (process->pvar, mkcisysid, process->sysid, MKC_VCTXT_MKC);
   for (mkc_system_id_t i = 0; i < MKC_SYS_ID_MAX; ++i) {
     if (process->sysid == i) {
       mkc_pvar_set_integer (process->pvar, sysidnames [i], true, MKC_VCTXT_MKC);
@@ -2054,7 +2043,6 @@ mkc_process_int_checks (mkc_process_t *process)
     process->variadicmacro = MKC_NO_VARIADIC_MACRO;
   }
   mkc_log (process->log, MKC_LOG_GENERAL, "%s: %d\n", mkcivarmacro, process->variadicmacro);
-
   mkc_pvar_set_integer (process->pvar, mkcivarmacro, process->variadicmacro, MKC_VCTXT_MKC);
 
   /* linux: library location : internal */
@@ -2124,8 +2112,6 @@ mkc_process_set_defaults (mkc_process_t *process)
   }
 
   mkc_pvar_profile_set_idx (process->pvar, process->pidx_curr_comp);
-
-  mkc_pvar_set_integer (process->pvar, mkcihdrmodern, process->headertype, MKC_VCTXT_MKC);
 
   mkc_process_find_executables (process);
 }

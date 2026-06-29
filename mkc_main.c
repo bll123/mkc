@@ -160,10 +160,8 @@ main (int argc, char *argv [])
 
   /* craete the mkc_files temporary directory tree */
   mkc_path_build (MKC_PATH_MKC_TMP, tbuff, sizeof (tbuff), NULL, mkcerr);
-  rc = mkc_dirop_make (tbuff);
+  rc = mkc_dirop_make (tbuff, mkcerr);
   if (rc != 0) {
-// ### fix error code
-    mkc_error_set (mkcerr, MKC_ERR_FILE_NOT_FOUND, errno, strerror (errno));
     rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
     return rc;
   }
@@ -353,7 +351,7 @@ mkc_main_set_dflt_profile (const char *profnm, mkc_error_t *mkcerr)
 
   mkc_path_build (MKC_PATH_CONFIG, tbuff, sizeof (tbuff), NULL, mkcerr);
   if (! mkc_is_directory (tbuff)) {
-    rc = mkc_dirop_make (tbuff);
+    rc = mkc_dirop_make (tbuff, mkcerr);
     if (rc != 0) {
       return rc;
     }

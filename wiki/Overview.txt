@@ -13,12 +13,12 @@ See [Status](Status) for the current status and goals.
 ##### Definitions
 
 __profile__: A profile is a namespace for variables and attributes.
-_mkc_ defines the __internal__, __global__ and __release__ profiles.
+_mkc_ defines the __internal__, __global__ and __default__ profiles.
 
 References: [Profiles](Profiles.txt)
 
 A user profile can have any name.  The usual names might be
-__release__ and __debug__.
+__development__, __debug__ and __release__.
 
 A profile may have an associated compiler.
 
@@ -51,7 +51,7 @@ command line argument.
 * --compiler <compiler>
   Select the default compiler.
 * --mkc-dir <mkc-dir>
-  Not implemented.
+  Sets the location of the temporary mkc_files directory.
 * --no-cache
   Run mkc without using the cache.
 * --parsedebug
@@ -62,7 +62,5 @@ command line argument.
   Select the profile to use.
 * --retest
   The cache will be loaded, but checks that failed will be re-run.
-
-
 
 [Wiki Home](Home)

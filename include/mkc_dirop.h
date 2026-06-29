@@ -5,6 +5,8 @@
 #ifndef INC_MKC_DIROP_H
 #define INC_MKC_DIROP_H
 
+#include "mkc_error.h"
+
 #if defined (__cplusplus) || defined (c_plusplus)
 extern "C" {
 #endif
@@ -14,8 +16,8 @@ enum {
   DIROP_ONLY_IF_EMPTY   = (1 << 0),
 };
 
-int   mkc_dirop_make (const char *dirname);
-bool  mkc_dirop_delete (const char *dir, int flags);
+int mkc_dirop_make (const char *dirname, mkc_error_t *mkcerr);
+int mkc_dirop_delete (const char *dir, int flags, mkc_error_t *mkcerr);
 
 #if defined (__cplusplus) || defined (c_plusplus)
 } /* extern C */

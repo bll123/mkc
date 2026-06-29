@@ -18,7 +18,9 @@ static char const * const mkcerrormsg [] = {
   [MKC_OK] = "success",
   [MKC_OK_CHANGE] = "success, cache invalidated",
   [MKC_ERR_COMPILER_FAILURE] = "compiler failure",
-  /* exceeds the set size of internal stacks */
+  [MKC_ERR_DIR_NOT_A_DIR] = "not a directory",
+  [MKC_ERR_DIR_NOT_CREATED] = "directory could not be created",
+  [MKC_ERR_DIR_UNABLE_TO_OPEN] = "directory could not be opened",
   [MKC_ERR_DIVIDE_BY_ZERO] = "division by zero",
   [MKC_ERR_EXCEEDS_STACK_SIZE] = "exceeds stack size",
   [MKC_ERR_FILE_NOT_FOUND] = "file not found",
