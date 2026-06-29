@@ -123,7 +123,11 @@ mkc_error_chk_err (mkc_error_t *mkcerr)
   if (mkcerr == NULL) {
     return true;
   }
-  if (mkcerr->err == MKC_OK || mkcerr->err == MKC_OK_CHANGE) {
+  if (mkcerr->err == MKC_OK ||
+      mkcerr->err == MKC_OK_CHANGE) {
+    return false;
+  }
+  if (mkcerr->err == MKC_ERR_USER_EXIT && mkcerr->syserr == 0) {
     return false;
   }
   return true;
@@ -136,6 +140,9 @@ mkc_error_chk_ok (mkc_error_t *mkcerr)
     return false;
   }
   if (mkcerr->err == MKC_OK || mkcerr->err == MKC_OK_CHANGE) {
+    return true;
+  }
+  if (mkcerr->err == MKC_ERR_USER_EXIT && mkcerr->syserr == 0) {
     return true;
   }
   return false;

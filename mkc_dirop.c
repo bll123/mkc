@@ -112,18 +112,15 @@ mkc_dirop_make_recursive (const char *dirname)
   char    *p = NULL;
 
   stpecpy (tbuff, tbuff + MKC_PATH_MAX, dirname);
-fprintf (stderr, "dir-mk-prep: %s\n", dirname);
   mkc_trim_char (tbuff, '/');
 
   for (p = tbuff + 1; *p; p++) {
     if (*p == '/') {
       *p = '\0';
-fprintf (stderr, "dir-mk-int: %s\n", tbuff);
       mkc_dirop_makedir (tbuff);
       *p = '/';
     }
   }
-fprintf (stderr, "dir-mk-fin: %s\n", tbuff);
   mkc_dirop_makedir (tbuff);
   return 0;
 }

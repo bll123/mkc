@@ -2,6 +2,10 @@
  * Copyright 2026 Brad Lanam Pleasant Hill CA
  */
 
+#ifndef MKC_BOOTSTRAP
+# include "mkc_config.h"
+#endif
+
 #include <stdio.h>
 #include <stdint.h>
 #include <inttypes.h>
@@ -32,6 +36,10 @@
 enum {
   MKC_AUTO_DEFINE_ZERO,
   MKC_AUTO_SKIP_ZERO,
+};
+
+enum {
+  MKC_CACHE_VERS_1 = 1,
 };
 
 typedef struct mkc_process_t {
@@ -1414,6 +1422,7 @@ mkc_process_chk_shell_extract (mkc_process_t *process, mkc_value_t *valpath)
     }
 
     mkc_strtrim (buff, sizeof (buff));
+    mkc_log (process->log, MKC_LOG_CHECK, "  shell: buff: %s\n", buff);
 
     match = mkc_regex_get (process->rxshellvar, buff);
     matchcount = 0;
@@ -1524,7 +1533,7 @@ mkc_process_save_cache (mkc_process_t *process)
   opidx = mkc_profile_get_active (process->profiles);
 
   /* version 1 */
-  fprintf (fh, "load_cache 1 {\n");
+  fprintf (fh, "load_cache %d {\n", MKC_CACHE_VERS_1);
 
   profiles = process->profiles;
   mkc_profile_iter_start (profiles, &piter);

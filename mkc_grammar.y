@@ -1137,13 +1137,13 @@ integer[v]:
     }
   | T_VAL_BOOTSTRAP
     {
+      int   bootstrap = MKC_T_VAL_FALSE;
+
 #if MKC_BOOTSTRAP
-      $v = mkc_ast_mk_value (ast, MKC_T_VAL_TRUE, NULL,
-          yylloc.first_line, yylloc.first_column);
-#else
-      $v = mkc_ast_mk_value (ast, MKC_T_VAL_FALSE, NULL,
-          yylloc.first_line, yylloc.first_column);
+      bootstrap = MKC_T_VAL_TRUE;
 #endif
+      $v = mkc_ast_mk_value (ast, bootstrap, NULL,
+          yylloc.first_line, yylloc.first_column);
     }
   ;
 

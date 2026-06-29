@@ -66,19 +66,12 @@ $(BOOTSTRAP_NOREGEX): $(BOOTSTRAP_TMPDIR) $(BOOTSTRAP_MKC_FILES) \
 bootstrap-noregex: mkc_config.h
 	@echo "make: -- bootstrap mkc (noregex)"
 	@$(MAKE) clean
-	@mv -f $(MKC_FILES)/log-mkc.txt $(MKC_FILES)/log-init.txt
-	@mv -f $(MKC_FILES)/cache.mkc $(MKC_FILES)/cache-init.mkc
 	@$(MAKE) -f $(MAKEFILE) \
 	   CFLAGS="$(CONF_CFLAGS)" LDFLAGS="$(CONF_LDFLAGS)" \
 	   LIBS="$(CONF_LIBS)" TARGET=all oscheck
-	@if [ ! -f $(MKC_TMP)/mkc_config-init.h ]; then \
-	  mv -f mkc_config.h $(MKC_TMP)/mkc_config-init.h ; \
-	fi
 	# make sure mkc_config.h is re-built
 	@$(MAKE) -f $(MAKEFILE) mkc_config.h
 	@$(MAKE) clean
-	@mv -f $(MKC_FILES)/log-mkc.txt $(MKC_FILES)/log-noregex.txt
-	@mv -f $(MKC_FILES)/cache.mkc $(MKC_FILES)/cache-noregex.mkc
 	@touch $(BOOTSTRAP_NOREGEX)
 
 .PHONY: bootstrap-final

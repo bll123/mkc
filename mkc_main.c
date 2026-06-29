@@ -100,7 +100,6 @@ main (int argc, char *argv [])
 
   mkc_path_build (MKC_PATH_CONFIG, tbuff, sizeof (tbuff),
       "defaultprofile.txt", mkcerr);
-fprintf (stderr, "conf: %s\n", tbuff);
   fh = mkc_fopen (tbuff, "r");
   if (fh != NULL) {
     *tbuff = '\0';
@@ -161,7 +160,6 @@ fprintf (stderr, "conf: %s\n", tbuff);
 
   /* craete the mkc_files temporary directory tree */
   mkc_path_build (MKC_PATH_MKC_TMP, tbuff, sizeof (tbuff), NULL, mkcerr);
-fprintf (stderr, "mkc-tmp: %s\n", tbuff);
   rc = mkc_dirop_make (tbuff);
   if (rc != 0) {
 // ### fix error code
@@ -173,7 +171,6 @@ fprintf (stderr, "mkc-tmp: %s\n", tbuff);
   log = mkc_log_init (mkcerr);
   mkc_path_build (MKC_PATH_MKC_FILES, tbuff, sizeof (tbuff),
       "log-mkc.txt", mkcerr);
-fprintf (stderr, "mkc-log: %s\n", tbuff);
 //  mkc_log_open (log, tbuff, MKC_LOG_NORMAL);
   mkc_log_open (log, tbuff, MKC_LOG_ALL);
 
