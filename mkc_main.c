@@ -157,7 +157,6 @@ main (int argc, char *argv [])
 
   /* create the mkc_files temporary directory tree */
   mkc_path_build (MKC_PATH_MKC_TMP, tbuff, sizeof (tbuff), NULL, mkcerr);
-fprintf (stderr, "mkc-files: %s\n", tbuff);
   rc = mkc_dirop_make (tbuff, mkcerr);
   if (rc != 0) {
     rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
@@ -167,7 +166,6 @@ fprintf (stderr, "mkc-files: %s\n", tbuff);
   log = mkc_log_init (mkcerr);
   mkc_path_build (MKC_PATH_MKC_FILES, tbuff, sizeof (tbuff),
       "log-mkc.txt", mkcerr);
-fprintf (stderr, "log-name: %s\n", tbuff);
 //  mkc_log_open (log, tbuff, MKC_LOG_NORMAL);
   mkc_log_open (log, tbuff, MKC_LOG_ALL);
 
@@ -391,5 +389,11 @@ mkc_main_set_exec_path (argcopy_t *argcopy)
     *p = '\0';
   }
   mkc_path_set_dir (MKC_DIR_EXEC, tbuff);
+
+  p = strrchr (tbuff, '/');
+  if (p != NULL) {
+    *p = '\0';
+  }
+  mkc_path_set_dir (MKC_DIR_PREFIX, tbuff);
 }
 

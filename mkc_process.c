@@ -2471,6 +2471,6 @@ mkc_process_path_print (mkc_process_t *process)
   fprintf (stdout, "== paths\n");
   for (int i = 0; i < MKC_PATH_BUILD_MAX; ++i) {
     mkc_path_build (i, tbuff, sizeof (tbuff), NULL, process->mkcerr);
-    fprintf (stderr, "path %d %s\n", i, tbuff);
+    fprintf (stdout, "path %d %s\n", i, tbuff);
   }
 }

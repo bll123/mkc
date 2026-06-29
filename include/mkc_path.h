@@ -25,6 +25,7 @@ typedef enum {
   MKC_PATH_MKC_INCLUDE,     /* .../share/mkc/include */
   MKC_PATH_MKC_TEMPLATES,   /* .../share/mkc/templates */
   MKC_PATH_SHARE,           /* .../share */
+  MKC_PATH_PREFIX,          /* one level above exec */
   MKC_PATH_BUILD_MAX,
 } mkc_path_t;
 
@@ -33,6 +34,7 @@ typedef enum {
   MKC_DIR_HOME,
   MKC_DIR_MKC_FILES,
   MKC_DIR_SHARE,
+  MKC_DIR_PREFIX,           /* one level above exec */
   MKC_DIR_MAX,
 } mkc_dir_t;
 

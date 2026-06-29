@@ -5,6 +5,8 @@
 
 . ./tests/testsetup.sh
 
+echo "-- using ${MKC}"
+
 systype=$(uname -m)
 case ${systype} in
   Linux)

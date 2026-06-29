@@ -8,7 +8,6 @@ if (! bootstrap) {
   mark BUILD enable-output;
   mark BUILDDATE enable-output;
   mark RELEASELEVEL enable-output;
-  mark DEVELOPMENT enable-output;
 }
 
 project {

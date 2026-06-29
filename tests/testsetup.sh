@@ -13,11 +13,13 @@ LOG=${MKCTMP}/log-runtests.txt
 MKCLOG=mkc_files
 mkclog=${MKCLOG}/log-mkc.txt
 
+MKC=${MKC:-./mkc}
+
 function dotest {
   tfile=$1
 
   if [[ $ttype == mkc ]]; then
-    prog=./mkc
+    prog=${MKC}
   fi
   if [[ $ttype == sh ]]; then
     prog="bash "
