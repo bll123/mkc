@@ -42,6 +42,8 @@ static void copyargs (argcopy_t *argcopy, int argc, char *argv [], mkc_error_t *
 static void cleanargs (argcopy_t *argcopy);
 static mkc_err_code_t mkc_cleanup (mkc_astmain_t *astmain, argcopy_t *argcopy, mkc_log_t *log, mkc_error_t *error);
 static int mkc_main_set_dflt_profile (const char *profnm, mkc_error_t *mkcerr);
+void mkc_main_set_home (void);
+void mkc_main_set_exec_path (argcopy_t *argcopy);
 
 int
 main (int argc, char *argv [])
@@ -84,13 +86,8 @@ main (int argc, char *argv [])
     return rc;
   }
 
-#if _WIN32
-  mkc_env_get ("USERPROFILE", tbuff, sizeof (tbuff));
-  mkc_normalize_path (tbuff, sizeof (tbuff));
-#else
-  mkc_env_get ("HOME", tbuff, sizeof (tbuff));
-#endif
-  mkc_path_set_dir (MKC_DIR_HOME, tbuff);
+  mkc_main_set_home ();
+  mkc_main_set_exec_path (&argcopy);
 
   mkcoptions.dfltprofile = strdup (MKC_PROF_DEFAULT_NAME);
   mkcoptions.compilertxt = NULL;
@@ -158,8 +155,9 @@ main (int argc, char *argv [])
     }
   }
 
-  /* craete the mkc_files temporary directory tree */
+  /* create the mkc_files temporary directory tree */
   mkc_path_build (MKC_PATH_MKC_TMP, tbuff, sizeof (tbuff), NULL, mkcerr);
+fprintf (stderr, "mkc-files: %s\n", tbuff);
   rc = mkc_dirop_make (tbuff, mkcerr);
   if (rc != 0) {
     rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
@@ -169,6 +167,7 @@ main (int argc, char *argv [])
   log = mkc_log_init (mkcerr);
   mkc_path_build (MKC_PATH_MKC_FILES, tbuff, sizeof (tbuff),
       "log-mkc.txt", mkcerr);
+fprintf (stderr, "log-name: %s\n", tbuff);
 //  mkc_log_open (log, tbuff, MKC_LOG_NORMAL);
   mkc_log_open (log, tbuff, MKC_LOG_ALL);
 
@@ -365,3 +364,32 @@ mkc_main_set_dflt_profile (const char *profnm, mkc_error_t *mkcerr)
   }
   return rc;
 }
+
+void
+mkc_main_set_home (void)
+{
+  char    tbuff [MKC_PATH_MAX];
+
+#if _WIN32
+  mkc_env_get ("USERPROFILE", tbuff, sizeof (tbuff));
+  mkc_normalize_path (tbuff, sizeof (tbuff));
+#else
+  mkc_env_get ("HOME", tbuff, sizeof (tbuff));
+#endif
+  mkc_path_set_dir (MKC_DIR_HOME, tbuff);
+}
+
+void
+mkc_main_set_exec_path (argcopy_t *argcopy)
+{
+  char    tbuff [MKC_PATH_MAX];
+  char    *p;
+
+  stpecpy (tbuff, tbuff + sizeof (tbuff), argcopy->utf8argv [0]);
+  p = strrchr (tbuff, '/');
+  if (p != NULL) {
+    *p = '\0';
+  }
+  mkc_path_set_dir (MKC_DIR_EXEC, tbuff);
+}
+

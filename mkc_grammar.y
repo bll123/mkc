@@ -58,7 +58,6 @@
 
 %start mkc
 
-%token T_EQUAL                "="
 %token T_LEFT_BRACE           "{"
 %token T_LEFT_BRACKET         "["
 %token T_LEFT_PAREN           "("
@@ -191,7 +190,7 @@
 %nonassoc T_OP_RANGE
 %left T_OP_OR
 %left T_OP_AND
-%left T_OP_NUM_EQ T_OP_NUM_NE T_OP_STR_EQ T_OP_STR_NE T_OPT_STR_EQ_REGEX T_OPT_STR_NE_REGEX
+%left T_OP_NUM_EQ T_OP_NUM_NE T_OP_STR_EQ T_OP_STR_NE T_OP_STR_EQ_REGEX T_OP_STR_NE_REGEX
 %left T_OP_NUM_LT T_OP_NUM_LE T_OP_NUM_GT T_OP_NUM_GE T_OP_STR_LT T_OP_STR_LE T_OP_STR_GT T_OP_STR_GE
 %left T_OP_MINUS T_OP_PLUS
 %left T_OP_MULTIPLY T_OP_DIVIDE T_OP_MODULO

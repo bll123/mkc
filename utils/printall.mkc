@@ -1,2 +1,3 @@
 mkcdebug printvar internal;
-mkcdebug printvar global;
+mkcdebug printvar default;
+mkcdebug printpath;

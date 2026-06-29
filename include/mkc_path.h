@@ -18,14 +18,18 @@ extern "C" {
 typedef enum {
   MKC_PATH_CONFIG,          /* $HOME/.config/mkc/ or */
                             /* $USERPROFILE/AppData/Roaming/mkc */
+  MKC_PATH_EXEC_PATH,
+  MKC_PATH_HOME,
   MKC_PATH_MKC_FILES,       /* mkc_files */
   MKC_PATH_MKC_TMP,         /* mkc_files/tmp */
   MKC_PATH_MKC_INCLUDE,     /* .../share/mkc/include */
   MKC_PATH_MKC_TEMPLATES,   /* .../share/mkc/templates */
   MKC_PATH_SHARE,           /* .../share */
+  MKC_PATH_BUILD_MAX,
 } mkc_path_t;
 
 typedef enum {
+  MKC_DIR_EXEC,
   MKC_DIR_HOME,
   MKC_DIR_MKC_FILES,
   MKC_DIR_SHARE,

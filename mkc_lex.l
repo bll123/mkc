@@ -110,7 +110,6 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 "+"           { return T_OP_PLUS; }
 "is_list"     { return T_OP_IS_LIST; }
 "is_defined"  { return T_OP_IS_DEFINED; }
-"="           { return T_EQUAL; }
 "{"           { return T_LEFT_BRACE; }
 "["           { return T_LEFT_BRACKET; }
 "("           { return T_LEFT_PAREN; }

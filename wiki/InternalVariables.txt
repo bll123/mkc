@@ -74,6 +74,8 @@ The compiler identification.
   MKC_PATH|list|
   MKC_PATH_PKGCONF|string|path to pkgconf
   MKC_PATH_PKG_CONFIG|string|path to pkg-config
+  MKC_PROFILE_NAME|string|
+  MKC_PROJECT_NAME|string|
   MKC_SHARED_LIBRARY_EXTENSION|string|
   MKC_TV_|string|any variable with this prefix is temporary
 

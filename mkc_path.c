@@ -18,9 +18,8 @@
 #include "mkc_path.h"
 #include "mkc_string.h"
 
-/* this works for development, not for a mkc/ dir included with a project */
-/* mkc/mkc_files */
 static char mkc_dirs [MKC_DIR_MAX][MKC_PATH_MAX] = {
+  [MKC_DIR_EXEC] = "",
   [MKC_DIR_HOME] = "",
   [MKC_DIR_MKC_FILES] = "",
   [MKC_DIR_SHARE] = "",
@@ -32,25 +31,55 @@ mkc_path_build (mkc_path_t pathtype, char *buff, size_t sz,
 {
   char        *p = NULL;
   mkc_dir_t   dir;
+  int         isdev = true;
 
+  /* set up the path to the mkc_files/ directory */
+  /* if in bootstrap, use local relative paths */
+  /* if the development flag is set, use local relative paths */
   dir = MKC_DIR_MKC_FILES;
-  if (*mkc_dirs [dir] == '\0') {
+#if defined (DEVELOPMENT)
+  isdev = strcmp (DEVELOPMENT, "dev") == 0;
+#endif
+  if (isdev) {
     /* development */
     stpecpy (mkc_dirs [dir], mkc_dirs [dir] + MKC_PATH_MAX, "mkc_files");
   }
-  dir = MKC_DIR_SHARE;
-  if (*mkc_dirs [dir] == '\0') {
-    /* development */
-    stpecpy (mkc_dirs [dir], mkc_dirs [dir] + MKC_PATH_MAX, ".");
+  if (*mkc_dirs [dir] == '\0' && ! isdev) {
+    p = stpecpy (mkc_dirs [dir], mkc_dirs [dir] + MKC_PATH_MAX,
+        mkc_dirs [MKC_DIR_EXEC]);
+    p = stpecpy (p, mkc_dirs [dir] + MKC_PATH_MAX, "/");
+    p = stpecpy (p, mkc_dirs [dir] + MKC_PATH_MAX, "mkc_files");
   }
 
-  if (pathtype == MKC_PATH_CONFIG) {
-#if _WIN32
-    snprintf (buff, sz, "%s/AppData/Roaming/mkc", mkc_dirs [MKC_DIR_HOME]);
-#else
-    snprintf (buff, sz, "%s/.config/mkc", mkc_dirs [MKC_DIR_HOME]);
+  /* set up the path to the ../share/mkc/ directory */
+
+  dir = MKC_DIR_SHARE;
+#if defined (MKC_DIR_SHARE)
+  p = stpecpy (mkc_dirs [dir], mkc_dirs [dir] + MKC_PATH_MAX, MKC_DIR_SHARE);
+  p = stpecpy (p, mkc_dirs [dir] + MKC_PATH_MAX, "/mkc");
 #endif
-    p = buff + strlen (buff);
+  if (isdev) {
+    /* the development flag overrides any share-directory that is set */
+    stpecpy (mkc_dirs [dir], mkc_dirs [dir] + MKC_PATH_MAX, ".");
+  }
+  if (*mkc_dirs [dir] == '\0' && ! isdev) {
+    stpecpy (mkc_dirs [dir], mkc_dirs [dir] + MKC_PATH_MAX, mkc_dirs [MKC_DIR_EXEC]);
+  }
+
+  p = NULL;
+
+  if (pathtype == MKC_PATH_CONFIG) {
+    p = stpecpy (buff, buff + sz, mkc_dirs [MKC_DIR_HOME]);
+#if _WIN32
+    p = stpecpy (p, buff + sz, "/AppData/Roaming/mkc");
+#else
+    p = stpecpy (p, buff + sz, "/.config/mkc");
+#endif
+  } else if (pathtype == MKC_PATH_EXEC_PATH) {
+    /* the path to the mkc executable */
+    p = stpecpy (buff, buff + sz, mkc_dirs [MKC_DIR_EXEC]);
+  } else if (pathtype == MKC_PATH_HOME) {
+    p = stpecpy (buff, buff + sz, mkc_dirs [MKC_DIR_HOME]);
   } else if (pathtype == MKC_PATH_SHARE) {
     /* the system share directory */
     p = stpecpy (buff, buff + sz, mkc_dirs [MKC_DIR_SHARE]);
@@ -75,7 +104,7 @@ mkc_path_build (mkc_path_t pathtype, char *buff, size_t sz,
     return;
   }
 
-  if (filename != NULL && *filename) {
+  if (p != NULL && filename != NULL && *filename) {
     p = stpecpy (p, buff + sz, "/");
     p = stpecpy (p, buff + sz, filename);
   }

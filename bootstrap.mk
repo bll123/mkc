@@ -158,6 +158,7 @@ MKCOBJECTS = mkc_main.o mkc_grammar.o \
 # be sure it is followed by a blank line
 # PARTIALOBJ keep this line
 PARTIALOBJ = \
+	mkc_grammar.o \
 	mkc_check.o \
 	mkc_dirop.o \
 	mkc_env.o \
@@ -235,8 +236,8 @@ mkc_compiler.o:  include/mkc_compiler.h
 mkc_context.o:  include/mkc_context.h
 mkc_context.o: include/mkc_error.h include/mkc_nodiscard.h
 mkc_dirop.o:  include/mkc_def.h 
-mkc_dirop.o:  include/mkc_dirop.h include/mkc_fileop.h
-mkc_dirop.o:  include/mkc_error.h include/mkc_nodiscard.h
+mkc_dirop.o:  include/mkc_dirop.h include/mkc_error.h
+mkc_dirop.o: include/mkc_nodiscard.h include/mkc_fileop.h 
 mkc_dirop.o: include/mkc_osdir.h include/mkc_string.h
 mkc_env.o:  include/mkc_env.h include/mkc_string.h
 mkc_env.o: include/mkc_nodiscard.h
@@ -296,8 +297,8 @@ mkc_process.o: include/mkc_nodiscard.h include/mkc_log.h
 mkc_process.o: include/mkc_profile.h include/mkc_list.h include/mkc_option.h
 mkc_process.o: include/mkc_var.h include/mkc_pvar.h include/mkc_context.h
 mkc_process.o: include/mkc_def.h  include/mkc_env.h
-mkc_process.o: include/mkc_fileop.h include/mkc_process.h include/mkc_regex.h
-mkc_process.o: include/mkc_string.h include/mkc_tmutil.h
+mkc_process.o: include/mkc_fileop.h include/mkc_path.h include/mkc_process.h
+mkc_process.o: include/mkc_regex.h include/mkc_string.h include/mkc_tmutil.h
 mkc_profile.o: include/mkc_compiler.h include/mkc_error.h
 mkc_profile.o: include/mkc_nodiscard.h include/mkc_list.h
 mkc_profile.o: include/mkc_option.h include/mkc_profile.h include/mkc_log.h

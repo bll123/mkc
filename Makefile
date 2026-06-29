@@ -74,9 +74,12 @@ depend:
 	    > $(BOOTSTRAPMAKE).n
 	mv $(BOOTSTRAPMAKE).n $(BOOTSTRAPMAKE)
 
+# sets the PARTIALOBJ variable in bootstrap.mk
 .PHONY: partialobj
 partialobj:
 	echo 'PARTIALOBJ = \\' > $(TMPFILE)
+        # mkc_grammar must be re-compiled, as it has a #if MKC_BOOTSTRAP
+	echo '\tmkc_grammar.o \\' >> $(TMPFILE)
 	grep -l 'include "mkc_config.h' *.c | \
 	    sed -e 's,\.c$$,\.o,' \
 	        -e 's,^,\t,' \

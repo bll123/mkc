@@ -383,7 +383,6 @@ mkc_chk_arg_count (mkc_check_t *check, mkc_compiler_t compiler,
   flags [fcount++] = "-E";
   flags [fcount++] = NULL;
   rc = mkc_compile_only (check, compiler, "c-argcount", flags, rbuff, rsz);
-//fprintf (stderr, "rbuff: %zd\n%s\n", rsz, rbuff);
 
   /*  int mkdir (const char *__path, __mode_t __mode) */
   /*      ;   */

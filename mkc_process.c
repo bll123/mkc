@@ -26,6 +26,7 @@
 #include "mkc_fileop.h"
 #include "mkc_log.h"
 #include "mkc_option.h"
+#include "mkc_path.h"
 #include "mkc_process.h"
 #include "mkc_profile.h"
 #include "mkc_pvar.h"
@@ -119,6 +120,7 @@ static char const * const mkctempvarpfx = "MKC_TV_";
 static size_t mkctvpfxlen = 0;
 static char const * const mkcivarmacro = "MKC_I_VARIADIC_MACRO";
 static char const * const mkcprojectname = "MKC_PROJECT_NAME";
+static char const * const mkcprofilename = "MKC_PROFILE_NAME";
 static char const * const mkcpathname = "MKC_PATH";
 /* these are duplicated from mkc_profile.c */
 /* so that the static aggregator can be initialized */
@@ -127,6 +129,7 @@ static char const * const mkcppkgconfig = "MKC_PATH_PKG_CONFIG";
 static void mkc_process_attr_clear (mkc_process_t *process);
 static void mkc_process_user_regex_free (void *turx);
 static int mkc_process_user_regex_comp (void *turxa, void *turxb);
+static void mkc_process_path_print (mkc_process_t *process);
 
 typedef struct mkc_prog_chk_t {
   const char  * program;
@@ -576,6 +579,9 @@ mkc_process_stmt_debug (mkc_process_t *process,
   if (strcmp (tbuff, "printvar") == 0) {
     mkc_pvar_value_get_str (process->pvar, subvalue, tbuff, sizeof (tbuff));
     mkc_process_var_print (process, tbuff);
+  }
+  if (strcmp (tbuff, "printpath") == 0) {
+    mkc_process_path_print (process);
   }
 
   return false;
@@ -1710,6 +1716,9 @@ mkc_process_var_print (mkc_process_t *process, const char *pname)
   pvar = process->pvar;
   opidx = mkc_profile_get_active (process->profiles);
 
+  if (pname != NULL && strcmp (pname, "default") == 0) {
+    pname = mkc_profile_get_name (process->profiles, opidx);
+  }
   if (pname != NULL && strcmp (pname, "test") == 0) {
     intest = true;
     pname = mkc_profile_get_name (process->profiles, opidx);
@@ -2111,6 +2120,10 @@ mkc_process_set_defaults (mkc_process_t *process)
     mkc_pvar_set_integer (process->pvar, compidnames [i], false, MKC_VCTXT_MKC);
   }
 
+  mkc_pvar_set_str (process->pvar, mkcprofilename,
+      mkc_profile_get_name (process->profiles, process->pidx_curr_comp),
+      MKC_VCTXT_MKC);
+
   mkc_pvar_profile_set_idx (process->pvar, process->pidx_curr_comp);
 
   mkc_process_find_executables (process);
@@ -2448,4 +2461,16 @@ mkc_process_user_regex_comp (void *turxa, void *turxb)
   mkc_user_regex_t  *urxb = turxb;
 
   return strcmp (urxa->pattern, urxb->pattern);
+}
+
+static void
+mkc_process_path_print (mkc_process_t *process)
+{
+  char    tbuff [MKC_PATH_MAX];
+
+  fprintf (stdout, "== paths\n");
+  for (int i = 0; i < MKC_PATH_BUILD_MAX; ++i) {
+    mkc_path_build (i, tbuff, sizeof (tbuff), NULL, process->mkcerr);
+    fprintf (stderr, "path %d %s\n", i, tbuff);
+  }
 }
