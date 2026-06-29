@@ -42,6 +42,11 @@ enum {
   MKC_CACHE_VERS_1 = 1,
 };
 
+typedef struct mkc_user_regex_t {
+  char          *pattern;
+  mkc_regex_t   *rx;
+} mkc_user_regex_t;
+
 typedef struct mkc_process_t {
   mkc_profile_t         * profiles;
   mkc_pvar_t            * pvar;
@@ -52,6 +57,7 @@ typedef struct mkc_process_t {
   mkc_option_t          * mkcoptions;
   char                  * projectname;
   mkc_regex_t           * rxshellvar;
+  mkc_list_t            * user_rx_list;
   mkc_attribute_t       attr;
   // internal
   mkc_compiler_t        dfltcompiler;
@@ -123,6 +129,8 @@ static char const * const mkcpathname = "MKC_PATH";
 static char const * const mkcppkgconf = "MKC_PATH_PKGCONF";
 static char const * const mkcppkgconfig = "MKC_PATH_PKG_CONFIG";
 static void mkc_process_attr_clear (mkc_process_t *process);
+static void mkc_process_user_regex_free (void *turx);
+static int mkc_process_user_regex_comp (void *turxa, void *turxb);
 
 typedef struct mkc_prog_chk_t {
   const char  * program;
@@ -145,6 +153,9 @@ static void mkc_process_configure_manual (mkc_process_t *process);
 static void mkc_process_configure_auto (mkc_process_t *process, int defzero);
 static bool mkc_process_chk_cache (mkc_process_t *process, const char *disp, const char *nm);
 static void mkc_process_find_executables (mkc_process_t *process);
+static mkc_user_regex_t *mkc_process_user_regex_init (mkc_process_t *process, const char *pattern);
+static void mkc_process_user_regex_free (void *turx);
+static int mkc_process_user_regex_comp (void *turxa, void *turxb);
 
 MKC_NODISCARD
 mkc_process_t *
@@ -168,6 +179,8 @@ mkc_process_init (mkc_profile_t *profiles, mkc_log_t *log,
   process->pvar = NULL;
   process->projectname = NULL;
   process->rxshellvar = NULL;
+  process->user_rx_list = mkc_list_init (MKC_LIST_SORTED,
+      mkc_process_user_regex_free, mkc_process_user_regex_comp, mkcerr);
   process->attr.name = NULL;
   process->attr.method = NULL;
   process->attr.vcontext = NULL;
@@ -238,6 +251,7 @@ mkc_process_free (mkc_process_t *process)
     mkc_regex_free (process->rxshellvar);
 #endif
   }
+  mkc_list_free (process->user_rx_list);
   free (process);
 }
 
@@ -388,6 +402,32 @@ mkc_process_str_op (mkc_process_t *process, int type,
     }
     case MKC_T_OP_STR_GE: {
       result = strcmp (stra, strb) >= 0;
+      break;
+    }
+    case MKC_T_OP_STR_EQ_REGEX: {
+      mkc_user_regex_t    *urx;
+
+      urx = mkc_process_user_regex_init (process, strb);
+      if (urx == NULL) {
+        break;
+      }
+      result = 0;
+#if _have_regex
+      result = mkc_regex_match (urx->rx, stra);
+#endif
+      break;
+    }
+    case MKC_T_OP_STR_NE_REGEX: {
+      mkc_user_regex_t    *urx;
+
+      urx = mkc_process_user_regex_init (process, strb);
+      if (urx == NULL) {
+        break;
+      }
+      result = 0;
+#if _have_regex
+      result = ! mkc_regex_match (urx->rx, stra);
+#endif
       break;
     }
     default: {
@@ -2372,4 +2412,54 @@ mkc_process_attr_clear (mkc_process_t *process)
   process->attr.path = NULL;
   process->attr.define_zero = MKC_AUTO_SKIP_ZERO;
   process->attr.currcompiler = process->dfltcompiler;
+}
+
+static mkc_user_regex_t *
+mkc_process_user_regex_init (mkc_process_t *process, const char *pattern)
+{
+  mkc_user_regex_t    *urx;
+  mkc_user_regex_t    turx;
+  mkc_listidx_t       idx;
+  mkc_listidx_t       loc = MKC_LIST_NOTFOUND;
+
+  turx.rx = NULL;
+  turx.pattern = (char *) pattern;
+
+  idx = mkc_list_find (process->user_rx_list, &turx, &loc);
+  if (idx == MKC_LIST_FOUND) {
+    urx = mkc_list_get_by_idx (process->user_rx_list, idx);
+    return urx;
+  }
+
+  turx.pattern = strdup (pattern);
+  if (turx.pattern == NULL) {
+    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return NULL;
+  }
+#if _have_regex
+  turx.rx = mkc_regex_init (turx.pattern, process->mkcerr);
+#endif
+  urx = mkc_list_set (process->user_rx_list, &turx, sizeof (mkc_user_regex_t), &loc);
+
+  return urx;
+}
+
+static void
+mkc_process_user_regex_free (void *turx)
+{
+  mkc_user_regex_t  *urx = turx;
+
+  datafree (urx->pattern);
+#if _have_regex
+  mkc_regex_free (urx->rx);
+#endif
+}
+
+static int
+mkc_process_user_regex_comp (void *turxa, void *turxb)
+{
+  mkc_user_regex_t  *urxa = turxa;
+  mkc_user_regex_t  *urxb = turxb;
+
+  return strcmp (urxa->pattern, urxb->pattern);
 }

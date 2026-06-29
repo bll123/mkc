@@ -1,6 +1,6 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
-# numeric comparisons
+# string comparisons
 
 # eq
 if ('a' eq 'a') {

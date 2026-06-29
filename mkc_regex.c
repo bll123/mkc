@@ -40,7 +40,7 @@ mkc_regex_init (const char *pattern, mkc_error_t *mkcerr)
   regex = g_regex_new (pattern, G_REGEX_OPTIMIZE, 0, NULL);
   if (regex == NULL) {
     mkc_error_set (mkcerr, MKC_ERR_REGEX_PATTERN_FAIL, 0, NULL);
-    fprintf (stderr, "ERR: failed to compile %s\n", pattern);
+    // fprintf (stderr, "ERR: failed to compile %s\n", pattern);
     return NULL;
   }
   rx = malloc (sizeof (mkc_regex_t));
@@ -55,12 +55,14 @@ mkc_regex_init (const char *pattern, mkc_error_t *mkcerr)
 void
 mkc_regex_free (mkc_regex_t *rx)
 {
-  if (rx != NULL) {
-    if (rx->regex != NULL) {
-      g_regex_unref (rx->regex);
-    }
-    free (rx);
+  if (rx == NULL) {
+    return;
   }
+
+  if (rx->regex != NULL) {
+    g_regex_unref (rx->regex);
+  }
+  free (rx);
 }
 
 /* the caller must free the allocated string */

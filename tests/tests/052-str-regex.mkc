@@ -1,0 +1,38 @@
+# Copyright 2026 Brad Lanam Pleasant Hill CA
+
+# string regex comparisons
+
+# not testing regular expressions, testing if the operator works
+
+# eq~
+if ('a' eq~ 'a') {
+  print '  ok a';
+} else {
+  print '  fail a';
+}
+if ('b' eq~ '.') {
+  print '  ok b';
+} else {
+  print '  fail b';
+}
+if ('c' eq~ '[abc]') {
+  print '  ok c';
+} else {
+  print '  fail c';
+}
+
+if ('d' ne~ 'd') {
+  print '  fail d';
+} else {
+  print '  ok d';
+}
+if ('e' ne~ '.') {
+  print '  fail e';
+} else {
+  print '  ok e';
+}
+if ('f' ne~ '[def]') {
+  print '  fail f';
+} else {
+  print '  ok f';
+}

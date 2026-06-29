@@ -3,26 +3,55 @@
 
 ### Syntax: Expressions
 
-Precedence of operators is the same as in the C language.
+Precedence of operators is the same as in the C language.  The
+precedence of the __eq~__ and __ne~__ operators is the same as the
+other string operators.
 
-(sourceforge's version of markdown is eating the &plus; symbol within
-code blocks).
+Listed by precedence (high to low):
 
-Binary Operations on Integers
-
-    plus - * / % && || == != < <= > >=
-
-Binary Operations on Strings
-
-    eq ne lt le gt ge
+* __is_defined is_list__
+* Unary: __&plus; &#8209; !__
+* __* / %__
+* __&plus; &#8209;__
+* __< <= > >= lt le gt ge__
+* __== != eq ne eq~ ne~__
+* __&&__
+* __||__
+* __..__
 
 Unary Operations on Integers
 
-    plus - !
+__&plus; &#8209; !__
+
+Binary Operations on Integers
+
+__&plus; &#8209; * / % && || == != < <= > >=__
+
+Binary Operations on Strings
+
+__eq ne lt le gt ge eq~ ne~__
+
+__eq~__ applies the regular expression in the second operand to the
+first operand.  If there is a match, true is returned, otherwise false
+is returned.
+
+__ne~__ applies the regular expression in the second operand to the
+first operand.  If there is no match, true is returned, otherwise
+false is returned.
+
+Internal Functions
+
+__is_defined is_list__
+
+__is_defined (_variable-name_)__ returns true if the variable is
+defined.
+
+__is_list (_variable-name_)__ returns true if the variable is defined
+and is a list.
 
 Examples
 
-    set a 1 plus 2;
+    set a 1 - 2;
     set b 0;
     set c ${a} && ${b};
     if (${a} || ${b}) {

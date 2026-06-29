@@ -13,12 +13,22 @@ MKC_FILES = mkc_files
 MKC_TMP = mkc_files/tmp
 MAIN_TMP = tmp
 
-CFLAGS = -g -ggdb3 -Og -Wall -Wextra -Wno-unused-parameter \
-	-DMKC_BOOTSTRAP=1 -Iinclude
-LDFLAGS = -g -ggdb3 -Og -Wall -Wextra
-LIBS =
+BASE_OPTFLAGS = -g -O2
+BASE_CFLAGS = -Wall -Wextra -Wno-unused-parameter \
+	-Iinclude
+BASE_LDFLAGS = -Wall -Wextra
+BASE_LIBS = 
 
-SAN_CFLAGS = -g -ggdb3 -Og -Wall -Wextra -DMKC_BOOTSTRAP=1 -Iinclude \
+INIT_CFLAGS = $(BASE_OPTFLAGS) $(BASE_CFLAGS) -DMKC_BOOTSTRAP=1
+INIT_LDFLAGS = $(BASE_LDFLAGS)
+INIT_LIBS =
+
+CONF_CFLAGS = $(BASE_OPTFLAGS) $(BASE_CFLAGS) $$(pkgconf --cflags glib-2.0)
+CONF_LDFLAGS = $(BASE_LDFLAGS)
+CONF_LIBS = $$(pkgconf --libs glib-2.0)
+
+SAN_OPTFLAGS = -g -ggdb3 -Og
+SAN_CFLAGS = $(SAN_OPTFLAGS) $(INIT_CFLAGS) \
     -Wno-unused-parameter \
     -fsanitize=address,undefined \
     -fsanitize-address-use-after-scope \
@@ -26,38 +36,38 @@ SAN_CFLAGS = -g -ggdb3 -Og -Wall -Wextra -DMKC_BOOTSTRAP=1 -Iinclude \
     -fno-omit-frame-pointer \
     -fno-common \
     -fno-inline
-SAN_LDFLAGS = -g \
+SAN_LDFLAGS = $(INIT_LDFLAGS) \
     -fsanitize=address,undefined \
     -fsanitize-address-use-after-scope \
     -fsanitize-recover=address \
     -lrt
-
-CONF_CFLAGS = -g -ggdb3 -Og -Wall -Wextra -Wno-unused-parameter \
-	-Iinclude $$(pkgconf --cflags glib-2.0)
-CONF_LDFLAGS = -g -ggdb3 -Og -Wall -Wextra
-CONF_LIBS = $$(pkgconf --libs glib-2.0)
+SAN_LIBS =
 
 WIN=F
 WINOBJ=mkc_os_win_process.o
 
-# bootstrap sequence
-#   build with -DMKC_BOOTSTRAP=1
-#   run: ./mkc mkc.mkc
-# at this point, the mkc_config.h is built, but regular expressions
-# were not available. build again with mkc_config.h
-#   build
-#   run: ./mkc mkc.mkc
-# now the mkc_config.h file should be correct with all checks properly set
-#   build
 .PHONY: all
 all:
 	@$(MAKE) -f $(MAKEFILE) bootstrap-final
 
+# the first time through, there is no mkc_config.h file
+# MKC_BOOTSTRAP must be defined
 $(BOOTSTRAP_INIT): $(BOOTSTRAP_TMPDIR) $(BOOTSTRAP_MKC_FILES)
 	@echo "make: -- bootstrap mkc (initial)"
-	@$(MAKE) -f $(MAKEFILE) TARGET=all oscheck
+	@$(MAKE) -f $(MAKEFILE) \
+	    CFLAGS="$(INIT_CFLAGS)" \
+	    LDFLAGS="$(INIT_LDFLAGS)" \
+	    LIBS="$(INIT_LIBS)" \
+	    TARGET=all oscheck
 	@touch $(BOOTSTRAP_INIT)
 
+# the second time through, the mkc_config.h file has been 
+# created, but regular expressions were not available, therefore
+# any check that uses regular expressions did not work 
+# (arg-count, shell-extract)
+# re-compile any module that uses mkc_config.h
+# and re-build mkc_config.h
+# the mkc_config.h that is created is correct and complete
 $(BOOTSTRAP_NOREGEX): $(BOOTSTRAP_TMPDIR) $(BOOTSTRAP_MKC_FILES) \
 		$(BOOTSTRAP_INIT)
 	@$(MAKE) -f $(MAKEFILE) bootstrap-noregex
@@ -65,21 +75,29 @@ $(BOOTSTRAP_NOREGEX): $(BOOTSTRAP_TMPDIR) $(BOOTSTRAP_MKC_FILES) \
 .PHONY: bootstrap-noregex
 bootstrap-noregex: mkc_config.h
 	@echo "make: -- bootstrap mkc (noregex)"
-	@$(MAKE) clean
+	@$(MAKE) -f $(MAKEFILE) partialclean
 	@$(MAKE) -f $(MAKEFILE) \
-	   CFLAGS="$(CONF_CFLAGS)" LDFLAGS="$(CONF_LDFLAGS)" \
-	   LIBS="$(CONF_LIBS)" TARGET=all oscheck
-	# make sure mkc_config.h is re-built
+	    CFLAGS="$(CONF_CFLAGS)" \
+	    LDFLAGS="$(CONF_LDFLAGS)" \
+	    LIBS="$(CONF_LIBS)" \
+	    TARGET=all oscheck
+	@# make sure mkc_config.h is re-built
+	@rm -f mkc_config.h
 	@$(MAKE) -f $(MAKEFILE) mkc_config.h
-	@$(MAKE) clean
+	@# prep for the bootstrap-final target
+	@$(MAKE) -f $(MAKEFILE) partialclean
 	@touch $(BOOTSTRAP_NOREGEX)
 
+# now that a correct and complete mkc_config.h file has been
+# created, re-compile once more
 .PHONY: bootstrap-final
 bootstrap-final: $(BOOTSTRAP_TMPDIR) $(BOOTSTRAP_MKC_FILES) \
 		$(BOOTSTRAP_NOREGEX) mkc_config.h
 	@$(MAKE) -f $(MAKEFILE) \
-	   CFLAGS="$(CONF_CFLAGS)" LDFLAGS="$(CONF_LDFLAGS)" \
-	   LIBS="$(CONF_LIBS)" TARGET=all oscheck 
+	    CFLAGS="$(CONF_CFLAGS)" \
+	    LDFLAGS="$(CONF_LDFLAGS)" \
+	    LIBS="$(CONF_LIBS)" \
+	    TARGET=all oscheck
 
 mkc_config.h:
 	@./mkc --no-cache mkc.mkc
@@ -92,6 +110,12 @@ $(BOOTSTRAP_MKC_FILES):
 	@test -d $(MKC_FILES) || mkdir $(MKC_FILES)
 	@test -d $(MKC_TMP) || mkdir $(MKC_TMP)
 	@touch $(BOOTSTRAP_MKC_FILES)
+
+# only clean the object files that are dependent on mkc_config.h
+# do not clean the mkc_files/ directory
+.PHONY: partialclean
+partialclean:
+	@rm -f $(PARTIALOBJ) mkc
 
 .PHONY: sanitize
 sanitize:
@@ -108,7 +132,7 @@ oscheck:
 
 .PHONY: windows-all
 windows-all:
-	@$(MAKE) -f $(MAKEFILE) MKC_MORE_OBJ="$(WINOBJ)" real-all
+	@$(MAKE) -f $(MAKEFILE) MKC_WIN_OBJ="$(WINOBJ)" real-all
 
 .PHONY: other-all
 other-all:
@@ -122,13 +146,30 @@ MKCOBJECTS = mkc_main.o mkc_grammar.o \
 	mkc_process.o mkc_context.o \
         mkc_check.o mkc_asttoken.o \
 	mkc_pvar.o mkc_os_process.o \
-	$(MKC_MORE_OBJ) \
+	$(MKC_WIN_OBJ) \
         mkc_profile.o mkc_env.o mkc_tmutil.o \
         mkc_var.o mkc_log.o \
         mkc_compiler.o mkc_list.o \
 	mkc_regex.o \
 	mkc_dirop.o mkc_osdir.o mkc_fileop.o mkc_path.o mkc_error.o \
 	mkc_string.o 
+
+# the PARTIALOBJ variable will be replaced
+# be sure it is followed by a blank line
+# PARTIALOBJ keep this line
+PARTIALOBJ = \
+	mkc_check.o \
+	mkc_dirop.o \
+	mkc_env.o \
+	mkc_fileop.o \
+	mkc_main.o \
+	mkc_os_process.o \
+	mkc_osdir.o \
+	mkc_path.o \
+	mkc_process.o \
+	mkc_regex.o \
+	mkc_string.o \
+	mkc_tmutil.o
 
 mkc: $(MKCOBJECTS)
 	$(CC) $(LDFLAGS) -o $@ $(MKCOBJECTS) $(LIBS)
@@ -225,9 +266,10 @@ mkc_main.o:  include/mkc_ast.h include/mkc_asttoken.h
 mkc_main.o: include/mkc_error.h include/mkc_nodiscard.h include/mkc_log.h
 mkc_main.o:  include/mkc_option.h include/mkc_var.h
 mkc_main.o: include/mkc_list.h include/mkc_def.h 
-mkc_main.o:  include/mkc_env.h include/mkc_fileop.h
-mkc_main.o: include/mkc_parse.h include/mkc_path.h include/mkc_profile.h
-mkc_main.o: include/mkc_compiler.h include/mkc_string.h include/mkc_tmutil.h
+mkc_main.o:  include/mkc_dirop.h include/mkc_env.h
+mkc_main.o: include/mkc_fileop.h include/mkc_parse.h include/mkc_path.h
+mkc_main.o: include/mkc_profile.h include/mkc_compiler.h include/mkc_string.h
+mkc_main.o: include/mkc_tmutil.h
 mkc_os_process.o:  include/mkc_os_process.h
 mkc_os_process.o: include/mkc_nodiscard.h include/mkc_tmutil.h
 mkc_os_win_process.o:  include/mkc_def.h
@@ -254,7 +296,7 @@ mkc_process.o: include/mkc_nodiscard.h include/mkc_log.h
 mkc_process.o: include/mkc_profile.h include/mkc_list.h include/mkc_option.h
 mkc_process.o: include/mkc_var.h include/mkc_pvar.h include/mkc_context.h
 mkc_process.o: include/mkc_def.h  include/mkc_env.h
-mkc_process.o: include/mkc_fileop.h include/mkc_process.h
+mkc_process.o: include/mkc_fileop.h include/mkc_process.h include/mkc_regex.h
 mkc_process.o: include/mkc_string.h include/mkc_tmutil.h
 mkc_profile.o: include/mkc_compiler.h include/mkc_error.h
 mkc_profile.o: include/mkc_nodiscard.h include/mkc_list.h

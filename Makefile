@@ -2,6 +2,7 @@
 
 MAKEFLAGS += --no-print-directory
 BOOTSTRAPMAKE = bootstrap.mk
+TMPFILE = mkc-tmp.txt
 
 INST_BIN_DIR = $(DESTDIR)$(PREFIX)/bin
 INST_TMPL_DIR = $(DESTDIR)$(PREFIX)/share/mkc/templates
@@ -42,7 +43,7 @@ realclean:
 	@-rm -f mkc_config.h
 	@-rm -f z
 	@-rm -f bootstrap.txt
-	@-rm -rf mkc_files
+	@# the tmp directory contains the bootstrap targets
 	@-rm -rf tmp
 
 .PHONY: clean
@@ -50,6 +51,7 @@ clean:
 	@$(MAKE) tclean
 	@-rm -f *.o
 	@-rm -f mkc
+	@-rm -rf mkc_files
 
 .PHONY: tclean
 tclean:
@@ -69,8 +71,24 @@ depend:
 	cat $(BOOTSTRAPMAKE) | \
 	    sed -e 's,[/]usr[/]include[/][^ ]*,,g' \
 	        -e '/^[a-z][a-z_]*\.o:[ ]*$$/ d' \
-	        > $(BOOTSTRAPMAKE).n
+	    > $(BOOTSTRAPMAKE).n
 	mv $(BOOTSTRAPMAKE).n $(BOOTSTRAPMAKE)
+
+.PHONY: partialobj
+partialobj:
+	echo 'PARTIALOBJ = \\' > $(TMPFILE)
+	grep -l 'include "mkc_config.h' *.c | \
+	    sed -e 's,\.c$$,\.o,' \
+	        -e 's,^,\t,' \
+	        -e '$$ ! s,$$, \\,' \
+	    >> $(TMPFILE)
+	echo '' >> $(TMPFILE)
+	cat $(BOOTSTRAPMAKE) | \
+	    sed -e '/^PARTIALOBJ/,/^$$/ d' | \
+	    sed -e '/^# PARTIALOBJ/ r $(TMPFILE)' \
+	    > $(BOOTSTRAPMAKE).n
+	mv $(BOOTSTRAPMAKE).n $(BOOTSTRAPMAKE)
+	rm -f $(TMPFILE)
 
 .PHONY: test-install
 test-install:

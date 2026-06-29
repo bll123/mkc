@@ -1637,7 +1637,9 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
     case MKC_T_OP_STR_LT:
     case MKC_T_OP_STR_LE:
     case MKC_T_OP_STR_GT:
-    case MKC_T_OP_STR_GE: {
+    case MKC_T_OP_STR_GE:
+    case MKC_T_OP_STR_EQ_REGEX:
+    case MKC_T_OP_STR_NE_REGEX: {
       mkc_value_t   stra, strb;
 
       mkc_ast_process (astmain, astnode->op.vala, ifcond, loopcond, astmain->depth);

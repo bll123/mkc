@@ -80,11 +80,13 @@
 %token T_OP_PLUS              "+"
 %token T_OP_RANGE             ".."
 %token T_OP_STR_EQ            "eq"
+%token T_OP_STR_EQ_REGEX      "eq~"
 %token T_OP_STR_GE            "ge"
 %token T_OP_STR_GT            "gt"
 %token T_OP_STR_LE            "le"
 %token T_OP_STR_LT            "lt"
 %token T_OP_STR_NE            "ne"
+%token T_OP_STR_NE_REGEX      "ne~"
 %token T_RIGHT_BRACE          "}"
 %token T_RIGHT_BRACKET        "]"
 %token T_RIGHT_PAREN          ")"
@@ -186,13 +188,13 @@
 %type <astnode> method input output compiler define_zero context attrpath
 
 // precedence rules: the lowest precedence comes first
+%nonassoc T_OP_RANGE
 %left T_OP_OR
 %left T_OP_AND
-%left T_OP_NUM_EQ T_OP_NUM_NE T_OP_STR_EQ T_OP_STR_NE
+%left T_OP_NUM_EQ T_OP_NUM_NE T_OP_STR_EQ T_OP_STR_NE T_OPT_STR_EQ_REGEX T_OPT_STR_NE_REGEX
 %left T_OP_NUM_LT T_OP_NUM_LE T_OP_NUM_GT T_OP_NUM_GE T_OP_STR_LT T_OP_STR_LE T_OP_STR_GT T_OP_STR_GE
 %left T_OP_MINUS T_OP_PLUS
 %left T_OP_MULTIPLY T_OP_DIVIDE T_OP_MODULO
-%nonassoc T_OP_RANGE
 %precedence UNARY
 %nonassoc T_OP_IS_LIST T_OP_IS_DEFINED
 
@@ -977,6 +979,16 @@ expr[v]:
   | expr[a] T_OP_STR_GE expr[b]
     {
       $v = mkc_ast_mk_op (ast, $a, MKC_T_OP_STR_GE, $b,
+          yylloc.first_line, yylloc.first_column);
+    }
+  | expr[a] T_OP_STR_EQ_REGEX expr[b]
+    {
+      $v = mkc_ast_mk_op (ast, $a, MKC_T_OP_STR_EQ_REGEX, $b,
+          yylloc.first_line, yylloc.first_column);
+    }
+  | expr[a] T_OP_STR_NE_REGEX expr[b]
+    {
+      $v = mkc_ast_mk_op (ast, $a, MKC_T_OP_STR_NE_REGEX, $b,
           yylloc.first_line, yylloc.first_column);
     }
   | expr[a] T_OP_MINUS expr[b]
