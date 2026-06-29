@@ -62,9 +62,8 @@ main (int argc, char *argv [])
   bool            loadcache = true;
   bool            debug = false;
   int             rc = 0;
-  char            logname [MKC_PATH_MAX];
-  char            cachename [MKC_PATH_MAX];
   char            tbuff [MKC_PATH_MAX];
+  char            cachename [MKC_PATH_MAX];
 
   static struct option mkc_cli_opts [] = {
     { "compiler",             required_argument,  NULL, 3   },
@@ -101,6 +100,7 @@ main (int argc, char *argv [])
 
   mkc_path_build (MKC_PATH_CONFIG, tbuff, sizeof (tbuff),
       "defaultprofile.txt", mkcerr);
+fprintf (stderr, "conf: %s\n", tbuff);
   fh = mkc_fopen (tbuff, "r");
   if (fh != NULL) {
     *tbuff = '\0';
@@ -159,11 +159,23 @@ main (int argc, char *argv [])
     }
   }
 
+  /* craete the mkc_files temporary directory tree */
+  mkc_path_build (MKC_PATH_MKC_TMP, tbuff, sizeof (tbuff), NULL, mkcerr);
+fprintf (stderr, "mkc-tmp: %s\n", tbuff);
+  rc = mkc_dirop_make (tbuff);
+  if (rc != 0) {
+// ### fix error code
+    mkc_error_set (mkcerr, MKC_ERR_FILE_NOT_FOUND, errno, strerror (errno));
+    rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
+    return rc;
+  }
+
   log = mkc_log_init (mkcerr);
-  mkc_path_build (MKC_PATH_MKC_FILES, logname, sizeof (logname),
+  mkc_path_build (MKC_PATH_MKC_FILES, tbuff, sizeof (tbuff),
       "log-mkc.txt", mkcerr);
-//  mkc_log_open (log, logname, MKC_LOG_NORMAL);
-  mkc_log_open (log, logname, MKC_LOG_ALL);
+fprintf (stderr, "mkc-log: %s\n", tbuff);
+//  mkc_log_open (log, tbuff, MKC_LOG_NORMAL);
+  mkc_log_open (log, tbuff, MKC_LOG_ALL);
 
   fnidx = optind;
   if (fnidx >= argcopy.nargc) {

@@ -1,6 +1,5 @@
 ^Archive/
 ^bootstrap\.mk\.bak$
-^bootstrap\.txt$
 ^dev
 ^mkc$
 \.o$

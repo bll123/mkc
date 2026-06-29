@@ -5,6 +5,14 @@
 MAKEFLAGS += --no-print-directory
 MAKEFILE = bootstrap.mk
 
+BOOTSTRAP_INIT = tmp/bootstrap-init.txt
+BOOTSTRAP_NOREGEX = tmp/bootstrap-noregex.txt
+BOOTSTRAP_TMPDIR = tmp/bootstrap-tmpdir.txt
+BOOTSTRAP_MKC_FILES = tmp/bootstrap-mkcfiles.txt
+MKC_FILES = mkc_files
+MKC_TMP = mkc_files/tmp
+MAIN_TMP = tmp
+
 CFLAGS = -g -ggdb3 -Og -Wall -Wextra -Wno-unused-parameter \
 	-DMKC_BOOTSTRAP=1 -Iinclude
 LDFLAGS = -g -ggdb3 -Og -Wall -Wextra
@@ -32,32 +40,65 @@ CONF_LIBS = $$(pkgconf --libs glib-2.0)
 WIN=F
 WINOBJ=mkc_os_win_process.o
 
+# bootstrap sequence
+#   build with -DMKC_BOOTSTRAP=1
+#   run: ./mkc mkc.mkc
+# at this point, the mkc_config.h is built, but regular expressions
+# were not available. build again with mkc_config.h
+#   build
+#   run: ./mkc mkc.mkc
+# now the mkc_config.h file should be correct with all checks properly set
+#   build
 .PHONY: all
 all:
-	@if [ -f mkc_config.h ]; then \
-	  echo "-- bootstrap mkc (mkc_config.h)"; \
-	  if [ -f bootstrap.txt ]; then \
-	    $(MAKE) clean; \
-	    rm -f bootstrap.txt; \
-	  fi; \
-	  $(MAKE) -f $(MAKEFILE) \
-	      CFLAGS="$(CONF_CFLAGS)" LDFLAGS="$(CONF_LDFLAGS)" \
-	      LIBS="$(CONF_LIBS)" TARGET=$@ oscheck; \
-	else \
-	  echo "-- bootstrap mkc"; \
-	  $(MAKE) -f $(MAKEFILE) TARGET=$@ oscheck; \
-	  rc=$$?; \
-          if [ $$rc -ne 0 ]; then \
-	    exit $$rc; \
-	  fi; \
-	  ./mkc --no-cache mkc.mkc; \
-	  rc=$$?; \
-          if [ $$rc -ne 0 ]; then \
-	    exit $$rc; \
-	  fi; \
-	  touch bootstrap.txt; \
-	  $(MAKE) -f $(MAKEFILE) all; \
+	@$(MAKE) -f $(MAKEFILE) bootstrap-final
+
+$(BOOTSTRAP_INIT): $(BOOTSTRAP_TMPDIR) $(BOOTSTRAP_MKC_FILES)
+	@echo "make: -- bootstrap mkc (initial)"
+	@$(MAKE) -f $(MAKEFILE) TARGET=all oscheck
+	@touch $(BOOTSTRAP_INIT)
+
+$(BOOTSTRAP_NOREGEX): $(BOOTSTRAP_TMPDIR) $(BOOTSTRAP_MKC_FILES) \
+		$(BOOTSTRAP_INIT)
+	@$(MAKE) -f $(MAKEFILE) bootstrap-noregex
+
+.PHONY: bootstrap-noregex
+bootstrap-noregex: mkc_config.h
+	@echo "make: -- bootstrap mkc (noregex)"
+	@$(MAKE) clean
+	@mv -f $(MKC_FILES)/log-mkc.txt $(MKC_FILES)/log-init.txt
+	@mv -f $(MKC_FILES)/cache.mkc $(MKC_FILES)/cache-init.mkc
+	@$(MAKE) -f $(MAKEFILE) \
+	   CFLAGS="$(CONF_CFLAGS)" LDFLAGS="$(CONF_LDFLAGS)" \
+	   LIBS="$(CONF_LIBS)" TARGET=all oscheck
+	@if [ ! -f $(MKC_TMP)/mkc_config-init.h ]; then \
+	  mv -f mkc_config.h $(MKC_TMP)/mkc_config-init.h ; \
 	fi
+	# make sure mkc_config.h is re-built
+	@$(MAKE) -f $(MAKEFILE) mkc_config.h
+	@$(MAKE) clean
+	@mv -f $(MKC_FILES)/log-mkc.txt $(MKC_FILES)/log-noregex.txt
+	@mv -f $(MKC_FILES)/cache.mkc $(MKC_FILES)/cache-noregex.mkc
+	@touch $(BOOTSTRAP_NOREGEX)
+
+.PHONY: bootstrap-final
+bootstrap-final: $(BOOTSTRAP_TMPDIR) $(BOOTSTRAP_MKC_FILES) \
+		$(BOOTSTRAP_NOREGEX) mkc_config.h
+	@$(MAKE) -f $(MAKEFILE) \
+	   CFLAGS="$(CONF_CFLAGS)" LDFLAGS="$(CONF_LDFLAGS)" \
+	   LIBS="$(CONF_LIBS)" TARGET=all oscheck 
+
+mkc_config.h:
+	@./mkc --no-cache mkc.mkc
+
+$(BOOTSTRAP_TMPDIR): 
+	@test -d $(MAIN_TMP) || mkdir $(MAIN_TMP)
+	@touch $(BOOTSTRAP_TMPDIR)
+
+$(BOOTSTRAP_MKC_FILES): 
+	@test -d $(MKC_FILES) || mkdir $(MKC_FILES)
+	@test -d $(MKC_TMP) || mkdir $(MKC_TMP)
+	@touch $(BOOTSTRAP_MKC_FILES)
 
 .PHONY: sanitize
 sanitize:

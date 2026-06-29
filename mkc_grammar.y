@@ -92,6 +92,7 @@
 %token T_VAL_FALSE            "false"
 %token <sval> T_VAL_INTEGER   "[0-9]+"
 %token T_VAL_TRUE             "true"
+%token T_VAL_BOOTSTRAP        "bootstrap"
 
 /* a T_VARIABLE is a ${...} complex */
 %token <sval> T_ID_PATH_NAME
@@ -1133,6 +1134,16 @@ integer[v]:
     {
       $v = mkc_ast_mk_value (ast, MKC_T_VAL_FALSE, NULL,
           yylloc.first_line, yylloc.first_column);
+    }
+  | T_VAL_BOOTSTRAP
+    {
+#if MKC_BOOTSTRAP
+      $v = mkc_ast_mk_value (ast, MKC_T_VAL_TRUE, NULL,
+          yylloc.first_line, yylloc.first_column);
+#else
+      $v = mkc_ast_mk_value (ast, MKC_T_VAL_FALSE, NULL,
+          yylloc.first_line, yylloc.first_column);
+#endif
     }
   ;
 

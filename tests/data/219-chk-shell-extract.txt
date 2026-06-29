@@ -1,7 +1,7 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
-a="abc123"
-b="def\"456"
-c=ghi
-d=${a}
-e="${a}"
+aaa="abc123"
+bbbb="def\"456"
+cc=ghi
+ddddd=${aaa}
+eee="${aaa}"

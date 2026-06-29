@@ -1,0 +1,47 @@
+# Copyright 2026 Brad Lanam Pleasant Hill CA
+
+set a [ 'a' 'b' 'c' 'd' ];
+set b 12;
+set c 'abc123';
+
+if (is_defined (a)) {
+  print '  ok a';
+} else {
+  print '  fail a';
+}
+if (is_defined (b)) {
+  print '  ok b';
+} else {
+  print '  fail b';
+}
+if (is_defined (c)) {
+  print '  ok c';
+} else {
+  print '  fail c';
+}
+if (is_defined (d)) {
+  print '  fail d';
+} else {
+  print '  ok d';
+}
+
+if (is_list (a)) {
+  print '  ok a';
+} else {
+  print '  fail a';
+}
+if (is_list (b)) {
+  print '  fail b';
+} else {
+  print '  ok b';
+}
+if (is_list (c)) {
+  print '  fail c';
+} else {
+  print '  ok c';
+}
+if (is_list (d)) {
+  print '  fail d';
+} else {
+  print '  ok d';
+}

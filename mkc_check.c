@@ -360,10 +360,12 @@ mkc_chk_arg_count (mkc_check_t *check, mkc_compiler_t compiler,
   char            *rbuff;
   size_t          rsz = MKC_LARGE_BUFF_SZ;
   const char      *flags [2];
-  char            pattern [MKC_VNAME_MAX];
   int             fcount = 0;
+#if _have_regex
+  char            pattern [MKC_VNAME_MAX];
   char            **match;
   int             matchcount = 0;
+#endif
 
   mkc_log (check->log, MKC_LOG_CHECK, "== chk: arg_count: %s\n", funcname);
   opidx = mkc_profile_get_active (check->profiles);

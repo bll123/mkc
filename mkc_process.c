@@ -226,7 +226,9 @@ mkc_process_free (mkc_process_t *process)
   datafree (process->projectname);
   mkc_process_attr_clear (process);
   if (process->rxshellvar != NULL) {
+#if _have_regex
     mkc_regex_free (process->rxshellvar);
+#endif
   }
   free (process);
 }
@@ -1356,9 +1358,10 @@ mkc_process_chk_struct_member (mkc_process_t *process,
 void
 mkc_process_chk_shell_extract (mkc_process_t *process, mkc_value_t *valpath)
 {
-  char        *path;
+#if _have_regex
   FILE        *fh;
   char        buff [MKC_VNAME_MAX];
+  char        *path;
   char        varname [MKC_VNAME_MAX];
   char        *varvalue;
   char        *tvalue;
@@ -1382,7 +1385,7 @@ mkc_process_chk_shell_extract (mkc_process_t *process, mkc_value_t *valpath)
 
   if (process->rxshellvar == NULL) {
     process->rxshellvar = mkc_regex_init (
-      "^[ \t]*([[:alnum:]_])+=((\"(([^\"\\\\]|\\\\.)*)\")|([^ \t\r\n]*))$", process->mkcerr);
+      "^[ \t]*([[:alnum:]_]+)=((\"(([^\"\\\\]|\\\\.)*)\")|([^ \t\r\n]*))$", process->mkcerr);
     /*  0: entire string */
     /*  1: var-name */
     /*  2: "..." or ... */
@@ -1421,8 +1424,13 @@ mkc_process_chk_shell_extract (mkc_process_t *process, mkc_value_t *valpath)
     *varname = '\0';
     *varvalue = '\0';
 
+    mkc_log (process->log, MKC_LOG_CHECK, "  shell: matchcount: %d\n", matchcount);
     if (matchcount != 7 && matchcount != 8) {
       continue;
+    }
+
+    for (int i = 0; i < matchcount; ++i) {
+      mkc_log (process->log, MKC_LOG_CHECK, "  shell: match: %d %s\n", i, match [i]);
     }
 
     stpecpy (varname, varname + sizeof (varname), match [1]);
@@ -1453,6 +1461,7 @@ mkc_process_chk_shell_extract (mkc_process_t *process, mkc_value_t *valpath)
   fclose (fh);
   free (path);
   free (varvalue);
+#endif
 
   mkc_process_attr_clear (process);
   return;

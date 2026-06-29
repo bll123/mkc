@@ -1,4 +1,13 @@
 
+if (! bootstrap) {
+  check_shell_extract VERSION.txt;
+  mark VERSION enable-output;
+  mark BUILD enable-output;
+  mark BUILDDATE enable-output;
+  mark RELEASELEVEL enable-output;
+  mark DEVELOPMENT enable-output;
+}
+
 project {
   name mkc;
   compiler c;

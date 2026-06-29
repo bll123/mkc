@@ -2,27 +2,27 @@
 
 check_shell_extract 'tests/data/219-chk-shell-extract.txt';
 
-if (${a} eq "abc123") {
+if (${aaa} eq "abc123") {
   print '  ok a';
 } else {
   print '  fail a';
 }
-if (${b} eq "def\"456") {
+if (${bbbb} eq "def\"456") {
   print '  ok b';
 } else {
   print '  fail b';
 }
-if (${c} eq "ghi") {
+if (${cc} eq "ghi") {
   print '  ok c';
 } else {
   print '  fail c';
 }
-if (${d} eq "abc123") {
+if (${ddddd} eq "abc123") {
   print '  ok d';
 } else {
   print '  fail d';
 }
-if (${e} eq "abc123") {
+if (${eee} eq "abc123") {
   print '  ok e';
 } else {
   print '  fail e';
