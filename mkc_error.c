@@ -42,6 +42,7 @@ static char const * const mkcerrormsg [] = {
   [MKC_ERR_PROC_NO_METHOD] = "no method",
   [MKC_ERR_PROC_NO_NAME] = "no name",
   [MKC_ERR_PROC_NO_OUTPUT] = "no output",
+  [MKC_ERR_REGEX_MATCH_FAIL] = "regex match failed",
   [MKC_ERR_REGEX_PATTERN_FAIL] = "regex pattern failed to compile",
   [MKC_ERR_SEARCH_UNSORTED_LIST] = "searching an unsorted list",
   [MKC_ERR_STMT_NOT_ALLOWED] = "statement not allowed",

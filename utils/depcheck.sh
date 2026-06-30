@@ -63,7 +63,7 @@ fi
 
 echo "## checking include file compilation"
 test -f $INCTOUT && rm -f $INCTOUT
-for fn in *.h; do
+for fn in include/*.h; do
   bfn=$(echo $fn | sed 's,include/,,')
   cat > $INCTC << _HERE_
 
@@ -75,7 +75,7 @@ main (int argc, char *argv [])
   return 0;
 }
 _HERE_
-  cc -c -I build -I include $INCTC >> $INCTOUT 2>&1
+  cc -c -I . -I include $INCTC >> $INCTOUT 2>&1
   rc=$?
   if [[ $rc -ne 0 ]]; then
     echo "compile of $bfn failed"
@@ -121,6 +121,7 @@ echo "## checking object file hierarchy"
 #
 tdir=.
 
+set -x
 OBJEXT=.o
 LORD=./utils/lorder
 case ${systype} in
@@ -129,11 +130,12 @@ case ${systype} in
     ;;
   MINGW*)
     # cygwin cmake uses .o
-    OBJEXT=.obj
+    # OBJEXT=.obj
     ;;
 esac
 
 ${LORD} $(find ${tdir} -name '*'${OBJEXT} ) > $TOIN
+set +x
 tsort < $TOIN > $TOSORT
 rc=$?
 if [[ $rc -ne 0 ]]; then

@@ -22,6 +22,9 @@ project {
 check_package 'glib-2.0' {
   name glib;
 }
+check_package 'libpcre2-posix' {
+  name pcre;
+}
 
 check_function fork {
   header unistd.h;
@@ -86,6 +89,9 @@ check_define S_IRWXU {
 # regular expressions are available.
 set _have_regex false;
 if (${_package_glib}) {
+  set _have_regex true;
+}
+if (${_package_pcre}) {
   set _have_regex true;
 }
 mark _have_regex enable-output;

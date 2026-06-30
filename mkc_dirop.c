@@ -136,11 +136,13 @@ mkc_dirop_make_recursive (const char *dirname, mkc_error_t *mkcerr)
 
   stpecpy (tbuff, tbuff + MKC_PATH_MAX, dirname);
   mkc_trim_char (tbuff, '/');
+fprintf (stderr, "mk-r-a: %s\n", tbuff);
 
   for (p = tbuff + 1; *p; p++) {
     if (*p == '/') {
       *p = '\0';
       rc = mkc_dirop_makedir (tbuff, mkcerr);
+fprintf (stderr, "mk-r-b: %d %s\n", rc, tbuff);
       if (rc != 0) {
         break;
       }
@@ -148,6 +150,7 @@ mkc_dirop_make_recursive (const char *dirname, mkc_error_t *mkcerr)
     }
   }
   if (rc == 0) {
+fprintf (stderr, "mk-r-c: %s\n", tbuff);
     rc = mkc_dirop_makedir (tbuff, mkcerr);
   }
   return rc;
@@ -171,6 +174,7 @@ mkc_dirop_makedir (const char *dirname, mkc_error_t *mkcerr)
   free (tdirname);
 #endif
 #if _arg_count_mkdir == 2 && _define_S_IRWXU
+fprintf (stderr, "mkdir %s\n", dirname);
   rc = mkdir (dirname, S_IRWXU);
 #endif
   if (rc != 0) {

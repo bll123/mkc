@@ -24,6 +24,10 @@ check_arg_count chk_e {
   compiler_flags '-Itests/data';
   header 218-chk-arg-count.h;
 }
+check_arg_count chk_f {
+  compiler_flags '-Itests/data';
+  header 218-chk-arg-count.h;
+}
 
 # some real-world routines
 
@@ -53,7 +57,7 @@ if (${_arg_count_chk_c} == 3) {
 } else {
   print '  fail c';
 }
-if (${_arg_count_chk_d} == 3) {
+if (${_arg_count_chk_d} == 4) {
   print '  ok d';
 } else {
   print '  fail d';
@@ -62,6 +66,11 @@ if (${_arg_count_chk_e} == 3) {
   print '  ok e';
 } else {
   print '  fail e';
+}
+if (${_arg_count_chk_f} == 3) {
+  print '  ok f';
+} else {
+  print '  fail f';
 }
 
 if (${_arg_count_stat} == 2) {

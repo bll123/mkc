@@ -1472,17 +1472,16 @@ mkc_process_chk_shell_extract (mkc_process_t *process, mkc_value_t *valpath)
     mkc_strtrim (buff, sizeof (buff));
     mkc_log (process->log, MKC_LOG_CHECK, "  shell: buff: %s\n", buff);
 
-    match = mkc_regex_get (process->rxshellvar, buff);
-    matchcount = 0;
-    while (match [matchcount] != NULL) {
-      ++matchcount;
+    match = mkc_regex_get (process->rxshellvar, buff, &matchcount);
+    if (match == NULL) {
+      continue;
     }
 
     *varname = '\0';
     *varvalue = '\0';
 
     mkc_log (process->log, MKC_LOG_CHECK, "  shell: matchcount: %d\n", matchcount);
-    if (matchcount != 7 && matchcount != 8) {
+    if (matchcount != 6 && matchcount != 7) {
       continue;
     }
 
@@ -2197,7 +2196,7 @@ mkc_process_configure_auto (mkc_process_t *process, int defzero)
 
   len = strlen (projnm);
   for (size_t i = 0; i < len; ++i) {
-    if (! isalnum (projnm [i])) {
+    if (! isalnum ((unsigned char) projnm [i])) {
       projnm [i] = '_';
     } else {
       projnm [i] = toupper (projnm [i]);

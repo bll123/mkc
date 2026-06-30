@@ -101,6 +101,7 @@ main (int argc, char *argv [])
   if (fh != NULL) {
     *tbuff = '\0';
     fgets (tbuff, sizeof (tbuff), fh);
+    datafree (mkcoptions.dfltprofile);
     mkcoptions.dfltprofile = strdup (tbuff);
     fclose (fh);
   }
@@ -110,6 +111,7 @@ main (int argc, char *argv [])
     switch (c) {
       case 'p': {
         if (optarg != NULL) {
+          datafree (mkcoptions.dfltprofile);
           mkcoptions.dfltprofile = strdup (argcopy.utf8argv [optind - 1]);
         }
         break;
@@ -145,6 +147,7 @@ main (int argc, char *argv [])
         if (optarg != NULL) {
           rc = mkc_main_set_dflt_profile (argcopy.utf8argv [optind - 1], mkcerr);
           rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
+          datafree (mkcoptions.dfltprofile);
           exit (rc);
         }
         break;
@@ -157,9 +160,11 @@ main (int argc, char *argv [])
 
   /* create the mkc_files temporary directory tree */
   mkc_path_build (MKC_PATH_MKC_TMP, tbuff, sizeof (tbuff), NULL, mkcerr);
+fprintf (stderr, "main: %s\n", tbuff);
   rc = mkc_dirop_make (tbuff, mkcerr);
   if (rc != 0) {
     rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
+    datafree (mkcoptions.dfltprofile);
     return rc;
   }
 
@@ -173,6 +178,7 @@ main (int argc, char *argv [])
   if (fnidx >= argcopy.nargc) {
     fprintf (stderr, "no file specified.\n");
     rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
+    datafree (mkcoptions.dfltprofile);
     return rc;
   }
 
@@ -181,6 +187,7 @@ main (int argc, char *argv [])
     if (fh == NULL) {
       mkc_error_set (mkcerr, MKC_ERR_FILE_NOT_FOUND, errno, argcopy.utf8argv [fnidx]);
       rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
+      datafree (mkcoptions.dfltprofile);
       return rc;
     }
   }
@@ -188,6 +195,7 @@ main (int argc, char *argv [])
   astmain = mkc_ast_init (log, &mkcoptions, mkcerr);
   if (mkc_error_chk_err (mkcerr)) {
     rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
+    datafree (mkcoptions.dfltprofile);
     return rc;
   }
 
@@ -217,6 +225,7 @@ main (int argc, char *argv [])
   mkc_parse_start (parse, fh);
   if (mkc_error_chk_err (mkcerr)) {
     rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
+    datafree (mkcoptions.dfltprofile);
     return rc;
   }
 
@@ -227,6 +236,7 @@ main (int argc, char *argv [])
     if (cfh == NULL) {
       mkc_error_set (mkcerr, MKC_ERR_FILE_NOT_FOUND, errno, cachename);
       rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
+      datafree (mkcoptions.dfltprofile);
       return rc;
     }
 
@@ -242,6 +252,7 @@ main (int argc, char *argv [])
 
   if (mkc_error_chk_err (mkcerr)) {
     rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
+    datafree (mkcoptions.dfltprofile);
     return rc;
   }
 

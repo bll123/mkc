@@ -82,23 +82,56 @@ mkc_regex_escape (const char *str)
 bool
 mkc_regex_match (mkc_regex_t *rx, const char *str)
 {
+  int         rc;
+
   if (rx == NULL || str == NULL) {
     return NULL;
   }
-  return g_regex_match (rx->regex, str, 0, NULL);
+
+  rc = g_regex_match (rx->regex, str, 0, NULL);
+  return rc;
 }
 
+int
+mkc_regex_match_count (mkc_regex_t *rx, const char *str)
+{
+  int           mcount = 0;
+  GMatchInfo    *match_info = NULL;
+
+  g_regex_match (rx->regex, str, 0, &match_info);
+  while (g_match_info_matches (match_info)) {
+    mcount += 1;
+    g_match_info_next (match_info, NULL);
+  }
+  g_match_info_free (match_info);
+
+  return mcount;
+}
 
 char **
-mkc_regex_get (mkc_regex_t *rx, const char *str)
+mkc_regex_get (mkc_regex_t *rx, const char *str, int *mcount)
 {
-  char **val;
+  char        **val;
+  GMatchInfo  * match_info = NULL;
 
-  if (rx == NULL || str == NULL) {
+  if (rx == NULL) {
+    return NULL;
+  }
+  if (str == NULL || mcount == NULL) {
+    mkc_error_set (rx->mkcerr, MKC_ERR_INVALID_ARGUMENT, 0, NULL);
     return NULL;
   }
 
-  val = g_regex_split (rx->regex, str, 0);
+  *mcount = 0;
+
+  g_regex_match (rx->regex, str, 0, &match_info);
+  val = g_match_info_fetch_all (match_info);
+  if (val != NULL) {
+    while (val [*mcount] != NULL) {
+      *mcount += 1;
+    }
+  }
+
   return val;
 }
 

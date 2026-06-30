@@ -267,18 +267,24 @@ int
 mkc_chk_system_type (mkc_check_t *check, mkc_compiler_t compiler)
 {
   int         rc;
-  char        inc [MKC_PATH_MAX];
+  char        *inc;
   const char  *flags [3];
   int         fcount = 0;
 
   mkc_log (check->log, MKC_LOG_CHECK, "  == chk: system-type\n");
 
-  mkc_path_build (MKC_PATH_MKC_INCLUDE, inc, sizeof (inc), NULL, check->mkcerr);
+  inc = malloc (MKC_PATH_MAX);
+  if (inc == NULL) {
+    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return MKC_SYS_UNKNOWN;
+  }
+  mkc_path_build (MKC_PATH_MKC_INCLUDE, inc, MKC_PATH_MAX, NULL, check->mkcerr);
   flags [fcount++] = "-I";
   flags [fcount++] = inc;
   flags [fcount++] = NULL;
   rc = mkc_compile_run (check, compiler, "int-system", flags, NULL, 0);
   mkc_chk_reset (check);
+  free (inc);
   return rc;
 }
 
@@ -286,17 +292,23 @@ int
 mkc_chk_system_id (mkc_check_t *check, mkc_compiler_t compiler)
 {
   int         rc;
-  char        inc [MKC_PATH_MAX];
+  char        *inc;
   const char  *flags [3];
   int         fcount = 0;
 
+  inc = malloc (MKC_PATH_MAX);
+  if (inc == NULL) {
+    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return MKC_SYS_ID_NOTSET;
+  }
   mkc_log (check->log, MKC_LOG_CHECK, "  == chk: system-id\n");
-  mkc_path_build (MKC_PATH_MKC_INCLUDE, inc, sizeof (inc), NULL, check->mkcerr);
+  mkc_path_build (MKC_PATH_MKC_INCLUDE, inc, MKC_PATH_MAX, NULL, check->mkcerr);
   flags [fcount++] = "-I";
   flags [fcount++] = inc;
   flags [fcount++] = NULL;
   rc = mkc_compile_run (check, compiler, "int-sysid", flags, NULL, 0);
   mkc_chk_reset (check);
+  free (inc);
   return rc;
 }
 
@@ -319,17 +331,23 @@ int
 mkc_chk_library_location (mkc_check_t *check, mkc_compiler_t compiler)
 {
   int         rc;
-  char        inc [MKC_PATH_MAX];
+  char        *inc;
   const char  *flags [3];
   int         fcount = 0;
 
+  inc = malloc (MKC_PATH_MAX);
+  if (inc == NULL) {
+    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return 0;
+  }
   mkc_log (check->log, MKC_LOG_CHECK, "  == chk: lib-location\n");
-  mkc_path_build (MKC_PATH_MKC_INCLUDE, inc, sizeof (inc), NULL, check->mkcerr);
+  mkc_path_build (MKC_PATH_MKC_INCLUDE, inc, MKC_PATH_MAX, NULL, check->mkcerr);
   flags [fcount++] = "-I";
   flags [fcount++] = inc;
   flags [fcount++] = NULL;
   rc = mkc_compile_run (check, compiler, "int-libloc", flags, NULL, 0);
   mkc_chk_reset (check);
+  free (inc);
   return rc;
 }
 
@@ -337,17 +355,23 @@ int
 mkc_chk_compiler_id (mkc_check_t *check, mkc_compiler_t compiler)
 {
   int         rc;
-  char        inc [MKC_PATH_MAX];
+  char        *inc;
   const char  *flags [3];
   int         fcount = 0;
 
+  inc = malloc (MKC_PATH_MAX);
+  if (inc == NULL) {
+    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return 0;
+  }
   mkc_log (check->log, MKC_LOG_CHECK, "  == chk: compiler-id\n");
-  mkc_path_build (MKC_PATH_MKC_INCLUDE, inc, sizeof (inc), NULL, check->mkcerr);
+  mkc_path_build (MKC_PATH_MKC_INCLUDE, inc, MKC_PATH_MAX, NULL, check->mkcerr);
   flags [fcount++] = "-I";
   flags [fcount++] = inc;
   flags [fcount++] = NULL;
   rc = mkc_compile_run (check, compiler, "int-compid", flags, NULL, 0);
   mkc_chk_reset (check);
+  free (inc);
   return rc;
 }
 
@@ -404,33 +428,18 @@ mkc_chk_arg_count (mkc_check_t *check, mkc_compiler_t compiler,
     return MKC_ERR_FAILURE;
   }
 
-  match = mkc_regex_get (check->rxargcount, rbuff);
-  /* match[1] will contain the string if matched */
-  matchcount = 0;
-  while (match [matchcount] != NULL) {
-    ++matchcount;
-  }
+  match = mkc_regex_get (check->rxargcount, rbuff, &matchcount);
   mkc_log (check->log, MKC_LOG_CHECK, "  arg-count: matches: %d\n", matchcount);
-  if (matchcount == 3) {
+  if (matchcount == 2) {
     const char  *tmatch;
-    char        **cmatch;
-    int         ccount = 0;
 
     /* now count the number of commas */
     tmatch = match [1];
     mkc_log (check->log, MKC_LOG_CHECK, "  arg-count: match: %s\n", tmatch);
-    cmatch = mkc_regex_get (check->rxcomma, tmatch);
-    matchcount = 0;
-    while (cmatch [matchcount] != NULL) {
-      if (strcmp (cmatch [matchcount], ",") == 0) {
-        ++ccount;
-      }
-      ++matchcount;
-    }
+    matchcount = mkc_regex_match_count (check->rxcomma, tmatch);
     mkc_log (check->log, MKC_LOG_CHECK, "  arg-count: commas: %d\n", matchcount);
 
-    rc = ccount + 1;
-    mkc_regex_get_free (cmatch);
+    rc = matchcount + 1;
   }
 
   mkc_regex_get_free (match);
@@ -550,12 +559,18 @@ mkc_chk_link_flag (mkc_check_t *check,
     const char *flag)
 {
   int               rc;
-  char              rbuff [400];
+  char              *rbuff;
+
+  rbuff = malloc (MKC_SMALL_BUFF_SZ);
+  if (rbuff == NULL) {
+    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return MKC_ERR_FAILURE;
+  }
 
   mkc_chk_append_link_flag (check, flag);
   mkc_log (check->log, MKC_LOG_CHECK, "== chk: link-flag: %s\n", flag);
   rc = mkc_compile_link (check, compiler,
-      "int-main", NULL, rbuff, sizeof (rbuff));
+      "int-main", NULL, rbuff, MKC_PATH_MAX);
   if (rc == 0) {
     /* clang does not return an error code on a unknown warning */
     if (strstr (rbuff, "warning") != NULL) {
@@ -563,6 +578,7 @@ mkc_chk_link_flag (mkc_check_t *check,
     }
   }
   mkc_chk_reset (check);
+  free (rbuff);
   return rc;
 }
 
@@ -662,29 +678,51 @@ mkc_compile_only (mkc_check_t *check, mkc_compiler_t compiler,
     const char *fname, const char *flags [], char *rbuff, size_t rsz)
 {
   int         rc;
-  char        tbuff [MKC_PATH_MAX];
+  char        *tbuff;
   size_t      retsz;
   const char  *sfx = NULL;
-  char        compstr [MKC_PATH_MAX];
+  char        *compstr;
   bool        rallocated = false;
-  char        outfile [MKC_PATH_MAX];
+  char        *outfile;
   bool        cpreprocess = false;
+
+  tbuff = malloc (MKC_PATH_MAX);
+  if (tbuff == NULL) {
+    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return MKC_ERR_FAILURE;
+  }
+  compstr = malloc (MKC_PATH_MAX);
+  if (compstr == NULL) {
+    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    free (tbuff);
+    return MKC_ERR_FAILURE;
+  }
+  outfile = malloc (MKC_PATH_MAX);
+  if (outfile == NULL) {
+    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    free (tbuff);
+    free (compstr);
+    return MKC_ERR_FAILURE;
+  }
 
   if (rbuff == NULL) {
     rsz = MKC_SMALL_BUFF_SZ;
     rbuff = malloc (rsz);
     if (rbuff == NULL) {
       mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+      free (tbuff);
+      free (compstr);
+      free (outfile);
       return MKC_ERR_FAILURE;
     }
     *rbuff = '\0';
     rallocated = true;
   }
 
-  mkc_check_get_compstr (check, compiler, compstr, sizeof (compstr));
+  mkc_check_get_compstr (check, compiler, compstr, MKC_PATH_MAX);
   sfx = mkc_compiler_get_suffix (compiler);
 // ### will need to be fixed, the original suffix may change
-  mkc_check_file_sub_copy (check, tbuff, sizeof (tbuff), fname, ".c", sfx);
+  mkc_check_file_sub_copy (check, tbuff, MKC_PATH_MAX, fname, ".c", sfx);
 
   check->targc = 0;
   mkc_check_append_arg (check, compstr);
@@ -705,12 +743,15 @@ mkc_compile_only (mkc_check_t *check, mkc_compiler_t compiler,
   if (! cpreprocess) {
     mkc_check_append_arg (check, "-c");
     mkc_check_append_arg (check, "-o");
-    mkc_path_build (MKC_PATH_MKC_TMP, outfile, sizeof (outfile), "mkctest.o", check->mkcerr);
+    mkc_path_build (MKC_PATH_MKC_TMP, outfile, MKC_PATH_MAX, "mkctest.o", check->mkcerr);
     mkc_check_append_arg (check, outfile);
   }
   mkc_check_append_arg (check, tbuff);
   mkc_check_append_arg (check, NULL);
   if (mkc_error_chk_err (check->mkcerr)) {
+    free (tbuff);
+    free (compstr);
+    free (outfile);
     if (rallocated) {
       free (rbuff);
     }
@@ -738,6 +779,9 @@ mkc_compile_only (mkc_check_t *check, mkc_compiler_t compiler,
     rc = - rc;
   }
 
+  free (tbuff);
+  free (compstr);
+  free (outfile);
   if (rallocated) {
     free (rbuff);
   }
@@ -752,9 +796,10 @@ mkc_compile_link (mkc_check_t *check, mkc_compiler_t compiler,
   int         rc;
   size_t      retsz;
   bool        rallocated = false;
-  char        compstr [MKC_PATH_MAX];
-  char        outfile [MKC_PATH_MAX];
-  char        objfile [MKC_PATH_MAX];
+  char        *compstr;
+  char        *outfile;
+  char        *objfile;
+
 
   if (rbuff == NULL) {
     rsz = MKC_SMALL_BUFF_SZ;
@@ -778,14 +823,33 @@ mkc_compile_link (mkc_check_t *check, mkc_compiler_t compiler,
     return rc;
   }
 
-  mkc_check_get_compstr (check, compiler, compstr, sizeof (compstr));
+  compstr = malloc (MKC_PATH_MAX);
+  if (compstr == NULL) {
+    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return MKC_ERR_FAILURE;
+  }
+  objfile = malloc (MKC_PATH_MAX);
+  if (objfile == NULL) {
+    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    free (compstr);
+    return MKC_ERR_FAILURE;
+  }
+  outfile = malloc (MKC_PATH_MAX);
+  if (outfile == NULL) {
+    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    free (objfile);
+    free (compstr);
+    return MKC_ERR_FAILURE;
+  }
+
+  mkc_check_get_compstr (check, compiler, compstr, MKC_PATH_MAX);
 
   check->targc = 0;
   mkc_check_append_arg (check, compstr);
   mkc_check_append_arg (check, "-o");
-  mkc_path_build (MKC_PATH_MKC_TMP, outfile, sizeof (outfile), "mkctest.exe", check->mkcerr);
+  mkc_path_build (MKC_PATH_MKC_TMP, outfile, MKC_PATH_MAX, "mkctest.exe", check->mkcerr);
   mkc_check_append_arg (check, outfile);
-  mkc_path_build (MKC_PATH_MKC_TMP, objfile, sizeof (objfile), "mkctest.o", check->mkcerr);
+  mkc_path_build (MKC_PATH_MKC_TMP, objfile, MKC_PATH_MAX, "mkctest.o", check->mkcerr);
   mkc_check_append_arg (check, objfile);
   for (int i = 0; i < check->lfcount; ++i) {
     mkc_check_append_arg (check, check->lf [i]);
@@ -815,6 +879,9 @@ mkc_compile_link (mkc_check_t *check, mkc_compiler_t compiler,
     rc = - rc;
   }
 
+  free (objfile);
+  free (outfile);
+  free (compstr);
   if (rallocated) {
     free (rbuff);
   }
@@ -831,7 +898,7 @@ mkc_compile_run (mkc_check_t *check,
   int         rc;
   bool        rallocated = false;
   size_t      retsz;
-  char        exefile [MKC_PATH_MAX];
+  char        *exefile;
 
   rc = mkc_compile_link (check, compiler, fname, flags, NULL, 0);
 
@@ -839,11 +906,18 @@ mkc_compile_run (mkc_check_t *check,
     return rc;
   }
 
+  exefile = malloc (MKC_PATH_MAX);
+  if (exefile == NULL) {
+    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return MKC_ERR_FAILURE;
+  }
+
   check->targc = 0;
-  mkc_path_build (MKC_PATH_MKC_TMP, exefile, sizeof (exefile), "mkctest.exe", check->mkcerr);
+  mkc_path_build (MKC_PATH_MKC_TMP, exefile, MKC_PATH_MAX, "mkctest.exe", check->mkcerr);
   mkc_check_append_arg (check, exefile);
   mkc_check_append_arg (check, NULL);
   if (mkc_error_chk_err (check->mkcerr)) {
+    free (exefile);
     return MKC_ERR_FAILURE;
   }
 
@@ -869,6 +943,7 @@ mkc_compile_run (mkc_check_t *check,
     mkc_log (check->log, MKC_LOG_CHECK, "---\n");
   }
 
+  free (exefile);
   if (rallocated) {
     free (rbuff);
   }
@@ -882,16 +957,23 @@ mkc_check_file_sub_copy (mkc_check_t *check,
     const char *fname, const char *origsfx, const char *sfx)
 {
   char    tfn [MKC_VNAME_MAX];
-  char    fbuff [MKC_PATH_MAX];
+  char    *fbuff;
   char    *data;
   char    *ndata;
   FILE    *fh;
   size_t  fsz;
 
+  fbuff = malloc (MKC_PATH_MAX);
+  if (fbuff == NULL) {
+    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return;
+  }
+
   snprintf (tfn, sizeof (tfn), "%s%s", fname, origsfx);
-  mkc_path_build (MKC_PATH_MKC_TEMPLATES, fbuff, sizeof (fbuff), tfn, check->mkcerr);
+  mkc_path_build (MKC_PATH_MKC_TEMPLATES, fbuff, MKC_PATH_MAX, tfn, check->mkcerr);
   data = mkc_read_file (fbuff, &fsz, check->mkcerr);
   if (mkc_error_chk_err (check->mkcerr)) {
+    free (fbuff);
     return;
   }
   ndata = mkc_pvar_substitute (check->pvar, data, false, 0);
@@ -907,6 +989,7 @@ mkc_check_file_sub_copy (mkc_check_t *check,
   fwrite (ndata, strlen (ndata), 1, fh);
   fclose (fh);
   free (ndata);
+  free (fbuff);
 }
 
 static void
@@ -932,14 +1015,22 @@ mkc_check_log_command (mkc_check_t *check, const char *tag)
 static mkc_err_code_t
 mkc_chk_env_var_set (mkc_check_t *check, const char *nm)
 {
-  char            tbuff [MKC_PATH_MAX];
+  char            *tbuff;
   mkc_err_code_t  rc = MKC_OK;
 
+  tbuff = malloc (MKC_PATH_MAX);
+  if (tbuff == NULL) {
+    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return MKC_ERR_FAILURE;
+  }
+
   *tbuff = '\0';
-  mkc_env_get (nm, tbuff, sizeof (tbuff));
+  mkc_env_get (nm, tbuff, MKC_PATH_MAX);
   if (*tbuff) {
     rc = mkc_pvar_set_str (check->pvar, nm, tbuff, MKC_VCTXT_ENV);
   }
+
+  free (tbuff);
 
   return rc;
 }
@@ -982,12 +1073,18 @@ static int
 mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
 {
   mkc_value_t   *value;
-  char          pkgconfpath [MKC_PATH_MAX];
+  char          *pkgconfpath;
   char          tmpname [MKC_VNAME_MAX];
   char          *rbuff;
   size_t        rsz;
   size_t        retsz;
   int           rc;
+
+  pkgconfpath = malloc (MKC_PATH_MAX);
+  if (pkgconfpath == NULL) {
+    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return MKC_ERR_FAILURE;
+  }
 
   *pkgconfpath = '\0';
   value = mkc_pvar_get_by_profidx (check->pvar, mkcpathpkgconf, check->pidx_internal);
@@ -995,11 +1092,12 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
     value = mkc_pvar_get_by_profidx (check->pvar, mkcpathpkgconfig, check->pidx_internal);
   }
   if (value != NULL) {
-    mkc_pvar_value_get_str (check->pvar, value, pkgconfpath, sizeof (pkgconfpath));
+    mkc_pvar_value_get_str (check->pvar, value, pkgconfpath, MKC_PATH_MAX);
   }
 
   if (! *pkgconfpath) {
     mkc_error_set (check->mkcerr, MKC_ERR_PKGCONF_NOT_FOUND, 0, NULL);
+    free (pkgconfpath);
     return MKC_ERR_FAILURE;
   }
 
@@ -1013,6 +1111,7 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
   mkc_check_append_arg (check, pkg);
   mkc_check_append_arg (check, NULL);
   if (mkc_error_chk_err (check->mkcerr)) {
+    free (pkgconfpath);
     return MKC_ERR_FAILURE;
   }
 
@@ -1020,6 +1119,7 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
   rbuff = malloc (rsz);
   if (rbuff == NULL) {
     mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    free (pkgconfpath);
     return MKC_ERR_FAILURE;
   }
   mkc_check_log_command (check, "pkg-exists");
@@ -1029,6 +1129,7 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
   mkc_log (check->log, MKC_LOG_CHECK, "pkg exists: %s\n", pkg);
   mkc_log (check->log, MKC_LOG_CHECK, "  rc: %d\n", rc);
   if (rc != MKC_OK) {
+    free (pkgconfpath);
     free (rbuff);
     return rc;
   }
@@ -1043,6 +1144,7 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
   mkc_check_append_arg (check, pkg);
   mkc_check_append_arg (check, NULL);
   if (mkc_error_chk_err (check->mkcerr)) {
+    free (pkgconfpath);
     free (rbuff);
     mkc_chk_reset (check);
     return MKC_ERR_FAILURE;
@@ -1055,6 +1157,7 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
   mkc_log (check->log, MKC_LOG_CHECK, "pkg cflags: %s\n", rbuff);
   mkc_log (check->log, MKC_LOG_CHECK, "  rc: %d\n", rc);
   if (rc != MKC_OK) {
+    free (pkgconfpath);
     free (rbuff);
     mkc_chk_reset (check);
     return rc;
@@ -1083,6 +1186,7 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
   mkc_check_append_arg (check, pkg);
   mkc_check_append_arg (check, NULL);
   if (mkc_error_chk_err (check->mkcerr)) {
+    free (pkgconfpath);
     free (rbuff);
     mkc_chk_reset (check);
     return MKC_ERR_FAILURE;
@@ -1108,6 +1212,7 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
   }
 
   mkc_chk_reset (check);
+  free (pkgconfpath);
   free (rbuff);
   return rc;
 }

@@ -4,6 +4,10 @@
 #ifndef INC_MKC_STRING_H
 #define INC_MKC_STRING_H
 
+#ifndef MKC_BOOTSTRAP
+# include "mkc_config.h"
+#endif
+
 #include "mkc_nodiscard.h"
 
 #if defined (__cplusplus) || defined (c_plusplus)

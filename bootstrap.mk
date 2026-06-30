@@ -5,6 +5,14 @@
 MAKEFLAGS += --no-print-directory
 MAKEFILE = bootstrap.mk
 
+# MKC_REGEX_PKG = glib-2.0
+# MKC_REGEX_OBJ = mkc_regex_glib.o
+# MKC_REGEX_SRC = mkc_regex_glib.c
+
+MKC_REGEX_PKG = libpcre2-8
+MKC_REGEX_OBJ = mkc_regex_pcre.o
+MKC_REGEX_SRC = mkc_regex_pcre.c
+
 BOOTSTRAP_INIT = tmp/bootstrap-init.txt
 BOOTSTRAP_NOREGEX = tmp/bootstrap-noregex.txt
 BOOTSTRAP_TMPDIR = tmp/bootstrap-tmpdir.txt
@@ -15,33 +23,35 @@ MAIN_TMP = tmp
 
 BASE_OPTFLAGS = -g -O2
 BASE_CFLAGS = -Wall -Wextra -Wno-unused-parameter \
-	-Iinclude
+	-I. -Iinclude
 BASE_LDFLAGS = -Wall -Wextra
 BASE_LIBS =
 
 INIT_CFLAGS = $(BASE_OPTFLAGS) $(BASE_CFLAGS) -DMKC_BOOTSTRAP=1
-INIT_LDFLAGS = $(BASE_LDFLAGS)
+INIT_LDFLAGS = $(BASE_OPTFLAGS) $(BASE_LDFLAGS)
 INIT_LIBS =
 
-CONF_CFLAGS = $(BASE_OPTFLAGS) $(BASE_CFLAGS) $$(pkgconf --cflags glib-2.0)
-CONF_LDFLAGS = $(BASE_LDFLAGS)
-CONF_LIBS = $$(pkgconf --libs glib-2.0)
+CONF_CFLAGS = $(BASE_OPTFLAGS) $(BASE_CFLAGS) \
+    $$(pkgconf --cflags $(MKC_REGEX_PKG))
+CONF_LDFLAGS = $(BASE_OPTFLAGS) $(BASE_LDFLAGS)
+CONF_LIBS = $$(pkgconf --libs $(MKC_REGEX_PKG))
 
 SAN_OPTFLAGS = -g -ggdb3 -Og
-SAN_CFLAGS = $(SAN_OPTFLAGS) $(INIT_CFLAGS) \
+SAN_CFLAGS = $(SAN_OPTFLAGS) $(BASE_CFLAGS) \
     -Wno-unused-parameter \
     -fsanitize=address,undefined \
     -fsanitize-address-use-after-scope \
     -fsanitize-recover=address \
     -fno-omit-frame-pointer \
     -fno-common \
-    -fno-inline
-SAN_LDFLAGS = $(INIT_LDFLAGS) \
+    -fno-inline \
+    $$(pkgconf --cflags $(MKC_REGEX_PKG))
+SAN_LDFLAGS = $(SAN_OPTFLAGS) $(BASE_LDFLAGS) \
     -fsanitize=address,undefined \
     -fsanitize-address-use-after-scope \
-    -fsanitize-recover=address \
-    -lrt
-SAN_LIBS =
+    -fsanitize-recover=address
+SAN_LIBS = $$(pkgconf --libs $(MKC_REGEX_PKG)) -lrt
+
 
 WIN=F
 WINOBJ=mkc_os_win_process.o
@@ -99,6 +109,15 @@ bootstrap-final: $(BOOTSTRAP_TMPDIR) $(BOOTSTRAP_MKC_FILES) \
 	    LIBS="$(CONF_LIBS)" \
 	    TARGET=all oscheck
 
+.PHONY: sanitize
+sanitize: $(BOOTSTRAP_TMPDIR) $(BOOTSTRAP_MKC_FILES) \
+		$(BOOTSTRAP_NOREGEX) mkc_config.h
+	@$(MAKE) -f $(MAKEFILE) \
+	    CFLAGS="$(SAN_CFLAGS)" \
+	    LDFLAGS="$(SAN_LDFLAGS)" \
+	    LIBS="$(SAN_LIBS)" \
+	    TARGET=all oscheck
+
 mkc_config.h: mkc.mkc
 	@./mkc --no-cache mkc.mkc
 
@@ -116,11 +135,6 @@ $(BOOTSTRAP_MKC_FILES):
 .PHONY: partialclean
 partialclean:
 	@rm -f $(PARTIALOBJ) mkc
-
-.PHONY: sanitize
-sanitize:
-	$(MAKE) -f $(MAKEFILE) TARGET=all \
-	    CFLAGS="$(SAN_CFLAGS)" LDFLAGS="$(SAN_LDFLAGS)" oscheck
 
 .PHONY: oscheck
 oscheck:
@@ -153,7 +167,7 @@ MKCOBJECTS = mkc_main.o mkc_grammar.o \
         mkc_profile.o mkc_env.o mkc_tmutil.o \
         mkc_var.o mkc_log.o \
         mkc_compiler.o mkc_list.o \
-	mkc_regex.o \
+	$(MKC_REGEX_OBJ) \
 	mkc_dirop.o mkc_osdir.o mkc_fileop.o mkc_path.o mkc_error.o \
 	mkc_string.o
 
@@ -168,10 +182,12 @@ PARTIALOBJ = \
 	mkc_fileop.o \
 	mkc_main.o \
 	mkc_os_process.o \
+	mkc_os_win_process.o \
 	mkc_osdir.o \
 	mkc_path.o \
 	mkc_process.o \
-	mkc_regex.o \
+	mkc_regex_glib.o \
+	mkc_regex_pcre.o \
 	mkc_string.o \
 	mkc_tmutil.o
 
@@ -212,7 +228,7 @@ mkc_path.o: mkc_path.c
 mkc_process.o: mkc_process.c
 mkc_profile.o: mkc_profile.c
 mkc_pvar.o: mkc_pvar.c
-mkc_regex.o: mkc_regex.c
+$(MKC_REGEX_OBJ): $(MKC_REGEX_SRC)
 mkc_string.o: mkc_string.c
 mkc_tmutil.o: mkc_tmutil.c
 mkc_var.o: mkc_var.c
@@ -277,8 +293,10 @@ mkc_main.o: include/mkc_tmutil.h
 mkc_os_process.o:  include/mkc_os_process.h
 mkc_os_process.o: include/mkc_nodiscard.h include/mkc_tmutil.h
 mkc_os_win_process.o:  include/mkc_def.h
-mkc_os_win_process.o: include/mkc_os_process.h include/mkc_nodiscard.h
-mkc_os_win_process.o: include/mkc_string.h
+mkc_os_win_process.o:  include/mkc_fileop.h
+mkc_os_win_process.o: include/mkc_error.h include/mkc_nodiscard.h
+mkc_os_win_process.o: include/mkc_os_process.h include/mkc_string.h
+mkc_os_win_process.o: include/mkc_tmutil.h
 mkc_osdir.o:  include/mkc_fileop.h
 mkc_osdir.o: include/mkc_error.h include/mkc_nodiscard.h include/mkc_osdir.h
 mkc_osdir.o: include/mkc_string.h

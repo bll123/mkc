@@ -4,6 +4,7 @@
   ok c
   ok d
   ok e
+  ok f
   ok stat
   ok fprintf
   ok atoll

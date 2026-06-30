@@ -3,7 +3,12 @@
  *  (from ballroomdj4)
  */
 
+#ifndef MKC_BOOTSTRAP
+# include "mkc_config.h"
+#endif
+
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
@@ -18,9 +23,12 @@
 #include <windows.h>
 
 #include "mkc_def.h"
+#include "mkc_fileop.h"
 #include "mkc_os_process.h"
 #include "mkc_string.h"
 #include "mkc_tmutil.h"
+
+static void mkc_os_win_create_cmd (char *buff, size_t sz, const char *targv []);
 
 pid_t
 mkc_os_process_start (const char *targv[], int flags, char *outfname)
@@ -28,16 +36,12 @@ mkc_os_process_start (const char *targv[], int flags, char *outfname)
   pid_t               pid;
   STARTUPINFOW        si;
   PROCESS_INFORMATION pi;
-  char                tbuff [MKC_PATH_MAX];
-  char                buff [MKC_PATH_MAX];
-  int                 idx;
+  char                *buff;
   DWORD               val;
   BOOL                inherit = FALSE;
   wchar_t             *wbuff = NULL;
   wchar_t             *woutfname = NULL;
   HANDLE              outhandle = INVALID_HANDLE_VALUE;
-  char                *p = buff;
-  char                *end = buff + sizeof (buff);
 
   memset (&si, '\0', sizeof (si));
   si.cb = sizeof (si);
@@ -65,14 +69,12 @@ mkc_os_process_start (const char *targv[], int flags, char *outfname)
     inherit = true;
   }
 
-  buff [0] = '\0';
-  idx = 0;
-  while (targv [idx] != NULL) {
-    /* quote everything on windows. the batch files must be adjusted to suit */
-    snprintf (tbuff, sizeof (tbuff), "\"%s\"", targv [idx++]);
-    p = stpecpy (p, end, tbuff);
-    p = stpecpy (p, end, " ");
+  buff = malloc (MKC_SMALL_BUFF_SZ);
+  if (buff == NULL) {
+    return -1;
   }
+
+  mkc_os_win_create_cmd (buff, MKC_SMALL_BUFF_SZ, targv);
   wbuff = mkc_towide (buff);
 
   val = 0;
@@ -105,6 +107,7 @@ mkc_os_process_start (const char *targv[], int flags, char *outfname)
   ) {
     long err = GetLastError ();
     fprintf (stderr, "osprocessstart: getlasterr-a: %ld %s\n", err, buff);
+    free (buff);
     return -1;
   }
 
@@ -120,9 +123,10 @@ mkc_os_process_start (const char *targv[], int flags, char *outfname)
   }
 
   if (outfname != NULL && *outfname) {
-    bool        rc;
-    int         count;
-    struct __stat64  statbuf;
+    bool            rc;
+    int             count;
+    struct __stat64 statbuf;
+    ssize_t         tsz;
 
     CloseHandle (outhandle);
     rc = _wstat64 (woutfname, &statbuf);
@@ -139,6 +143,7 @@ mkc_os_process_start (const char *targv[], int flags, char *outfname)
     free (woutfname);
   }
   free (wbuff);
+  free (buff);
   return pid;
 }
 
@@ -148,9 +153,7 @@ mkc_os_process_pipe (const char *targv[], int flags, char *rbuff, size_t sz, siz
 {
   STARTUPINFOW        si;
   PROCESS_INFORMATION pi;
-  char                tbuff [MKC_PATH_MAX];
-  char                buff [MKC_PATH_MAX];
-  int                 idx;
+  char                *buff;
   DWORD               val;
   wchar_t             *wbuff;
   HANDLE              handleStdoutRead = INVALID_HANDLE_VALUE;
@@ -160,8 +163,6 @@ mkc_os_process_pipe (const char *targv[], int flags, char *rbuff, size_t sz, siz
   SECURITY_ATTRIBUTES sao;
   DWORD               rbytes;
   DWORD               rc = 0;
-  char                *p = buff;
-  char                *end = buff + sizeof (buff);
 
   flags |= OS_PROC_WAIT;      // required
 
@@ -196,14 +197,12 @@ mkc_os_process_pipe (const char *targv[], int flags, char *rbuff, size_t sz, siz
   }
   si.dwFlags |= STARTF_USESTDHANDLES;
 
-  buff [0] = '\0';
-  idx = 0;
-  while (targv [idx] != NULL) {
-    /* quote everything on windows. the batch files must be adjusted to suit */
-    snprintf (tbuff, sizeof (tbuff), "\"%s\"", targv [idx++]);
-    p = stpecpy (p, end, tbuff);
-    p = stpecpy (p, end, " ");
+  buff = malloc (MKC_SMALL_BUFF_SZ);
+  if (buff == NULL) {
+    return -1;
   }
+
+  mkc_os_win_create_cmd (buff, MKC_SMALL_BUFF_SZ, targv);
   wbuff = mkc_towide (buff);
 
   val = 0;
@@ -232,6 +231,7 @@ mkc_os_process_pipe (const char *targv[], int flags, char *rbuff, size_t sz, siz
   ) {
     long err = GetLastError ();
     fprintf (stderr, "osprocesspipe: getlasterr-d: %ld %s\n", err, buff);
+    free (buff);
     return -1;
   }
 
@@ -275,7 +275,39 @@ mkc_os_process_pipe (const char *targv[], int flags, char *rbuff, size_t sz, siz
     CloseHandle (pi.hProcess);
   }
 
+  free (buff);
   free (wbuff);
   return rc;
 }
 
+static void
+mkc_os_win_create_cmd (char *buff, size_t sz, const char *targv [])
+{
+  char      *p = buff;
+  char      *tbuff;
+  size_t    idx;
+
+  buff [0] = '\0';
+
+  tbuff = malloc (MKC_PATH_MAX);
+  if (tbuff == NULL) {
+    return;
+  }
+
+  idx = 0;
+  while (targv [idx] != NULL) {
+    char    *sp;
+
+    /* this logic seems to work ok -- there could be further issues */
+    sp = strchr (targv [idx], '/');
+    if (sp != NULL) {
+      /* anything that contains a slash gets quoted, as it may contain a space */
+      snprintf (tbuff, sz, "\"%s\"", targv [idx]);
+    } else {
+      snprintf (tbuff, sz, "%s", targv [idx]);
+    }
+    p = stpecpy (p, buff + sz, tbuff);
+    p = stpecpy (p, buff + sz, " ");
+    ++idx;
+  }
+}
