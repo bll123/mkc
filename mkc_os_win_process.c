@@ -90,9 +90,6 @@ mkc_os_process_start (const char *targv[], int flags, char *outfname)
     val |= CREATE_NO_WINDOW;
   }
 
-  /* windows and its stupid space-in-name and quoting issues */
-  /* leave the module name as null, as otherwise it would have to be */
-  /* a non-quoted version.  the command in the command line must be quoted */
   if (! CreateProcessW (
       NULL,           // module name
       wbuff,           // command line
@@ -214,9 +211,6 @@ mkc_os_process_pipe (const char *targv[], int flags, char *rbuff, size_t sz, siz
     val |= CREATE_NO_WINDOW;
   }
 
-  /* windows and its stupid space-in-name and quoting issues */
-  /* leave the module name as null, as otherwise it would have to be */
-  /* a non-quoted version.  the command in the command line must be quoted */
   if (! CreateProcessW (
       NULL,           // module name
       wbuff,           // command line
@@ -287,6 +281,16 @@ mkc_os_win_create_cmd (char *buff, size_t sz, const char *targv [])
   char      *tbuff;
   size_t    idx;
 
+  /* windows and its stupid quoting issues */
+  /* welcome to a nightmare */
+  /* current logic: */
+  /*    if there is a / or \ character in the argument, */
+  /*        quote it with double quotes */
+  /* example arguments: */
+  /*    C:/Program Files/...
+  /*    -DABC="hello world"
+  /* this may need further changes */
+
   buff [0] = '\0';
 
   tbuff = malloc (MKC_PATH_MAX);
@@ -296,12 +300,16 @@ mkc_os_win_create_cmd (char *buff, size_t sz, const char *targv [])
 
   idx = 0;
   while (targv [idx] != NULL) {
-    char    *sp;
+    char    *sp = NULL;
+    char    *bsp = NULL;
 
-    /* this logic seems to work ok -- there could be further issues */
     sp = strchr (targv [idx], '/');
-    if (sp != NULL) {
-      /* anything that contains a slash gets quoted, as it may contain a space */
+    if (sp == NULL) {
+      bsp = strchr (targv [idx], '\\');
+    }
+    if (sp != NULL || bsp != NULL) {
+      /* anything that contains a slash or backslash gets quoted, */
+      /* as it may contain a space */
       snprintf (tbuff, sz, "\"%s\"", targv [idx]);
     } else {
       snprintf (tbuff, sz, "%s", targv [idx]);

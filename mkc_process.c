@@ -89,13 +89,19 @@ static const char *sysnames [MKC_SYS_MAX] = {
 };
 
 static const char *sysidnames [MKC_SYS_ID_MAX] = {
+  [MKC_SYS_ID_ALPINE] = "MKC_SYS_ID_ALPINE",
+  [MKC_SYS_ID_ARCH] = "MKC_SYS_ID_ARCH",
   [MKC_SYS_ID_CYGWIN] = "MKC_SYS_ID_CYGWIN",
+  [MKC_SYS_ID_DEBIAN] = "MKC_SYS_ID_DEBIAN",
   [MKC_SYS_ID_DRAGONFLYBSD] = "MKC_SYS_ID_DRAGONFLYBSD",
+  [MKC_SYS_ID_FEDORA] = "MKC_SYS_ID_FEDORA",
   [MKC_SYS_ID_FREEBSD] = "MKC_SYS_ID_FREEBSD",
   [MKC_SYS_ID_MSYS2] = "MKC_SYS_ID_MSYS2",
   [MKC_SYS_ID_NETBSD] = "MKC_SYS_ID_NETBSD",
   [MKC_SYS_ID_NOTSET] = "MKC_SYS_ID_NOTSET",
   [MKC_SYS_ID_OPENBSD] = "MKC_SYS_ID_OPENBSD",
+  [MKC_SYS_ID_SOLARIS] = "MKC_SYS_ID_SOLARIS",
+  [MKC_SYS_ID_SUSE] = "MKC_SYS_ID_SUSE",
 };
 
 static const char *compidnames [MKC_COMP_ID_MAX] = {
@@ -128,10 +134,6 @@ static char const * const mkcpathname = "MKC_PATH";
 /* so that the static aggregator can be initialized */
 static char const * const mkcppkgconf = "MKC_PATH_PKGCONF";
 static char const * const mkcppkgconfig = "MKC_PATH_PKG_CONFIG";
-static void mkc_process_attr_clear (mkc_process_t *process);
-static void mkc_process_user_regex_free (void *turx);
-static int mkc_process_user_regex_comp (void *turxa, void *turxb);
-static void mkc_process_path_print (mkc_process_t *process);
 
 typedef struct mkc_prog_chk_t {
   const char  * program;
@@ -145,8 +147,9 @@ static mkc_prog_chk_t proglist [] = {
   { NULL,           NULL },
 };
 
-static void mkc_process_var_print (mkc_process_t *process, const char *pname);
-static void mkc_process_prof_print (mkc_process_t *process);
+static void mkc_process_attr_clear (mkc_process_t *process);
+static void mkc_process_user_regex_free (void *turx);
+static int mkc_process_user_regex_comp (void *turxa, void *turxb);
 const char * mkc_process_create_name (mkc_process_t *process, mkc_astnode_token_t asttype, char *buff, size_t sz, const char *tag, ...);
 static int mkc_process_int_checks (mkc_process_t *process);
 static void mkc_process_set_defaults (mkc_process_t *process);
@@ -157,6 +160,11 @@ static void mkc_process_find_executables (mkc_process_t *process);
 static mkc_user_regex_t *mkc_process_user_regex_init (mkc_process_t *process, const char *pattern);
 static void mkc_process_user_regex_free (void *turx);
 static int mkc_process_user_regex_comp (void *turxa, void *turxb);
+static void mkc_process_dbg_print_var (mkc_process_t *process, const char *pname);
+static void mkc_process_dbg_print_prof (mkc_process_t *process);
+static void mkc_process_dbg_print_path (mkc_process_t *process);
+static void mkc_process_dbg_print_int_var (mkc_process_t *process);
+
 
 MKC_NODISCARD
 mkc_process_t *
@@ -576,18 +584,18 @@ mkc_process_stmt_debug (mkc_process_t *process,
   if (strcmp (tbuff, "null") == 0) {
     /* do nothing */ ;
   }
-  if (strcmp (tbuff, "vardebug") == 0) {
-    mkc_pvar_debug (process->pvar);
-  }
   if (strcmp (tbuff, "printprof") == 0) {
-    mkc_process_prof_print (process);
+    mkc_process_dbg_print_prof (process);
   }
   if (strcmp (tbuff, "printvar") == 0) {
     mkc_pvar_value_get_str (process->pvar, subvalue, tbuff, sizeof (tbuff));
-    mkc_process_var_print (process, tbuff);
+    mkc_process_dbg_print_var (process, tbuff);
   }
   if (strcmp (tbuff, "printpath") == 0) {
-    mkc_process_path_print (process);
+    mkc_process_dbg_print_path (process);
+  }
+  if (strcmp (tbuff, "printinternal") == 0) {
+    mkc_process_dbg_print_int_var (process);
   }
 
   return false;
@@ -1725,150 +1733,6 @@ mkc_process_save_cache (mkc_process_t *process)
 
 /* internal routines */
 
-static void
-mkc_process_var_print (mkc_process_t *process, const char *pname)
-{
-  mkc_varidx_t    iteridx;
-  mkc_varidx_t    vidx;
-  mkc_pvar_t      *pvar;
-  bool            intest = false;
-  bool            ininternal = false;
-  mkc_profidx_t   opidx;
-
-  pvar = process->pvar;
-  opidx = mkc_profile_get_active (process->profiles);
-
-  if (pname != NULL && strcmp (pname, "default") == 0) {
-    pname = mkc_profile_get_name (process->profiles, opidx);
-  }
-  if (pname != NULL && strcmp (pname, "test") == 0) {
-    intest = true;
-    pname = mkc_profile_get_name (process->profiles, opidx);
-  }
-  if (pname != NULL && strcmp (pname, "internalall") == 0) {
-    pname = MKC_PROF_INTERNAL_NAME;
-  }
-  if (pname != NULL && strcmp (pname, "internal") == 0) {
-    ininternal = true;
-  }
-
-  for (mkc_compiler_t i = 0; i < MKC_COMPILER_MAX; ++i) {
-    bool      hdr = false;
-
-    if (mkc_error_chk_err (process->mkcerr)) {
-      break;
-    }
-
-    if (mkc_pvar_profile_set (process->pvar, pname, i) == MKC_PROF_NOT_FOUND) {
-      continue;
-    }
-
-    mkc_pvar_iter_start (pvar, &iteridx);
-
-    while ((vidx = mkc_pvar_iter_next (pvar, &iteridx)) != MKC_ITER_FINISH) {
-      const char      *nm;
-      mkc_value_t     *value;
-
-      if (! hdr) {
-        fprintf (stdout, "== %s %s\n", pname, mkc_compiler_get_name (i));
-        hdr = true;
-      }
-
-      nm = mkc_pvar_get_name (pvar, vidx);
-      value = mkc_pvar_get_by_idx (pvar, vidx);
-
-      if (ininternal) {
-        /* the variables that are used internally are */
-        /* generally not interesting */
-        if (strncmp (nm, mkctempvarpfx, mkctvpfxlen) == 0) {
-          continue;
-        }
-      }
-
-      if (intest) {
-        if (strcmp (nm, "CC") == 0 ||
-            strcmp (nm, "CXX") == 0 ||
-            strcmp (nm, "OBJC") == 0 ||
-            strcmp (nm, "BISON") == 0 ||
-            strcmp (nm, "FLEX") == 0 ||
-            strcmp (nm, mkcivarmacro) == 0) {
-          continue;
-        }
-      }
-
-      if (value->vtype == MKC_VT_LIST) {
-        mkc_list_t    *list;
-        mkc_listidx_t lidx;
-        mkc_listidx_t iteridx;
-
-        list = value->list;
-        mkc_list_iter_start (list, &iteridx);
-        fprintf (stdout, "  %s [ ", nm);
-        while ((lidx = mkc_list_iter_next (list, &iteridx)) != MKC_ITER_FINISH) {
-          mkc_value_t   *tvalue;
-
-          if (mkc_error_chk_err (process->mkcerr)) {
-            break;
-          }
-          tvalue = mkc_list_get_by_idx (list, lidx);
-          if (tvalue->vtype == MKC_VT_INTEGER) {
-            fprintf (stdout, "%d ", tvalue->ival);
-          }
-          if (tvalue->vtype != MKC_VT_INVALID &&
-              tvalue->vtype != MKC_VT_INTEGER &&
-              tvalue->vtype != MKC_VT_LIST) {
-            fprintf (stdout, "'%s' ", tvalue->sval);
-          }
-          if (tvalue->vtype == MKC_VT_LIST) {
-// ### don't know yet if this will be legal
-            fprintf (stdout, "[...] ");
-          }
-        }
-        fprintf (stdout, "]\n");
-      }
-      if (value->vtype == MKC_VT_STRING) {
-        const char  *val;
-
-        val = value->sval;
-        fprintf (stdout, "  %s %s\n", nm, val);
-      }
-      if (value->vtype == MKC_VT_INTEGER) {
-        int32_t     ival;
-
-        ival = value->ival;
-        fprintf (stdout, "  %s %d\n", nm, ival);
-      }
-    }
-  }
-
-  mkc_pvar_profile_set_idx (process->pvar, opidx);
-}
-
-static void
-mkc_process_prof_print (mkc_process_t *process)
-{
-  mkc_varidx_t   iteridx;
-  mkc_varidx_t   idx;
-  mkc_profile_t   *profiles;
-
-  fprintf (stdout, "== profiles\n");
-
-  profiles = process->profiles;
-  mkc_profile_iter_start (profiles, &iteridx);
-  while ((idx = mkc_profile_iter_next (profiles, &iteridx)) != MKC_ITER_FINISH) {
-    const char      *nm;
-    mkc_compiler_t compiler;
-
-    if (mkc_error_chk_err (process->mkcerr)) {
-      break;
-    }
-
-    nm = mkc_profile_get_name (profiles, idx);
-    compiler = mkc_profile_get_compiler (profiles, idx);
-    fprintf (stdout, "  %s %s\n", nm, mkc_compiler_get_name (compiler));
-  }
-}
-
 const char *
 mkc_process_create_name (mkc_process_t *process, mkc_astnode_token_t asttype,
     char *buff, size_t sz, const char *tag, ...)
@@ -2085,10 +1949,9 @@ mkc_process_int_checks (mkc_process_t *process)
     if (rc >= 0) {
       process->libloc = rc;
     }
+    mkc_log (process->log, MKC_LOG_GENERAL, "%s: %d\n", liblocname, process->libloc);
+    mkc_pvar_set_integer (process->pvar, liblocname, process->libloc, MKC_VCTXT_MKC);
   }
-  mkc_log (process->log, MKC_LOG_GENERAL, "%s: %d\n", liblocname, process->libloc);
-
-  mkc_pvar_set_integer (process->pvar, liblocname, process->libloc, MKC_VCTXT_MKC);
 
   /* reset profile */
 
@@ -2475,7 +2338,151 @@ mkc_process_user_regex_comp (void *turxa, void *turxb)
 }
 
 static void
-mkc_process_path_print (mkc_process_t *process)
+mkc_process_dbg_print_var (mkc_process_t *process, const char *pname)
+{
+  mkc_varidx_t    iteridx;
+  mkc_varidx_t    vidx;
+  mkc_pvar_t      *pvar;
+  bool            intest = false;
+  bool            ininternal = false;
+  mkc_profidx_t   opidx;
+
+  pvar = process->pvar;
+  opidx = mkc_profile_get_active (process->profiles);
+
+  if (pname != NULL && strcmp (pname, "default") == 0) {
+    pname = mkc_profile_get_name (process->profiles, opidx);
+  }
+  if (pname != NULL && strcmp (pname, "test") == 0) {
+    intest = true;
+    pname = mkc_profile_get_name (process->profiles, opidx);
+  }
+  if (pname != NULL && strcmp (pname, "internalall") == 0) {
+    pname = MKC_PROF_INTERNAL_NAME;
+  }
+  if (pname != NULL && strcmp (pname, "internal") == 0) {
+    ininternal = true;
+  }
+
+  for (mkc_compiler_t i = 0; i < MKC_COMPILER_MAX; ++i) {
+    bool      hdr = false;
+
+    if (mkc_error_chk_err (process->mkcerr)) {
+      break;
+    }
+
+    if (mkc_pvar_profile_set (process->pvar, pname, i) == MKC_PROF_NOT_FOUND) {
+      continue;
+    }
+
+    mkc_pvar_iter_start (pvar, &iteridx);
+
+    while ((vidx = mkc_pvar_iter_next (pvar, &iteridx)) != MKC_ITER_FINISH) {
+      const char      *nm;
+      mkc_value_t     *value;
+
+      if (! hdr) {
+        fprintf (stdout, "== %s %s\n", pname, mkc_compiler_get_name (i));
+        hdr = true;
+      }
+
+      nm = mkc_pvar_get_name (pvar, vidx);
+      value = mkc_pvar_get_by_idx (pvar, vidx);
+
+      if (ininternal) {
+        /* the variables that are used internally are */
+        /* generally not interesting */
+        if (strncmp (nm, mkctempvarpfx, mkctvpfxlen) == 0) {
+          continue;
+        }
+      }
+
+      if (intest) {
+        if (strcmp (nm, "CC") == 0 ||
+            strcmp (nm, "CXX") == 0 ||
+            strcmp (nm, "OBJC") == 0 ||
+            strcmp (nm, "BISON") == 0 ||
+            strcmp (nm, "FLEX") == 0 ||
+            strcmp (nm, mkcivarmacro) == 0) {
+          continue;
+        }
+      }
+
+      if (value->vtype == MKC_VT_LIST) {
+        mkc_list_t    *list;
+        mkc_listidx_t lidx;
+        mkc_listidx_t iteridx;
+
+        list = value->list;
+        mkc_list_iter_start (list, &iteridx);
+        fprintf (stdout, "  %s [ ", nm);
+        while ((lidx = mkc_list_iter_next (list, &iteridx)) != MKC_ITER_FINISH) {
+          mkc_value_t   *tvalue;
+
+          if (mkc_error_chk_err (process->mkcerr)) {
+            break;
+          }
+          tvalue = mkc_list_get_by_idx (list, lidx);
+          if (tvalue->vtype == MKC_VT_INTEGER) {
+            fprintf (stdout, "%d ", tvalue->ival);
+          }
+          if (tvalue->vtype != MKC_VT_INVALID &&
+              tvalue->vtype != MKC_VT_INTEGER &&
+              tvalue->vtype != MKC_VT_LIST) {
+            fprintf (stdout, "'%s' ", tvalue->sval);
+          }
+          if (tvalue->vtype == MKC_VT_LIST) {
+// ### don't know yet if this will be legal
+            fprintf (stdout, "[...] ");
+          }
+        }
+        fprintf (stdout, "]\n");
+      }
+      if (value->vtype == MKC_VT_STRING) {
+        const char  *val;
+
+        val = value->sval;
+        fprintf (stdout, "  %s %s\n", nm, val);
+      }
+      if (value->vtype == MKC_VT_INTEGER) {
+        int32_t     ival;
+
+        ival = value->ival;
+        fprintf (stdout, "  %s %d\n", nm, ival);
+      }
+    }
+  }
+
+  mkc_pvar_profile_set_idx (process->pvar, opidx);
+}
+
+static void
+mkc_process_dbg_print_prof (mkc_process_t *process)
+{
+  mkc_varidx_t   iteridx;
+  mkc_varidx_t   idx;
+  mkc_profile_t   *profiles;
+
+  fprintf (stdout, "== profiles\n");
+
+  profiles = process->profiles;
+  mkc_profile_iter_start (profiles, &iteridx);
+  while ((idx = mkc_profile_iter_next (profiles, &iteridx)) != MKC_ITER_FINISH) {
+    const char      *nm;
+    mkc_compiler_t compiler;
+
+    if (mkc_error_chk_err (process->mkcerr)) {
+      break;
+    }
+
+    nm = mkc_profile_get_name (profiles, idx);
+    compiler = mkc_profile_get_compiler (profiles, idx);
+    fprintf (stdout, "  %s %s\n", nm, mkc_compiler_get_name (compiler));
+  }
+}
+
+static void
+mkc_process_dbg_print_path (mkc_process_t *process)
 {
   char    tbuff [MKC_PATH_MAX];
 
@@ -2484,4 +2491,18 @@ mkc_process_path_print (mkc_process_t *process)
     mkc_path_build (i, tbuff, sizeof (tbuff), NULL, process->mkcerr);
     fprintf (stdout, "path %d %s\n", i, tbuff);
   }
+}
+
+static void
+mkc_process_dbg_print_int_var (mkc_process_t *process)
+{
+  fprintf (stdout, "== internal variables\n");
+  fprintf (stdout, "  project-name: %s\n", process->projectname);
+  fprintf (stdout, "  dfltcompiler %d/%s\n", process->dfltcompiler, mkc_compiler_get_name (process->dfltcompiler));
+  fprintf (stdout, "  systype %d\n", process->systype);
+  fprintf (stdout, "  sysid %d\n", process->sysid);
+  fprintf (stdout, "  compid %d\n", process->compid);
+  fprintf (stdout, "  header-type %d\n", process->headertype);
+  fprintf (stdout, "  cache-loaded %d\n", process->cacheloaded);
+  fprintf (stdout, "  cache-invalidated %d\n", process->cacheinvalidated);
 }

@@ -52,7 +52,6 @@ mkc_value_t * mkc_pvar_get_variable_value (mkc_pvar_t *pvar, const char *str);
 
 mkc_value_t *mkc_pvar_get_value (mkc_pvar_t *pvar, const char *vname);
 
-void mkc_pvar_debug (mkc_pvar_t *pvar);
 int32_t mkc_pvar_value_get_integer (mkc_pvar_t *pvar, mkc_value_t *value);
 void mkc_pvar_value_get_str (mkc_pvar_t *pvar, mkc_value_t *value, char *buff, size_t sz);
 bool mkc_pvar_is_defined (mkc_pvar_t *pvar, const char *vname);

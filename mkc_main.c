@@ -161,7 +161,6 @@ main (int argc, char *argv [])
 
   /* create the mkc_files temporary directory tree */
   mkc_path_build (MKC_PATH_MKC_TMP, tbuff, sizeof (tbuff), NULL, mkcerr);
-fprintf (stderr, "main: %s\n", tbuff);
   rc = mkc_dirop_make (tbuff, mkcerr);
   if (rc != 0) {
     rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);

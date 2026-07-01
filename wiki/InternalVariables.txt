@@ -21,13 +21,21 @@ system types.
 
 ##### System Identification (boolean)
 
-* MKC_SYS_ID_CYGWIN
-* MKC_SYS_ID_DRAGONFLYBSD
-* MKC_SYS_ID_FREEBSD
-* MKC_SYS_ID_MSYS2
-* MKC_SYS_ID_NETBSD
+* Linux Flavors
+    * MKC_SYS_ID_ALPINE
+    * MKC_SYS_ID_ARCH
+    * MKC_SYS_ID_DEBIAN
+    * MKC_SYS_ID_FEDORA
+    * MKC_SYS_ID_SUSE
+* Windows Flavors
+    * MKC_SYS_ID_CYGWIN not supported at this time
+    * MKC_SYS_ID_MSYS2
+* BSD Flavors
+    * MKC_SYS_ID_DRAGONFLYBSD
+    * MKC_SYS_ID_FREEBSD
+    * MKC_SYS_ID_NETBSD
+    * MKC_SYS_ID_OPENBSD
 * MKC_SYS_ID_NOTSET (not determined)
-* MKC_SYS_ID_OPENBSD
 * MKC_SYS_ID_SOLARIS
 
 ##### Linux: Library Prefix (boolean)

@@ -34,6 +34,7 @@ typedef enum {
 /* variable context, used to determine if the variable should be output */
 typedef enum {
   MKC_VCTXT_CHECK,
+  MKC_VCTXT_DELETED,      /* not yet implemented */
   MKC_VCTXT_ENV,
   MKC_VCTXT_FLAG,
   MKC_VCTXT_MKC,

@@ -21,7 +21,6 @@ typedef struct mkc_pvar_t {
   mkc_profile_t   * profiles;
   mkc_error_t     * mkcerr;
   mkc_log_t       * log;
-  bool            debug;
   bool            fromcache;
 } mkc_pvar_t;
 
@@ -44,7 +43,6 @@ mkc_pvar_init (mkc_profile_t *profiles, mkc_log_t *log, mkc_error_t *mkcerr)
     return NULL;
   }
 
-  pvar->debug = false;
   pvar->mkcerr = mkcerr;
   pvar->log = log;
   pvar->profiles = profiles;
@@ -498,16 +496,6 @@ mkc_pvar_get_variable_value (mkc_pvar_t *pvar, const char *str)
   value = mkc_pvar_get_by_profile (pvar, tstr);
   free (tstr);
   return value;
-}
-
-void
-mkc_pvar_debug (mkc_pvar_t *pvar)
-{
-  if (pvar == NULL) {
-    return;
-  }
-
-  pvar->debug = ! pvar->debug;
 }
 
 int32_t

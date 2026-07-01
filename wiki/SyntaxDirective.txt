@@ -6,12 +6,11 @@
 ##### Internal Debugging
 
     mkcdebug printvar <profile>;    # user defined profile
-    mkcdebug printvar release;
-    mkcdebug printvar global;
     mkcdebug printvar internal;
-    mkcdebug printvar internalall;  # including variables used internally
-    mkcdebug printvar test;         # most global variables
+    mkcdebug printvar internalall;  # including temporary variables
+    mkcdebug printvar test;         # most variables
     mkcdebug printprof;             # prints profile names
+    mkcdebug printinternal;         # prints internal values
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)
