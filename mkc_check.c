@@ -14,6 +14,7 @@
 
 #include "mkc_check.h"
 #include "mkc_compiler.h"
+#include "mkc_const.h"
 #include "mkc_def.h"
 #include "mkc_env.h"
 #include "mkc_error.h"
@@ -53,7 +54,7 @@ static void mkc_check_file_sub_copy (mkc_check_t *check, char *tbuff, size_t sz,
 static void mkc_check_log_command (mkc_check_t *check, const char *tag);
 static mkc_err_code_t mkc_chk_env_var_set (mkc_check_t *check, const char *nm);
 static void mkc_check_append_arg (mkc_check_t *check, const char *arg);
-const char * mkc_check_get_compstr (mkc_check_t *check, mkc_compiler_t compiler, char *buff, size_t sz);
+static const char * mkc_check_get_compstr (mkc_check_t *check, mkc_compiler_t compiler, char *buff, size_t sz);
 static int mkc_chk_package_exec (mkc_check_t *check, const char *pkg);
 
 MKC_NODISCARD
@@ -1056,7 +1057,7 @@ mkc_check_append_arg (mkc_check_t *check, const char *arg)
   check->targc += 1;
 }
 
-const char *
+static const char *
 mkc_check_get_compstr (mkc_check_t *check, mkc_compiler_t compiler,
     char *buff, size_t sz)
 {

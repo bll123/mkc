@@ -77,7 +77,8 @@ $(BOOTSTRAP_INIT): $(BOOTSTRAP_TMPDIR) $(BOOTSTRAP_MKC_FILES)
 # (arg-count, shell-extract)
 # re-compile any module that uses mkc_config.h
 # and re-build mkc_config.h
-# the mkc_config.h that is created is correct and complete
+# the mkc_config.h that is created is now correct and complete
+# remove any modules that use mkc_config.h for the final re-compile
 $(BOOTSTRAP_NOREGEX): $(BOOTSTRAP_TMPDIR) $(BOOTSTRAP_MKC_FILES) \
 		$(BOOTSTRAP_INIT)
 	@$(MAKE) -f $(MAKEFILE) bootstrap-noregex
@@ -169,7 +170,7 @@ MKCOBJECTS = mkc_main.o mkc_grammar.o \
         mkc_compiler.o mkc_list.o \
 	$(MKC_REGEX_OBJ) \
 	mkc_dirop.o mkc_osdir.o mkc_fileop.o mkc_path.o mkc_error.o \
-	mkc_string.o
+	mkc_string.o mkc_const.o
 
 # the PARTIALOBJ variable will be replaced
 # be sure it is followed by a blank line
@@ -211,6 +212,7 @@ mkc_ast.o: mkc_ast.c
 mkc_asttoken.o: mkc_asttoken.c
 mkc_check.o: mkc_check.c
 mkc_compiler.o: mkc_compiler.c
+mkc_const.o: mkc_const.c
 mkc_context.o: mkc_context.c
 mkc_dirop.o: mkc_dirop.c
 mkc_env.o: mkc_env.c
@@ -248,9 +250,10 @@ mkc_check.o: include/mkc_check.h include/mkc_compiler.h include/mkc_error.h
 mkc_check.o:  include/mkc_nodiscard.h include/mkc_log.h
 mkc_check.o:  include/mkc_profile.h include/mkc_list.h
 mkc_check.o: include/mkc_option.h include/mkc_var.h include/mkc_pvar.h
-mkc_check.o: include/mkc_def.h
-mkc_check.o: include/mkc_env.h include/mkc_fileop.h include/mkc_os_process.h
-mkc_check.o: include/mkc_path.h include/mkc_regex.h include/mkc_string.h
+mkc_check.o: include/mkc_const.h include/mkc_def.h
+mkc_check.o:  include/mkc_env.h include/mkc_fileop.h
+mkc_check.o: include/mkc_os_process.h include/mkc_path.h include/mkc_regex.h
+mkc_check.o: include/mkc_string.h
 mkc_compiler.o:  include/mkc_compiler.h
 mkc_context.o:  include/mkc_context.h
 mkc_context.o: include/mkc_error.h include/mkc_nodiscard.h
@@ -285,11 +288,11 @@ mkc_log.o:  include/mkc_log.h include/mkc_string.h
 mkc_main.o:  include/mkc_ast.h include/mkc_asttoken.h
 mkc_main.o: include/mkc_error.h include/mkc_nodiscard.h include/mkc_log.h
 mkc_main.o:  include/mkc_option.h include/mkc_var.h
-mkc_main.o: include/mkc_list.h include/mkc_def.h
-mkc_main.o:  include/mkc_dirop.h include/mkc_env.h
-mkc_main.o: include/mkc_fileop.h include/mkc_parse.h include/mkc_path.h
-mkc_main.o: include/mkc_profile.h include/mkc_compiler.h include/mkc_string.h
-mkc_main.o: include/mkc_tmutil.h
+mkc_main.o: include/mkc_list.h include/mkc_const.h include/mkc_def.h
+mkc_main.o:   include/mkc_dirop.h
+mkc_main.o: include/mkc_env.h include/mkc_fileop.h include/mkc_parse.h
+mkc_main.o: include/mkc_path.h include/mkc_profile.h include/mkc_compiler.h
+mkc_main.o: include/mkc_string.h include/mkc_tmutil.h
 mkc_os_process.o:  include/mkc_os_process.h
 mkc_os_process.o: include/mkc_nodiscard.h include/mkc_tmutil.h
 mkc_os_win_process.o:  include/mkc_def.h
@@ -316,11 +319,12 @@ mkc_process.o: include/mkc_asttoken.h include/mkc_check.h
 mkc_process.o: include/mkc_compiler.h include/mkc_error.h
 mkc_process.o: include/mkc_nodiscard.h include/mkc_log.h
 mkc_process.o: include/mkc_profile.h include/mkc_list.h include/mkc_option.h
-mkc_process.o: include/mkc_var.h include/mkc_pvar.h include/mkc_context.h
-mkc_process.o: include/mkc_def.h  include/mkc_env.h
-mkc_process.o: include/mkc_fileop.h include/mkc_path.h include/mkc_process.h
-mkc_process.o: include/mkc_regex.h include/mkc_string.h include/mkc_tmutil.h
-mkc_profile.o: include/mkc_compiler.h include/mkc_error.h
+mkc_process.o: include/mkc_var.h include/mkc_pvar.h include/mkc_const.h
+mkc_process.o: include/mkc_context.h include/mkc_def.h
+mkc_process.o: include/mkc_env.h include/mkc_fileop.h include/mkc_path.h
+mkc_process.o: include/mkc_process.h include/mkc_regex.h include/mkc_string.h
+mkc_process.o: include/mkc_tmutil.h
+mkc_profile.o: include/mkc_compiler.h include/mkc_const.h include/mkc_error.h
 mkc_profile.o: include/mkc_nodiscard.h include/mkc_list.h
 mkc_profile.o: include/mkc_option.h include/mkc_profile.h include/mkc_log.h
 mkc_profile.o:  include/mkc_var.h include/mkc_string.h

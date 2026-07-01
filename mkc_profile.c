@@ -9,6 +9,7 @@
 #include <string.h>
 
 #include "mkc_compiler.h"
+#include "mkc_const.h"
 #include "mkc_error.h"
 #include "mkc_list.h"
 #include "mkc_option.h"
@@ -42,11 +43,6 @@ typedef struct mkc_profile_t {
   int               localidx;
   int               localstacksz;
 } mkc_profile_t;
-
-char const * const MKC_PROF_INTERNAL_NAME = "internal";
-char const * const MKC_PROF_DEFAULT_NAME = "default";
-char const * const mkcpathpkgconf = "MKC_PATH_PKGCONF";
-char const * const mkcpathpkgconfig = "MKC_PATH_PKG_CONFIG";
 
 static void mkc_profile_entry_free (void *pentry);
 static int mkc_profile_compare (void *tentrya, void *tentryb);

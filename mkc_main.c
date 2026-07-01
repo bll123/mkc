@@ -21,6 +21,7 @@
 #endif
 
 #include "mkc_ast.h"
+#include "mkc_const.h"
 #include "mkc_def.h"
 #include "mkc_dirop.h"
 #include "mkc_env.h"

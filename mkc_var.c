@@ -9,6 +9,7 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include "mkc_const.h"
 #include "mkc_def.h"
 #include "mkc_error.h"
 #include "mkc_list.h"
@@ -205,14 +206,21 @@ mkc_var_set (mkc_varlist_t *varlist,
   /* check to see if a variable from the cache has changed */
   /* only do this if the cache is currently loading */
   if (varlist->fromcache && var->fromcache != varlist->fromcache) {
-    if (tvalue->vtype == MKC_VT_STRING && nvtype == MKC_VT_STRING) {
-      if (strcmp (tvalue->sval, value->sval) != 0) {
-        rc = MKC_OK_CHANGE;
+    /* changing the profile name does not invalidate the cache */
+    if (strcmp (vname, mkcprofilename) != 0) {
+      if (tvalue->vtype == MKC_VT_STRING && nvtype == MKC_VT_STRING) {
+        if (strcmp (tvalue->sval, value->sval) != 0) {
+          mkc_log (varlist->log, MKC_LOG_VAR, "invalidate cache: %s : %s %s\n",
+              vname, tvalue->sval, value->sval);
+          rc = MKC_OK_CHANGE;
+        }
       }
-    }
-    if (tvalue->vtype == MKC_VT_INTEGER && nvtype == MKC_VT_INTEGER) {
-      if (tvalue->ival != value->ival) {
-        rc = MKC_OK_CHANGE;
+      if (tvalue->vtype == MKC_VT_INTEGER && nvtype == MKC_VT_INTEGER) {
+        if (tvalue->ival != value->ival) {
+          mkc_log (varlist->log, MKC_LOG_VAR, "invalidate cache: %s : %s %s\n",
+              vname, tvalue->ival, value->ival);
+          rc = MKC_OK_CHANGE;
+        }
       }
     }
   }

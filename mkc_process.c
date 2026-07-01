@@ -19,6 +19,7 @@
 
 #include "mkc_asttoken.h"
 #include "mkc_check.h"
+#include "mkc_const.h"
 #include "mkc_context.h"
 #include "mkc_def.h"
 #include "mkc_env.h"
@@ -122,7 +123,6 @@ static char const * const mkctempvarpfx = "MKC_TV_";
 static size_t mkctvpfxlen = 0;
 static char const * const mkcivarmacro = "MKC_I_VARIADIC_MACRO";
 static char const * const mkcprojectname = "MKC_PROJECT_NAME";
-static char const * const mkcprofilename = "MKC_PROFILE_NAME";
 static char const * const mkcpathname = "MKC_PATH";
 /* these are duplicated from mkc_profile.c */
 /* so that the static aggregator can be initialized */
@@ -692,6 +692,7 @@ mkc_process_stmt_loadcache (mkc_process_t *process,
     mkc_log (process->log, MKC_LOG_GENERAL, "-- cache invalidated\n");
     mkc_process_set_defaults (process);
     mkc_process_int_checks (process);
+    mkc_process_find_executables (process);
   }
 
   mkc_process_attr_clear (process);
@@ -1569,12 +1570,27 @@ mkc_process_save_cache (mkc_process_t *process)
   mkc_profile_t   *profiles;
   mkc_profidx_t   opidx;
   mkc_profidx_t   pidx;
+  char            *cachename;
   FILE            *fh;
   int             tcount = 0;
   const char      * indent = "  ";
 
-  fh = mkc_fopen ("mkc_files/cache.mkc", "w");
+  if (mkc_error_chk_err (process->mkcerr)) {
+    /* at this time, the cache is not saved if there was an error */
+    return;
+  }
+
+  cachename = malloc (MKC_PATH_MAX);
+  if (cachename == NULL) {
+    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return;
+  }
+
+  mkc_path_build (MKC_PATH_MKC_FILES, cachename, MKC_PATH_MAX,
+      "cache.mkc", process->mkcerr);
+  fh = mkc_fopen (cachename, "w");
   if (fh == NULL) {
+    free (cachename);
     return;
   }
   opidx = mkc_profile_get_active (process->profiles);
@@ -1703,6 +1719,7 @@ mkc_process_save_cache (mkc_process_t *process)
   fprintf (fh, "}\n");
 
   mkc_pvar_profile_set_idx (process->pvar, opidx);
+  free (cachename);
   fclose (fh);
 }
 
@@ -2378,7 +2395,7 @@ mkc_process_find_executables (mkc_process_t *process)
   }
 
   mkc_pvar_profile_set_idx (process->pvar, process->pidx_internal);
-  mkc_pvar_set_list (process->pvar, mkcpathname, pathlist, MKC_VCTXT_MKC);
+  mkc_pvar_set_list (process->pvar, mkcpathname, pathlist, MKC_VCTXT_ENV);
 
   free (tbuff);
   free (testpath);
