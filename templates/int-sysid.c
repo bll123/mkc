@@ -53,35 +53,13 @@ main (void)
     return sysid;
   }
 
-  /* note that only major flavors are of concern, not every sub-flavor */
+  /* note that only major variants are of concern, not every sub-variant */
+  /* https://github.com/chef/os_release has a bunch of examples */
 
   /* /etc/os-release is rather dependent on the os that created it */
   /* but see what we can do */
-  /* examples */
-  /*   alpine */
-  /*     ID=alpine */
-  /*   devuan */
-  /*     ID=devuan */
-  /*     ID_LIKE=debian */
-  /*   fedora */
-  /*     ID=fedora */
-  /*   manjaro */
-  /*     ID=manjaro */
-  /*     ID_LIKE=arch */
-  /*   linux mint */
-  /*     ID=linuxmint */
-  /*     ID_LIKE="ubuntu debian" (ack!) */
-  /*   mx-linux */
-  /*     ID=debian */
-  /*   redhat (old example found on internet) */
-  /*     ID="rhel" */
-  /*     ID_LIKE="fedora" */
-  /*   suse */
-  /*     ID="opensuse-leap" */
-  /*     ID_LIKE="suse opensuse" */
-  /*   ubuntu */
-  /*     ID=ubuntu */
-  /*     ID_LIKE=debian */
+  /* the ID_LIKE variable doesn't list the most basic type first, */
+  /* so the comparisons have to check several name */
 
   fh = fopen ("/etc/os-release", "r");
   if (fh == NULL) {
@@ -125,7 +103,9 @@ main (void)
     if (strcmp (p, "alpine") == 0) {
       sysid = MKC_SYS_ID_ALPINE;
     }
-    if (strcmp (p, "arch") == 0) {
+    if (strcmp (p, "arch") == 0 ||
+        strcmp (p, "cachyos") == 0 ||
+        strcmp (p, "manjaro") == 0) {
       sysid = MKC_SYS_ID_ARCH;
     }
     /* compare to ubuntu to handle linux-mint os-release */
@@ -133,11 +113,27 @@ main (void)
         strcmp (p, "ubuntu") == 0) {
       sysid = MKC_SYS_ID_DEBIAN;
     }
-    if (strcmp (p, "fedora") == 0) {
+    if (strcmp (p, "fedora") == 0 ||
+        strcmp (p, "rhel") == 0 ||
+        strcmp (p, "centos") == 0 ||
+        strcmp (p, "mandriva") == 0) {
       sysid = MKC_SYS_ID_FEDORA;
     }
-    if (strcmp (p, "suse") == 0) {
+    if (strcmp (p, "gentoo") == 0) {
+      sysid = MKC_SYS_ID_GENTOO;
+    }
+    if (strcmp (p, "nixos") == 0) {
+      sysid = MKC_SYS_ID_NIXOS;
+    }
+    if (strcmp (p, "slackware") == 0) {
+      sysid = MKC_SYS_ID_SLACKWARE;
+    }
+    if (strcmp (p, "suse") == 0 ||
+        strcmp (p, "opensuse") == 0) {
       sysid = MKC_SYS_ID_SUSE;
+    }
+    if (strcmp (p, "wrlinux") == 0) {
+      sysid = MKC_SYS_ID_WRLINUX;
     }
   }
 

@@ -53,19 +53,24 @@ typedef enum {
 
 /* update the variable names in mkc_process.c */
 typedef enum {
-  MKC_SYS_ID_ALPINE,          // linux: any alpine based system
-  MKC_SYS_ID_ARCH,            // linux: any arch based system
+  MKC_SYS_ID_ALPINE,          // linux
+  MKC_SYS_ID_ARCH,            // linux
+  MKC_SYS_ID_AZURE,           // linux
   MKC_SYS_ID_CYGWIN,
-  MKC_SYS_ID_DEBIAN,          // linux: any debian based system
+  MKC_SYS_ID_DEBIAN,          // linux
   MKC_SYS_ID_DRAGONFLYBSD,
-  MKC_SYS_ID_FEDORA,          // linux: any fedora based system
+  MKC_SYS_ID_FEDORA,          // linux
   MKC_SYS_ID_FREEBSD,
+  MKC_SYS_ID_GENTOO,          // linux
   MKC_SYS_ID_MSYS2,
   MKC_SYS_ID_NETBSD,
+  MKC_SYS_ID_NIXOS,           // linux
   MKC_SYS_ID_NOTSET,
   MKC_SYS_ID_OPENBSD,
+  MKC_SYS_ID_SLACKWARE,       // linux
   MKC_SYS_ID_SOLARIS,
-  MKC_SYS_ID_SUSE,            // linux: any suse based system
+  MKC_SYS_ID_SUSE,            // linux
+  MKC_SYS_ID_WRLINUX,         // linux
   MKC_SYS_ID_MAX,
 } mkc_system_id_t;
 

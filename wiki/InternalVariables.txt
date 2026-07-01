@@ -21,14 +21,19 @@ system types.
 
 ##### System Identification (boolean)
 
-* Linux Flavors
+* Linux Variants
     * MKC_SYS_ID_ALPINE
     * MKC_SYS_ID_ARCH
+    * MKC_SYS_ID_AZURE
     * MKC_SYS_ID_DEBIAN
     * MKC_SYS_ID_FEDORA
+    * MKC_SYS_ID_GENTOO
+    * MKC_SYS_ID_NIXOS
+    * MKC_SYS_ID_SLACKWARE
     * MKC_SYS_ID_SUSE
-* Windows Flavors
-    * MKC_SYS_ID_CYGWIN not supported at this time
+    * MKC_SYS_ID_WRLINUX
+* Windows Variants
+    * MKC_SYS_ID_CYGWIN (not supported at this time)
     * MKC_SYS_ID_MSYS2
 * BSD Flavors
     * MKC_SYS_ID_DRAGONFLYBSD
