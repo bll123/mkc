@@ -57,9 +57,9 @@ main (void)
   /* https://github.com/chef/os_release has a bunch of examples */
 
   /* /etc/os-release is rather dependent on the os that created it */
-  /* but see what we can do */
+  /* but see what is possible */
   /* the ID_LIKE variable doesn't list the most basic type first, */
-  /* so the comparisons have to check several name */
+  /* so the comparisons have to check several names */
 
   fh = fopen ("/etc/os-release", "r");
   if (fh == NULL) {
@@ -132,7 +132,8 @@ main (void)
         strcmp (p, "opensuse") == 0) {
       sysid = MKC_SYS_ID_SUSE;
     }
-    if (strcmp (p, "wrlinux") == 0) {
+    if (strcmp (p, "wrlinux") == 0 ||
+        strcmp (p, "cisco-wrlinux") == 0) {
       sysid = MKC_SYS_ID_WRLINUX;
     }
   }
