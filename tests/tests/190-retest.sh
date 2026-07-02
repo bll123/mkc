@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 #
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 #
@@ -14,13 +14,13 @@ ttype=mkc
 cp -f ${ddir}/190-retest-a.h ${odir}
 rm -f ${odir}/190-retest-b.h
 dotest ${ddir}/190-retest.mkc
-if [[ $rc -ne 0 ]]; then exit $rc; fi
+if [ $rc -ne 0 ]; then exit $rc; fi
 dodiff ${rdir}/$bnm-a.out ${odir}/$bnm-a.out
 testfin
 
 cp -f ${ddir}/190-retest-b.h ${odir}
 args=""
 dotest ${ddir}/190-retest.mkc
-if [[ $rc -ne 0 ]]; then exit $rc; fi
+if [ $rc -ne 0 ]; then exit $rc; fi
 dodiff ${rdir}/$bnm-b.out ${odir}/$bnm-b.out
 testfin

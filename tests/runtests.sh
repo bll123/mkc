@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 #
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 #
@@ -7,7 +7,7 @@
 
 echo "-- using ${MKC}"
 
-systype=$(uname -m)
+systype=`uname -s`
 case ${systype} in
   Linux)
     tag=linux
@@ -24,13 +24,13 @@ case ${systype} in
     ;;
 esac
 
-if [[ $tag == win64 ]]; then
+if [ $tag = win64 ]; then
   MKCDFLTPROF="$USERPROFILE/AppData/Roaming/mkc/defaultprofile.txt"
 else
   MKCDFLTPROF="$HOME/.config/mkc/defaultprofile.txt"
 fi
 
-if [[ -f ${MKCDFLTPROF} ]]; then
+if [ -f ${MKCDFLTPROF} ]; then
   mv ${MKCDFLTPROF} ${MKCDFLTPROF}.keep
 fi
 
@@ -67,7 +67,7 @@ for tnm in ${tdir}/${pattern}; do
 
   echo "== $tnm"
   echo "== $tnm" >> ${LOG}
-  bnm=$(basename $tnm | sed 's,\.mkc$,,')
+  bnm=`basename $tnm | sed 's,\.mkc$,,'`
   expfail=F
   case $tnm in
     *-error.*)
@@ -77,26 +77,27 @@ for tnm in ${tdir}/${pattern}; do
 
   ottype=${ttype}
   dotest ${tnm}
-  if [[ $rc -ne 0 ]]; then continue; fi
-  if [[ $ottype == mkc ]]; then
+  rc=$?
+  if [ $rc -ne 0 ]; then continue; fi
+  if [ $ottype = mkc ]; then
     # shell scripts run their own diff...
     dodiff
   fi
   testfin
 
-  if [[ $ottype == mkc ]]; then
-    if [[ -f ${ddir}/${bnm}.cache ]]; then
+  if [ $ottype = mkc ]; then
+    if [ -f ${ddir}/${bnm}.cache ]; then
       args=""
       echo "== $tnm (cache)"
       echo "== $tnm (cache)" >> ${LOG}
       dotest ${tnm}
-      if [[ $rc -ne 0 ]]; then continue; fi
+      if [ $rc -ne 0 ]; then continue; fi
       dodiff
       testfin
     fi
   fi
 done
 
-if [[ -f ${MKCDFLTPROF}.keep ]]; then
+if [ -f ${MKCDFLTPROF}.keep ]; then
   mv ${MKCDFLTPROF}.keep ${MKCDFLTPROF}
 fi

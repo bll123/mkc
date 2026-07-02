@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 #
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 #
@@ -15,54 +15,54 @@ mkclog=${MKCLOG}/log-mkc.txt
 
 MKC=${MKC:-./mkc}
 
-function dotest {
+dotest () {
   tfile=$1
 
-  if [[ $ttype == mkc ]]; then
+  if [ $ttype = mkc ]; then
     prog=${MKC}
   fi
-  if [[ $ttype == sh ]]; then
-    prog="bash "
+  if [ $ttype = sh ]; then
+    prog="sh "
     args=""
   fi
 
   ${prog} ${args} ${tfile} > ${odir}/$bnm.out 2>>${LOG}
   trc=$?
-  if [[ $expfail == T ]]; then
-    if [[ $trc -eq 0 ]]; then
+  if [ $expfail = T ]; then
+    if [ $trc -eq 0 ]; then
       echo "   fail: test: $tfile"
     fi
   else
-    if [[ $trc -ne 0 ]]; then
+    if [ $trc -ne 0 ]; then
       echo "   fail: test: $tfile"
     fi
   fi
 }
 
-function dodiff {
+dodiff () {
   dfile=$1
   ofile=$2
 
   diff=F
-  if [[ $dfile == "" ]]; then
-    if [[ -f ${rdir}/$bnm.h ]]; then
+  if [ "$dfile" = "" ]; then
+    if [ -f ${rdir}/$bnm.h ]; then
       diff=T
       dfile=${rdir}/$bnm.h
       ofile=${odir}/$bnm.h
     fi
-    if [[ -f ${rdir}/$bnm.out ]]; then
+    if [ -f ${rdir}/$bnm.out ]; then
       diff=T
       dfile=${rdir}/$bnm.out
       ofile=${odir}/$bnm.out
     fi
   fi
 
-  if [[ ${diff} == T ]]; then
+  if [ ${diff} = T ]; then
     diff=T
     diff -q -w ${dfile} ${ofile} >>${LOG} 2>&1
     trc=$?
 
-    if [[ $trc -ne 0 ]]; then
+    if [ $trc -ne 0 ]; then
       echo "   fail: diff: $tnm"
     else
       true
@@ -71,8 +71,8 @@ function dodiff {
   fi
 }
 
-function testfin {
-  if [[ -f ${mkclog} ]]; then
+testfin () {
+  if [ -f ${mkclog} ]; then
     mv ${mkclog} ${MKCTMP}/${bnm}-log.txt
   fi
 }

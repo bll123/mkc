@@ -1,20 +1,20 @@
-#!/bin/bash
+#!/bin/sh
 #
 # Copyright 2021-2025 Brad Lanam Pleasant Hill CA
 #
 
-if [[ ! -d web || ! -d wiki ]]; then
+if [ ! -d web ] || [ ! -d wiki ]; then
   echo "wrong dir"
   exit 1
 fi
-cwd=$(pwd)
+cwd=`pwd`
 
 keep=F
-if [[ $1 == --keep ]]; then
+if [ "$1" = --keep ]; then
   keep=T
 fi
 
-systype=$(uname -s)
+systype=`uname -s`
 
 INCTC=dep-inctest.c
 INCTO=dep-inctest.o
@@ -52,19 +52,19 @@ for fn in *.y *.l *.c *.mk include/*.h *.mkc \
   esac
   grep "Copyright" $fn > /dev/null 2>&1
   rc=$?
-  if [[ $rc -ne 0 ]]; then
+  if [ $rc -ne 0 ]; then
     echo "$fn : missing copyright"
     grc=$rc
   fi
 done
-if [[ $grc != 0 ]]; then
+if [ $grc != 0 ]; then
   exit $grc
 fi
 
 echo "## checking include file compilation"
 test -f $INCTOUT && rm -f $INCTOUT
 for fn in include/*.h; do
-  bfn=$(echo $fn | sed 's,include/,,')
+  bfn=`echo $fn | sed 's,include/,,'`
   cat > $INCTC << _HERE_
 
 #include "${bfn}"
@@ -77,16 +77,16 @@ main (int argc, char *argv [])
 _HERE_
   cc -c -I . -I include $INCTC >> $INCTOUT 2>&1
   rc=$?
-  if [[ $rc -ne 0 ]]; then
+  if [ $rc -ne 0 ]; then
     echo "compile of $bfn failed"
-    if [[ $rc -ne 0 ]]; then
+    if [ $rc -ne 0 ]; then
       grc=$rc
     fi
   fi
   rm -f $INCTC $INCTO
 done
 rm -f $INCTC $INCTO
-if [[ $grc -ne 0 ]]; then
+if [ $grc -ne 0 ]; then
   exit $grc
 fi
 rm -f $INCTOUT
@@ -95,7 +95,7 @@ rm -f $INCTOUT
 echo "## checking include file hierarchy"
 > $TIIN
 cfh=""
-if [[ -f mkc_config.h ]]; then
+if [ -f mkc_config.h ]; then
   cfh=mkc_config.h
 fi
 for fn in *.c include/*.h ${cfh}; do
@@ -108,10 +108,10 @@ done
 tsort < $TIIN > $TISORT
 rc=$?
 
-if [[ $keep == F ]]; then
+if [ $keep = F ]; then
   rm -f $TIIN $TISORT > /dev/null 2>&1
 fi
-if [[ $rc -ne 0 ]]; then
+if [ $rc -ne 0 ]; then
   grc=$rc
   exit $grc
 fi
@@ -121,7 +121,6 @@ echo "## checking object file hierarchy"
 #
 tdir=.
 
-set -x
 OBJEXT=.o
 LORD=./utils/lorder
 case ${systype} in
@@ -134,15 +133,14 @@ case ${systype} in
     ;;
 esac
 
-${LORD} $(find ${tdir} -name '*'${OBJEXT} ) > $TOIN
-set +x
+${LORD} `find ${tdir} -name '*'${OBJEXT}` > $TOIN
 tsort < $TOIN > $TOSORT
 rc=$?
-if [[ $rc -ne 0 ]]; then
+if [ $rc -ne 0 ]; then
   grc=$rc
 fi
 
-if [[ $keep == F ]]; then
+if [ $keep = F ]; then
   rm -f $TIIN $TISORT $TOIN $TOSORT > /dev/null 2>&1
 fi
 rm -f $INCCT $INCTO $INCTOUT cmake.log
