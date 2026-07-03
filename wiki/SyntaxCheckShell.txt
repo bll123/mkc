@@ -8,7 +8,8 @@ Sets variables from a shell script.  Only variable assignments are
 processed.  Substitution is done, but environment variables are not
 recognized.
 
-2026-6-28 Only recognizes ${var}, not $var.
+2026-6-28 Only recognizes ${var}, not $var.  Environment variables are
+not recognized.
 
     check_shell_extract <shell-script>;
 

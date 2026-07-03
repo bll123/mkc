@@ -7,7 +7,7 @@
 ##### Working with Profiles
 
 The current working profile is selected on the command line, and all
-checks that are not within a profile statement will go into the
+checks that are not within a profile statement will be attached to the
 currently selected profile.
 
 The profile statement should only be used when a check
@@ -15,6 +15,10 @@ should only be in a particular profile. e.g.
 
     profile optimized {
       add_compiler_flag '-O3';
+    }
+
+    profile debug {
+      add_compiler_flag '-g';
     }
 
 A check or variable may be made compiler specific by using the
@@ -31,6 +35,7 @@ test.mkc:
 
     project {
       name test;
+      compiler c;
     }
 
     # int64_t appears within the currently selected profile
@@ -49,8 +54,6 @@ test.mkc:
       method auto;
     }
 
-command line:
-
 Note the default profile.
 
     $ mkc --profile debug test.mkc
@@ -66,8 +69,6 @@ test_config.h:
     #define _size_int64_t 8
     #define _size_int8_t 1
     ...
-
-command line:
 
 Note the default profile.
 

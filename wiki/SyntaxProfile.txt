@@ -23,8 +23,6 @@ following order:
 * target
 * user-profile / compiler
 * user-profile
-* global / compiler
-* global
 * internal
 
 ##### Attributes

@@ -1,0 +1,13 @@
+[Wiki Home](Home)
+<br>[Syntax](Syntax)
+
+### Syntax: path (attribute)
+
+The __path__ attribute specifies an additional path.  It is used in
+the [check_package](SyntaxCheckPackage) statement.
+
+    path <path>;
+
+
+[Wiki Home](Home)
+<br>[Syntax](Syntax)

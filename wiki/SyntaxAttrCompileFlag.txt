@@ -5,8 +5,8 @@
 
     compiler_flags '-flag' ['-flag' ...];
 
-Note that if you use "-I some/path", each individual argument must be
-quoted: '-I'&nbsp;'some/path'.  Or use '-Isome/path'.
+Note that if you use `'-I some/path'`, each individual argument must be
+quoted: `'-I' 'some/path'`.  Or use `'-Isome/path'`.
 
 The __compiler\_flags__ attribute is used with a [check](SyntaxCheck)
 statement.
