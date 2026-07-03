@@ -15,7 +15,6 @@
 ^mkc_grammar\.h$
 ^mkc_grammar\.output$
 ^pkg\.log$
-^prep$
 ^tests/tmp/
 ^tmp/
 ^web/lastwiki\.txt$
