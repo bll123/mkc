@@ -2,7 +2,6 @@
 
 MAKEFLAGS += --no-print-directory
 BOOTSTRAPMAKE = bootstrap.mk
-TMPFILE = mkc-tmp.txt
 
 INST_BIN_DIR = $(DESTDIR)$(PREFIX)/bin
 INST_TMPL_DIR = $(DESTDIR)$(PREFIX)/share/mkc/templates
@@ -13,7 +12,7 @@ INST_SHR_INC_DIR = $(DESTDIR)$(PREFIX)/share/mkc/include
 # target will exist
 .PHONY: all
 all:
-	@grep '^mkc-all' Makefile >/dev/null 2>&1; rc=$$?; \
+	@-grep '^mkc-all' Makefile >/dev/null 2>&1; rc=$$?; \
 	if [ $$rc -eq 0 ]; then \
 	  $(MAKE) mkc-all; \
 	else \
@@ -74,24 +73,10 @@ depend:
 	    > $(BOOTSTRAPMAKE).n
 	mv $(BOOTSTRAPMAKE).n $(BOOTSTRAPMAKE)
 
-# sets the PARTIALOBJ variable in bootstrap.mk
-.PHONY: partialobj
-partialobj:
-	echo 'PARTIALOBJ = \\' > $(TMPFILE)
-        # mkc_grammar must be re-compiled, as it has a #if MKC_BOOTSTRAP
-	echo '\tmkc_grammar.o \\' >> $(TMPFILE)
-	grep -l 'include "mkc_config.h' *.c | \
-	    sed -e 's,\.c$$,\.o,' \
-	        -e 's,^,\t,' \
-	        -e '$$ ! s,$$, \\,' \
-	    >> $(TMPFILE)
-	echo '' >> $(TMPFILE)
-	cat $(BOOTSTRAPMAKE) | \
-	    sed -e '/^PARTIALOBJ/,/^$$/ d' | \
-	    sed -e '/^# PARTIALOBJ/ r $(TMPFILE)' \
-	    > $(BOOTSTRAPMAKE).n
-	mv $(BOOTSTRAPMAKE).n $(BOOTSTRAPMAKE)
-	rm -f $(TMPFILE)
+# sets the INITIALOBJ variable in bootstrap.mk
+.PHONY: bootstrapsetup
+bootstrapsetup:
+	./utils/bootstrapsetup.sh $(BOOTSTRAPMAKE)
 
 .PHONY: test-install
 test-install:

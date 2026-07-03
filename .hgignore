@@ -1,5 +1,6 @@
 ^Archive/
 ^bootstrap\.mk\.bak$
+^btest\.log$
 ^dev
 ^mkc$
 \.o$
@@ -13,6 +14,8 @@
 ^mkc_grammar\.c$
 ^mkc_grammar\.h$
 ^mkc_grammar\.output$
+^pkg\.log$
+^prep$
 ^tests/tmp/
 ^tmp/
 ^web/lastwiki\.txt$

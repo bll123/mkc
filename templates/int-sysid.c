@@ -53,8 +53,9 @@ main (void)
     return sysid;
   }
 
-  /* note that only major variants are of concern, not every sub-variant */
-  /* https://github.com/chef/os_release has a bunch of examples */
+  /* note that only major linux variants are of concern, */
+  /* not every sub-variant */
+  /* https://github.com/chef/os_release for many examples */
 
   /* /etc/os-release is rather dependent on the os that created it */
   /* but see what is possible */
@@ -95,7 +96,7 @@ main (void)
 
     ep = tbuff + strlen (tbuff) - 1;
     while (ep >= tbuff &&
-           (*ep == ' ' || *ep == '\r' || *ep == '\n' || *ep == '"')) {
+         (*ep == ' ' || *ep == '\r' || *ep == '\n' || *ep == '"')) {
       *ep = '\0';
       --ep;
     }
@@ -108,7 +109,6 @@ main (void)
         strcmp (p, "manjaro") == 0) {
       sysid = MKC_SYS_ID_ARCH;
     }
-    /* compare to ubuntu to handle linux-mint os-release */
     if (strcmp (p, "debian") == 0 ||
         strcmp (p, "ubuntu") == 0) {
       sysid = MKC_SYS_ID_DEBIAN;

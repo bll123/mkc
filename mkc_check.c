@@ -11,6 +11,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
 #include "mkc_check.h"
 #include "mkc_compiler.h"
@@ -720,6 +721,7 @@ mkc_compile_only (mkc_check_t *check, mkc_compiler_t compiler,
     rallocated = true;
   }
 
+
   mkc_check_get_compstr (check, compiler, compstr, MKC_PATH_MAX);
   sfx = mkc_compiler_get_suffix (compiler);
 // ### will need to be fixed, the original suffix may change
@@ -987,8 +989,12 @@ mkc_check_file_sub_copy (mkc_check_t *check,
   mkc_path_build (MKC_PATH_MKC_TMP, tbuff, sz, tfn, check->mkcerr);
 
   fh = mkc_fopen (tbuff, "wb");
-  fwrite (ndata, strlen (ndata), 1, fh);
-  fclose (fh);
+  if (fh == NULL) {
+    mkc_error_set (check->mkcerr, MKC_ERR_FILE_NOT_FOUND, errno, tbuff);
+  } else {
+    fwrite (ndata, strlen (ndata), 1, fh);
+    fclose (fh);
+  }
   free (ndata);
   free (fbuff);
 }
@@ -1088,9 +1094,11 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
   }
 
   *pkgconfpath = '\0';
-  value = mkc_pvar_get_by_profidx (check->pvar, mkcpathpkgconf, check->pidx_internal);
+  /* if pkgconf is installed, pkg-config is a symlink. */
+  /* use pkg-config by preference (pkgconf does not seem to work in macos macports) */
+  value = mkc_pvar_get_by_profidx (check->pvar, mkcpathpkgconfig, check->pidx_internal);
   if (value == NULL) {
-    value = mkc_pvar_get_by_profidx (check->pvar, mkcpathpkgconfig, check->pidx_internal);
+    value = mkc_pvar_get_by_profidx (check->pvar, mkcpathpkgconf, check->pidx_internal);
   }
   if (value != NULL) {
     mkc_pvar_value_get_str (check->pvar, value, pkgconfpath, MKC_PATH_MAX);

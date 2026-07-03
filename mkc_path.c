@@ -128,7 +128,7 @@ mkc_path_init (void)
 
   /* this is a special case for development purposes */
   p = stpecpy (tbuff, tbuff + sizeof (tbuff), mkc_dirs [MKC_DIR_EXEC]);
-  p = stpecpy (p, tbuff + sizeof (tbuff), "/dev");
+  p = stpecpy (p, tbuff + sizeof (tbuff), "/templates");
   if (mkc_is_directory (tbuff)) {
     isdev = true;
   }

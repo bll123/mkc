@@ -2,7 +2,7 @@
 
 ### Status
 
-##### 2026-6-24 pre-alpha
+##### 2026-7-3 pre-alpha
 
 Basic syntax is working.  I believe I have figured a decent
 syntax to handle the profiles/targets and their attributes.
@@ -13,6 +13,14 @@ and get all the infrastructure needed for a pre-release done.
 
 The expected first pre-release will only create a configuration file.
 
+##### Testing
+
+_mkc_ is developed on Linux, and tested on Linux, Windows, MacOS and
+FreeBSD.
+
+If you have a system that you want regularly tested, please
+[let&nbsp;me&nbsp;know](GettingHelp).
+
 ##### Goals
 
 * Goals
@@ -21,7 +29,7 @@ The expected first pre-release will only create a configuration file.
       Use a grammar so that the syntax is regular and extendable.
     * UTF-8 support.
     * Cross platform support.
-    * Be able to associate checks with particular profiles/targets (complete).
+    * Be able to associate checks with particular profiles/targets.
     * Modern language support.
       Despite wanting to use _mkc_ for _di_ on legacy systems, I think
       it is better to just skip that and assume some modernity.
@@ -31,22 +39,29 @@ The expected first pre-release will only create a configuration file.
     * Check for headers.
       Mostly not needed for modern systems.
       (not yet implemented)
-    * Check for library functions. (c: complete)
-    * Check for defines. (complete)
-    * Check for types. (complete)
-    * Check for structure members. (complete)
-    * Check size of types. (complete)
-    * Be able to name the checks. (complete)
-    * Configure a file. (complete)
-    * Very simple file support (variable=something).
-      This is also useful for pkg-config files.
-      (not yet implemented)
-    * Package support (via pkg-config files).  (complete)
-    * Variable cache. The usual invalidation problem.
-      complete, but could use more tests for invalidation.
+    * Check for library functions. (c: complete; c&plus;&plus; not implemented)
+    * __Complete__: Check for defines.
+    * __Complete__: Check for types.
+    * __Complete__: Check for structure members.
+    * __Complete__: Check size of types.
+    * __Complete__: Check if constant.
+    * __Complete__: Be able to name the checks.
+    * __Complete__: Configure a file.
+    * __Complete__: Very simple file support (variable=something).
+    * __Complete__: Package support (via pkg-config files).
+    * __Complete__: Variable cache. The usual invalidation problems.
+    * __Complete__: Check the number of arguments a function requires.
+    * Statements:
+        * __Complete__: include
+        * __Complete__: while
+        * __Complete__: print
+        * __Complete__: set
     * Test with the [libmp4tag](https://sourceforge.net/projects/libmp4tag/) package.
     * Test with _mkc_.
 * Phase 2
+    * Statements:
+        * foreach
+        * functions
     * Test with _di_.
       _di_ checks a __lot__ of stuff.  Many checks will be missing.
       Start adding these checks in.
@@ -62,12 +77,14 @@ The expected first pre-release will only create a configuration file.
     * Test with _libmp4tag_.
     * Test with _di_.
     * Test with _mkc_.
+    * Start testing with _BallroomDJ 4_.
     * At this point, an alpha release could be made.
 * Phase 5
     * Installation process.
     * Test with _libmp4tag_.
     * Test with _di_.
     * Test with _mkc_.
+    * Test with _BallroomDJ 4_.
     * alpha release.
 * Phase 6
     * Test with _BallroomDJ 4_.

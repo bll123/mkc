@@ -77,6 +77,7 @@ main (int argc, char *argv [])
     { "profile",              required_argument,  NULL, 'p' },
     { "retest",               no_argument,        NULL, 'r' },
     { "set-default-profile",  required_argument,  NULL, 7   },
+    { "version",              no_argument,        NULL, 'v'   },
     { NULL,                   no_argument,        NULL, 0   },
   };
 
@@ -108,7 +109,7 @@ main (int argc, char *argv [])
   }
 
   while ((c = getopt_long_only (argcopy.nargc, argcopy.utf8argv,
-      "p:r", mkc_cli_opts, &option_index)) != -1) {
+      "p:rv", mkc_cli_opts, &option_index)) != -1) {
     switch (c) {
       case 'p': {
         if (optarg != NULL) {
@@ -119,6 +120,9 @@ main (int argc, char *argv [])
       }
       case 'r': {
         mkcoptions.retest = true;
+        break;
+      }
+      case 'v': {
         break;
       }
       case 1: {

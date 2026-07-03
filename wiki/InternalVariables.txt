@@ -84,7 +84,7 @@ The compiler identification.
   MKC_EXECUTABLE_EXTENSION|string|
   MKC_I_VARIADIC_MACRO|boolean|internal
   MKC_OBJECT_EXTENSION|string|
-  MKC_PATH|list|
+  MKC_PATH|list|from the environment
   MKC_PATH_PKGCONF|string|path to pkgconf
   MKC_PATH_PKG_CONFIG|string|path to pkg-config
   MKC_PROFILE_NAME|string|

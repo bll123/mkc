@@ -1,0 +1,25 @@
+[Wiki Home](Home)
+
+### __mkc__ command line arguments
+
+* --compiler _compiler_
+  Select the default compiler.
+* --mkc-dir _mkc-dir_
+  Sets the location of the temporary mkc_files directory.
+* --no-cache
+  Run mkc without using the cache.
+* --parsedebug
+  Turn on bison parser debugging.
+* --prefix _prefix_
+  Not implemented.
+* --profile _profile_ (-p)
+  Select the profile to use.
+* --retest (-r)
+  The cache will be loaded, but checks that failed will be re-run.
+* --set-default-profile
+  Sets the name of the default profile to use.  This profile name can
+  be overridden using the &#8209;&#8209;profile command line argument.
+* --version (-v)
+  Not implemented.
+
+[Wiki Home](Home)

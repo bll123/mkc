@@ -2503,7 +2503,7 @@ mkc_process_dbg_print_int_var (mkc_process_t *process)
 {
   fprintf (stdout, "== internal variables\n");
   fprintf (stdout, "  project-name: %s\n", process->projectname);
-  fprintf (stdout, "  dfltcompiler %d/%s\n", process->dfltcompiler, mkc_compiler_get_name (process->dfltcompiler));
+  fprintf (stdout, "  default-compiler %d/%s\n", process->dfltcompiler, mkc_compiler_get_name (process->dfltcompiler));
   fprintf (stdout, "  systype %d\n", process->systype);
   fprintf (stdout, "  sysid %d\n", process->sysid);
   fprintf (stdout, "  compid %d\n", process->compid);
