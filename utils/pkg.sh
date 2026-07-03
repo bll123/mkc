@@ -49,7 +49,7 @@ BUILDDATE=`date '+%Y-%m-%d'`
 RELEASELEVEL=${RELEASELEVEL}
 DEVELOPMENT=
 _HERE_
-mv ${fn}.n ${vn}
+mv ${fn}.n ${fn}
 
 cp -pr include templates tests utils ${SRCDEST}
 cp -p *.c *.y *.l *.h *.md *.mk *.mkc *.txt Makefile ${SRCDEST}
