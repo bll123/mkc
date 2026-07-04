@@ -207,7 +207,7 @@ mkc_var_set (mkc_varlist_t *varlist,
   /* only do this if the cache is currently loading */
   if (varlist->fromcache && var->fromcache != varlist->fromcache) {
     /* changing the profile name does not invalidate the cache */
-    if (strcmp (vname, mkcprofilename) != 0) {
+    if (strcmp (vname, MKC_C_PROFILE_NAME) != 0) {
       if (tvalue->vtype == MKC_VT_STRING && nvtype == MKC_VT_STRING) {
         if (strcmp (tvalue->sval, value->sval) != 0) {
           mkc_log (varlist->log, MKC_LOG_VAR, "invalidate cache: %s : %s %s\n",
@@ -231,13 +231,20 @@ mkc_var_set (mkc_varlist_t *varlist,
   tvalue->vtype = nvtype;
 
   if (nvtype == MKC_VT_STRING) {
+fprintf (stderr, "var: set: str %s\n", value->sval);
     tvalue->sval = strdup (value->sval);
   }
   if (nvtype == MKC_VT_INTEGER) {
+fprintf (stderr, "var: set: int %d\n", value->ival);
     tvalue->ival = value->ival;
   }
   if (nvtype == MKC_VT_LIST) {
     tvalue->list = mkc_var_list_copy (varlist, value->list);
+{
+char tbuff [MKC_PATH_MAX];
+mkc_value_to_str (value, tbuff, sizeof (tbuff));
+fprintf (stderr, "var: set: list %s\n", tbuff);
+}
   }
 
   return rc;
@@ -426,21 +433,17 @@ const char *
 mkc_value_to_str (mkc_value_t *value, char *buff, size_t sz)
 {
   if (value == NULL) {
-    snprintf (buff, sz, "null ");
+    snprintf (buff, sz, "null");
     return buff;
   }
 
   switch (value->vtype) {
     case MKC_VT_INVALID: {
-      snprintf (buff, sz, "invalid ");
+      snprintf (buff, sz, "invalid");
       break;
     }
     case MKC_VT_INTEGER: {
-      snprintf (buff, sz, "i:%d ", value->ival);
-      break;
-    }
-    case MKC_VT_STRING: {
-      snprintf (buff, sz, "s:%s ", value->sval);
+      snprintf (buff, sz, "%d", value->ival);
       break;
     }
     case MKC_VT_LIST: {
@@ -451,31 +454,30 @@ mkc_value_to_str (mkc_value_t *value, char *buff, size_t sz)
       char          tbuff [MKC_PATH_MAX];
       char          *p;
 
-      p = stpecpy (buff, buff + sz, "[");
+      p = stpecpy (buff, buff + sz, "[ ");
       tlist = value->list;
       mkc_list_iter_start (tlist, &iteridx);
       while ((lidx = mkc_list_iter_next (tlist, &iteridx)) != MKC_ITER_FINISH) {
         tvalue = mkc_list_get_by_idx (tlist, lidx);
         mkc_value_to_str (tvalue, tbuff, sizeof (tbuff));
+        if (mkc_var_is_string_type (tvalue)) {
+          p = stpecpy (p, buff + sz, "'");
+        }
         p = stpecpy (p, buff + sz, tbuff);
+        if (mkc_var_is_string_type (tvalue)) {
+          p = stpecpy (p, buff + sz, "'");
+        }
+        p = stpecpy (p, buff + sz, " ");
       }
-      p = stpecpy (p, buff + sz, "] ");
+      p = stpecpy (p, buff + sz, "]");
       break;
     }
-    case MKC_VT_VARIABLE: {
-      snprintf (buff, sz, "var:%s ", value->sval);
-      break;
-    }
-    case MKC_VT_ENV_VARIABLE: {
-      snprintf (buff, sz, "evar:%s ", value->sval);
-      break;
-    }
-    case MKC_VT_STATIC_STRING: {
-      snprintf (buff, sz, "ss:%s ", value->sval);
-      break;
-    }
+    case MKC_VT_STRING:
+    case MKC_VT_VARIABLE:
+    case MKC_VT_ENV_VARIABLE:
+    case MKC_VT_STATIC_STRING:
     case MKC_VT_QUOTED_STRING: {
-      snprintf (buff, sz, "qs:%s ", value->sval);
+      snprintf (buff, sz, "%s", value->sval);
       break;
     }
   }
@@ -573,9 +575,18 @@ mkc_var_list_copy (mkc_varlist_t *varlist, mkc_list_t *list)
 
     if (mkc_var_is_string_type (value)) {
       nvalue.sval = strdup (value->sval);
+fprintf (stderr, "copy: str %s\n", value->sval);
     }
     if (value->vtype == MKC_VT_LIST) {
+{
+char tbuff [MKC_PATH_MAX];
+mkc_value_to_str (value, tbuff, sizeof (tbuff));
+fprintf (stderr, "copy: list %s\n", tbuff);
+}
       nvalue.list = mkc_var_list_copy (varlist, value->list);
+    }
+    if (value->vtype == MKC_VT_INTEGER) {
+fprintf (stderr, "copy: int %d\n", value->ival);
     }
     mkc_list_set (nlist, &nvalue, sizeof (mkc_value_t), &loc);
   }

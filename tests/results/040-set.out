@@ -1,12 +1,12 @@
 == default general
-  AAA 111
-  aaa 444
+  AAA '111'
+  aaa '444'
   bbb 7
-  ccc ghi
-  ddd 222
-  fff 111
+  ccc 'ghi'
+  ddd '222'
+  fff '111'
   ggg 555
-  hhh abc
-  iii 333
-  v-1 a
-  v_2 b
+  hhh 'abc'
+  iii '333'
+  v-1 'a'
+  v_2 'b'

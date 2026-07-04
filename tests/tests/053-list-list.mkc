@@ -1,0 +1,8 @@
+# Copyright 2026 Brad Lanam Pleasant Hill CA
+
+set a [ 'a' 1 ];
+set b [ 'b' 2 ];
+set c ${a};
+set d ${b};
+set e [ ${a} ${b} ];
+mkcdebug printvar test;

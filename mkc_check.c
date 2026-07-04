@@ -45,7 +45,7 @@ typedef struct mkc_check_t {
   int               targvallocsz;
 } mkc_check_t;
 
-static char const * const mkctesthdrlist = "MKC_TV_TEST_HEADER_LIST";
+static char const * const MKC_C_TEST_HDR_LIST = "MKC_TV_TEST_HEADER_LIST";
 
 static void mkc_check_file_sub_copy (mkc_check_t *check, char *tbuff, size_t sz, const char *fname, const char *origsfx, const char *sfx);
 static void mkc_check_log_command (mkc_check_t *check, const char *tag);
@@ -76,7 +76,7 @@ mkc_check_init (mkc_profile_t *profiles, mkc_pvar_t *pvar,
   check->rxcomma = NULL;
 
   tpidx = mkc_profile_find (check->profiles,
-      MKC_PROF_INTERNAL_NAME, MKC_COMPILER_GENERAL);
+      MKC_C_PROF_INTERNAL_NAME, MKC_COMPILER_GENERAL);
   check->pidx_internal = tpidx;
   check->pidx_dflt_comp = pidx;
 
@@ -1072,9 +1072,9 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
   *pkgconfpath = '\0';
   /* if pkgconf is installed, pkg-config is a symlink. */
   /* use pkg-config by preference (pkgconf does not seem to work in macos macports) */
-  value = mkc_pvar_get_by_profidx (check->pvar, mkcpathpkgconfig, check->pidx_internal);
+  value = mkc_pvar_get_by_profidx (check->pvar, MKC_C_PATH_PKGCONFIG, check->pidx_internal);
   if (value == NULL) {
-    value = mkc_pvar_get_by_profidx (check->pvar, mkcpathpkgconf, check->pidx_internal);
+    value = mkc_pvar_get_by_profidx (check->pvar, MKC_C_PATH_PKGCONF, check->pidx_internal);
   }
   if (value != NULL) {
     mkc_pvar_value_get_str (check->pvar, value, pkgconfpath, MKC_PATH_MAX);
@@ -1244,7 +1244,7 @@ mkc_chk_create_header_var (mkc_check_t *check)
   }
   pidx = mkc_profile_get_active (check->profiles);
   mkc_pvar_profile_set_idx (check->pvar, check->pidx_internal);
-  mkc_pvar_set_str (check->pvar, mkctesthdrlist, tmp, MKC_VCTXT_TEMP);
+  mkc_pvar_set_str (check->pvar, MKC_C_TEST_HDR_LIST, tmp, MKC_VCTXT_TEMP);
   mkc_pvar_profile_set_idx (check->pvar, pidx);
 
   free (hdrtxt);

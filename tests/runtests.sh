@@ -3,7 +3,7 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 #
 
-. ./tests/testsetup.sh
+. ./tests/testutil.sh
 
 echo "-- using ${MKC}"
 

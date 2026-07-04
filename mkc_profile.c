@@ -85,7 +85,7 @@ mkc_profile_init (mkc_log_t *log, mkc_error_t *mkcerr, mkc_option_t *mkcoptions)
     return NULL;
   }
 
-  mkc_profile_create (profiles, MKC_PROF_INTERNAL_NAME,
+  mkc_profile_create (profiles, MKC_C_PROF_INTERNAL_NAME,
       MKC_COMPILER_GENERAL, MKC_PROF_TYPE_INTERNAL);
 
   /* create current/compiler */
@@ -632,7 +632,7 @@ mkc_profile_iter_hierarchy_next (mkc_profile_t *profiles,
     }
     case MKC_PROF_TYPE_CURRENT: {
       pidx = mkc_profile_find (profiles,
-          MKC_PROF_INTERNAL_NAME, MKC_COMPILER_GENERAL);
+          MKC_C_PROF_INTERNAL_NAME, MKC_COMPILER_GENERAL);
       profiter->ptype = MKC_PROF_TYPE_INTERNAL;
       profiter->pidx = pidx;
       break;
@@ -679,7 +679,7 @@ mkc_profile_is_current (mkc_profile_t *profiles, const char *reqnm)
   }
 
   tcompiler = profiles->dfltcompiler;
-  if (strcmp (reqnm, MKC_PROF_INTERNAL_NAME) == 0) {
+  if (strcmp (reqnm, MKC_C_PROF_INTERNAL_NAME) == 0) {
     tcompiler = MKC_COMPILER_GENERAL;
   }
   pidx = mkc_profile_find (profiles, reqnm, tcompiler);

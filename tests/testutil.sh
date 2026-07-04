@@ -37,11 +37,14 @@ dotest () {
       echo "   fail: test: $tfile"
     fi
   fi
+
+  return $trc
 }
 
 dodiff () {
   dfile=$1
   ofile=$2
+  trc=0
 
   diff=F
   if [ "$dfile" = "" ]; then
@@ -69,6 +72,8 @@ dodiff () {
       # echo "   ok: diff: $tnm"
     fi
   fi
+
+  return $trc
 }
 
 testfin () {

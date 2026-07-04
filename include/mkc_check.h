@@ -21,8 +21,10 @@ extern "C" {
 
 typedef struct mkc_attribute_t {
   mkc_list_t      * hdrlist;
+  mkc_list_t      * hdrlistalt;
   mkc_list_t      * compflags;
   mkc_list_t      * linkflags;
+  mkc_list_t      * linkflagsalt;
   mkc_list_t      * replacelist;
   char            * name;
   char            * method;

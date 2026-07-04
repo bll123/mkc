@@ -149,8 +149,10 @@
 %token T_ATTR_CONTEXT         "context"
 %token T_ATTR_DEFINE_ZERO     "define_zero"
 %token T_ATTR_HEADER          "header"
+%token T_ATTR_HEADER_ALT      "header_alternate"
 %token T_ATTR_INPUT           "input"
 %token T_ATTR_LINK_FLAGS      "link_flags"
+%token T_ATTR_LINK_FLAGS_ALT  "link_flags_alternate"
 %token T_ATTR_METHOD          "method"
 %token T_ATTR_NAME            "name"
 %token T_ATTR_NEGATE          "negate"
@@ -184,8 +186,8 @@
 %type <astnode> chkpackage chkshellcmd chksize chkstructmember chktype
 // attributes
 %type <astnode> attr attr_name attr_path attr_compiler attr_compilerflags
-%type <astnode> attr_context attr_define_zero attr_header attr_input
-%type <astnode> attr_linkflags attr_method
+%type <astnode> attr_context attr_define_zero attr_header attr_header_alt
+%type <astnode> attr_input attr_linkflags attr_linkflags_alt attr_method
 %type <astnode> attr_negate attr_output attr_replace attr_source
 
 // precedence rules: the lowest precedence comes first
@@ -315,11 +317,19 @@ attr[v]:
     {
       $v = $a;
     }
+  | attr_header_alt[a]
+    {
+      $v = $a;
+    }
   | attr_input[a]
     {
       $v = $a;
     }
   | attr_linkflags[a]
+    {
+      $v = $a;
+    }
+  | attr_linkflags_alt[a]
     {
       $v = $a;
     }
@@ -835,6 +845,15 @@ attr_header[v]:
     }
   ;
 
+/* a list of header files */
+attr_header_alt[v]:
+    T_ATTR_HEADER_ALT pathlist[l] T_SEMICOLON
+    {
+      $v = mkc_ast_mk_attr_header (ast, $l,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
 attr_input[v]:
     T_ATTR_INPUT varvalue[a] T_SEMICOLON
     {
@@ -853,6 +872,22 @@ attr_linkflags[v]:
           yylloc.first_line, yylloc.first_column);
     }
   | T_ATTR_LINK_FLAGS valuelist[l] T_SEMICOLON
+    {
+      $v = mkc_ast_mk_attr_linkflags (ast, $l,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+/* a list of link flags */
+attr_linkflags_alt[v]:
+    T_ATTR_LINK_FLAGS_ALT varvalue[a] T_SEMICOLON
+    {
+      $a = mkc_ast_mk_value_list (ast, NULL, $a,
+          yylloc.first_line, yylloc.first_column);
+      $v = mkc_ast_mk_attr_linkflags (ast, $a,
+          yylloc.first_line, yylloc.first_column);
+    }
+  | T_ATTR_LINK_FLAGS_ALT valuelist[l] T_SEMICOLON
     {
       $v = mkc_ast_mk_attr_linkflags (ast, $l,
           yylloc.first_line, yylloc.first_column);

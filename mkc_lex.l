@@ -164,8 +164,10 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 "context"                   { return T_ATTR_CONTEXT; }
 "define_zero"               { return T_ATTR_DEFINE_ZERO; }
 "header"                    { return T_ATTR_HEADER; }
+"header_alternate"          { return T_ATTR_HEADER_ALT; }
 "input"                     { return T_ATTR_INPUT; }
 "link_flags"                { return T_ATTR_LINK_FLAGS; }
+"link_flags_alternate"      { return T_ATTR_LINK_FLAGS_ALT; }
 "method"                    { return T_ATTR_METHOD; }
 "name"                      { return T_ATTR_NAME; }
 "negate"                    { return T_ATTR_NEGATE; }

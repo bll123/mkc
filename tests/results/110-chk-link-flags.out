@@ -1,2 +1,2 @@
 == default general
-  lf_fPIC -fPIC
+  lf_fPIC '-fPIC'

@@ -92,7 +92,7 @@ main (int argc, char *argv [])
   mkc_main_set_home ();
   mkc_main_set_exec_path (&argcopy);
 
-  mkcoptions.dfltprofile = strdup (MKC_PROF_DEFAULT_NAME);
+  mkcoptions.dfltprofile = strdup (MKC_C_PROF_DEFAULT_NAME);
   mkcoptions.compilertxt = NULL;
   mkcoptions.stage = NULL;
   mkcoptions.prefix = NULL;
