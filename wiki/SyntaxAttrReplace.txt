@@ -1,0 +1,16 @@
+[Wiki Home](Home)
+<br>[Syntax](Syntax)
+
+### Syntax: replace (attribute)
+
+The __replace__ attribute is used to configure replacement text.
+It is used in the [configure](SyntaxConfigure) statement.
+
+    replace <str> <value>;
+
+_value_ will be substituted for _str_ during input file processing.
+
+Repeatable: __yes__
+
+[Wiki Home](Home)
+<br>[Syntax](Syntax)

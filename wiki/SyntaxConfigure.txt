@@ -14,16 +14,34 @@ _project_\_config.h .
 If the __method__ attribute is _manual_, the input file is processed
 and all variable names are substituted.
 
+##### Manual Replacement Strings
+
+    configure {
+      method manual;
+      replace '@install-dir@' ${my_install_dir};
+      replace '@HAVE_MALLOC@' ${_function_malloc};
+    }
+
+When using the __manual__ method, replacement strings can be specified
+in the attribute list.  This is useful when configuring
+pkg-config&nbsp;(.pc) files or shell scripts that may have
+`${variable}` strings in them.
+
+When one or more __replace__ attributes are specified, the strings
+specified by the replacement attributes will be substituted, and no
+variable substitution will be performed.
+
 ##### Attributes
 
-* [method](SyntaxAttrrMethod) (required)
+* [method](SyntaxAttrMethod) (required)
 * [input](SyntaxAttrInput) (required for manual method)
 * [output](SyntaxAttrOutput) (required for manual method)
+* [replace](SyntaxAttrReplace) (manual only)
 * define_zero
 
 ##### Examples
 
-###### Example 1:
+###### Example 1: Auto, with define_zero
 
     project {
       name mkctest;
@@ -48,7 +66,7 @@ mkctest_config.h:
 
     #endif /* INC_MKCTEST_CONFIG_H */
 
-###### Example 2:
+###### Example 2: Auto, without define_zero
 
     project {
       name mkctest;
@@ -71,10 +89,9 @@ myconfig.h:
 
     #endif /* INC_MYCONFIG_H */
 
-###### Example 3:
+###### Example 3: Manual
 
     check_function malloc;
-    check_function junk;
 
     configure {
       method manual;
@@ -99,6 +116,41 @@ config.h:
 
     #define HAVE_MALLOC 1
     #define SHLIBEXT ".so"
+
+    #endif /* INC_CONFIG_H */
+
+###### Example 4: Manual, with __replace__ attribute
+
+    check_function malloc;
+    set something 'abc';
+
+    configure {
+      method manual;
+      replace '@malloc@' ${_function_malloc};
+      replace '@shlibext@' ${MKC_SHARED_LIBRARY_EXTENSION}
+      input 'config.h.in';
+      output 'config.h';
+    }
+
+config.h.in:
+
+    #ifndef INC_CONFIG_H
+    #define INC_CONFIG_H
+
+    #define HAVE_MALLOC @malloc@
+    #define SHLIBEXT "@shlibext@"
+    #define something "${something}"
+
+    #endif /* INC_CONFIG_H */
+
+config.h:
+
+    #ifndef INC_CONFIG_H
+    #define INC_CONFIG_H
+
+    #define HAVE_MALLOC 1
+    #define SHLIBEXT ".so"
+    #define something "${something}"
 
     #endif /* INC_CONFIG_H */
 

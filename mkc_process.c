@@ -168,6 +168,7 @@ static void mkc_process_dbg_print_var (mkc_process_t *process, const char *pname
 static void mkc_process_dbg_print_prof (mkc_process_t *process);
 static void mkc_process_dbg_print_path (mkc_process_t *process);
 static void mkc_process_dbg_print_int_var (mkc_process_t *process);
+static char * mkc_process_configure_substitute (mkc_process_t *process, char *data);
 
 
 MKC_NODISCARD
@@ -201,6 +202,7 @@ mkc_process_init (mkc_profile_t *profiles, mkc_log_t *log,
   process->attr.hdrlist = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, mkcerr);
   process->attr.compflags = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, mkcerr);
   process->attr.linkflags = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, mkcerr);
+  process->attr.replacelist = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, mkcerr);
   process->attr.name = NULL;
   process->attr.method = NULL;
   process->attr.vcontext = NULL;
@@ -274,6 +276,7 @@ mkc_process_free (mkc_process_t *process)
   mkc_list_free (process->attr.hdrlist);
   mkc_list_free (process->attr.compflags);
   mkc_list_free (process->attr.linkflags);
+  mkc_list_free (process->attr.replacelist);
 
   if (process->rxshellvar != NULL) {
 #if _have_regex
@@ -1106,6 +1109,26 @@ mkc_process_attr_link_flags (mkc_process_t *process, mkc_value_t *value)
     mkc_list_set (process->attr.linkflags, lvalue, sizeof (mkc_value_t), &loc);
   }
 
+  return;
+}
+
+void
+mkc_process_attr_replace (mkc_process_t *process,
+    mkc_value_t *str, mkc_value_t *name)
+{
+  mkc_listidx_t   loc;
+
+  if (process == NULL) {
+    return;
+  }
+
+  if (! mkc_context_check (process->context, MKC_CONTEXT_CONFIGURE)) {
+    mkc_error_set (process->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
+    return;
+  }
+
+  mkc_list_set (process->attr.replacelist, str, sizeof (mkc_value_t), &loc);
+  mkc_list_set (process->attr.replacelist, name, sizeof (mkc_value_t), &loc);
   return;
 }
 
@@ -2031,7 +2054,7 @@ mkc_process_configure_manual (mkc_process_t *process)
     mkc_error_set (process->mkcerr, MKC_ERR_FILE_NOT_FOUND, errno, process->attr.input);
     return;
   }
-  ndata = mkc_pvar_substitute (process->pvar, data, true, 0);
+  ndata = mkc_process_configure_substitute (process, data);
   free (data);
   fh = mkc_fopen (process->attr.output, "wb");
   if (fh == NULL) {
@@ -2277,12 +2300,22 @@ mkc_process_find_executables (mkc_process_t *process)
 static void
 mkc_process_attr_clear (mkc_process_t *process)
 {
-  mkc_list_free (process->attr.hdrlist);
-  process->attr.hdrlist = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, process->mkcerr);
-  mkc_list_free (process->attr.compflags);
-  process->attr.compflags = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, process->mkcerr);
-  mkc_list_free (process->attr.linkflags);
-  process->attr.linkflags = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, process->mkcerr);
+  if (mkc_list_size (process->attr.hdrlist) > 0) {
+    mkc_list_free (process->attr.hdrlist);
+    process->attr.hdrlist = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, process->mkcerr);
+  }
+  if (mkc_list_size (process->attr.compflags) > 0) {
+    mkc_list_free (process->attr.compflags);
+    process->attr.compflags = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, process->mkcerr);
+  }
+  if (mkc_list_size (process->attr.linkflags) > 0) {
+    mkc_list_free (process->attr.linkflags);
+    process->attr.linkflags = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, process->mkcerr);
+  }
+  if (mkc_list_size (process->attr.replacelist) > 0) {
+    mkc_list_free (process->attr.replacelist);
+    process->attr.replacelist = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, process->mkcerr);
+  }
   datafree (process->attr.name);
   process->attr.name = NULL;
   datafree (process->attr.method);
@@ -2517,4 +2550,47 @@ mkc_process_dbg_print_int_var (mkc_process_t *process)
   fprintf (stdout, "  header-type %d\n", process->headertype);
   fprintf (stdout, "  cache-loaded %d\n", process->cacheloaded);
   fprintf (stdout, "  cache-invalidated %d\n", process->cacheinvalidated);
+}
+
+static char *
+mkc_process_configure_substitute (mkc_process_t *process, char *data)
+{
+  char          *ndata = NULL;
+  mkc_list_t    *rl;
+
+  rl = process->attr.replacelist;
+  if (mkc_list_size (rl) == 0) {
+    ndata = mkc_pvar_substitute (process->pvar, data, true, 0);
+  } else {
+    mkc_listidx_t   iteridx;
+    mkc_listidx_t   lidx;
+
+    ndata = data;
+
+    mkc_list_iter_start (rl, &iteridx);
+    while ((lidx = mkc_list_iter_next (rl, &iteridx)) != MKC_ITER_FINISH) {
+      mkc_value_t   *valstr;
+      mkc_value_t   *valval;
+      char          str [MKC_VNAME_MAX];
+      char          val [MKC_VNAME_MAX];
+      char          *tdata;
+
+      valstr = mkc_list_get_by_idx (rl, lidx);
+      lidx = mkc_list_iter_next (rl, &iteridx);
+      if (lidx == MKC_ITER_FINISH) {
+        fprintf (stderr, "ERR: replace-list not paired\n");
+        mkc_error_set (process->mkcerr, MKC_ERR_FATAL_ERROR, 0, NULL);
+        return NULL;
+      }
+      valval = mkc_list_get_by_idx (rl, lidx);
+      mkc_pvar_value_get_str (process->pvar, valstr, str, sizeof (str));
+      mkc_pvar_value_get_str (process->pvar, valval, val, sizeof (val));
+      tdata = mkc_regex_replace_literal (ndata, str, val, process->mkcerr);
+      if (ndata != data) {
+        datafree (ndata);
+      }
+      ndata = tdata;
+    }
+  }
+  return ndata;
 }

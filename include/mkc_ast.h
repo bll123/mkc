@@ -61,6 +61,7 @@ MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_attribute (mkc_astmain_t *astmain, mkc_
 MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_attr_compflags (mkc_astmain_t *astmain, mkc_astnode_t *compflaglist, int32_t lineno, int colno);
 MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_attr_header (mkc_astmain_t *astmain, mkc_astnode_t *hdrlist, int32_t lineno, int colno);
 MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_attr_linkflags (mkc_astmain_t *astmain, mkc_astnode_t *linkflaglist, int32_t lineno, int colno);
+MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_attr_replace (mkc_astmain_t *astmain, mkc_astnode_t *valstr, mkc_astnode_t *value, int32_t lineno, int colno);
 
 MKC_NODISCARD mkc_astmain_t * mkc_ast_init (mkc_log_t *log, mkc_option_t *mkcoptions, mkc_error_t *mkcerr);
 int32_t mkc_ast_start (mkc_astmain_t *);

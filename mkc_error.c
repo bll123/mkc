@@ -23,6 +23,7 @@ static char const * const mkcerrormsg [] = {
   [MKC_ERR_DIR_UNABLE_TO_OPEN] = "directory could not be opened",
   [MKC_ERR_DIVIDE_BY_ZERO] = "division by zero",
   [MKC_ERR_EXCEEDS_STACK_SIZE] = "exceeds stack size",
+  [MKC_ERR_FATAL_ERROR] = "fatal error",
   [MKC_ERR_FILE_NOT_FOUND] = "file not found",
   [MKC_ERR_FILE_READ_ERROR] = "file read error",
   [MKC_ERR_FILE_WRITE_ERROR] = "file write error",

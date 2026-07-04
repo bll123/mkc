@@ -154,12 +154,18 @@ typedef struct mkc_ast_attr_linkflag_t {
   mkc_astnode_t     *linkflaglist;
 } mkc_ast_attr_linkflag_t;
 
+typedef struct mkc_ast_attr_replace_t {
+  mkc_astnode_t     *str;
+  mkc_astnode_t     *val;
+} mkc_ast_attr_replace_t;
+
 typedef struct mkc_astnode_t {
   union {
     mkc_ast_attribute_t         attribute;
     mkc_ast_attr_compflag_t     compflagattr;
     mkc_ast_attr_header_t       hdrattr;
     mkc_ast_attr_linkflag_t     linkflagattr;
+    mkc_ast_attr_replace_t      replaceattr;
     mkc_ast_check_t             checkstmt;
     mkc_ast_check_flag_t        checkflag;
     mkc_ast_chk_package_t       chkpackage;
@@ -1028,6 +1034,27 @@ mkc_ast_mk_attr_linkflags (mkc_astmain_t *astmain,
   return astnode;
 }
 
+MKC_NODISCARD
+mkc_astnode_t *
+mkc_ast_mk_attr_replace (mkc_astmain_t *astmain,
+    mkc_astnode_t *valstr, mkc_astnode_t *value,
+    int32_t lineno, int colno)
+{
+  mkc_astnode_t   *astnode;
+
+  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
+      "ast-mk: attr-replace\n");
+
+  astnode = mkc_astnode_init (astmain, MKC_T_ATTR_REPLACE, lineno, colno);
+  if (astnode == NULL) {
+    return NULL;
+  }
+
+  astnode->replaceattr.str = valstr;
+  astnode->replaceattr.val = value;
+  return astnode;
+}
+
 mkc_astnode_t *
 mkc_ast_mk_main (mkc_astmain_t *astmain,
     mkc_astnode_t *stmtlist,
@@ -1478,6 +1505,22 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
         break;
       }
       mkc_process_attr_link_flags (astmain->process, val);
+      break;
+    }
+
+    case MKC_T_ATTR_REPLACE: {
+      mkc_value_t   *str;
+      mkc_value_t   *val;
+
+      str = mkc_ast_get_value (astmain, astnode->replaceattr.str);
+      if (mkc_error_chk_err (astmain->mkcerr)) {
+        break;
+      }
+      val = mkc_ast_get_value (astmain, astnode->replaceattr.val);
+      if (mkc_error_chk_err (astmain->mkcerr)) {
+        break;
+      }
+      mkc_process_attr_replace (astmain->process, str, val);
       break;
     }
 

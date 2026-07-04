@@ -1,0 +1,25 @@
+# Copyright 2026 Brad Lanam Pleasant Hill CA
+
+project {
+  name mkctest;
+}
+
+check_function malloc;
+check_function fstat {
+  header sys/stat.h;
+}
+check_function sqrt {
+  header math.h;
+  link_flags '-lm';
+}
+check_function other;
+
+configure {
+  method manual;
+  replace '@malloc@' ${_function_malloc};
+  replace '@sqrt@' ${_function_sqrt};
+  replace '@fstat@' ${_function_fstat};
+  replace '@other@' ${_function_other};
+  input 'tests/data/306-configure-manual-replace.h';
+  output 'tests/tmp/306-configure-manual-replace.h';
+}

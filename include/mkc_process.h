@@ -46,6 +46,7 @@ void mkc_process_attr_comp_flags (mkc_process_t *process, mkc_value_t *value);
 void mkc_process_attr_header (mkc_process_t *process, mkc_value_t *value);
 void mkc_process_attr_link_flags (mkc_process_t *process, mkc_value_t *value);
 void mkc_process_attr_compiler (mkc_process_t *process, mkc_value_t *name);
+void mkc_process_attr_replace (mkc_process_t *process, mkc_value_t *str, mkc_value_t *name);
 
 mkc_value_t * mkc_process_get_value (mkc_process_t *process, const char *nm);
 

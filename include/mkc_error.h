@@ -24,6 +24,8 @@ typedef enum {
   MKC_ERR_DIR_UNABLE_TO_OPEN,
   MKC_ERR_DIVIDE_BY_ZERO,
   MKC_ERR_EXCEEDS_STACK_SIZE,
+  /* a catch-all for very serious internal errors */
+  MKC_ERR_FATAL_ERROR,
   MKC_ERR_FILE_NOT_FOUND,
   MKC_ERR_FILE_READ_ERROR,
   MKC_ERR_FILE_WRITE_ERROR,

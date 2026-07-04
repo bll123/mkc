@@ -9,10 +9,13 @@
 * Bug Fixes:
     * Fix relative path location for share directory.
     * Fix repeatable attributes.
+* New Features:
+    * Add 'check_header'.
+    * Add 'replace' attribute for 'configure'.
 
 -->
 
-**0.1 2026-7-3**
+**0.1 2026-7-3 pre-alpha**
 
 * First pre-alpha release.
     * Can only create configuration files.

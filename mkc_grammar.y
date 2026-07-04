@@ -144,8 +144,8 @@
 %token T_ADD_LINK_FLAG        "add_link_flag"
 
 // attributes
-%token T_ATTR_COMPILER        "compiler"
 %token T_ATTR_COMP_FLAGS      "compiler_flags"
+%token T_ATTR_COMPILER        "compiler"
 %token T_ATTR_CONTEXT         "context"
 %token T_ATTR_DEFINE_ZERO     "define_zero"
 %token T_ATTR_HEADER          "header"
@@ -156,6 +156,7 @@
 %token T_ATTR_NEGATE          "negate"
 %token T_ATTR_OUTPUT          "output"
 %token T_ATTR_PATH            "path"
+%token T_ATTR_REPLACE         "replace"
 %token T_ATTR_SOURCE          "source"
 
 %type <astnode> expr
@@ -182,8 +183,10 @@
 %type <astnode> chkdefine chkfunction chkheader chklinkflag
 %type <astnode> chkpackage chkshellcmd chksize chkstructmember chktype
 // attributes
-%type <astnode> attr attrname source header compilerflags linkflags negate
-%type <astnode> method input output compiler define_zero context attrpath
+%type <astnode> attr attr_name attr_path attr_compiler attr_compilerflags
+%type <astnode> attr_context attr_define_zero attr_header attr_input
+%type <astnode> attr_linkflags attr_method
+%type <astnode> attr_negate attr_output attr_replace attr_source
 
 // precedence rules: the lowest precedence comes first
 %nonassoc T_OP_RANGE
@@ -288,55 +291,59 @@ stmt[v]:
   ;
 
 attr[v]:
-    attrname[a]
+    attr_name[a]
     {
       $v = $a;
     }
-  | compiler[a]
+  | attr_compiler[a]
     {
       $v = $a;
     }
-  | compilerflags[a]
+  | attr_compilerflags[a]
     {
       $v = $a;
     }
-  | context[a]
+  | attr_context[a]
     {
       $v = $a;
     }
-  | define_zero[a]
+  | attr_define_zero[a]
     {
       $v = $a;
     }
-  | header[a]
+  | attr_header[a]
     {
       $v = $a;
     }
-  | input[a]
+  | attr_input[a]
     {
       $v = $a;
     }
-  | linkflags[a]
+  | attr_linkflags[a]
     {
       $v = $a;
     }
-  | method[a]
+  | attr_method[a]
     {
       $v = $a;
     }
-  | negate[a]
+  | attr_negate[a]
     {
       $v = $a;
     }
-  | output[a]
+  | attr_output[a]
     {
       $v = $a;
     }
-  | attrpath[a]
+  | attr_path[a]
     {
       $v = $a;
     }
-  | source[a]
+  | attr_replace[a]
+    {
+      $v = $a;
+    }
+  | attr_source[a]
     {
       $v = $a;
     }
@@ -777,102 +784,8 @@ chkshellcmd[v]:
 
 // attributes
 
-compiler[v]:
-    T_ATTR_COMPILER varvalue[a] T_SEMICOLON
-    {
-      $v = mkc_ast_mk_attribute (ast, $a, MKC_T_ATTR_COMPILER,
-          yylloc.first_line, yylloc.first_column);
-    }
-  ;
-
-/* context for set */
-context[v]:
-    T_ATTR_CONTEXT varvalue[a] T_SEMICOLON
-    {
-      $v = mkc_ast_mk_attribute (ast, $a, MKC_T_ATTR_CONTEXT,
-          yylloc.first_line, yylloc.first_column);
-    }
-  ;
-
-/* define-zero flag for configure */
-define_zero[v]:
-    T_ATTR_DEFINE_ZERO T_SEMICOLON
-    {
-      $v = mkc_ast_mk_attribute (ast, NULL, MKC_T_ATTR_DEFINE_ZERO,
-          yylloc.first_line, yylloc.first_column);
-    }
-  ;
-
-input[v]:
-    T_ATTR_INPUT varvalue[a] T_SEMICOLON
-    {
-      $v = mkc_ast_mk_attribute (ast, $a, MKC_T_ATTR_INPUT,
-          yylloc.first_line, yylloc.first_column);
-    }
-  ;
-
-/* method for configure/install/etc. */
-method[v]:
-    T_ATTR_METHOD varvalue[a] T_SEMICOLON
-    {
-      $v = mkc_ast_mk_attribute (ast, $a, MKC_T_ATTR_METHOD,
-          yylloc.first_line, yylloc.first_column);
-    }
-  ;
-
-/* a name is the user requested name that overrides the generated name */
-attrname[v]:
-    T_ATTR_NAME varname[a] T_SEMICOLON
-    {
-      $v = mkc_ast_mk_attribute (ast, $a, MKC_T_ATTR_NAME,
-          yylloc.first_line, yylloc.first_column);
-    }
-  ;
-
-/* negation flag for compiler-flag check */
-negate[v]:
-    T_ATTR_NEGATE T_SEMICOLON
-    {
-      $v = mkc_ast_mk_attribute (ast, NULL, MKC_T_ATTR_NEGATE,
-          yylloc.first_line, yylloc.first_column);
-    }
-  ;
-
-output[v]:
-    T_ATTR_OUTPUT varvalue[a] T_SEMICOLON
-    {
-      $v = mkc_ast_mk_attribute (ast, $a, MKC_T_ATTR_OUTPUT,
-          yylloc.first_line, yylloc.first_column);
-    }
-  ;
-
-attrpath[v]:
-    T_ATTR_PATH pathname[a] T_SEMICOLON
-    {
-      $v = mkc_ast_mk_attribute (ast, $a, MKC_T_ATTR_PATH,
-          yylloc.first_line, yylloc.first_column);
-    }
-  ;
-
-/* a list of source files */
-source[v]:
-    T_ATTR_SOURCE pathlist[l] T_SEMICOLON
-    {
-      $v = NULL;
-    }
-  ;
-
-/* a list of header files */
-header[v]:
-    T_ATTR_HEADER pathlist[l] T_SEMICOLON
-    {
-      $v = mkc_ast_mk_attr_header (ast, $l,
-          yylloc.first_line, yylloc.first_column);
-    }
-  ;
-
 /* a list of compiler flags */
-compilerflags[v]:
+attr_compilerflags[v]:
     T_ATTR_COMP_FLAGS varvalue[a] T_SEMICOLON
     {
       $a = mkc_ast_mk_value_list (ast, NULL, $a,
@@ -887,8 +800,51 @@ compilerflags[v]:
     }
   ;
 
+attr_compiler[v]:
+    T_ATTR_COMPILER varvalue[a] T_SEMICOLON
+    {
+      $v = mkc_ast_mk_attribute (ast, $a, MKC_T_ATTR_COMPILER,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+/* context for set */
+attr_context[v]:
+    T_ATTR_CONTEXT varvalue[a] T_SEMICOLON
+    {
+      $v = mkc_ast_mk_attribute (ast, $a, MKC_T_ATTR_CONTEXT,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+/* define-zero flag for configure */
+attr_define_zero[v]:
+    T_ATTR_DEFINE_ZERO T_SEMICOLON
+    {
+      $v = mkc_ast_mk_attribute (ast, NULL, MKC_T_ATTR_DEFINE_ZERO,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+/* a list of header files */
+attr_header[v]:
+    T_ATTR_HEADER pathlist[l] T_SEMICOLON
+    {
+      $v = mkc_ast_mk_attr_header (ast, $l,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+attr_input[v]:
+    T_ATTR_INPUT varvalue[a] T_SEMICOLON
+    {
+      $v = mkc_ast_mk_attribute (ast, $a, MKC_T_ATTR_INPUT,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
 /* a list of link flags */
-linkflags[v]:
+attr_linkflags[v]:
     T_ATTR_LINK_FLAGS varvalue[a] T_SEMICOLON
     {
       $a = mkc_ast_mk_value_list (ast, NULL, $a,
@@ -900,6 +856,65 @@ linkflags[v]:
     {
       $v = mkc_ast_mk_attr_linkflags (ast, $l,
           yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+/* method for configure/install/etc. */
+attr_method[v]:
+    T_ATTR_METHOD varvalue[a] T_SEMICOLON
+    {
+      $v = mkc_ast_mk_attribute (ast, $a, MKC_T_ATTR_METHOD,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+/* a name is the user requested name that overrides the generated name */
+attr_name[v]:
+    T_ATTR_NAME varname[a] T_SEMICOLON
+    {
+      $v = mkc_ast_mk_attribute (ast, $a, MKC_T_ATTR_NAME,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+/* negation flag for compiler-flag check */
+attr_negate[v]:
+    T_ATTR_NEGATE T_SEMICOLON
+    {
+      $v = mkc_ast_mk_attribute (ast, NULL, MKC_T_ATTR_NEGATE,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+attr_output[v]:
+    T_ATTR_OUTPUT varvalue[a] T_SEMICOLON
+    {
+      $v = mkc_ast_mk_attribute (ast, $a, MKC_T_ATTR_OUTPUT,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+attr_path[v]:
+    T_ATTR_PATH pathname[a] T_SEMICOLON
+    {
+      $v = mkc_ast_mk_attribute (ast, $a, MKC_T_ATTR_PATH,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+attr_replace[v]:
+    T_ATTR_REPLACE varvalue[a] varvalue[b] T_SEMICOLON
+    {
+      $v = mkc_ast_mk_attr_replace (ast, $a, $b,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+/* a list of source files */
+attr_source[v]:
+    T_ATTR_SOURCE pathlist[l] T_SEMICOLON
+    {
+      $v = NULL;
     }
   ;
 
