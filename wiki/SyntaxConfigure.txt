@@ -16,9 +16,9 @@ and all variable names are substituted.
 
 ##### Attributes
 
-* [method](SyntaxMethod) (required)
-* [input](SyntaxInput) (required for manual method)
-* [output](SyntaxOutput) (required for manual method)
+* [method](SyntaxAttrrMethod) (required)
+* [input](SyntaxAttrInput) (required for manual method)
+* [output](SyntaxAttrOutput) (required for manual method)
 * define_zero
 
 ##### Examples

@@ -45,6 +45,7 @@ static mkc_err_code_t mkc_cleanup (mkc_astmain_t *astmain, argcopy_t *argcopy, m
 static int mkc_main_set_dflt_profile (const char *profnm, mkc_error_t *mkcerr);
 void mkc_main_set_home (void);
 void mkc_main_set_exec_path (argcopy_t *argcopy);
+static void mkc_main_print_version (void);
 
 int
 main (int argc, char *argv [])
@@ -123,6 +124,8 @@ main (int argc, char *argv [])
         break;
       }
       case 'v': {
+        mkc_main_print_version ();
+        exit (0);
         break;
       }
       case 1: {
@@ -413,3 +416,8 @@ mkc_main_set_exec_path (argcopy_t *argcopy)
   mkc_path_set_dir (MKC_DIR_PREFIX, tbuff);
 }
 
+static void
+mkc_main_print_version (void)
+{
+  fprintf (stdout, "mkc version %s\n", VERSION);
+}

@@ -9,12 +9,12 @@
 
 Check statements may allow the following attribute statements:
 
-* [compiler_flags](SyntaxCompileFlag)
-* [header](SyntaxHeader)
-* [link_flags](SyntaxLinkFlag)
-* [name](SyntaxName)
+* [compiler_flags](SyntaxAttrCompileFlag)
+* [header](SyntaxAttrHeader)
+* [link_flags](SyntaxAttrLinkFlag)
+* [name](SyntaxAttrName)
 * [negate](SyntaxCheckCompilerFlag)
-* [path](SyntaxPath)
+* [path](SyntaxAttrPath)
 
 ##### Setting Required Headers for a Check
 
@@ -61,6 +61,7 @@ statement.
 * [Check Constant](SyntaxCheckConstant)
 * [Check Define](SyntaxCheckDefine)
 * [Check Function](SyntaxCheckFunction)
+* [Check Header](SyntaxCheckHeader)
 * [Check/Add Link Flag](SyntaxCheckLinkFlag)
 * [Check Package](SyntaxCheckPackage)
 * [Check Size](SyntaxCheckSize)

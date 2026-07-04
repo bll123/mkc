@@ -19,8 +19,8 @@ The default compiler is defined with the [compiler](SyntaxCompiler) attribute.
 
 ##### Attributes
 
-* [name](SyntaxName) (required)
-* [compiler](SyntaxCompiler)
+* [name](SyntaxAttrName) (required)
+* [compiler](SyntaxAttrCompiler)
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

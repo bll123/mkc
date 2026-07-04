@@ -38,10 +38,10 @@ Adds a compiler flag without any check for validity.
 
 ##### Attributes
 
-* [header](SyntaxHeader)
-* [name](SyntaxName)
+* [header](SyntaxAttrHeader)
+* [name](SyntaxAttrName)
 * negate
-* [compiler_flags](SyntaxCompileFlag)
+* [compiler_flags](SyntaxAttrCompileFlag)
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

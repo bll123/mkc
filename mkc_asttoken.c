@@ -23,6 +23,7 @@ char const * const typenames [MKC_T_MAX] = {
   [MKC_T_CHK_CONST] = "constant",
   [MKC_T_CHK_DEFINE] = "define",
   [MKC_T_CHK_FUNCTION] = "function",
+  [MKC_T_CHK_HEADER] = "header",
   [MKC_T_CHK_LINK_FLAG] = "link flag",
   [MKC_T_CHK_PACKAGE] = "package",
   [MKC_T_CHK_SHELL_EXTRACT] = "shell_extract",

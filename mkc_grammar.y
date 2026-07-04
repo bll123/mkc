@@ -178,10 +178,9 @@
 %type <astnode> printstmt setstmt configurestmt projectstmt loadcachestmt
 %type <astnode> profilestmt markstmt
 // checks
-%type <astnode> checkcommand chkcompflag chklinkflag
-%type <astnode> chksize chktype chkstructmember chkargcount
-%type <astnode> chkfunction chkdefine chkconst chkpackage
-%type <astnode> chkshellcmd
+%type <astnode> checkcommand chkargcount chkcompflag chkconst
+%type <astnode> chkdefine chkfunction chkheader chklinkflag
+%type <astnode> chkpackage chkshellcmd chksize chkstructmember chktype
 // attributes
 %type <astnode> attr attrname source header compilerflags linkflags negate
 %type <astnode> method input output compiler define_zero context attrpath
@@ -373,6 +372,14 @@ checkcommand[v]:
     {
       $v = $a;
     }
+  | chkheader[a]
+    {
+      $v = $a;
+    }
+  | chkfunction[a]
+    {
+      $v = $a;
+    }
   | chklinkflag[a]
     {
       $v = $a;
@@ -381,11 +388,11 @@ checkcommand[v]:
     {
       $v = $a;
     }
-  | chksize[a]
+  | chkshellcmd[a]
     {
       $v = $a;
     }
-  | chktype[a]
+  | chksize[a]
     {
       $v = $a;
     }
@@ -393,11 +400,7 @@ checkcommand[v]:
     {
       $v = $a;
     }
-  | chkfunction[a]
-    {
-      $v = $a;
-    }
-  | chkshellcmd[a]
+  | chktype[a]
     {
       $v = $a;
     }
@@ -699,6 +702,14 @@ chkdefine[v]:
     T_CHK_DEFINE varvalue[a] stmtblock_or_semi[b]
     {
       $v = mkc_ast_mk_check (ast, $a, $b, MKC_T_CHK_DEFINE,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+chkheader[v]:
+    T_CHK_HEADER pathname[a] stmtblock_or_semi[b]
+    {
+      $v = mkc_ast_mk_check (ast, $a, $b, MKC_T_CHK_HEADER,
           yylloc.first_line, yylloc.first_column);
     }
   ;

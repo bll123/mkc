@@ -1,0 +1,27 @@
+[Wiki Home](Home)
+<br>[Syntax](Syntax)
+<br>[Checks](SyntaxCheck)
+
+### Check Header
+
+Checks if _header_ exists as a macro.
+
+    check_define <header>;
+    check_define <header> { <attribute-statements> }
+
+Generated Name: Prefix: __\_header\___
+<br>Example: \_header\_sys\_stat
+
+##### Examples
+
+    check_header sys/stat.h;
+
+##### Attributes
+
+* [header](SyntaxAttrHeader)
+* [name](SyntaxAttrName)
+* [compiler_flags](SyntaxAttrCompileFlag)
+
+[Wiki Home](Home)
+<br>[Syntax](Syntax)
+<br>[Checks](SyntaxCheck)

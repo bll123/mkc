@@ -33,6 +33,7 @@ if [[ $VERSFN -nt web/${project}.html ]]; then
   touch -r $VERSFN ${TMP}/index.html
 fi
 cp -p web/${project}.svg ${TMP}
+cp -p web/${project}.png ${TMP}
 
 if [[ ! -d $TMP ]]; then
   echo "no $TMP"

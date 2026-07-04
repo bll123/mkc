@@ -21,10 +21,10 @@ Generated Name: Prefix: __\_arg\_count\___
 
 ##### Attributes
 
-* [header](SyntaxHeader)
-* [name](SyntaxName)
-* [compiler_flags](SyntaxCompileFlag)
-* [link_flags](SyntaxLinkFlag)
+* [header](SyntaxAttrHeader)
+* [name](SyntaxAttrName)
+* [compiler_flags](SyntaxAttrCompileFlag)
+* [link_flags](SyntaxAttrLinkFlag)
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

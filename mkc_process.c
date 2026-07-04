@@ -985,7 +985,14 @@ mkc_process_attr_header (mkc_process_t *process, mkc_value_t *value)
     }
 
     lvalue = mkc_list_get_by_idx (value->list, lidx);
-    snprintf (tbuff, sizeof (tbuff), "#include <%s>\n", lvalue->sval);
+    if (process->headertype == MKC_HEADER_MODERN) {
+      snprintf (tbuff, sizeof (tbuff),
+          "#if __has_include (<%s>)\n"
+          "# include <%s>\n"
+          "#endif\n", lvalue->sval, lvalue->sval);
+    } else {
+      snprintf (tbuff, sizeof (tbuff), "#include <%s>\n", lvalue->sval);
+    }
     tlen = strlen (tbuff);
     hdrtxtlen += tlen;
     hdrtxt = realloc (hdrtxt, hdrtxtlen);
@@ -1169,6 +1176,21 @@ mkc_process_check (mkc_process_t *process, mkc_value_t *valconst,
       rc = mkc_chk_define (process->check, process->attr.currcompiler, txt);
       break;
     }
+    case MKC_T_CHK_FUNCTION: {
+      successtype = true;
+      rc = mkc_chk_function (process->check, process->attr.currcompiler, txt);
+      break;
+    }
+    case MKC_T_CHK_HEADER: {
+      successtype = true;
+      rc = mkc_chk_header (process->check, process->attr.currcompiler, txt);
+      break;
+    }
+    case MKC_T_CHK_PACKAGE: {
+      successtype = true;
+      rc = mkc_chk_package (process->check, process->attr.currcompiler, txt);
+      break;
+    }
     case MKC_T_CHK_SIZE: {
       valtype = true;
       rc = mkc_chk_size (process->check, process->attr.currcompiler, txt);
@@ -1177,16 +1199,6 @@ mkc_process_check (mkc_process_t *process, mkc_value_t *valconst,
     case MKC_T_CHK_TYPE: {
       successtype = true;
       rc = mkc_chk_type (process->check, process->attr.currcompiler, txt);
-      break;
-    }
-    case MKC_T_CHK_FUNCTION: {
-      successtype = true;
-      rc = mkc_chk_function (process->check, process->attr.currcompiler, txt);
-      break;
-    }
-    case MKC_T_CHK_PACKAGE: {
-      successtype = true;
-      rc = mkc_chk_package (process->check, process->attr.currcompiler, txt);
       break;
     }
     default: {

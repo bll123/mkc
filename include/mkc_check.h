@@ -57,6 +57,7 @@ int mkc_chk_compiler_flag (mkc_check_t *check, mkc_compiler_t compiler, const ch
 int mkc_chk_const (mkc_check_t *check, mkc_compiler_t compiler, const char *consttxt);
 int mkc_chk_define (mkc_check_t *check, mkc_compiler_t compiler, const char *def);
 int mkc_chk_function (mkc_check_t *check, mkc_compiler_t compiler, const char *funcname);
+int mkc_chk_header (mkc_check_t *check, mkc_compiler_t compiler, const char *header);
 int mkc_chk_link_flag (mkc_check_t *check, mkc_compiler_t compiler, const char *flag);
 int mkc_chk_package (mkc_check_t *check, mkc_compiler_t compiler, const char *pkg);
 int mkc_chk_size (mkc_check_t *check, mkc_compiler_t compiler, const char *type);

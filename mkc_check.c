@@ -674,6 +674,27 @@ mkc_chk_function (mkc_check_t *check, mkc_compiler_t compiler,
   return rc;
 }
 
+int
+mkc_chk_header (mkc_check_t *check,
+    mkc_compiler_t compiler, const char *header)
+{
+  int             rc;
+  mkc_profidx_t   opidx;
+
+  mkc_log (check->log, MKC_LOG_CHECK,
+      "== chk: header: %s\n", header);
+
+  opidx = mkc_profile_get_active (check->profiles);
+
+  mkc_pvar_profile_set_idx (check->pvar, check->pidx_internal);
+  mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_HEADER", header, MKC_VCTXT_TEMP);
+
+  mkc_pvar_profile_set_idx (check->pvar, opidx);
+
+  rc = mkc_compile_link (check, compiler, "c-header", NULL, NULL, 0);
+  mkc_chk_reset (check);
+  return rc;
+}
 
 int
 mkc_compile_only (mkc_check_t *check, mkc_compiler_t compiler,
@@ -974,6 +995,7 @@ mkc_check_file_sub_copy (mkc_check_t *check,
 
   snprintf (tfn, sizeof (tfn), "%s%s", fname, origsfx);
   mkc_path_build (MKC_PATH_MKC_TEMPLATES, fbuff, MKC_PATH_MAX, tfn, check->mkcerr);
+  mkc_log (check->log, MKC_LOG_CHECK, "filename: %s\n", fbuff);
   data = mkc_read_file (fbuff, &fsz, check->mkcerr);
   if (mkc_error_chk_err (check->mkcerr)) {
     free (fbuff);
@@ -1017,6 +1039,7 @@ mkc_check_log_command (mkc_check_t *check, const char *tag)
   if (targc + 1 != check->targc) {
     mkc_log (check->log, MKC_LOG_CHECK, "mismatch count %d %d\n", targc + 1, check->targc);
   }
+  mkc_log_flush (check->log);
 }
 
 static mkc_err_code_t

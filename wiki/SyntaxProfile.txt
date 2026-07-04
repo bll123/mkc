@@ -27,7 +27,7 @@ following order:
 
 ##### Attributes
 
-* [compiler](SyntaxCompiler)
+* [compiler](SyntaxAttrCompiler)
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

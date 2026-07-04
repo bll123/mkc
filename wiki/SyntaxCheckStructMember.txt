@@ -20,9 +20,9 @@ Generated Name: Prefix: __\_member\___
 
 ##### Attributes
 
-* [header](SyntaxHeader)
-* [name](SyntaxName)
-* [compiler_flags](SyntaxCompileFlag)
+* [header](SyntaxAttrHeader)
+* [name](SyntaxAttrName)
+* [compiler_flags](SyntaxAttrCompileFlag)
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

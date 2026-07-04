@@ -180,3 +180,9 @@ mkc_log_set_disp_filename (mkc_log_t *log, const char *fname)
     log->dispfname = strdup (fname);
   }
 }
+
+void
+mkc_log_flush (mkc_log_t *log)
+{
+  fflush (log->fh);
+}

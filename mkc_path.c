@@ -28,7 +28,7 @@ static char mkc_dirs [MKC_DIR_MAX][MKC_PATH_MAX] = {
 
 static bool gmkcpathinit = false;
 
-static void mkc_path_init (void);
+static void mkc_path_init (mkc_error_t *mkcerr);
 
 void
 mkc_path_build (mkc_path_t pathtype, char *buff, size_t sz,
@@ -36,7 +36,7 @@ mkc_path_build (mkc_path_t pathtype, char *buff, size_t sz,
 {
   char        *p = NULL;
 
-  mkc_path_init ();
+  mkc_path_init (mkcerr);
 
   switch (pathtype) {
     case MKC_PATH_CONFIG: {
@@ -110,12 +110,12 @@ mkc_path_set_dir (mkc_dir_t dir, const char *path)
 }
 
 static void
-mkc_path_init (void)
+mkc_path_init (mkc_error_t *mkcerr)
 {
   char        tbuff [MKC_PATH_MAX];
   char        *p = NULL;
   mkc_dir_t   dir;
-  bool        isdev = false;
+  bool        islocal = false;
 
   if (gmkcpathinit) {
     return;
@@ -123,21 +123,21 @@ mkc_path_init (void)
 
   /* set up the path to the mkc_files/ directory */
   /* if in bootstrap, use local relative paths */
-  /* if the development flag is set, use local relative paths */
+  /* if the templates/ directory is there, use local relative paths */
   dir = MKC_DIR_MKC_FILES;
 
   /* this is a special case for development purposes */
   p = stpecpy (tbuff, tbuff + sizeof (tbuff), mkc_dirs [MKC_DIR_EXEC]);
   p = stpecpy (p, tbuff + sizeof (tbuff), "/templates");
   if (mkc_is_directory (tbuff)) {
-    isdev = true;
+    islocal = true;
   }
 
-  if (isdev) {
-    /* development only */
+  if (islocal) {
+    /* the local flag overrides any share-directory that is set */
     stpecpy (mkc_dirs [dir], mkc_dirs [dir] + MKC_PATH_MAX, "mkc_files");
   }
-  if (*mkc_dirs [dir] == '\0' && ! isdev) {
+  if (*mkc_dirs [dir] == '\0' && ! islocal) {
     stpecpy (mkc_dirs [dir], mkc_dirs [dir] + MKC_PATH_MAX, "mkc_files");
   }
 
@@ -148,11 +148,11 @@ mkc_path_init (void)
   p = stpecpy (mkc_dirs [dir], mkc_dirs [dir] + MKC_PATH_MAX, MKC_DIR_SHARE);
   p = stpecpy (p, mkc_dirs [dir] + MKC_PATH_MAX, "/mkc");
 #endif
-  if (isdev) {
-    /* the development flag overrides any share-directory that is set */
-    stpecpy (mkc_dirs [dir], mkc_dirs [dir] + MKC_PATH_MAX, ".");
+  if (islocal) {
+    /* the local flag overrides any share-directory that is set */
+    stpecpy (mkc_dirs [dir], mkc_dirs [dir] + MKC_PATH_MAX, mkc_dirs [MKC_DIR_EXEC]);
   }
-  if (*mkc_dirs [dir] == '\0' && ! isdev) {
+  if (*mkc_dirs [dir] == '\0' && ! islocal) {
     p = stpecpy (mkc_dirs [dir], mkc_dirs [dir] + MKC_PATH_MAX, mkc_dirs [MKC_DIR_PREFIX]);
     p = stpecpy (p, mkc_dirs [dir] + MKC_PATH_MAX, "/share/mkc");
   }

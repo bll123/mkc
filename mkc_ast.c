@@ -1522,6 +1522,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
     case MKC_T_CHK_CONST:
     case MKC_T_CHK_DEFINE:
     case MKC_T_CHK_FUNCTION:
+    case MKC_T_CHK_HEADER:
     case MKC_T_CHK_PACKAGE:
     case MKC_T_CHK_SIZE:
     case MKC_T_CHK_TYPE: {

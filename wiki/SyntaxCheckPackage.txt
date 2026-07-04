@@ -36,8 +36,8 @@ Generated Name: Prefix: __\_package\___
 
 ##### Attributes
 
-* [name](SyntaxName)
-* [path](SyntaxPath)
+* [name](SyntaxAttrName)
+* [path](SyntaxAttrPath)
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)
