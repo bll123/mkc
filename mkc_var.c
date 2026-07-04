@@ -231,20 +231,13 @@ mkc_var_set (mkc_varlist_t *varlist,
   tvalue->vtype = nvtype;
 
   if (nvtype == MKC_VT_STRING) {
-fprintf (stderr, "var: set: str %s\n", value->sval);
     tvalue->sval = strdup (value->sval);
   }
   if (nvtype == MKC_VT_INTEGER) {
-fprintf (stderr, "var: set: int %d\n", value->ival);
     tvalue->ival = value->ival;
   }
   if (nvtype == MKC_VT_LIST) {
     tvalue->list = mkc_var_list_copy (varlist, value->list);
-{
-char tbuff [MKC_PATH_MAX];
-mkc_value_to_str (value, tbuff, sizeof (tbuff));
-fprintf (stderr, "var: set: list %s\n", tbuff);
-}
   }
 
   return rc;
@@ -574,19 +567,11 @@ mkc_var_list_copy (mkc_varlist_t *varlist, mkc_list_t *list)
     memcpy (&nvalue, value, sizeof (mkc_value_t));
 
     if (mkc_var_is_string_type (value)) {
+      nvalue.vtype = MKC_VT_STRING;
       nvalue.sval = strdup (value->sval);
-fprintf (stderr, "copy: str %s\n", value->sval);
     }
     if (value->vtype == MKC_VT_LIST) {
-{
-char tbuff [MKC_PATH_MAX];
-mkc_value_to_str (value, tbuff, sizeof (tbuff));
-fprintf (stderr, "copy: list %s\n", tbuff);
-}
       nvalue.list = mkc_var_list_copy (varlist, value->list);
-    }
-    if (value->vtype == MKC_VT_INTEGER) {
-fprintf (stderr, "copy: int %d\n", value->ival);
     }
     mkc_list_set (nlist, &nvalue, sizeof (mkc_value_t), &loc);
   }

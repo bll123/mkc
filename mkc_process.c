@@ -133,8 +133,8 @@ static char const * const MKC_C_TEMPVARPFX = "MKC_TV_";
 static size_t mkctvpfxlen = 0;
 static char const * const MKC_C_IVARMACRO = "MKC_I_VARIADIC_MACRO";
 static char const * const MKC_C_PROJECTNAME = "MKC_PROJECT_NAME";
-static char const * const MKC_C_PATHNAME = "MKC_PATH";
-/* these are duplicated from mkc_profile.c */
+static char const * const MKC_C_PATH_NAME = "MKC_PATH";
+/* these are duplicated */
 /* so that the static aggregator can be initialized */
 static char const * const MKC_C_P_PKGCONF = "MKC_PATH_PKGCONF";
 static char const * const MKC_C_P_PKGCONFig = "MKC_PATH_PKG_CONFIG";
@@ -169,6 +169,7 @@ static void mkc_process_dbg_print_prof (mkc_process_t *process);
 static void mkc_process_dbg_print_path (mkc_process_t *process);
 static void mkc_process_dbg_print_int_var (mkc_process_t *process);
 static char * mkc_process_configure_substitute (mkc_process_t *process, char *data);
+static void mkc_process_substitutions (mkc_process_t *process, mkc_value_t *value);
 
 
 MKC_NODISCARD
@@ -763,9 +764,7 @@ mkc_process_stmt_set (mkc_process_t *process,
     mkc_value_t *valnm, mkc_value_t *value)
 {
   char              nm [MKC_VNAME_MAX];
-  char              buff [MKC_PATH_MAX];
   mkc_value_t       tvalue;
-  mkc_value_t       *nvalue = NULL;
   mkc_err_code_t    trc = MKC_ERR_FAILURE;
   mkc_var_ctxt_t    vctxt = MKC_VCTXT_USER_DISABLE;
 
@@ -786,25 +785,9 @@ mkc_process_stmt_set (mkc_process_t *process,
     return trc;
   }
 
-  if (value->vtype == MKC_VT_ENV_VARIABLE ||
-      value->vtype == MKC_VT_QUOTED_STRING) {
-    /* need to get the actual value */
-    mkc_pvar_value_get_str (process->pvar, value, buff, sizeof (buff));
-    tvalue.sval = buff;
-    tvalue.vtype = MKC_VT_STRING;
-    value = &tvalue;
-  }
-  if (value->vtype == MKC_VT_VARIABLE) {
-    char    *tstr;
 
-    /* substitution must be run on the variable before the value is fetched */
-    tstr = mkc_pvar_substitute (process->pvar, value->sval, true, 0);
-    if (tstr != NULL) {
-      nvalue = mkc_process_get_value (process, tstr);
-      value = nvalue;
-      free (tstr);
-    }
-  }
+  memcpy (&tvalue, value, sizeof (mkc_value_t));
+  mkc_process_substitutions (process, &tvalue);
 
   if (process->attr.vcontext != NULL) {
     const char    *tvc;
@@ -829,11 +812,9 @@ mkc_process_stmt_set (mkc_process_t *process,
     }
   }
 
-  if (value != NULL) {
-    trc = mkc_pvar_set (process->pvar, nm, value, vctxt);
-    if (trc == MKC_OK_CHANGE) {
-      process->cacheinvalidated = true;
-    }
+  trc = mkc_pvar_set (process->pvar, nm, &tvalue, vctxt);
+  if (trc == MKC_OK_CHANGE) {
+    process->cacheinvalidated = true;
   }
 
   mkc_process_attr_clear (process);
@@ -1632,7 +1613,7 @@ mkc_process_save_cache (mkc_process_t *process)
   }
   opidx = mkc_profile_get_active (process->profiles);
 
-  tbuff = malloc (MKC_PATH_MAX);
+  tbuff = malloc (MKC_SMALL_BUFF_SZ);
   if (tbuff == NULL) {
     mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
     return;
@@ -1690,7 +1671,7 @@ mkc_process_save_cache (mkc_process_t *process)
       }
 
       value = mkc_pvar_get_by_idx (pvar, vidx);
-      mkc_value_to_str (value, tbuff, MKC_PATH_MAX);
+      mkc_value_to_str (value, tbuff, MKC_SMALL_BUFF_SZ);
       if (value->vtype == MKC_VT_INTEGER ||
           value->vtype == MKC_VT_LIST) {
         fprintf (fh, "  %sset %s %s ", indent, nm, tbuff);
@@ -2196,7 +2177,6 @@ mkc_process_find_executables (mkc_process_t *process)
   mkc_prog_chk_t  *chk;
   char            *p;
   mkc_list_t      *pathlist;
-  mkc_listidx_t   loc = MKC_LIST_NOTFOUND;
   mkc_listidx_t   iteridx;
   mkc_listidx_t   lidx;
   char            *tokstr;
@@ -2231,11 +2211,14 @@ mkc_process_find_executables (mkc_process_t *process)
 
   tpath = mkc_strtok (tbuff, pathdelim, &tokstr);
   while (tpath != NULL) {
-    char    *tmp;
+    char          *tmp;
+    mkc_value_t   tvalue;
 
     tmp = strdup (tpath);
     mkc_normalize_path (tmp, strlen (tmp));
-    mkc_list_append (pathlist, &tmp, sizeof (char *), &loc);
+    tvalue.sval = tmp;
+    tvalue.vtype = MKC_VT_STRING;
+    mkc_list_append (pathlist, &tvalue, sizeof (mkc_value_t));
     tpath = mkc_strtok (NULL, pathdelim, &tokstr);
   }
 
@@ -2243,10 +2226,10 @@ mkc_process_find_executables (mkc_process_t *process)
   while (chk->program != NULL) {
     mkc_list_iter_start (pathlist, &iteridx);
     while ((lidx = mkc_list_iter_next (pathlist, &iteridx)) != MKC_ITER_FINISH) {
-      char    **tmp;
+      mkc_value_t   *lvalue;
 
-      tmp = mkc_list_get_by_idx (pathlist, lidx);
-      tpath = *tmp;
+      lvalue = mkc_list_get_by_idx (pathlist, lidx);
+      tpath = lvalue->sval;
 
       p = stpecpy (testpath, testpath + MKC_PATH_MAX, tpath);
       p = stpecpy (p, testpath + MKC_PATH_MAX, "/");
@@ -2263,7 +2246,7 @@ mkc_process_find_executables (mkc_process_t *process)
   }
 
   mkc_pvar_profile_set_idx (process->pvar, process->pidx_internal);
-  mkc_pvar_set_list (process->pvar, MKC_C_PATHNAME, pathlist, MKC_VCTXT_ENV);
+  mkc_pvar_set_list (process->pvar, MKC_C_PATH_NAME, pathlist, MKC_VCTXT_ENV);
 
   free (tbuff);
   free (testpath);
@@ -2369,7 +2352,7 @@ mkc_process_dbg_print_var (mkc_process_t *process, const char *pname)
   mkc_profidx_t   opidx;
   char            *tbuff;
 
-  tbuff = malloc (MKC_PATH_MAX);
+  tbuff = malloc (MKC_SMALL_BUFF_SZ);
   if (tbuff == NULL) {
     mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
     return;
@@ -2436,7 +2419,7 @@ mkc_process_dbg_print_var (mkc_process_t *process, const char *pname)
         }
       }
 
-      mkc_value_to_str (value, tbuff, MKC_PATH_MAX);
+      mkc_value_to_str (value, tbuff, MKC_SMALL_BUFF_SZ);
       if (value->vtype == MKC_VT_INTEGER ||
           value->vtype == MKC_VT_LIST) {
         fprintf (stdout, "  %s %s\n", nm, tbuff);
@@ -2542,4 +2525,62 @@ mkc_process_configure_substitute (mkc_process_t *process, char *data)
     }
   }
   return ndata;
+}
+
+static void
+mkc_process_substitutions (mkc_process_t *process, mkc_value_t *value)
+{
+  if (value->vtype == MKC_VT_ENV_VARIABLE ||
+      value->vtype == MKC_VT_QUOTED_STRING) {
+    char    *buff;
+
+    buff = malloc (MKC_PATH_MAX);
+    if (buff == NULL) {
+      mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+      return;
+    }
+
+    /* need to get the actual value */
+    mkc_pvar_value_get_str (process->pvar, value, buff, MKC_PATH_MAX);
+    value->sval = buff;
+    value->vtype = MKC_VT_STRING;
+  }
+  if (value->vtype == MKC_VT_VARIABLE) {
+    char          *tstr;
+    mkc_value_t   *nvalue;
+
+    /* substitution must be run on the variable before the value is fetched */
+    tstr = mkc_pvar_substitute (process->pvar, value->sval, true, 0);
+    if (tstr != NULL) {
+      nvalue = mkc_process_get_value (process, tstr);
+      memcpy (value, nvalue, sizeof (mkc_value_t));
+      free (tstr);
+    }
+  }
+  if (value->vtype == MKC_VT_LIST) {
+    mkc_listidx_t     iteridx;
+    mkc_listidx_t     lidx;
+    mkc_list_t        *nlist;
+
+    /* each value in a list must be processed, as the value in the list */
+    /* may be a variable */
+
+    nlist = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, process->mkcerr);
+    mkc_list_iter_start (value->list, &iteridx);
+    while ((lidx = mkc_list_iter_next (value->list, &iteridx)) != MKC_ITER_FINISH) {
+      mkc_value_t   *lvalue;
+      mkc_value_t   tvalue;
+      mkc_listidx_t loc = MKC_LIST_NOTFOUND;
+
+      if (mkc_error_chk_err (process->mkcerr)) {
+        break;
+      }
+      lvalue = mkc_list_get_by_idx (value->list, lidx);
+      memcpy (&tvalue, lvalue, sizeof (mkc_value_t));
+      mkc_process_substitutions (process, &tvalue);
+      mkc_list_set (nlist, &tvalue, sizeof (mkc_value_t), &loc);
+    }
+
+    value->list = nlist;
+  }
 }

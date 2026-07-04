@@ -410,7 +410,6 @@ mkc_ast_mk_value_list (mkc_astmain_t *astmain,
 
   value = &vala->value.value;
   mkc_list_set (tlist, value, sizeof (mkc_value_t), &loc);
-fprintf (stderr, "ast: list: sz: %d\n", mkc_list_size (tlist));
 
   return listnode;
 }

@@ -1,0 +1,7 @@
+== default general
+  a [ 'a' 1 ]
+  b [ 'b' 2 ]
+  c [ 'a' 1 ]
+  d [ 'b' 2 ]
+  e [ 'a' 1 ]
+  f [ [ 'a' 1 ] [ 'b' 2 ] ]

@@ -258,7 +258,7 @@ mkc_profile_local_create (mkc_profile_t *profiles)
   }
 
   pentry = mkc_list_append (profiles->list, &tentry,
-      sizeof (mkc_prof_entry_t), &loc);
+      sizeof (mkc_prof_entry_t));
   if (pentry == NULL) {
     mkc_error_set (profiles->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
     return MKC_ERR_FAILURE;
