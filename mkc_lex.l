@@ -159,15 +159,15 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 "add_compile_flag"          { return T_ADD_COMP_FLAG; }
 "add_link_flag"             { return T_ADD_LINK_FLAG; }
 
+"alternate"                 { return T_ATTR_ALTERNATE; }
 "compiler"                  { return T_ATTR_COMPILER; }
 "compiler_flags"            { return T_ATTR_COMP_FLAGS; }
 "context"                   { return T_ATTR_CONTEXT; }
 "define_zero"               { return T_ATTR_DEFINE_ZERO; }
 "header"                    { return T_ATTR_HEADER; }
-"header_alternate"          { return T_ATTR_HEADER_ALT; }
 "input"                     { return T_ATTR_INPUT; }
+"library_version"           { return T_ATTR_LIBRARY_VERSION; }
 "link_flags"                { return T_ATTR_LINK_FLAGS; }
-"link_flags_alternate"      { return T_ATTR_LINK_FLAGS_ALT; }
 "method"                    { return T_ATTR_METHOD; }
 "name"                      { return T_ATTR_NAME; }
 "negate"                    { return T_ATTR_NEGATE; }
@@ -175,6 +175,7 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 "path"                      { return T_ATTR_PATH; }
 "replace"                   { return T_ATTR_REPLACE; }
 "source"                    { return T_ATTR_SOURCE; }
+"version"                   { return T_ATTR_VERSION; }
 
 ({DIGIT}+)          {
     yylval->sval = strdup (yytext);

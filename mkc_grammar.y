@@ -144,15 +144,15 @@
 %token T_ADD_LINK_FLAG        "add_link_flag"
 
 // attributes
+%token T_ATTR_ALTERNATE       "alternate"
 %token T_ATTR_COMP_FLAGS      "compiler_flags"
 %token T_ATTR_COMPILER        "compiler"
 %token T_ATTR_CONTEXT         "context"
 %token T_ATTR_DEFINE_ZERO     "define_zero"
 %token T_ATTR_HEADER          "header"
-%token T_ATTR_HEADER_ALT      "header_alternate"
 %token T_ATTR_INPUT           "input"
+%token T_ATTR_LIBRARY_VERSION "library_version"
 %token T_ATTR_LINK_FLAGS      "link_flags"
-%token T_ATTR_LINK_FLAGS_ALT  "link_flags_alternate"
 %token T_ATTR_METHOD          "method"
 %token T_ATTR_NAME            "name"
 %token T_ATTR_NEGATE          "negate"
@@ -160,6 +160,7 @@
 %token T_ATTR_PATH            "path"
 %token T_ATTR_REPLACE         "replace"
 %token T_ATTR_SOURCE          "source"
+%token T_ATTR_VERSION         "version"
 
 %type <astnode> expr
 %type <astnode> integer stringvalue basicvalue
@@ -175,20 +176,20 @@
 %type <astnode> stmtblock_or_semi stmtblock stmtlist stmt
 %type <astnode> directive
 // program control
-%type <astnode> ifexpr ifstmt elseif elseclause
-%type <astnode> foreachstmt whilestmt function loopcontrol
+%type <astnode> ifexpr stmt_if elseif elseclause loopcontrol
+%type <astnode> stmt_foreach stmt_function stmt_while
 // commands
-%type <astnode> printstmt setstmt configurestmt projectstmt loadcachestmt
-%type <astnode> profilestmt markstmt
+%type <astnode> stmt_config stmt_loadcache
+%type <astnode> stmt_mark stmt_print stmt_profile stmt_project stmt_set
 // checks
-%type <astnode> checkcommand chkargcount chkcompflag chkconst
-%type <astnode> chkdefine chkfunction chkheader chklinkflag
-%type <astnode> chkpackage chkshellcmd chksize chkstructmember chktype
+%type <astnode> checkcommand chk_argcount chk_compflag chk_const
+%type <astnode> chk_define chk_function chk_header chk_linkflag
+%type <astnode> chk_member chk_package chk_shellcmc chk_size chk_type
 // attributes
-%type <astnode> attr attr_name attr_path attr_compiler attr_compilerflags
-%type <astnode> attr_context attr_define_zero attr_header attr_header_alt
-%type <astnode> attr_input attr_linkflags attr_linkflags_alt attr_method
-%type <astnode> attr_negate attr_output attr_replace attr_source
+%type <astnode> attr attr_alternate attr_name attr_path attr_compiler
+%type <astnode> attr_compilerflags attr_context attr_define_zero attr_header
+%type <astnode> attr_input attr_libversion attr_linkflags attr_method
+%type <astnode> attr_negate attr_output attr_replace attr_source attr_version
 
 // precedence rules: the lowest precedence comes first
 %nonassoc T_OP_RANGE
@@ -222,29 +223,29 @@ stmt[v]:
       $v = mkc_ast_mk_exit (ast, $b,
           yylloc.first_line, yylloc.first_column);
     }
-  | ifstmt[a]
+  | stmt_if[a]
     {
       $v = $a;
     }
-  | foreachstmt[a]
+  | stmt_foreach[a]
     {
       $v = $a;
     }
-  | whilestmt[a]
+  | stmt_while[a]
     {
       $v = $a;
     }
-  | function
+  | stmt_function
     {
       $v = NULL;
     }
 // internal statements
-  | loadcachestmt[a]
+  | stmt_loadcache[a]
     {
       $v = $a;
     }
 // statements
-  | configurestmt[a]
+  | stmt_config[a]
     {
       $v = $a;
     }
@@ -256,23 +257,23 @@ stmt[v]:
     {
       $v = NULL;
     }
-  | markstmt[a]
+  | stmt_mark[a]
     {
       $v = $a;
     }
-  | printstmt[a]
+  | stmt_print[a]
     {
       $v = $a;
     }
-  | profilestmt[a]
+  | stmt_profile[a]
     {
       $v = $a;
     }
-  | projectstmt[a]
+  | stmt_project[a]
     {
       $v = $a;
     }
-  | setstmt[a]
+  | stmt_set[a]
     {
       $v = $a;
     }
@@ -293,7 +294,7 @@ stmt[v]:
   ;
 
 attr[v]:
-    attr_name[a]
+    attr_alternate[a]
     {
       $v = $a;
     }
@@ -317,11 +318,11 @@ attr[v]:
     {
       $v = $a;
     }
-  | attr_header_alt[a]
+  | attr_input[a]
     {
       $v = $a;
     }
-  | attr_input[a]
+  | attr_libversion[a]
     {
       $v = $a;
     }
@@ -329,11 +330,11 @@ attr[v]:
     {
       $v = $a;
     }
-  | attr_linkflags_alt[a]
+  | attr_method[a]
     {
       $v = $a;
     }
-  | attr_method[a]
+  | attr_name[a]
     {
       $v = $a;
     }
@@ -357,6 +358,10 @@ attr[v]:
     {
       $v = $a;
     }
+  | attr_version[a]
+    {
+      $v = $a;
+    }
   ;
 
 loopcontrol[v]:
@@ -373,51 +378,51 @@ loopcontrol[v]:
   ;
 
 checkcommand[v]:
-    chkargcount[a]
+    chk_argcount[a]
     {
       $v = $a;
     }
-  | chkcompflag[a]
+  | chk_compflag[a]
     {
       $v = $a;
     }
-  | chkconst[a]
+  | chk_const[a]
     {
       $v = $a;
     }
-  | chkdefine[a]
+  | chk_define[a]
     {
       $v = $a;
     }
-  | chkheader[a]
+  | chk_header[a]
     {
       $v = $a;
     }
-  | chkfunction[a]
+  | chk_function[a]
     {
       $v = $a;
     }
-  | chklinkflag[a]
+  | chk_linkflag[a]
     {
       $v = $a;
     }
-  | chkpackage[a]
+  | chk_package[a]
     {
       $v = $a;
     }
-  | chkshellcmd[a]
+  | chk_shellcmc[a]
     {
       $v = $a;
     }
-  | chksize[a]
+  | chk_size[a]
     {
       $v = $a;
     }
-  | chkstructmember[a]
+  | chk_member[a]
     {
       $v = $a;
     }
-  | chktype[a]
+  | chk_type[a]
     {
       $v = $a;
     }
@@ -455,7 +460,7 @@ stmtlist[v]:
 
 /* flow control */
 
-ifstmt[v]:
+stmt_if[v]:
     ifexpr[a] stmtblock[b] elseclause[c]
     {
       $v = mkc_ast_mk_if (ast, $a, $b, NULL, $c,
@@ -507,7 +512,7 @@ elseclause[v]:
     }
   ;
 
-foreachstmt[v]:
+stmt_foreach[v]:
     T_STMT_FOREACH varname[a] valuelist[l] stmtblock[b]
     {
       $v = mkc_ast_mk_foreach (ast, $a, $l, $b,
@@ -528,7 +533,7 @@ range[v]:
     }
   ;
 
-whilestmt[v]:
+stmt_while[v]:
     T_STMT_WHILE T_LEFT_PAREN expr[a] T_RIGHT_PAREN stmtblock[b]
     {
       $v = mkc_ast_mk_while (ast, $a, $b,
@@ -536,7 +541,7 @@ whilestmt[v]:
     }
   ;
 
-function[v]:
+stmt_function[v]:
     T_STMT_FUNCTION varname[a] T_LEFT_PAREN funcargs[l] T_RIGHT_PAREN
         stmtblock[b]
     {
@@ -556,7 +561,7 @@ funcargs:
 
 // statements
 
-configurestmt[v]:
+stmt_config[v]:
     T_STMT_CONFIGURE stmtblock[a]
     {
       $v = mkc_ast_mk_configure (ast, $a,
@@ -602,7 +607,7 @@ includestmt:
     }
   ;
 
-loadcachestmt[v]:
+stmt_loadcache[v]:
     T_STMT_LOADCACHE integer[a] stmtblock[b]
     {
       $v = mkc_ast_mk_loadcache (ast, $a, $b,
@@ -610,7 +615,7 @@ loadcachestmt[v]:
     }
   ;
 
-markstmt[v]:
+stmt_mark[v]:
     T_STMT_MARK varname[a] varname[b] T_SEMICOLON
     {
       $v = mkc_ast_mk_mark (ast, $a, $b,
@@ -618,7 +623,7 @@ markstmt[v]:
     }
   ;
 
-printstmt[v]:
+stmt_print[v]:
     T_STMT_PRINT varvalue[a] T_SEMICOLON
     {
       $v = mkc_ast_mk_print (ast, $a,
@@ -626,7 +631,7 @@ printstmt[v]:
     }
   ;
 
-profilestmt[v]:
+stmt_profile[v]:
     T_STMT_PROFILE varname[a] stmtblock[b]
     {
       $v = mkc_ast_mk_profile (ast, $a, $b,
@@ -634,7 +639,7 @@ profilestmt[v]:
     }
   ;
 
-projectstmt[v]:
+stmt_project[v]:
     T_STMT_PROJECT stmtblock[a]
     {
       $v = mkc_ast_mk_project (ast, $a,
@@ -642,7 +647,7 @@ projectstmt[v]:
     }
   ;
 
-setstmt[v]:
+stmt_set[v]:
     T_STMT_SET varname[a] expr[b] T_SEMICOLON
     {
       $v = mkc_ast_mk_set (ast, $a, $b, NULL,
@@ -686,7 +691,7 @@ setstmt[v]:
 
 // checks
 
-chkargcount[v]:
+chk_argcount[v]:
     T_CHK_ARG_COUNT varvalue[a] stmtblock_or_semi[b]
     {
       $v = mkc_ast_mk_check (ast, $a, $b, MKC_T_CHK_ARG_COUNT,
@@ -694,7 +699,7 @@ chkargcount[v]:
     }
   ;
 
-chkcompflag[v]:
+chk_compflag[v]:
     T_ADD_COMP_FLAG varvalue[a] stmtblock_or_semi[b]
     {
       $v = mkc_ast_mk_check_flag (ast, $a, $b, MKC_ADD, MKC_T_CHK_COMP_FLAG,
@@ -707,7 +712,7 @@ chkcompflag[v]:
     }
   ;
 
-chkconst[v]:
+chk_const[v]:
     T_CHK_CONST varvalue[a] stmtblock_or_semi[b]
     {
       $v = mkc_ast_mk_check (ast, $a, $b, MKC_T_CHK_CONST,
@@ -715,7 +720,7 @@ chkconst[v]:
     }
   ;
 
-chkdefine[v]:
+chk_define[v]:
     T_CHK_DEFINE varvalue[a] stmtblock_or_semi[b]
     {
       $v = mkc_ast_mk_check (ast, $a, $b, MKC_T_CHK_DEFINE,
@@ -723,7 +728,7 @@ chkdefine[v]:
     }
   ;
 
-chkheader[v]:
+chk_header[v]:
     T_CHK_HEADER pathname[a] stmtblock_or_semi[b]
     {
       $v = mkc_ast_mk_check (ast, $a, $b, MKC_T_CHK_HEADER,
@@ -731,7 +736,7 @@ chkheader[v]:
     }
   ;
 
-chklinkflag[v]:
+chk_linkflag[v]:
     T_ADD_LINK_FLAG varvalue[a] stmtblock_or_semi[b]
     {
       $v = mkc_ast_mk_check_flag (ast, $a, $b, MKC_ADD, MKC_T_CHK_LINK_FLAG,
@@ -744,7 +749,7 @@ chklinkflag[v]:
     }
   ;
 
-chkpackage[v]:
+chk_package[v]:
     T_CHK_PACKAGE varvalue[a] stmtblock_or_semi[b]
     {
       $v = mkc_ast_mk_chk_package (ast, $a, $b,
@@ -752,7 +757,7 @@ chkpackage[v]:
     }
   ;
 
-chksize[v]:
+chk_size[v]:
     T_CHK_SIZE varvalue[a] stmtblock_or_semi[b]
     {
       $v = mkc_ast_mk_check (ast, $a, $b, MKC_T_CHK_SIZE,
@@ -760,7 +765,7 @@ chksize[v]:
     }
   ;
 
-chktype[v]:
+chk_type[v]:
     T_CHK_TYPE varvalue[a] stmtblock_or_semi[b]
     {
       $v = mkc_ast_mk_check (ast, $a, $b, MKC_T_CHK_TYPE,
@@ -768,7 +773,7 @@ chktype[v]:
     }
   ;
 
-chkstructmember[v]:
+chk_member[v]:
     T_CHK_STRUCT_MEMBER varvalue[a] varvalue[b] stmtblock_or_semi[c]
     {
       $v = mkc_ast_mk_chk_struct_member (ast, $a, $b, $c,
@@ -776,7 +781,7 @@ chkstructmember[v]:
     }
   ;
 
-chkfunction[v]:
+chk_function[v]:
     T_CHK_FUNCTION varvalue[a] stmtblock_or_semi[b]
     {
       $v = mkc_ast_mk_check (ast, $a, $b, MKC_T_CHK_FUNCTION,
@@ -784,7 +789,7 @@ chkfunction[v]:
     }
   ;
 
-chkshellcmd[v]:
+chk_shellcmc[v]:
     T_CHK_SHELL_EXTRACT pathname[a] T_SEMICOLON
     {
       $v = mkc_ast_mk_check (ast, $a, NULL, MKC_T_CHK_SHELL_EXTRACT,
@@ -793,6 +798,14 @@ chkshellcmd[v]:
   ;
 
 // attributes
+
+attr_alternate[v]:
+    T_ATTR_ALTERNATE stmtblock[a]
+    {
+      $v = mkc_ast_mk_attr_alternate (ast, $a,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
 
 /* a list of compiler flags */
 attr_compilerflags[v]:
@@ -845,19 +858,18 @@ attr_header[v]:
     }
   ;
 
-/* a list of header files */
-attr_header_alt[v]:
-    T_ATTR_HEADER_ALT pathlist[l] T_SEMICOLON
-    {
-      $v = mkc_ast_mk_attr_header (ast, $l,
-          yylloc.first_line, yylloc.first_column);
-    }
-  ;
-
 attr_input[v]:
     T_ATTR_INPUT varvalue[a] T_SEMICOLON
     {
       $v = mkc_ast_mk_attribute (ast, $a, MKC_T_ATTR_INPUT,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+attr_libversion[v]:
+    T_ATTR_LIBRARY_VERSION varvalue[a] T_SEMICOLON
+    {
+      $v = mkc_ast_mk_attribute (ast, $a, MKC_T_ATTR_LIBRARY_VERSION,
           yylloc.first_line, yylloc.first_column);
     }
   ;
@@ -872,22 +884,6 @@ attr_linkflags[v]:
           yylloc.first_line, yylloc.first_column);
     }
   | T_ATTR_LINK_FLAGS valuelist[l] T_SEMICOLON
-    {
-      $v = mkc_ast_mk_attr_linkflags (ast, $l,
-          yylloc.first_line, yylloc.first_column);
-    }
-  ;
-
-/* a list of link flags */
-attr_linkflags_alt[v]:
-    T_ATTR_LINK_FLAGS_ALT varvalue[a] T_SEMICOLON
-    {
-      $a = mkc_ast_mk_value_list (ast, NULL, $a,
-          yylloc.first_line, yylloc.first_column);
-      $v = mkc_ast_mk_attr_linkflags (ast, $a,
-          yylloc.first_line, yylloc.first_column);
-    }
-  | T_ATTR_LINK_FLAGS_ALT valuelist[l] T_SEMICOLON
     {
       $v = mkc_ast_mk_attr_linkflags (ast, $l,
           yylloc.first_line, yylloc.first_column);
@@ -950,6 +946,14 @@ attr_source[v]:
     T_ATTR_SOURCE pathlist[l] T_SEMICOLON
     {
       $v = NULL;
+    }
+  ;
+
+attr_version[v]:
+    T_ATTR_VERSION varvalue[a] T_SEMICOLON
+    {
+      $v = mkc_ast_mk_attribute (ast, $a, MKC_T_ATTR_VERSION,
+          yylloc.first_line, yylloc.first_column);
     }
   ;
 

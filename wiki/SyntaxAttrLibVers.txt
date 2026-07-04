@@ -1,0 +1,14 @@
+[Wiki Home](Home)
+<br>[Syntax](Syntax)
+
+### Syntax: library_version (attribute)
+
+The __library\_version__ attribute is an attribute
+for something.
+
+    library_version <version-string>;
+
+Repeatable: no
+
+[Wiki Home](Home)
+<br>[Syntax](Syntax)

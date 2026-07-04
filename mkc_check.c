@@ -171,8 +171,9 @@ mkc_chk_reset (mkc_check_t *check)
 void
 mkc_chk_append_comp_flag (mkc_check_t *check, const char *flag)
 {
-  mkc_value_t   tvalue;
-  mkc_listidx_t loc = MKC_LIST_NOTFOUND;
+  mkc_value_t     tvalue;
+  mkc_listidx_t   loc = MKC_LIST_NOTFOUND;
+  mkc_alternate_t  * alt;
 
   if (check == NULL || flag == NULL) {
     return;
@@ -180,14 +181,16 @@ mkc_chk_append_comp_flag (mkc_check_t *check, const char *flag)
 
   tvalue.sval = (char *) flag;
   tvalue.vtype = MKC_VT_STRING;
-  mkc_list_set (check->attr->compflags, &tvalue, sizeof (mkc_value_t), &loc);
+  alt = check->attr->curralt;
+  mkc_list_set (alt->compflags, &tvalue, sizeof (mkc_value_t), &loc);
 }
 
 void
 mkc_chk_append_link_flag (mkc_check_t *check, const char *flag)
 {
-  mkc_value_t   tvalue;
-  mkc_listidx_t loc = MKC_LIST_NOTFOUND;
+  mkc_value_t     tvalue;
+  mkc_listidx_t   loc = MKC_LIST_NOTFOUND;
+  mkc_alternate_t  * alt;
 
   if (check == NULL || flag == NULL) {
     return;
@@ -195,7 +198,8 @@ mkc_chk_append_link_flag (mkc_check_t *check, const char *flag)
 
   tvalue.sval = (char *) flag;
   tvalue.vtype = MKC_VT_STRING;
-  mkc_list_set (check->attr->linkflags, &tvalue, sizeof (mkc_value_t), &loc);
+  alt = check->attr->curralt;
+  mkc_list_set (alt->linkflags, &tvalue, sizeof (mkc_value_t), &loc);
 }
 
 int
@@ -655,14 +659,15 @@ int
 mkc_compile_only (mkc_check_t *check, mkc_compiler_t compiler,
     const char *fname, const char *flags [], char *rbuff, size_t rsz)
 {
-  int         rc;
-  char        *tbuff;
-  size_t      retsz;
-  const char  *sfx = NULL;
-  char        *compstr;
-  bool        rallocated = false;
-  char        *outfile;
-  bool        cpreprocess = false;
+  int             rc;
+  char            *tbuff;
+  size_t          retsz;
+  const char      *sfx = NULL;
+  char            *compstr;
+  bool            rallocated = false;
+  char            *outfile;
+  bool            cpreprocess = false;
+  mkc_alternate_t  * alt;
 
   tbuff = malloc (MKC_PATH_MAX);
   if (tbuff == NULL) {
@@ -697,7 +702,6 @@ mkc_compile_only (mkc_check_t *check, mkc_compiler_t compiler,
     rallocated = true;
   }
 
-
   mkc_check_get_compstr (check, compiler, compstr, MKC_PATH_MAX);
   sfx = mkc_compiler_get_suffix (compiler);
 // ### will need to be fixed, the original suffix may change
@@ -717,7 +721,8 @@ mkc_compile_only (mkc_check_t *check, mkc_compiler_t compiler,
     }
   }
 
-  mkc_check_append_list_arg (check, check->attr->compflags);
+  alt = check->attr->curralt;
+  mkc_check_append_list_arg (check, alt->compflags);
 
   if (! cpreprocess) {
     mkc_check_append_arg (check, "-c");
@@ -772,12 +777,13 @@ mkc_compile_link (mkc_check_t *check, mkc_compiler_t compiler,
     const char *fname, const char *flags [],
     char *rbuff, size_t rsz)
 {
-  int         rc;
-  size_t      retsz;
-  bool        rallocated = false;
-  char        *compstr;
-  char        *outfile;
-  char        *objfile;
+  int               rc;
+  size_t            retsz;
+  bool              rallocated = false;
+  char              *compstr;
+  char              *outfile;
+  char              *objfile;
+  mkc_alternate_t  * alt;
 
 
   if (rbuff == NULL) {
@@ -830,7 +836,10 @@ mkc_compile_link (mkc_check_t *check, mkc_compiler_t compiler,
   mkc_check_append_arg (check, outfile);
   mkc_path_build (MKC_PATH_MKC_TMP, objfile, MKC_PATH_MAX, "mkctest.o", check->mkcerr);
   mkc_check_append_arg (check, objfile);
-  mkc_check_append_list_arg (check, check->attr->linkflags);
+
+  alt = check->attr->curralt;
+  mkc_check_append_list_arg (check, alt->linkflags);
+
   mkc_check_append_arg (check, NULL);
   if (mkc_error_chk_err (check->mkcerr)) {
     if (rallocated) {
@@ -1055,13 +1064,14 @@ mkc_check_get_compstr (mkc_check_t *check, mkc_compiler_t compiler,
 static int
 mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
 {
-  mkc_value_t   *value;
-  char          *pkgconfpath;
-  char          tmpname [MKC_VNAME_MAX];
-  char          *rbuff;
-  size_t        rsz;
-  size_t        retsz;
-  int           rc;
+  mkc_value_t       *value;
+  char              *pkgconfpath;
+  char              tmpname [MKC_VNAME_MAX];
+  char              *rbuff;
+  size_t            rsz;
+  size_t            retsz;
+  int               rc;
+  mkc_alternate_t   * alt;
 
   pkgconfpath = malloc (MKC_PATH_MAX);
   if (pkgconfpath == NULL) {
@@ -1150,9 +1160,10 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
   if (retsz > 0) {
     const char  *tmp;
 
+    alt = check->attr->curralt;
     tmp = pkg;
-    if (check->attr->name != NULL) {
-      tmp = check->attr->name;
+    if (alt->name != NULL) {
+      tmp = alt->name;
     }
     mkc_strtrim (rbuff, retsz);
     snprintf (tmpname, sizeof (tmpname), "%s_CFLAGS", tmp);
@@ -1186,9 +1197,10 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
   if (retsz > 0) {
     const char  *tmp;
 
+    alt = check->attr->curralt;
     tmp = pkg;
-    if (check->attr->name != NULL) {
-      tmp = check->attr->name;
+    if (alt->name != NULL) {
+      tmp = alt->name;
     }
     mkc_strtrim (rbuff, retsz);
     snprintf (tmpname, sizeof (tmpname), "%s_LIBS", tmp);
@@ -1211,10 +1223,12 @@ mkc_chk_create_header_var (mkc_check_t *check)
   char            * tmp = NULL;
   size_t          hdrtxtlen = 1;
   mkc_profidx_t   pidx;
+  mkc_alternate_t  * alt;
 
 
-  mkc_list_iter_start (check->attr->hdrlist, &iteridx);
-  while ((lidx = mkc_list_iter_next (check->attr->hdrlist, &iteridx)) != MKC_ITER_FINISH) {
+  alt = check->attr->curralt;
+  mkc_list_iter_start (alt->hdrlist, &iteridx);
+  while ((lidx = mkc_list_iter_next (alt->hdrlist, &iteridx)) != MKC_ITER_FINISH) {
     char        tbuff [MKC_PATH_MAX];
     mkc_value_t *lvalue;
     size_t      tlen;
@@ -1223,7 +1237,7 @@ mkc_chk_create_header_var (mkc_check_t *check)
       break;
     }
 
-    lvalue = mkc_list_get_by_idx (check->attr->hdrlist, lidx);
+    lvalue = mkc_list_get_by_idx (alt->hdrlist, lidx);
     if (check->attr->headertype == MKC_HEADER_MODERN) {
       snprintf (tbuff, sizeof (tbuff),
           "#if __has_include (<%s>)\n"

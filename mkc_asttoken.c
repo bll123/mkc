@@ -5,15 +5,15 @@
 #include "mkc_asttoken.h"
 
 char const * const typenames [MKC_T_MAX] = {
+  [MKC_T_ATTR_ALTERNATE] = "alternate",
   [MKC_T_ATTR_COMPILER] = "compiler",
   [MKC_T_ATTR_COMP_FLAGS] = "compiler_flags",
   [MKC_T_ATTR_CONTEXT] = "context",
   [MKC_T_ATTR_DEFINE_ZERO] = "define_zero",
   [MKC_T_ATTR_HEADER] = "header",
-  [MKC_T_ATTR_HEADER_ALT] = "header_alternate",
   [MKC_T_ATTR_INPUT] = "input",
+  [MKC_T_ATTR_LIBRARY_VERSION] = "library_version",
   [MKC_T_ATTR_LINK_FLAGS] = "link_flags",
-  [MKC_T_ATTR_LINK_FLAGS_ALT] = "link_flags_alternate",
   [MKC_T_ATTR_METHOD] = "method",
   [MKC_T_ATTR_NAME] = "name",
   [MKC_T_ATTR_NEGATE] = "negate",
@@ -21,6 +21,7 @@ char const * const typenames [MKC_T_MAX] = {
   [MKC_T_ATTR_PATH] = "path",
   [MKC_T_ATTR_REPLACE] = "replace",
   [MKC_T_ATTR_SOURCE] = "source",
+  [MKC_T_ATTR_VERSION] = "version",
   [MKC_T_CHK_ARG_COUNT] = "arg_count",
   [MKC_T_CHK_COMP_FLAG] = "compiler_flag",
   [MKC_T_CHK_CONST] = "constant",

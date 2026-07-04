@@ -132,7 +132,9 @@ static char const * const MKC_C_WHILELIMIT = "MKC_TV_WHILE_LIMIT";
 static char const * const MKC_C_TEMPVARPFX = "MKC_TV_";
 static size_t mkctvpfxlen = 0;
 static char const * const MKC_C_IVARMACRO = "MKC_I_VARIADIC_MACRO";
-static char const * const MKC_C_PROJECTNAME = "MKC_PROJECT_NAME";
+static char const * const MKC_C_PROJECT_NAME = "MKC_PROJECT_NAME";
+static char const * const MKC_C_PROJECT_VERS = "MKC_PROJECT_VERSION";
+static char const * const MKC_C_PROJECT_LIB_VERS = "MKC_PROJECT_LIBRARY_VERSION";
 static char const * const MKC_C_PATH_NAME = "MKC_PATH";
 /* these are duplicated */
 /* so that the static aggregator can be initialized */
@@ -170,6 +172,8 @@ static void mkc_process_dbg_print_path (mkc_process_t *process);
 static void mkc_process_dbg_print_int_var (mkc_process_t *process);
 static char * mkc_process_configure_substitute (mkc_process_t *process, char *data);
 static void mkc_process_substitutions (mkc_process_t *process, mkc_value_t *value);
+static void mkc_process_alternate_free (void *talt);
+static void mkc_process_temp_value_free (void *tvalue);
 
 
 MKC_NODISCARD
@@ -200,16 +204,16 @@ mkc_process_init (mkc_profile_t *profiles, mkc_log_t *log,
 
   process->attr.currcompiler = process->dfltcompiler;
   process->attr.headertype = process->headertype;
-  process->attr.hdrlist = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, mkcerr);
-  process->attr.compflags = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, mkcerr);
-  process->attr.linkflags = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, mkcerr);
+  process->attr.alternates = mkc_list_init (MKC_LIST_UNSORTED, mkc_process_alternate_free, NULL, mkcerr);
+  mkc_process_attr_alternate (process);
   process->attr.replacelist = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, mkcerr);
-  process->attr.name = NULL;
   process->attr.method = NULL;
   process->attr.vcontext = NULL;
   process->attr.input = NULL;
   process->attr.output = NULL;
   process->attr.path = NULL;
+  process->attr.version = NULL;
+  process->attr.libraryversion = NULL;
   process->attr.negate = false;
   process->attr.define_zero = MKC_AUTO_SKIP_ZERO;
 
@@ -274,9 +278,7 @@ mkc_process_free (mkc_process_t *process)
   datafree (process->projectname);
 
   mkc_process_attr_clear (process);
-  mkc_list_free (process->attr.hdrlist);
-  mkc_list_free (process->attr.compflags);
-  mkc_list_free (process->attr.linkflags);
+  mkc_list_free (process->attr.alternates);
   mkc_list_free (process->attr.replacelist);
 
   if (process->rxshellvar != NULL) {
@@ -660,21 +662,28 @@ void
 mkc_process_stmt_project (mkc_process_t *process)
 {
   mkc_profidx_t   pidx;
+  mkc_alternate_t * alt;
 
-  if (process->attr.name == NULL ||
-      *(process->attr.name) == '\0') {
+  alt = process->attr.curralt;
+  if (alt->name == NULL || *(alt->name) == '\0') {
     mkc_error_set (process->mkcerr, MKC_ERR_PROC_NO_NAME, 0, NULL);
     mkc_process_attr_clear (process);
     return;
   }
 
   datafree (process->projectname);
-  process->projectname = strdup (process->attr.name);
+  process->projectname = strdup (alt->name);
   process->dfltcompiler = process->attr.currcompiler;
 
   pidx = mkc_profile_get_active (process->profiles);
   mkc_pvar_profile_set_idx (process->pvar, process->pidx_internal);
-  mkc_pvar_set_str (process->pvar, MKC_C_PROJECTNAME, process->projectname, MKC_VCTXT_MKC);
+  mkc_pvar_set_str (process->pvar, MKC_C_PROJECT_NAME, process->projectname, MKC_VCTXT_MKC);
+  if (process->attr.version != NULL) {
+    mkc_pvar_set_str (process->pvar, MKC_C_PROJECT_VERS, process->attr.version, MKC_VCTXT_MKC);
+  }
+  if (process->attr.libraryversion != NULL) {
+    mkc_pvar_set_str (process->pvar, MKC_C_PROJECT_LIB_VERS, process->attr.libraryversion, MKC_VCTXT_MKC);
+  }
   mkc_pvar_profile_set_idx (process->pvar, pidx);
 
   mkc_process_attr_clear (process);
@@ -817,6 +826,8 @@ mkc_process_stmt_set (mkc_process_t *process,
     process->cacheinvalidated = true;
   }
 
+  mkc_process_temp_value_free (&tvalue);
+
   mkc_process_attr_clear (process);
   return trc;
 }
@@ -870,7 +881,8 @@ mkc_process_attribute (mkc_process_t *process, mkc_value_t *valname,
       break;
     }
     case MKC_T_ATTR_NAME: {
-      ctxt = MKC_CONTEXT_CHECK | MKC_CONTEXT_COMP_FLAG | MKC_CONTEXT_PROJECT;
+      ctxt = MKC_CONTEXT_CHECK | MKC_CONTEXT_COMP_FLAG |
+          MKC_CONTEXT_PROJECT | MKC_CONTEXT_ALTERNATE;
       break;
     }
     case MKC_T_ATTR_NEGATE: {
@@ -883,6 +895,15 @@ mkc_process_attribute (mkc_process_t *process, mkc_value_t *valname,
     }
     case MKC_T_ATTR_PATH: {
       ctxt = MKC_CONTEXT_CHECK;
+      break;
+    }
+    case MKC_T_ATTR_VERSION: {
+      ctxt = MKC_CONTEXT_PROJECT;
+      break;
+    }
+    case MKC_T_ATTR_LIBRARY_VERSION: {
+// ### this will need to be fixed
+      ctxt = MKC_CONTEXT_PROJECT;
       break;
     }
     default: {
@@ -921,7 +942,10 @@ mkc_process_attribute (mkc_process_t *process, mkc_value_t *valname,
       break;
     }
     case MKC_T_ATTR_NAME: {
-      p = &process->attr.name;
+      mkc_alternate_t   *alt;
+
+      alt = process->attr.curralt;
+      p = &alt->name;
       break;
     }
     case MKC_T_ATTR_NEGATE: {
@@ -935,6 +959,14 @@ mkc_process_attribute (mkc_process_t *process, mkc_value_t *valname,
     }
     case MKC_T_ATTR_PATH: {
       p = &process->attr.path;
+      break;
+    }
+    case MKC_T_ATTR_VERSION: {
+      p = &process->attr.version;
+      break;
+    }
+    case MKC_T_ATTR_LIBRARY_VERSION: {
+      p = &process->attr.libraryversion;
       break;
     }
     default: {
@@ -951,6 +983,20 @@ mkc_process_attribute (mkc_process_t *process, mkc_value_t *valname,
       mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
     }
   }
+}
+
+void
+mkc_process_attr_alternate (mkc_process_t *process)
+{
+  mkc_alternate_t   alt;
+  mkc_listidx_t     loc = MKC_LIST_NOTFOUND;
+
+  alt.name = NULL;
+  alt.hdrlist = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, process->mkcerr);
+  alt.compflags = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, process->mkcerr);
+  alt.linkflags = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, process->mkcerr);
+  process->attr.curralt = mkc_list_set (process->attr.alternates,
+      &alt, sizeof (mkc_alternate_t), &loc);
 }
 
 void
@@ -1005,15 +1051,19 @@ mkc_process_attr_comp_flags (mkc_process_t *process, mkc_value_t *value)
 {
   mkc_listidx_t   iteridx;
   mkc_listidx_t   lidx;
+  mkc_list_t      * clist;
 
   if (process == NULL) {
     return;
   }
 
-  if (! mkc_context_check (process->context, MKC_CONTEXT_CHECK)) {
+  if (! mkc_context_check (process->context,
+      MKC_CONTEXT_CHECK | MKC_CONTEXT_ALTERNATE)) {
     mkc_error_set (process->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
     return;
   }
+
+  clist = process->attr.curralt->compflags;
 
   mkc_list_iter_start (value->list, &iteridx);
   while ((lidx = mkc_list_iter_next (value->list, &iteridx)) != MKC_ITER_FINISH) {
@@ -1025,7 +1075,7 @@ mkc_process_attr_comp_flags (mkc_process_t *process, mkc_value_t *value)
     }
 
     lvalue = mkc_list_get_by_idx (value->list, lidx);
-    mkc_list_set (process->attr.compflags, lvalue, sizeof (mkc_value_t), &loc);
+    mkc_list_set (clist, lvalue, sizeof (mkc_value_t), &loc);
   }
 
   return;
@@ -1036,15 +1086,19 @@ mkc_process_attr_header (mkc_process_t *process, mkc_value_t *value)
 {
   mkc_listidx_t   iteridx;
   mkc_listidx_t   lidx;
+  mkc_list_t      * hlist;
 
   if (process == NULL) {
     return;
   }
 
-  if (! mkc_context_check (process->context, MKC_CONTEXT_CHECK)) {
+  if (! mkc_context_check (process->context,
+      MKC_CONTEXT_CHECK | MKC_CONTEXT_ALTERNATE)) {
     mkc_error_set (process->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
     return;
   }
+
+  hlist = process->attr.curralt->hdrlist;
 
   mkc_list_iter_start (value->list, &iteridx);
   while ((lidx = mkc_list_iter_next (value->list, &iteridx)) != MKC_ITER_FINISH) {
@@ -1056,7 +1110,7 @@ mkc_process_attr_header (mkc_process_t *process, mkc_value_t *value)
     }
 
     lvalue = mkc_list_get_by_idx (value->list, lidx);
-    mkc_list_set (process->attr.hdrlist, lvalue, sizeof (mkc_value_t), &loc);
+    mkc_list_set (hlist, lvalue, sizeof (mkc_value_t), &loc);
   }
 
   return;
@@ -1067,15 +1121,19 @@ mkc_process_attr_link_flags (mkc_process_t *process, mkc_value_t *value)
 {
   mkc_listidx_t   iteridx;
   mkc_listidx_t   lidx;
+  mkc_list_t      * llist;
 
   if (process == NULL) {
     return;
   }
 
-  if (! mkc_context_check (process->context, MKC_CONTEXT_CHECK)) {
+  if (! mkc_context_check (process->context,
+      MKC_CONTEXT_CHECK | MKC_CONTEXT_ALTERNATE)) {
     mkc_error_set (process->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
     return;
   }
+
+  llist = process->attr.curralt->linkflags;
 
   mkc_list_iter_start (value->list, &iteridx);
   while ((lidx = mkc_list_iter_next (value->list, &iteridx)) != MKC_ITER_FINISH) {
@@ -1087,7 +1145,7 @@ mkc_process_attr_link_flags (mkc_process_t *process, mkc_value_t *value)
     }
 
     lvalue = mkc_list_get_by_idx (value->list, lidx);
-    mkc_list_set (process->attr.linkflags, lvalue, sizeof (mkc_value_t), &loc);
+    mkc_list_set (llist, lvalue, sizeof (mkc_value_t), &loc);
   }
 
   return;
@@ -1700,6 +1758,7 @@ mkc_process_save_cache (mkc_process_t *process)
 
   mkc_pvar_profile_set_idx (process->pvar, opidx);
   free (cachename);
+  free (tbuff);
   fclose (fh);
 }
 
@@ -1709,17 +1768,19 @@ const char *
 mkc_process_create_name (mkc_process_t *process, mkc_astnode_token_t asttype,
     char *buff, size_t sz, const char *tag, ...)
 {
-  char        *p;
-  size_t      len;
-  size_t      nlen = 0;
-  const char  * str;
-  va_list     ap;
+  char            *p;
+  size_t          len;
+  size_t          nlen = 0;
+  const char      * str;
+  va_list         ap;
+  mkc_alternate_t * alt;
 
   va_start (ap, tag);
 
+  alt = process->attr.curralt;
   /* for chk-package, the name replaces the name of the package */
-  if (process->attr.name != NULL && asttype != MKC_T_CHK_PACKAGE) {
-    stpecpy (buff, buff + sz, process->attr.name);
+  if (alt->name != NULL && asttype != MKC_T_CHK_PACKAGE) {
+    stpecpy (buff, buff + sz, alt->name);
     va_end (ap);
     return buff;
   }
@@ -1729,9 +1790,9 @@ mkc_process_create_name (mkc_process_t *process, mkc_astnode_token_t asttype,
 
   /* the caller must pass in a NULL terminal indicator */
   while ((str = va_arg (ap, const char *)) != NULL) {
-    if (process->attr.name != NULL && asttype == MKC_T_CHK_PACKAGE) {
+    if (alt->name != NULL && asttype == MKC_T_CHK_PACKAGE) {
       /* special case for chk-package */
-      str = process->attr.name;
+      str = alt->name;
     }
 
     len = strlen (str);
@@ -1807,6 +1868,8 @@ mkc_process_int_checks (mkc_process_t *process)
     return MKC_ERR_FAILURE;
   }
 
+  mkc_process_attr_clear (process);
+
   /* compiler id : internal */
 
   mkc_pvar_profile_set_idx (process->pvar, process->pidx_internal);
@@ -1824,6 +1887,8 @@ mkc_process_int_checks (mkc_process_t *process)
     }
   }
 
+  mkc_process_attr_clear (process);
+
   /* modern header support : dflt/comp */
 
   mkc_pvar_profile_set_idx (process->pvar, process->pidx_curr_comp);
@@ -1834,6 +1899,8 @@ mkc_process_int_checks (mkc_process_t *process)
   }
   process->attr.headertype = process->headertype;
   mkc_log (process->log, MKC_LOG_GENERAL, "%s: %d\n", "header-type", process->headertype);
+
+  mkc_process_attr_clear (process);
 
   /* system type : internal */
 
@@ -1851,6 +1918,8 @@ mkc_process_int_checks (mkc_process_t *process)
       break;
     }
   }
+
+  mkc_process_attr_clear (process);
 
   /* object, executable extension : internal */
 
@@ -1902,6 +1971,8 @@ mkc_process_int_checks (mkc_process_t *process)
     }
   }
 
+  mkc_process_attr_clear (process);
+
   /* variadic macro support : dflt/comp */
 
   mkc_pvar_profile_set_idx (process->pvar, process->pidx_curr_comp);
@@ -1912,6 +1983,8 @@ mkc_process_int_checks (mkc_process_t *process)
   }
   mkc_log (process->log, MKC_LOG_GENERAL, "%s: %d\n", MKC_C_IVARMACRO, process->variadicmacro);
   mkc_pvar_set_integer (process->pvar, MKC_C_IVARMACRO, process->variadicmacro, MKC_VCTXT_MKC);
+
+  mkc_process_attr_clear (process);
 
   /* linux: library location : internal */
 
@@ -1925,6 +1998,8 @@ mkc_process_int_checks (mkc_process_t *process)
     mkc_log (process->log, MKC_LOG_GENERAL, "%s: %d\n", MKC_C_LIBLOCNAME, process->libloc);
     mkc_pvar_set_integer (process->pvar, MKC_C_LIBLOCNAME, process->libloc, MKC_VCTXT_MKC);
   }
+
+  mkc_process_attr_clear (process);
 
   /* reset profile */
 
@@ -2259,34 +2334,36 @@ mkc_process_find_executables (mkc_process_t *process)
 static void
 mkc_process_attr_clear (mkc_process_t *process)
 {
-  if (mkc_list_size (process->attr.hdrlist) > 0) {
-    mkc_list_free (process->attr.hdrlist);
-    process->attr.hdrlist = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, process->mkcerr);
-  }
-  if (mkc_list_size (process->attr.compflags) > 0) {
-    mkc_list_free (process->attr.compflags);
-    process->attr.compflags = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, process->mkcerr);
-  }
-  if (mkc_list_size (process->attr.linkflags) > 0) {
-    mkc_list_free (process->attr.linkflags);
-    process->attr.linkflags = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, process->mkcerr);
-  }
+  mkc_list_free (process->attr.alternates);
+  process->attr.alternates = mkc_list_init (MKC_LIST_UNSORTED, mkc_process_alternate_free, NULL, process->mkcerr);
+  mkc_process_attr_alternate (process);
+
   if (mkc_list_size (process->attr.replacelist) > 0) {
     mkc_list_free (process->attr.replacelist);
     process->attr.replacelist = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, process->mkcerr);
   }
-  datafree (process->attr.name);
-  process->attr.name = NULL;
+
   datafree (process->attr.method);
   process->attr.method = NULL;
+
   datafree (process->attr.vcontext);
   process->attr.vcontext = NULL;
+
   datafree (process->attr.input);
   process->attr.input = NULL;
+
   datafree (process->attr.output);
   process->attr.output = NULL;
+
   datafree (process->attr.path);
   process->attr.path = NULL;
+
+  datafree (process->attr.version);
+  process->attr.version = NULL;
+
+  datafree (process->attr.libraryversion);
+  process->attr.libraryversion = NULL;
+
   process->attr.define_zero = MKC_AUTO_SKIP_ZERO;
   process->attr.currcompiler = process->dfltcompiler;
 }
@@ -2505,7 +2582,7 @@ mkc_process_configure_substitute (mkc_process_t *process, char *data)
       mkc_value_t   *valval;
       char          str [MKC_VNAME_MAX];
       char          val [MKC_VNAME_MAX];
-      char          *tdata;
+      char          *tdata = NULL;
 
       valstr = mkc_list_get_by_idx (rl, lidx);
       lidx = mkc_list_iter_next (rl, &iteridx);
@@ -2517,7 +2594,9 @@ mkc_process_configure_substitute (mkc_process_t *process, char *data)
       valval = mkc_list_get_by_idx (rl, lidx);
       mkc_pvar_value_get_str (process->pvar, valstr, str, sizeof (str));
       mkc_pvar_value_get_str (process->pvar, valval, val, sizeof (val));
+#if _have_regex
       tdata = mkc_regex_replace_literal (ndata, str, val, process->mkcerr);
+#endif
       if (ndata != data) {
         datafree (ndata);
       }
@@ -2543,7 +2622,6 @@ mkc_process_substitutions (mkc_process_t *process, mkc_value_t *value)
     /* need to get the actual value */
     mkc_pvar_value_get_str (process->pvar, value, buff, MKC_PATH_MAX);
     value->sval = buff;
-    value->vtype = MKC_VT_STRING;
   }
   if (value->vtype == MKC_VT_VARIABLE) {
     char          *tstr;
@@ -2565,7 +2643,7 @@ mkc_process_substitutions (mkc_process_t *process, mkc_value_t *value)
     /* each value in a list must be processed, as the value in the list */
     /* may be a variable */
 
-    nlist = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, process->mkcerr);
+    nlist = mkc_list_init (MKC_LIST_UNSORTED, mkc_process_temp_value_free, NULL, process->mkcerr);
     mkc_list_iter_start (value->list, &iteridx);
     while ((lidx = mkc_list_iter_next (value->list, &iteridx)) != MKC_ITER_FINISH) {
       mkc_value_t   *lvalue;
@@ -2582,5 +2660,32 @@ mkc_process_substitutions (mkc_process_t *process, mkc_value_t *value)
     }
 
     value->list = nlist;
+  }
+}
+
+static void
+mkc_process_alternate_free (void *tchkcontext)
+{
+  mkc_alternate_t    *alt = tchkcontext;
+
+  if (alt == NULL) {
+    return;
+  }
+
+  datafree (alt->name);
+  mkc_list_free (alt->hdrlist);
+  mkc_list_free (alt->compflags);
+  mkc_list_free (alt->linkflags);
+}
+
+static void
+mkc_process_temp_value_free (void *tvalue)
+{
+  mkc_value_t   *value = tvalue;
+
+  if (value->vtype == MKC_VT_LIST ||
+      value->vtype == MKC_VT_QUOTED_STRING ||
+      value->vtype == MKC_VT_ENV_VARIABLE) {
+    mkc_value_free (value);
   }
 }

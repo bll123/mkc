@@ -33,7 +33,7 @@ typedef void (*mkc_list_free_t) (void *data);
 typedef int (*mkc_list_compare_t) (void *ditema, void *ditemb);
 
 MKC_NODISCARD mkc_list_t * mkc_list_init (mkc_list_type_t type, mkc_list_free_t freefunc, mkc_list_compare_t compare, mkc_error_t *mkcerr);
-void mkc_list_free (mkc_list_t *list);
+void mkc_list_free (void *list);
 mkc_listidx_t mkc_list_size (mkc_list_t *list);
 void * mkc_list_set (mkc_list_t *list, void *data, size_t sz, mkc_listidx_t *loc);
 void * mkc_list_append (mkc_list_t *list, void *data, size_t sz);

@@ -42,6 +42,7 @@ int mkc_process_stmt_set (mkc_process_t *process, mkc_value_t *valnm, mkc_value_
 void mkc_process_include (mkc_process_t *process, mkc_value_t *vala, char *tbuff, size_t sz);
 
 void mkc_process_attribute (mkc_process_t *process, mkc_value_t *name, mkc_astnode_token_t asttype);
+void mkc_process_attr_alternate (mkc_process_t *process);
 void mkc_process_attr_comp_flags (mkc_process_t *process, mkc_value_t *value);
 void mkc_process_attr_header (mkc_process_t *process, mkc_value_t *value);
 void mkc_process_attr_link_flags (mkc_process_t *process, mkc_value_t *value);

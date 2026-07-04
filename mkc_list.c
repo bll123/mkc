@@ -64,8 +64,10 @@ mkc_list_init (mkc_list_type_t type, mkc_list_free_t freefunc,
 }
 
 void
-mkc_list_free (mkc_list_t *list)
+mkc_list_free (void *tlist)
 {
+  mkc_list_t    * list = tlist;
+
   if (list == NULL) {
     return;
   }

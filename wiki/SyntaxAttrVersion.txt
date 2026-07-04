@@ -1,0 +1,16 @@
+[Wiki Home](Home)
+<br>[Syntax](Syntax)
+
+### Syntax: version (attribute)
+
+The __version__ attribute is an attribute
+for the [project](SyntaxProject) statement.
+
+    version <version-string>;
+
+The __version__ attribute defines the version number for the project.
+
+Repeatable: no
+
+[Wiki Home](Home)
+<br>[Syntax](Syntax)

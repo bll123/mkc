@@ -801,9 +801,10 @@ mkc_pvar_sub_escapes (char *buff, size_t blen)
   char  *sp = buff;
   char  *dp = buff;
 
-  for (size_t i = 0; i < blen; ++i) {
+  while (*sp) {
     if (*sp == '\\') {
       bool  found = false;
+
       ++sp;
       switch (*sp) {
         case 'b': { *dp = '\b'; found = true; break; }
@@ -825,4 +826,5 @@ mkc_pvar_sub_escapes (char *buff, size_t blen)
     ++sp;
     ++dp;
   }
+  *dp = '\0';
 }

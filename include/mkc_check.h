@@ -19,19 +19,27 @@
 extern "C" {
 #endif
 
-typedef struct mkc_attribute_t {
+/* each alternate will have a name associated with it */
+/* the first alternate in the list is the base context */
+/* and stores the name for the check */
+typedef struct mkc_alternate_t {
+  char            * name;
   mkc_list_t      * hdrlist;
-  mkc_list_t      * hdrlistalt;
   mkc_list_t      * compflags;
   mkc_list_t      * linkflags;
-  mkc_list_t      * linkflagsalt;
+} mkc_alternate_t;
+
+typedef struct mkc_attribute_t {
+  mkc_list_t      * alternates;
+  mkc_alternate_t * curralt;
   mkc_list_t      * replacelist;
-  char            * name;
   char            * method;
   char            * vcontext;
   char            * input;
   char            * output;
   char            * path;
+  char            * version;
+  char            * libraryversion;
   mkc_compiler_t  currcompiler;
   int             define_zero;
   int             headertype;

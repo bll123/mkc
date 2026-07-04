@@ -13,6 +13,9 @@ if (! bootstrap) {
 project {
   name mkc;
   compiler c;
+  if (! bootstrap) {
+    version ${VERSION};
+  }
 }
 
 # configure

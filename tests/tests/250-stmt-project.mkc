@@ -1,0 +1,16 @@
+
+project {
+  name mkctest;
+  version '0.1';
+}
+
+if (${MKC_PROJECT_NAME} eq 'mkctest') {
+  print '  ok name';
+} else {
+  print '  fail name';
+}
+if (${MKC_PROJECT_VERSION} eq '0.1') {
+  print '  ok vers';
+} else {
+  print '  fail vers';
+}
