@@ -231,7 +231,7 @@ mkc_profile_local_create (mkc_profile_t *profiles)
 {
   mkc_prof_entry_t  *pentry;
   mkc_prof_entry_t  tentry;
-  mkc_profidx_t     loc;
+  mkc_listidx_t     loc = MKC_LIST_NOTFOUND;
   char              tbuff [40];
 
   if (profiles == NULL) {

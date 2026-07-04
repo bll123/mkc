@@ -1037,7 +1037,7 @@ mkc_process_attr_comp_flags (mkc_process_t *process, mkc_value_t *value)
   mkc_list_iter_start (value->list, &iteridx);
   while ((lidx = mkc_list_iter_next (value->list, &iteridx)) != MKC_ITER_FINISH) {
     mkc_value_t     *lvalue;
-    mkc_listidx_t   loc;
+    mkc_listidx_t   loc = MKC_LIST_NOTFOUND;
 
     if (mkc_error_chk_err (process->mkcerr)) {
       break;
@@ -1068,7 +1068,7 @@ mkc_process_attr_header (mkc_process_t *process, mkc_value_t *value)
   mkc_list_iter_start (value->list, &iteridx);
   while ((lidx = mkc_list_iter_next (value->list, &iteridx)) != MKC_ITER_FINISH) {
     mkc_value_t     *lvalue;
-    mkc_listidx_t   loc;
+    mkc_listidx_t   loc = MKC_LIST_NOTFOUND;
 
     if (mkc_error_chk_err (process->mkcerr)) {
       break;
@@ -1099,7 +1099,7 @@ mkc_process_attr_link_flags (mkc_process_t *process, mkc_value_t *value)
   mkc_list_iter_start (value->list, &iteridx);
   while ((lidx = mkc_list_iter_next (value->list, &iteridx)) != MKC_ITER_FINISH) {
     mkc_value_t     *lvalue;
-    mkc_listidx_t   loc;
+    mkc_listidx_t   loc = MKC_LIST_NOTFOUND;
 
     if (mkc_error_chk_err (process->mkcerr)) {
       break;
@@ -1116,7 +1116,7 @@ void
 mkc_process_attr_replace (mkc_process_t *process,
     mkc_value_t *str, mkc_value_t *name)
 {
-  mkc_listidx_t   loc;
+  mkc_listidx_t   loc = MKC_LIST_NOTFOUND;
 
   if (process == NULL) {
     return;
@@ -2220,7 +2220,7 @@ mkc_process_find_executables (mkc_process_t *process)
   mkc_prog_chk_t  *chk;
   char            *p;
   mkc_list_t      *pathlist;
-  mkc_listidx_t   loc;
+  mkc_listidx_t   loc = MKC_LIST_NOTFOUND;
   mkc_listidx_t   iteridx;
   mkc_listidx_t   lidx;
   char            *tokstr;

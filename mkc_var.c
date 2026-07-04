@@ -247,7 +247,7 @@ void
 mkc_var_set_context (mkc_varlist_t *varlist, const char *vname, int vctxt)
 {
   mkc_listidx_t   vidx;
-  mkc_listidx_t   loc;
+  mkc_listidx_t   loc = MKC_LIST_NOTFOUND;
   mkc_var_t       *var;
   mkc_value_t     *tvalue;
 

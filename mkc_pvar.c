@@ -204,7 +204,7 @@ mkc_pvar_set_list_from_str (mkc_pvar_t *pvar,
   mkc_list_t    *tlist = NULL;
   char          *p;
   char          *tokstr;
-  mkc_listidx_t loc;
+  mkc_listidx_t loc = MKC_LIST_NOTFOUND;
 
   tlist = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, pvar->mkcerr);
   p = mkc_strtok (str, " ", &tokstr);

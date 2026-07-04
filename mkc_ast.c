@@ -385,7 +385,7 @@ mkc_ast_mk_value_list (mkc_astmain_t *astmain,
     mkc_astnode_t *listnode, mkc_astnode_t *vala, int32_t lineno, int colno)
 {
   mkc_list_t      *tlist = NULL;
-  mkc_listidx_t   loc;
+  mkc_listidx_t   loc = MKC_LIST_NOTFOUND;
   mkc_ast_value_t *astvalue;
   mkc_value_t     *value;
 
@@ -422,7 +422,7 @@ mkc_ast_mk_stmtlist (mkc_astmain_t *astmain,
 {
   mkc_astnode_t   *astnode = NULL;
   mkc_list_t      *tlist = NULL;
-  mkc_listidx_t   loc;
+  mkc_listidx_t   loc = MKC_LIST_NOTFOUND;
 
   mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
       "ast-mk: stmt-list\n");

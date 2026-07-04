@@ -172,7 +172,7 @@ void
 mkc_chk_append_comp_flag (mkc_check_t *check, const char *flag)
 {
   mkc_value_t   tvalue;
-  mkc_listidx_t loc;
+  mkc_listidx_t loc = MKC_LIST_NOTFOUND;
 
   if (check == NULL || flag == NULL) {
     return;
@@ -187,7 +187,7 @@ void
 mkc_chk_append_link_flag (mkc_check_t *check, const char *flag)
 {
   mkc_value_t   tvalue;
-  mkc_listidx_t loc;
+  mkc_listidx_t loc = MKC_LIST_NOTFOUND;
 
   if (check == NULL || flag == NULL) {
     return;
