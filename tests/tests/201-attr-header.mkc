@@ -3,24 +3,26 @@
 # checks the header attribute, uses check_size to test it.
 
 check_size 'DIR *' {
-  name  chka;
+  name chka;
   header dirent.h;
 }
 
 check_size 'DIR *' {
-  name  chkb;
+  name chkb;
   header fcntl.h;
 }
 
 check_size 'DIR *' {
-  name  chkc;
+  name chkc;
   header fcntl.h dirent.h;
 }
 
 check_size 'DIR *' {
-  name  chkd;
-  header fcntl.h;
+  name chkd;
+  # all headers should be processed
+  # put these out of order for the test
   header dirent.h;
+  header fcntl.h;
 }
 
 check_size 'DIR *' {

@@ -11,5 +11,7 @@ used in the [configure](SyntaxConfigure) statement.
 For a [configure](SyntaxConfigure) statement, _method_ may be one of
 _auto_ or _manual_.
 
+Repeatable: no
+
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

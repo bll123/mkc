@@ -8,5 +8,7 @@ the [check_package](SyntaxCheckPackage) statement.
 
     path <path>;
 
+Repeatable: no
+
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

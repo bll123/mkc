@@ -419,5 +419,7 @@ mkc_main_set_exec_path (argcopy_t *argcopy)
 static void
 mkc_main_print_version (void)
 {
+#if defined (VERSION)
   fprintf (stdout, "mkc version %s\n", VERSION);
+#endif
 }

@@ -9,6 +9,7 @@
 
 #include "mkc_compiler.h"
 #include "mkc_error.h"
+#include "mkc_list.h"
 #include "mkc_log.h"
 #include "mkc_nodiscard.h"
 #include "mkc_profile.h"
@@ -19,6 +20,9 @@ extern "C" {
 #endif
 
 typedef struct mkc_attribute_t {
+  mkc_list_t      * hdrlist;
+  mkc_list_t      * compflags;
+  mkc_list_t      * linkflags;
   char            * name;
   char            * method;
   char            * vcontext;
@@ -27,6 +31,7 @@ typedef struct mkc_attribute_t {
   char            * path;
   mkc_compiler_t  currcompiler;
   int             define_zero;
+  int             headertype;
   bool            negate;
 } mkc_attribute_t;
 

@@ -8,5 +8,7 @@ It is used in the [configure](SyntaxConfigure) statement.
 
     output <path>;
 
+Repeatable: no
+
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

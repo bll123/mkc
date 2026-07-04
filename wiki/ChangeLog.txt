@@ -8,6 +8,7 @@
 
 * Bug Fixes:
     * Fix relative path location for share directory.
+    * Fix repeatable attributes.
 
 -->
 

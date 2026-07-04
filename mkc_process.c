@@ -63,7 +63,7 @@ typedef struct mkc_process_t {
   mkc_regex_t           * rxshellvar;
   mkc_list_t            * user_rx_list;
   mkc_attribute_t       attr;
-  // internal
+  /* internal */
   mkc_compiler_t        dfltcompiler;
   mkc_system_type_t     systype;
   mkc_system_id_t       sysid;
@@ -128,7 +128,6 @@ static char const * const liblocname = "MKC_LIB_LOC_LIB64";
 static char const * const shlibext = "MKC_SHARED_LIBRARY_EXTENSION";
 static char const * const objext = "MKC_OBJECT_EXTENSION";
 static char const * const exeext = "MKC_EXECUTABLE_EXTENSION";
-static char const * const mkctesthdrlist = "MKC_TV_TEST_HEADER_LIST";
 static char const * const mkcwhilelimit = "MKC_TV_WHILE_LIMIT";
 static char const * const mkctempvarpfx = "MKC_TV_";
 static size_t mkctvpfxlen = 0;
@@ -185,7 +184,6 @@ mkc_process_init (mkc_profile_t *profiles, mkc_log_t *log,
 
   process->profiles = profiles;
   process->dfltcompiler = mkc_profile_get_dflt_compiler (profiles);
-  process->attr.currcompiler = process->dfltcompiler;
   process->log = log;
   process->context = context;
   process->mkcoptions = mkcoptions;
@@ -197,6 +195,12 @@ mkc_process_init (mkc_profile_t *profiles, mkc_log_t *log,
   process->rxshellvar = NULL;
   process->user_rx_list = mkc_list_init (MKC_LIST_SORTED,
       mkc_process_user_regex_free, mkc_process_user_regex_comp, mkcerr);
+
+  process->attr.currcompiler = process->dfltcompiler;
+  process->attr.headertype = process->headertype;
+  process->attr.hdrlist = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, mkcerr);
+  process->attr.compflags = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, mkcerr);
+  process->attr.linkflags = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, mkcerr);
   process->attr.name = NULL;
   process->attr.method = NULL;
   process->attr.vcontext = NULL;
@@ -205,6 +209,7 @@ mkc_process_init (mkc_profile_t *profiles, mkc_log_t *log,
   process->attr.path = NULL;
   process->attr.negate = false;
   process->attr.define_zero = MKC_AUTO_SKIP_ZERO;
+
   process->cacheloaded = false;
   process->cacheinvalidated = false;
   process->mkcerr = mkcerr;
@@ -214,6 +219,7 @@ mkc_process_init (mkc_profile_t *profiles, mkc_log_t *log,
   process->compid = MKC_COMP_ID_UNKNOWN;
   process->libloc = MKC_LIB_LOC_NOTSET;
   process->headertype = MKC_HEADER_MODERN;
+  process->attr.headertype = process->headertype;
   process->variadicmacro = MKC_VARIADIC_MACRO_SUPPORTED;
 
   process->pvar = mkc_pvar_init (process->profiles, log, mkcerr);
@@ -263,7 +269,12 @@ mkc_process_free (mkc_process_t *process)
     mkc_check_free (process->check);
   }
   datafree (process->projectname);
+
   mkc_process_attr_clear (process);
+  mkc_list_free (process->attr.hdrlist);
+  mkc_list_free (process->attr.compflags);
+  mkc_list_free (process->attr.linkflags);
+
   if (process->rxshellvar != NULL) {
 #if _have_regex
     mkc_regex_free (process->rxshellvar);
@@ -842,6 +853,8 @@ mkc_process_include (mkc_process_t *process, mkc_value_t *vala,
   mkc_pvar_value_get_str (process->pvar, vala, tbuff, sz);
 }
 
+/* attributes */
+
 void
 mkc_process_attribute (mkc_process_t *process, mkc_value_t *valname,
     mkc_astnode_token_t asttype)
@@ -957,124 +970,6 @@ mkc_process_attribute (mkc_process_t *process, mkc_value_t *valname,
 }
 
 void
-mkc_process_attr_header (mkc_process_t *process, mkc_value_t *value)
-{
-  mkc_listidx_t   iteridx;
-  mkc_listidx_t   lidx;
-  char            * hdrtxt = NULL;
-  size_t          hdrtxtlen = 1;
-  mkc_profidx_t   pidx;
-
-  if (process == NULL) {
-    return;
-  }
-
-  if (! mkc_context_check (process->context, MKC_CONTEXT_CHECK)) {
-    mkc_error_set (process->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
-    return;
-  }
-
-  mkc_list_iter_start (value->list, &iteridx);
-  while ((lidx = mkc_list_iter_next (value->list, &iteridx)) != MKC_ITER_FINISH) {
-    char        tbuff [MKC_PATH_MAX];
-    mkc_value_t *lvalue;
-    size_t      tlen;
-
-    if (mkc_error_chk_err (process->mkcerr)) {
-      break;
-    }
-
-    lvalue = mkc_list_get_by_idx (value->list, lidx);
-    if (process->headertype == MKC_HEADER_MODERN) {
-      snprintf (tbuff, sizeof (tbuff),
-          "#if __has_include (<%s>)\n"
-          "# include <%s>\n"
-          "#endif\n", lvalue->sval, lvalue->sval);
-    } else {
-      snprintf (tbuff, sizeof (tbuff), "#include <%s>\n", lvalue->sval);
-    }
-    tlen = strlen (tbuff);
-    hdrtxtlen += tlen;
-    hdrtxt = realloc (hdrtxt, hdrtxtlen);
-    stpecpy (hdrtxt + hdrtxtlen - tlen - 1, hdrtxt + hdrtxtlen, tbuff);
-  }
-
-  pidx = mkc_profile_get_active (process->profiles);
-
-  mkc_pvar_profile_set_idx (process->pvar, process->pidx_internal);
-  mkc_pvar_set_str (process->pvar, mkctesthdrlist, hdrtxt, MKC_VCTXT_TEMP);
-  free (hdrtxt);
-
-  mkc_pvar_profile_set_idx (process->pvar, pidx);
-
-  return;
-}
-
-void
-mkc_process_attr_comp_flags (mkc_process_t *process, mkc_value_t *value)
-{
-  mkc_listidx_t   iteridx;
-  mkc_listidx_t   lidx;
-
-  if (process == NULL) {
-    return;
-  }
-
-  if (! mkc_context_check (process->context, MKC_CONTEXT_CHECK)) {
-    mkc_error_set (process->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
-    return;
-  }
-
-  mkc_list_iter_start (value->list, &iteridx);
-  while ((lidx = mkc_list_iter_next (value->list, &iteridx)) != MKC_ITER_FINISH) {
-    char        tbuff [MKC_VNAME_MAX];
-    mkc_value_t *lvalue;
-
-    if (mkc_error_chk_err (process->mkcerr)) {
-      break;
-    }
-
-    lvalue = mkc_list_get_by_idx (value->list, lidx);
-    mkc_pvar_value_get_str (process->pvar, lvalue, tbuff, sizeof (tbuff));
-    mkc_chk_append_comp_flag (process->check, tbuff);
-  }
-
-  return;
-}
-
-void
-mkc_process_attr_link_flags (mkc_process_t *process, mkc_value_t *value)
-{
-  mkc_listidx_t   iteridx;
-  mkc_listidx_t   lidx;
-
-  if (process == NULL) {
-    return;
-  }
-
-  if (! mkc_context_check (process->context, MKC_CONTEXT_CHECK)) {
-    mkc_error_set (process->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
-    return;
-  }
-
-  mkc_list_iter_start (value->list, &iteridx);
-  while ((lidx = mkc_list_iter_next (value->list, &iteridx)) != MKC_ITER_FINISH) {
-    char        tbuff [MKC_VNAME_MAX];
-    mkc_value_t *lvalue;
-
-    if (mkc_error_chk_err (process->mkcerr)) {
-      break;
-    }
-
-    lvalue = mkc_list_get_by_idx (value->list, lidx);
-    mkc_pvar_value_get_str (process->pvar, lvalue, tbuff, sizeof (tbuff));
-    mkc_chk_append_link_flag (process->check, tbuff);
-  }
-
-  return;
-}
-
-void
 mkc_process_attr_compiler (mkc_process_t *process, mkc_value_t *name)
 {
   char            nm [MKC_VNAME_MAX];
@@ -1119,6 +1014,99 @@ mkc_process_attr_compiler (mkc_process_t *process, mkc_value_t *name)
   if (mkc_context_check (process->context, MKC_CONTEXT_PROFILE)) {
     mkc_profile_set_active (process->profiles, pidx);
   }
+}
+
+void
+mkc_process_attr_comp_flags (mkc_process_t *process, mkc_value_t *value)
+{
+  mkc_listidx_t   iteridx;
+  mkc_listidx_t   lidx;
+
+  if (process == NULL) {
+    return;
+  }
+
+  if (! mkc_context_check (process->context, MKC_CONTEXT_CHECK)) {
+    mkc_error_set (process->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
+    return;
+  }
+
+  mkc_list_iter_start (value->list, &iteridx);
+  while ((lidx = mkc_list_iter_next (value->list, &iteridx)) != MKC_ITER_FINISH) {
+    mkc_value_t     *lvalue;
+    mkc_listidx_t   loc;
+
+    if (mkc_error_chk_err (process->mkcerr)) {
+      break;
+    }
+
+    lvalue = mkc_list_get_by_idx (value->list, lidx);
+    mkc_list_set (process->attr.compflags, lvalue, sizeof (mkc_value_t), &loc);
+  }
+
+  return;
+}
+
+void
+mkc_process_attr_header (mkc_process_t *process, mkc_value_t *value)
+{
+  mkc_listidx_t   iteridx;
+  mkc_listidx_t   lidx;
+
+  if (process == NULL) {
+    return;
+  }
+
+  if (! mkc_context_check (process->context, MKC_CONTEXT_CHECK)) {
+    mkc_error_set (process->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
+    return;
+  }
+
+  mkc_list_iter_start (value->list, &iteridx);
+  while ((lidx = mkc_list_iter_next (value->list, &iteridx)) != MKC_ITER_FINISH) {
+    mkc_value_t     *lvalue;
+    mkc_listidx_t   loc;
+
+    if (mkc_error_chk_err (process->mkcerr)) {
+      break;
+    }
+
+    lvalue = mkc_list_get_by_idx (value->list, lidx);
+    mkc_list_set (process->attr.hdrlist, lvalue, sizeof (mkc_value_t), &loc);
+  }
+
+  return;
+}
+
+void
+mkc_process_attr_link_flags (mkc_process_t *process, mkc_value_t *value)
+{
+  mkc_listidx_t   iteridx;
+  mkc_listidx_t   lidx;
+
+  if (process == NULL) {
+    return;
+  }
+
+  if (! mkc_context_check (process->context, MKC_CONTEXT_CHECK)) {
+    mkc_error_set (process->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
+    return;
+  }
+
+  mkc_list_iter_start (value->list, &iteridx);
+  while ((lidx = mkc_list_iter_next (value->list, &iteridx)) != MKC_ITER_FINISH) {
+    mkc_value_t     *lvalue;
+    mkc_listidx_t   loc;
+
+    if (mkc_error_chk_err (process->mkcerr)) {
+      break;
+    }
+
+    lvalue = mkc_list_get_by_idx (value->list, lidx);
+    mkc_list_set (process->attr.linkflags, lvalue, sizeof (mkc_value_t), &loc);
+  }
+
+  return;
 }
 
 mkc_value_t *
@@ -1877,6 +1865,7 @@ mkc_process_int_checks (mkc_process_t *process)
   if (rc != 0) {
     process->headertype = MKC_HEADER_LEGACY;
   }
+  process->attr.headertype = process->headertype;
   mkc_log (process->log, MKC_LOG_GENERAL, "%s: %d\n", "header-type", process->headertype);
 
   /* system type : internal */
@@ -2288,6 +2277,12 @@ mkc_process_find_executables (mkc_process_t *process)
 static void
 mkc_process_attr_clear (mkc_process_t *process)
 {
+  mkc_list_free (process->attr.hdrlist);
+  process->attr.hdrlist = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, process->mkcerr);
+  mkc_list_free (process->attr.compflags);
+  process->attr.compflags = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, process->mkcerr);
+  mkc_list_free (process->attr.linkflags);
+  process->attr.linkflags = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, process->mkcerr);
   datafree (process->attr.name);
   process->attr.name = NULL;
   datafree (process->attr.method);

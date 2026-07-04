@@ -13,6 +13,8 @@ statement.
 
 Multiple __header__ attribute statements may be included.
 
+Repeatable: __yes__
+
 ##### Examples
 
     header sys/statvfs.h;

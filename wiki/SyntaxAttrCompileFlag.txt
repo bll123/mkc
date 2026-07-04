@@ -13,5 +13,7 @@ statement.
 
 The flags specified will be added to the check.
 
+Repeatable: __yes__
+
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

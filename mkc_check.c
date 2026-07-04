@@ -35,21 +35,17 @@ typedef struct mkc_check_t {
   mkc_error_t       * mkcerr;
   mkc_log_t         * log;
   mkc_attribute_t   * attr;
-  char              ** cf;
-  char              ** lf;
   const   char      ** targv;
   char              * pkgname;
   mkc_regex_t       * rxargcount;
   mkc_regex_t       * rxcomma;
   mkc_profidx_t     pidx_internal;
   mkc_profidx_t     pidx_dflt_comp;
-  int               cfcount;
-  int               cfallocsz;
-  int               lfcount;
-  int               lfallocsz;
   int               targc;
   int               targvallocsz;
 } mkc_check_t;
+
+static char const * const mkctesthdrlist = "MKC_TV_TEST_HEADER_LIST";
 
 static void mkc_check_file_sub_copy (mkc_check_t *check, char *tbuff, size_t sz, const char *fname, const char *origsfx, const char *sfx);
 static void mkc_check_log_command (mkc_check_t *check, const char *tag);
@@ -57,6 +53,8 @@ static mkc_err_code_t mkc_chk_env_var_set (mkc_check_t *check, const char *nm);
 static void mkc_check_append_arg (mkc_check_t *check, const char *arg);
 static const char * mkc_check_get_compstr (mkc_check_t *check, mkc_compiler_t compiler, char *buff, size_t sz);
 static int mkc_chk_package_exec (mkc_check_t *check, const char *pkg);
+static void mkc_chk_create_header_var (mkc_check_t *check);
+static void mkc_check_append_list_arg (mkc_check_t *check, mkc_list_t *list);
 
 MKC_NODISCARD
 mkc_check_t *
@@ -82,22 +80,6 @@ mkc_check_init (mkc_profile_t *profiles, mkc_pvar_t *pvar,
   check->pidx_internal = tpidx;
   check->pidx_dflt_comp = pidx;
 
-  check->cf = NULL;
-  check->cfcount = 0;
-  check->cfallocsz = 10;
-  check->cf = malloc (check->cfallocsz * sizeof (char *));
-  if (check->cf == NULL) {
-    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-  }
-
-  check->lf = NULL;
-  check->lfcount = 0;
-  check->lfallocsz = 10;
-  check->lf = malloc (check->lfallocsz * sizeof (char *));
-  if (check->lf == NULL) {
-    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-  }
-
   check->targv = NULL;
   check->targc = 0;
   check->targvallocsz = 10;
@@ -117,19 +99,6 @@ mkc_check_free (mkc_check_t *check)
     return;
   }
 
-  for (int i = 0; i < check->cfcount; ++i) {
-    if (check->cf [i] != NULL) {
-      free (check->cf [i]);
-    }
-  }
-  for (int i = 0; i < check->lfcount; ++i) {
-    if (check->lf [i] != NULL) {
-      free (check->lf [i]);
-    }
-  }
-
-  datafree (check->cf);
-  datafree (check->lf);
   datafree (check->targv);
   datafree (check->pkgname);
   if (check->rxargcount != NULL) {
@@ -195,63 +164,38 @@ mkc_chk_reset (mkc_check_t *check)
     return;
   }
 
-  for (int i = 0; i < check->cfcount; ++i) {
-    if (check->cf [i] != NULL) {
-      free (check->cf [i]);
-    }
-  }
-  for (int i = 0; i < check->lfcount; ++i) {
-    if (check->lf [i] != NULL) {
-      free (check->lf [i]);
-    }
-  }
-
-  check->cf [0] = NULL;
-  check->lf [0] = NULL;
   check->targv [0] = NULL;
-  check->cfcount = 0;
-  check->lfcount = 0;
   check->targc = 0;
 }
 
 void
 mkc_chk_append_comp_flag (mkc_check_t *check, const char *flag)
 {
+  mkc_value_t   tvalue;
+  mkc_listidx_t loc;
+
   if (check == NULL || flag == NULL) {
     return;
   }
 
-  if (check->cfcount >= check->cfallocsz) {
-    check->cfallocsz += 10;
-    check->cf = realloc (check->cf, check->cfallocsz * sizeof (char *));
-    if (check->cf == NULL) {
-      mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-      return;
-    }
-  }
-
-  check->cf [check->cfcount] = strdup (flag);
-  check->cfcount += 1;
+  tvalue.sval = (char *) flag;
+  tvalue.vtype = MKC_VT_STRING;
+  mkc_list_set (check->attr->compflags, &tvalue, sizeof (mkc_value_t), &loc);
 }
 
 void
 mkc_chk_append_link_flag (mkc_check_t *check, const char *flag)
 {
+  mkc_value_t   tvalue;
+  mkc_listidx_t loc;
+
   if (check == NULL || flag == NULL) {
     return;
   }
 
-  if (check->lfcount >= check->lfallocsz) {
-    check->lfallocsz += 10;
-    check->lf = realloc (check->lf, check->lfallocsz * sizeof (char *));
-    if (check->lf == NULL) {
-      mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-      return;
-    }
-  }
-
-  check->lf [check->lfcount] = strdup (flag);
-  check->lfcount += 1;
+  tvalue.sval = (char *) flag;
+  tvalue.vtype = MKC_VT_STRING;
+  mkc_list_set (check->attr->linkflags, &tvalue, sizeof (mkc_value_t), &loc);
 }
 
 int
@@ -397,6 +341,7 @@ mkc_chk_arg_count (mkc_check_t *check, mkc_compiler_t compiler,
   opidx = mkc_profile_get_active (check->profiles);
 
   mkc_pvar_profile_set_idx (check->pvar, check->pidx_internal);
+  mkc_chk_create_header_var (check);
   mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_FUNCTION_NAME", funcname, MKC_VCTXT_TEMP);
   mkc_pvar_profile_set_idx (check->pvar, opidx);
 
@@ -417,6 +362,7 @@ mkc_chk_arg_count (mkc_check_t *check, mkc_compiler_t compiler,
   if (check->rxcomma == NULL) {
     check->rxcomma = mkc_regex_init ("(,)", check->mkcerr);
     if (mkc_error_chk_err (check->mkcerr)) {
+      free (rbuff);
       return MKC_ERR_FAILURE;
     }
   }
@@ -427,6 +373,7 @@ mkc_chk_arg_count (mkc_check_t *check, mkc_compiler_t compiler,
   mkc_log (check->log, MKC_LOG_CHECK, "  arg-count: pattern: %s\n", pattern);
   check->rxargcount = mkc_regex_init (pattern, check->mkcerr);
   if (mkc_error_chk_err (check->mkcerr)) {
+    free (rbuff);
     return MKC_ERR_FAILURE;
   }
 
@@ -450,6 +397,7 @@ mkc_chk_arg_count (mkc_check_t *check, mkc_compiler_t compiler,
 #endif
 
   mkc_chk_reset (check);
+  free (rbuff);
   return rc;
 }
 
@@ -509,6 +457,7 @@ mkc_chk_const (mkc_check_t *check,
   opidx = mkc_profile_get_active (check->profiles);
 
   mkc_pvar_profile_set_idx (check->pvar, check->pidx_internal);
+  mkc_chk_create_header_var (check);
   mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_CONSTANT", consttxt, MKC_VCTXT_TEMP);
 
   mkc_pvar_profile_set_idx (check->pvar, opidx);
@@ -529,6 +478,7 @@ mkc_chk_define (mkc_check_t *check,
   opidx = mkc_profile_get_active (check->profiles);
 
   mkc_pvar_profile_set_idx (check->pvar, check->pidx_internal);
+  mkc_chk_create_header_var (check);
   mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_DEFINE", def, MKC_VCTXT_TEMP);
 
   mkc_pvar_profile_set_idx (check->pvar, opidx);
@@ -596,6 +546,7 @@ mkc_chk_size (mkc_check_t *check,
   opidx = mkc_profile_get_active (check->profiles);
 
   mkc_pvar_profile_set_idx (check->pvar, check->pidx_internal);
+  mkc_chk_create_header_var (check);
   mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_SIZE", type, MKC_VCTXT_TEMP);
 
   mkc_pvar_profile_set_idx (check->pvar, opidx);
@@ -620,6 +571,7 @@ mkc_chk_type (mkc_check_t *check,
   opidx = mkc_profile_get_active (check->profiles);
 
   mkc_pvar_profile_set_idx (check->pvar, check->pidx_internal);
+  mkc_chk_create_header_var (check);
   mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_TYPE", type, MKC_VCTXT_TEMP);
 
   mkc_pvar_profile_set_idx (check->pvar, opidx);
@@ -642,6 +594,7 @@ mkc_chk_struct_member (mkc_check_t *check,
   opidx = mkc_profile_get_active (check->profiles);
 
   mkc_pvar_profile_set_idx (check->pvar, check->pidx_internal);
+  mkc_chk_create_header_var (check);
   mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_STRUCT_NAME", structname, MKC_VCTXT_TEMP);
   mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_STRUCT_MEMBER", membername, MKC_VCTXT_TEMP);
 
@@ -665,6 +618,7 @@ mkc_chk_function (mkc_check_t *check, mkc_compiler_t compiler,
   opidx = mkc_profile_get_active (check->profiles);
 
   mkc_pvar_profile_set_idx (check->pvar, check->pidx_internal);
+  mkc_chk_create_header_var (check);
   mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_FUNCTION_NAME", funcname, MKC_VCTXT_TEMP);
 
   mkc_pvar_profile_set_idx (check->pvar, opidx);
@@ -687,6 +641,7 @@ mkc_chk_header (mkc_check_t *check,
   opidx = mkc_profile_get_active (check->profiles);
 
   mkc_pvar_profile_set_idx (check->pvar, check->pidx_internal);
+  mkc_chk_create_header_var (check);
   mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_HEADER", header, MKC_VCTXT_TEMP);
 
   mkc_pvar_profile_set_idx (check->pvar, opidx);
@@ -761,9 +716,9 @@ mkc_compile_only (mkc_check_t *check, mkc_compiler_t compiler,
       mkc_check_append_arg (check, p);
     }
   }
-  for (int i = 0; i < check->cfcount; ++i) {
-    mkc_check_append_arg (check, check->cf [i]);
-  }
+
+  mkc_check_append_list_arg (check, check->attr->compflags);
+
   if (! cpreprocess) {
     mkc_check_append_arg (check, "-c");
     mkc_check_append_arg (check, "-o");
@@ -875,9 +830,7 @@ mkc_compile_link (mkc_check_t *check, mkc_compiler_t compiler,
   mkc_check_append_arg (check, outfile);
   mkc_path_build (MKC_PATH_MKC_TMP, objfile, MKC_PATH_MAX, "mkctest.o", check->mkcerr);
   mkc_check_append_arg (check, objfile);
-  for (int i = 0; i < check->lfcount; ++i) {
-    mkc_check_append_arg (check, check->lf [i]);
-  }
+  mkc_check_append_list_arg (check, check->attr->linkflags);
   mkc_check_append_arg (check, NULL);
   if (mkc_error_chk_err (check->mkcerr)) {
     if (rallocated) {
@@ -1247,4 +1200,75 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
   free (pkgconfpath);
   free (rbuff);
   return rc;
+}
+
+static void
+mkc_chk_create_header_var (mkc_check_t *check)
+{
+  mkc_listidx_t   iteridx;
+  mkc_listidx_t   lidx;
+  char            * hdrtxt = NULL;
+  char            * tmp = NULL;
+  size_t          hdrtxtlen = 1;
+  mkc_profidx_t   pidx;
+
+
+  mkc_list_iter_start (check->attr->hdrlist, &iteridx);
+  while ((lidx = mkc_list_iter_next (check->attr->hdrlist, &iteridx)) != MKC_ITER_FINISH) {
+    char        tbuff [MKC_PATH_MAX];
+    mkc_value_t *lvalue;
+    size_t      tlen;
+
+    if (mkc_error_chk_err (check->mkcerr)) {
+      break;
+    }
+
+    lvalue = mkc_list_get_by_idx (check->attr->hdrlist, lidx);
+    if (check->attr->headertype == MKC_HEADER_MODERN) {
+      snprintf (tbuff, sizeof (tbuff),
+          "#if __has_include (<%s>)\n"
+          "# include <%s>\n"
+          "#endif\n", lvalue->sval, lvalue->sval);
+    } else {
+      snprintf (tbuff, sizeof (tbuff), "#include <%s>\n", lvalue->sval);
+    }
+    tlen = strlen (tbuff);
+    hdrtxtlen += tlen;
+    hdrtxt = realloc (hdrtxt, hdrtxtlen);
+    stpecpy (hdrtxt + hdrtxtlen - tlen - 1, hdrtxt + hdrtxtlen, tbuff);
+  }
+
+  tmp = hdrtxt;
+  if (hdrtxt == NULL) {
+    tmp = "";
+  }
+  pidx = mkc_profile_get_active (check->profiles);
+  mkc_pvar_profile_set_idx (check->pvar, check->pidx_internal);
+  mkc_pvar_set_str (check->pvar, mkctesthdrlist, tmp, MKC_VCTXT_TEMP);
+  mkc_pvar_profile_set_idx (check->pvar, pidx);
+
+  free (hdrtxt);
+}
+
+static void
+mkc_check_append_list_arg (mkc_check_t *check, mkc_list_t *list)
+{
+  mkc_listidx_t   iteridx;
+  mkc_listidx_t   lidx;
+
+  if (check == NULL || list == NULL) {
+    return;
+  }
+
+  mkc_list_iter_start (list, &iteridx);
+  while ((lidx = mkc_list_iter_next (list, &iteridx)) != MKC_ITER_FINISH) {
+    mkc_value_t   *lvalue;
+
+    if (mkc_error_chk_err (check->mkcerr)) {
+      break;
+    }
+
+    lvalue = mkc_list_get_by_idx (list, lidx);
+    mkc_check_append_arg (check, lvalue->sval);
+  }
 }

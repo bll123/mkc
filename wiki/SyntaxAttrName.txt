@@ -14,5 +14,7 @@ the generated name of the check with _new-name_.
 For [project](SyntaxProject) statements, the __name__ attribute
 defines the name of the project.
 
+Repeatable: no
+
 [Wiki Home](Home)
 <br>[Syntax](Syntax)
