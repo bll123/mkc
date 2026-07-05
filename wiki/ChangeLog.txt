@@ -4,7 +4,9 @@
 
 <!--
 
-**0.2 2026-7---**
+-->
+
+**0.2 2026-7-5**
 
 * Bug Fixes:
     * Fix relative path location for share directory.
@@ -13,8 +15,6 @@
     * Add 'check_header'.
     * Add 'replace' attribute for 'configure'.
     * Add 'alternate' attribute.
-
--->
 
 **0.1 2026-7-3 pre-alpha**
 
