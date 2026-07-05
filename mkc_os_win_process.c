@@ -123,7 +123,6 @@ mkc_os_process_start (const char *targv[], int flags, char *outfname)
     bool            rc;
     int             count;
     struct __stat64 statbuf;
-    ssize_t         tsz;
 
     CloseHandle (outhandle);
     rc = _wstat64 (woutfname, &statbuf);
@@ -287,8 +286,8 @@ mkc_os_win_create_cmd (char *buff, size_t sz, const char *targv [])
   /*    if there is a / or \ character in the argument, */
   /*        quote it with double quotes */
   /* example arguments: */
-  /*    C:/Program Files/...
-  /*    -DABC="hello world"
+  /*    C:/Program Files/... */
+  /*    -DABC="hello world" */
   /* this may need further changes */
 
   buff [0] = '\0';

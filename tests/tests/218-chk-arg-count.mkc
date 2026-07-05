@@ -28,6 +28,10 @@ check_arg_count chk_f {
   compiler_flags '-Itests/data';
   header 218-chk-arg-count.h;
 }
+check_arg_count chk_unknown {
+  compiler_flags '-Itests/data';
+  header 218-chk-arg-count.h;
+}
 
 # some real-world routines
 
@@ -71,6 +75,11 @@ if (${_arg_count_chk_f} == 3) {
   print '  ok f';
 } else {
   print '  fail f';
+}
+if (${_arg_count_chk_unknown} == 0) {
+  print '  ok unknown';
+} else {
+  print '  fail unknown';
 }
 
 if (${_arg_count_stat} == 2) {

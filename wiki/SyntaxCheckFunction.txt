@@ -29,6 +29,7 @@ Generated Name: Prefix: __\_function\___
 
 ##### Attributes
 
+* [alternate](SyntaxAttrAlternate)
 * [header](SyntaxAttrHeader)
 * [name](SyntaxAttrName)
 * [compiler_flags](SyntaxAttrCompileFlag)

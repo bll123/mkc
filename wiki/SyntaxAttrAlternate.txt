@@ -1,0 +1,32 @@
+[Wiki Home](Home)
+<br>[Syntax](Syntax)
+
+### Syntax: alternate (attribute)
+
+The __alternate__ attribute allows a check to test with different
+compiler flags, link flags and headers.
+
+    alternate { <attribute-statements> }
+
+The __alternate__ attribute is used with a [check](SyntaxCheck)
+statement.
+
+Repeatable: __yes__
+
+##### Examples
+
+    check_function statfs {
+      alternate {
+        # linux
+        name _header_sys_vfs;
+        header sys/vfs.h;
+      }
+      alternate {
+        # macos, freebsd
+        name _header_sys_mount;
+        header sys/mount.h;
+      }
+    }
+
+[Wiki Home](Home)
+<br>[Syntax](Syntax)

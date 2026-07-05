@@ -12,6 +12,7 @@
 * New Features:
     * Add 'check_header'.
     * Add 'replace' attribute for 'configure'.
+    * Add 'alternate' attribute.
 
 -->
 

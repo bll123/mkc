@@ -33,6 +33,7 @@ typedef struct mkc_attribute_t {
   mkc_list_t      * alternates;
   mkc_alternate_t * curralt;
   mkc_list_t      * replacelist;
+  char            * currname;
   char            * method;
   char            * vcontext;
   char            * input;
@@ -79,10 +80,6 @@ int mkc_chk_package (mkc_check_t *check, mkc_compiler_t compiler, const char *pk
 int mkc_chk_size (mkc_check_t *check, mkc_compiler_t compiler, const char *type);
 int mkc_chk_struct_member (mkc_check_t *check, mkc_compiler_t compiler, const char *structname, const char *membername);
 int mkc_chk_type (mkc_check_t *check, mkc_compiler_t compiler, const char *type);
-
-int mkc_compile_only (mkc_check_t *check, mkc_compiler_t compiler, const char *fname, const char *flags[], char *rbuff, size_t rsz);
-int mkc_compile_link (mkc_check_t *check, mkc_compiler_t compiler, const char *fname, const char *flags[], char *rbuff, size_t rsz);
-int mkc_compile_run (mkc_check_t *check, mkc_compiler_t compiler, const char *fname, const char *flags[], char *rbuff, size_t rsz);
 
 #if defined (__cplusplus) || defined (c_plusplus)
 }

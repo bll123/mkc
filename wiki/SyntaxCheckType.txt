@@ -21,6 +21,7 @@ Generated Name: Prefix __\_type\___
 
 ##### Attributes
 
+* [alternate](SyntaxAttrAlternate)
 * [compiler_flags](SyntaxAttrCompileFlag)
 * [header](SyntaxAttrHeader)
 * [name](SyntaxAttrName)

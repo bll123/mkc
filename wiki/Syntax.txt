@@ -36,6 +36,7 @@
       * [Check Struct Member](SyntaxCheckStructMember)
       * [Check Type](SyntaxCheckType)
   * Attributes
+      * [Alternate](SyntaxAttrAlternate)
       * [Compiler Flags](SyntaxAttrCompileFlag)
       * [Compiler](SyntaxAttrCompiler)
       * [Header](SyntaxAttrHeader)

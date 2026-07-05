@@ -8,6 +8,9 @@ statement.
 
     link_flags '-flag' ['-flag' ...];
 
+The __link\_flags__ attribute is used with a [check](SyntaxCheck)
+statement or with an [alternate](SyntaxAttrAlternate) attribute.
+
 The flags specified will be added to the check.
 
 Repeatable: __yes__

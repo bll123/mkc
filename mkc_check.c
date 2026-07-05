@@ -29,6 +29,12 @@
 
 #define MKC_PKG_TRACE 0
 
+typedef enum {
+  MKC_CHK_TEST_COMPILE_ONLY,
+  MKC_CHK_TEST_COMPILE_LINK,
+  MKC_CHK_TEST_COMPILE_RUN,
+} mkc_check_test_t;
+
 typedef struct mkc_check_t {
   mkc_profile_t     * profiles;
   mkc_pvar_t        * pvar;
@@ -55,6 +61,13 @@ static const char * mkc_check_get_compstr (mkc_check_t *check, mkc_compiler_t co
 static int mkc_chk_package_exec (mkc_check_t *check, const char *pkg);
 static void mkc_chk_create_header_var (mkc_check_t *check);
 static void mkc_check_append_list_arg (mkc_check_t *check, mkc_list_t *list);
+
+typedef int (*test_func_t)(mkc_check_t *check, mkc_compiler_t compiler, const char *fname, const char *flags [], char *rbuff, size_t rsz);
+
+static int mkc_do_test (mkc_check_test_t type, mkc_check_t *check, mkc_compiler_t compiler, const char *fname, const char *flags[], char *rbuff, size_t rsz);
+static int mkc_compile_only (mkc_check_t *check, mkc_compiler_t compiler, const char *fname, const char *flags[], char *rbuff, size_t rsz);
+static int mkc_compile_link (mkc_check_t *check, mkc_compiler_t compiler, const char *fname, const char *flags[], char *rbuff, size_t rsz);
+static int mkc_compile_run (mkc_check_t *check, mkc_compiler_t compiler, const char *fname, const char *flags[], char *rbuff, size_t rsz);
 
 MKC_NODISCARD
 mkc_check_t *
@@ -345,7 +358,6 @@ mkc_chk_arg_count (mkc_check_t *check, mkc_compiler_t compiler,
   opidx = mkc_profile_get_active (check->profiles);
 
   mkc_pvar_profile_set_idx (check->pvar, check->pidx_internal);
-  mkc_chk_create_header_var (check);
   mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_FUNCTION_NAME", funcname, MKC_VCTXT_TEMP);
   mkc_pvar_profile_set_idx (check->pvar, opidx);
 
@@ -357,7 +369,8 @@ mkc_chk_arg_count (mkc_check_t *check, mkc_compiler_t compiler,
 
   flags [fcount++] = "-E";
   flags [fcount++] = NULL;
-  rc = mkc_compile_only (check, compiler, "c-argcount", flags, rbuff, rsz);
+  rc = mkc_do_test (MKC_CHK_TEST_COMPILE_ONLY,
+      check, compiler, "c-argcount", flags, rbuff, rsz);
 
   /*  int mkdir (const char *__path, __mode_t __mode) */
   /*      ;   */
@@ -461,12 +474,12 @@ mkc_chk_const (mkc_check_t *check,
   opidx = mkc_profile_get_active (check->profiles);
 
   mkc_pvar_profile_set_idx (check->pvar, check->pidx_internal);
-  mkc_chk_create_header_var (check);
   mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_CONSTANT", consttxt, MKC_VCTXT_TEMP);
 
   mkc_pvar_profile_set_idx (check->pvar, opidx);
 
-  rc = mkc_compile_only (check, compiler, "c-const", NULL, NULL, 0);
+  rc = mkc_do_test (MKC_CHK_TEST_COMPILE_ONLY,
+      check, compiler, "c-const", NULL, NULL, 0);
   mkc_chk_reset (check);
   return rc;
 }
@@ -482,12 +495,12 @@ mkc_chk_define (mkc_check_t *check,
   opidx = mkc_profile_get_active (check->profiles);
 
   mkc_pvar_profile_set_idx (check->pvar, check->pidx_internal);
-  mkc_chk_create_header_var (check);
   mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_DEFINE", def, MKC_VCTXT_TEMP);
 
   mkc_pvar_profile_set_idx (check->pvar, opidx);
 
-  rc = mkc_compile_only (check, compiler, "c-define", NULL, NULL, 0);
+  rc = mkc_do_test (MKC_CHK_TEST_COMPILE_ONLY,
+      check, compiler, "c-define", NULL, NULL, 0);
   mkc_chk_reset (check);
   return rc;
 }
@@ -525,8 +538,7 @@ mkc_chk_link_flag (mkc_check_t *check,
 
   mkc_chk_append_link_flag (check, flag);
   mkc_log (check->log, MKC_LOG_CHECK, "== chk: link-flag: %s\n", flag);
-  rc = mkc_compile_link (check, compiler,
-      "int-main", NULL, rbuff, MKC_PATH_MAX);
+  rc = mkc_compile_link (check, compiler, "int-main", NULL, rbuff, MKC_PATH_MAX);
   if (rc == 0) {
     /* clang does not return an error code on a unknown warning */
     if (strstr (rbuff, "warning") != NULL) {
@@ -550,12 +562,12 @@ mkc_chk_size (mkc_check_t *check,
   opidx = mkc_profile_get_active (check->profiles);
 
   mkc_pvar_profile_set_idx (check->pvar, check->pidx_internal);
-  mkc_chk_create_header_var (check);
   mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_SIZE", type, MKC_VCTXT_TEMP);
 
   mkc_pvar_profile_set_idx (check->pvar, opidx);
 
-  rc = mkc_compile_run (check, compiler, "c-size", NULL, NULL, 0);
+  rc = mkc_do_test (MKC_CHK_TEST_COMPILE_RUN,
+      check, compiler, "c-size", NULL, NULL, 0);
   if (rc < 0) {
     rc = 0;
   }
@@ -575,12 +587,12 @@ mkc_chk_type (mkc_check_t *check,
   opidx = mkc_profile_get_active (check->profiles);
 
   mkc_pvar_profile_set_idx (check->pvar, check->pidx_internal);
-  mkc_chk_create_header_var (check);
   mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_TYPE", type, MKC_VCTXT_TEMP);
 
   mkc_pvar_profile_set_idx (check->pvar, opidx);
 
-  rc = mkc_compile_only (check, compiler, "c-type", NULL, NULL, 0);
+  rc = mkc_do_test (MKC_CHK_TEST_COMPILE_ONLY,
+      check, compiler, "c-type", NULL, NULL, 0);
   mkc_chk_reset (check);
   return rc;
 }
@@ -598,13 +610,13 @@ mkc_chk_struct_member (mkc_check_t *check,
   opidx = mkc_profile_get_active (check->profiles);
 
   mkc_pvar_profile_set_idx (check->pvar, check->pidx_internal);
-  mkc_chk_create_header_var (check);
   mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_STRUCT_NAME", structname, MKC_VCTXT_TEMP);
   mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_STRUCT_MEMBER", membername, MKC_VCTXT_TEMP);
 
   mkc_pvar_profile_set_idx (check->pvar, opidx);
 
-  rc = mkc_compile_only (check, compiler, "c-struct-member", NULL, NULL, 0);
+  rc = mkc_do_test (MKC_CHK_TEST_COMPILE_ONLY,
+      check, compiler, "c-struct-member", NULL, NULL, 0);
   mkc_chk_reset (check);
   return rc;
 }
@@ -622,12 +634,12 @@ mkc_chk_function (mkc_check_t *check, mkc_compiler_t compiler,
   opidx = mkc_profile_get_active (check->profiles);
 
   mkc_pvar_profile_set_idx (check->pvar, check->pidx_internal);
-  mkc_chk_create_header_var (check);
   mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_FUNCTION_NAME", funcname, MKC_VCTXT_TEMP);
 
   mkc_pvar_profile_set_idx (check->pvar, opidx);
 
-  rc = mkc_compile_link (check, compiler, "c-function", NULL, NULL, 0);
+  rc = mkc_do_test (MKC_CHK_TEST_COMPILE_LINK,
+      check, compiler, "c-function", NULL, NULL, 0);
   mkc_chk_reset (check);
   return rc;
 }
@@ -645,295 +657,13 @@ mkc_chk_header (mkc_check_t *check,
   opidx = mkc_profile_get_active (check->profiles);
 
   mkc_pvar_profile_set_idx (check->pvar, check->pidx_internal);
-  mkc_chk_create_header_var (check);
   mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_HEADER", header, MKC_VCTXT_TEMP);
 
   mkc_pvar_profile_set_idx (check->pvar, opidx);
 
-  rc = mkc_compile_link (check, compiler, "c-header", NULL, NULL, 0);
+  rc = mkc_do_test (MKC_CHK_TEST_COMPILE_LINK,
+      check, compiler, "c-header", NULL, NULL, 0);
   mkc_chk_reset (check);
-  return rc;
-}
-
-int
-mkc_compile_only (mkc_check_t *check, mkc_compiler_t compiler,
-    const char *fname, const char *flags [], char *rbuff, size_t rsz)
-{
-  int             rc;
-  char            *tbuff;
-  size_t          retsz;
-  const char      *sfx = NULL;
-  char            *compstr;
-  bool            rallocated = false;
-  char            *outfile;
-  bool            cpreprocess = false;
-  mkc_alternate_t  * alt;
-
-  tbuff = malloc (MKC_PATH_MAX);
-  if (tbuff == NULL) {
-    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return MKC_ERR_FAILURE;
-  }
-  compstr = malloc (MKC_PATH_MAX);
-  if (compstr == NULL) {
-    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    free (tbuff);
-    return MKC_ERR_FAILURE;
-  }
-  outfile = malloc (MKC_PATH_MAX);
-  if (outfile == NULL) {
-    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    free (tbuff);
-    free (compstr);
-    return MKC_ERR_FAILURE;
-  }
-
-  if (rbuff == NULL) {
-    rsz = MKC_SMALL_BUFF_SZ;
-    rbuff = malloc (rsz);
-    if (rbuff == NULL) {
-      mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-      free (tbuff);
-      free (compstr);
-      free (outfile);
-      return MKC_ERR_FAILURE;
-    }
-    *rbuff = '\0';
-    rallocated = true;
-  }
-
-  mkc_check_get_compstr (check, compiler, compstr, MKC_PATH_MAX);
-  sfx = mkc_compiler_get_suffix (compiler);
-// ### will need to be fixed, the original suffix may change
-  mkc_check_file_sub_copy (check, tbuff, MKC_PATH_MAX, fname, ".c", sfx);
-
-  check->targc = 0;
-  mkc_check_append_arg (check, compstr);
-  if (flags != NULL) {
-    const char  *p;
-    int         count = 0;
-
-    while ((p = flags [count++]) != NULL) {
-      if (strcmp (p, "-E") == 0) {
-        cpreprocess = true;
-      }
-      mkc_check_append_arg (check, p);
-    }
-  }
-
-  alt = check->attr->curralt;
-  mkc_check_append_list_arg (check, alt->compflags);
-
-  if (! cpreprocess) {
-    mkc_check_append_arg (check, "-c");
-    mkc_check_append_arg (check, "-o");
-    mkc_path_build (MKC_PATH_MKC_TMP, outfile, MKC_PATH_MAX, "mkctest.o", check->mkcerr);
-    mkc_check_append_arg (check, outfile);
-  }
-  mkc_check_append_arg (check, tbuff);
-  mkc_check_append_arg (check, NULL);
-  if (mkc_error_chk_err (check->mkcerr)) {
-    free (tbuff);
-    free (compstr);
-    free (outfile);
-    if (rallocated) {
-      free (rbuff);
-    }
-    return MKC_ERR_FAILURE;
-  }
-
-  mkc_check_log_command (check, "comp-only");
-
-  rc = mkc_os_process_pipe (check->targv,
-      OS_PROC_WAIT | OS_PROC_NOWINDOW, rbuff, rsz, &retsz);
-
-  if (retsz > 0) {
-    mkc_log (check->log, MKC_LOG_CHECK, "--- compile log (%zd)\n", retsz);
-    if (retsz < 2000) {
-      mkc_log (check->log, MKC_LOG_CHECK, "%s\n", rbuff);
-    } else {
-      mkc_log (check->log, MKC_LOG_CHECK_VERBOSE, "%s\n", rbuff);
-    }
-    mkc_log (check->log, MKC_LOG_CHECK, "---\n");
-  }
-  mkc_log (check->log, MKC_LOG_CHECK, "  rc: %d\n", rc);
-
-  /* never want the return code to overlap with various enums */
-  if (rc > 0) {
-    rc = - rc;
-  }
-
-  free (tbuff);
-  free (compstr);
-  free (outfile);
-  if (rallocated) {
-    free (rbuff);
-  }
-  return rc;
-}
-
-int
-mkc_compile_link (mkc_check_t *check, mkc_compiler_t compiler,
-    const char *fname, const char *flags [],
-    char *rbuff, size_t rsz)
-{
-  int               rc;
-  size_t            retsz;
-  bool              rallocated = false;
-  char              *compstr;
-  char              *outfile;
-  char              *objfile;
-  mkc_alternate_t  * alt;
-
-
-  if (rbuff == NULL) {
-    rsz = MKC_SMALL_BUFF_SZ;
-    rbuff = malloc (rsz);
-    if (rbuff == NULL) {
-      mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-      return MKC_ERR_FAILURE;
-    }
-    *rbuff = '\0';
-    rallocated = true;
-  }
-
-  rc = mkc_compile_only (check, compiler, fname, flags, rbuff, rsz);
-  if (rc > 0) {
-    rc = - rc;
-  }
-  if (rc != 0) {
-    if (rallocated) {
-      free (rbuff);
-    }
-    return rc;
-  }
-
-  compstr = malloc (MKC_PATH_MAX);
-  if (compstr == NULL) {
-    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return MKC_ERR_FAILURE;
-  }
-  objfile = malloc (MKC_PATH_MAX);
-  if (objfile == NULL) {
-    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    free (compstr);
-    return MKC_ERR_FAILURE;
-  }
-  outfile = malloc (MKC_PATH_MAX);
-  if (outfile == NULL) {
-    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    free (objfile);
-    free (compstr);
-    return MKC_ERR_FAILURE;
-  }
-
-  mkc_check_get_compstr (check, compiler, compstr, MKC_PATH_MAX);
-
-  check->targc = 0;
-  mkc_check_append_arg (check, compstr);
-  mkc_check_append_arg (check, "-o");
-  mkc_path_build (MKC_PATH_MKC_TMP, outfile, MKC_PATH_MAX, "mkctest.exe", check->mkcerr);
-  mkc_check_append_arg (check, outfile);
-  mkc_path_build (MKC_PATH_MKC_TMP, objfile, MKC_PATH_MAX, "mkctest.o", check->mkcerr);
-  mkc_check_append_arg (check, objfile);
-
-  alt = check->attr->curralt;
-  mkc_check_append_list_arg (check, alt->linkflags);
-
-  mkc_check_append_arg (check, NULL);
-  if (mkc_error_chk_err (check->mkcerr)) {
-    if (rallocated) {
-      free (rbuff);
-    }
-    return MKC_ERR_FAILURE;
-  }
-
-  mkc_check_log_command (check, "link");
-
-  rc = mkc_os_process_pipe (check->targv,
-      OS_PROC_WAIT | OS_PROC_NOWINDOW, rbuff, rsz, &retsz);
-
-  mkc_log (check->log, MKC_LOG_CHECK, "  rc: %d\n", rc);
-  if (retsz > 0) {
-    mkc_log (check->log, MKC_LOG_CHECK, "--- link log\n");
-    mkc_log (check->log, MKC_LOG_CHECK, "%s\n", rbuff);
-    mkc_log (check->log, MKC_LOG_CHECK, "---\n");
-  }
-
-  /* never want the return code to overlap with various enums */
-  if (rc > 0) {
-    rc = - rc;
-  }
-
-  free (objfile);
-  free (outfile);
-  free (compstr);
-  if (rallocated) {
-    free (rbuff);
-  }
-
-  return rc;
-}
-
-int
-mkc_compile_run (mkc_check_t *check,
-    mkc_compiler_t compiler,
-    const char *fname, const char *flags [],
-    char *rbuff, size_t rsz)
-{
-  int         rc;
-  bool        rallocated = false;
-  size_t      retsz;
-  char        *exefile;
-
-  rc = mkc_compile_link (check, compiler, fname, flags, NULL, 0);
-
-  if (rc != 0) {
-    return rc;
-  }
-
-  exefile = malloc (MKC_PATH_MAX);
-  if (exefile == NULL) {
-    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return MKC_ERR_FAILURE;
-  }
-
-  check->targc = 0;
-  mkc_path_build (MKC_PATH_MKC_TMP, exefile, MKC_PATH_MAX, "mkctest.exe", check->mkcerr);
-  mkc_check_append_arg (check, exefile);
-  mkc_check_append_arg (check, NULL);
-  if (mkc_error_chk_err (check->mkcerr)) {
-    free (exefile);
-    return MKC_ERR_FAILURE;
-  }
-
-  mkc_check_log_command (check, "run");
-
-  if (rbuff == NULL) {
-    rsz = MKC_SMALL_BUFF_SZ;
-    rbuff = malloc (rsz);
-    if (rbuff == NULL) {
-      mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-      return MKC_ERR_FAILURE;
-    }
-    rallocated = true;
-  }
-
-  rc = mkc_os_process_pipe (check->targv,
-      OS_PROC_WAIT | OS_PROC_NOWINDOW, rbuff, rsz, &retsz);
-
-  mkc_log (check->log, MKC_LOG_CHECK, "  run: rc: %d\n", rc);
-  if (retsz > 0) {
-    mkc_log (check->log, MKC_LOG_CHECK, "--- run log\n");
-    mkc_log (check->log, MKC_LOG_CHECK, "%s\n", rbuff);
-    mkc_log (check->log, MKC_LOG_CHECK, "---\n");
-  }
-
-  free (exefile);
-  if (rallocated) {
-    free (rbuff);
-  }
-
   return rc;
 }
 
@@ -1286,3 +1016,355 @@ mkc_check_append_list_arg (mkc_check_t *check, mkc_list_t *list)
     mkc_check_append_arg (check, lvalue->sval);
   }
 }
+
+static int
+mkc_do_test (mkc_check_test_t ctype,
+    mkc_check_t *check, mkc_compiler_t compiler,
+    const char *fname, const char *flags [], char *rbuff, size_t rsz)
+{
+  int             rc = MKC_ERR_FAILURE;
+  int             altsz;
+  mkc_alternate_t * oldcurr;
+  mkc_list_t      * alternates;
+  mkc_alternate_t * alt;
+  mkc_listidx_t   iteridx;
+  mkc_listidx_t   aidx;
+  test_func_t     func;
+  bool            first = true;
+
+  alternates = check->attr->alternates;
+  altsz = mkc_list_size (alternates);
+
+  oldcurr = check->attr->curralt;
+
+  switch (ctype) {
+    case MKC_CHK_TEST_COMPILE_ONLY: {
+      func = mkc_compile_only;
+      break;
+    }
+    case MKC_CHK_TEST_COMPILE_LINK: {
+      func = mkc_compile_link;
+      break;
+    }
+    case MKC_CHK_TEST_COMPILE_RUN: {
+      func = mkc_compile_run;
+      break;
+    }
+  }
+
+  mkc_list_iter_start (alternates, &iteridx);
+  while ((aidx = mkc_list_iter_next (alternates, &iteridx)) != MKC_ITER_FINISH) {
+    alt = mkc_list_get_by_idx (alternates, aidx);
+
+    if (first && altsz > 1) {
+      /* if any alternates are specified, only test the alternates, */
+      /* not the default */
+      first = false;
+      continue;
+    }
+
+    check->attr->curralt = alt;
+    mkc_chk_create_header_var (check);
+    rc = (*func) (check, compiler, fname, flags, rbuff, rsz);
+
+    /* check doesn't really have the knowledge as to how */
+    /* the return code should be processed */
+    /* assume for the moment that a return code > 0 */
+    /* is a valid test */
+    /* this may need to be changed in the future */
+    if (rc >= 0 && alt->name != NULL) {
+      mkc_pvar_set_integer (check->pvar, alt->name,
+          rc >= 0 ? true : false, MKC_VCTXT_CHECK);
+    }
+
+    if (rc >= 0) {
+      /* the first alternate that succeeds stops the test */
+      break;
+    }
+  }
+
+  check->attr->curralt = oldcurr;
+  return rc;
+}
+
+static int
+mkc_compile_only (mkc_check_t *check, mkc_compiler_t compiler,
+    const char *fname, const char *flags [], char *rbuff, size_t rsz)
+{
+  int             rc;
+  char            * tbuff;
+  char            * compstr;
+  char            * outfile;
+  size_t          retsz;
+  const char      * sfx = NULL;
+  bool            rallocated = false;
+  bool            cpreprocess = false;
+  mkc_alternate_t * alt;
+
+  tbuff = malloc (MKC_PATH_MAX);
+  if (tbuff == NULL) {
+    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return MKC_ERR_FAILURE;
+  }
+  compstr = malloc (MKC_PATH_MAX);
+  if (compstr == NULL) {
+    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    free (tbuff);
+    return MKC_ERR_FAILURE;
+  }
+  outfile = malloc (MKC_PATH_MAX);
+  if (outfile == NULL) {
+    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    free (tbuff);
+    free (compstr);
+    return MKC_ERR_FAILURE;
+  }
+
+  if (rbuff == NULL) {
+    rsz = MKC_SMALL_BUFF_SZ;
+    rbuff = malloc (rsz);
+    if (rbuff == NULL) {
+      mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+      free (tbuff);
+      free (compstr);
+      free (outfile);
+      return MKC_ERR_FAILURE;
+    }
+    *rbuff = '\0';
+    rallocated = true;
+  }
+
+  mkc_check_get_compstr (check, compiler, compstr, MKC_PATH_MAX);
+  sfx = mkc_compiler_get_suffix (compiler);
+// ### will need to be fixed, the original suffix may change
+  mkc_check_file_sub_copy (check, tbuff, MKC_PATH_MAX, fname, ".c", sfx);
+
+  check->targc = 0;
+  mkc_check_append_arg (check, compstr);
+  if (flags != NULL) {
+    const char  *p;
+    int         count = 0;
+
+    while ((p = flags [count++]) != NULL) {
+      if (strcmp (p, "-E") == 0) {
+        cpreprocess = true;
+      }
+      mkc_check_append_arg (check, p);
+    }
+  }
+
+  alt = check->attr->curralt;
+  mkc_check_append_list_arg (check, alt->compflags);
+
+  if (! cpreprocess) {
+    mkc_check_append_arg (check, "-c");
+    mkc_check_append_arg (check, "-o");
+    mkc_path_build (MKC_PATH_MKC_TMP, outfile, MKC_PATH_MAX, "mkctest.o", check->mkcerr);
+    mkc_check_append_arg (check, outfile);
+  }
+  mkc_check_append_arg (check, tbuff);
+  mkc_check_append_arg (check, NULL);
+  if (mkc_error_chk_err (check->mkcerr)) {
+    free (tbuff);
+    free (compstr);
+    free (outfile);
+    if (rallocated) {
+      free (rbuff);
+    }
+    return MKC_ERR_FAILURE;
+  }
+
+  mkc_check_log_command (check, "comp-only");
+
+  rc = mkc_os_process_pipe (check->targv,
+      OS_PROC_WAIT | OS_PROC_NOWINDOW, rbuff, rsz, &retsz);
+
+  if (retsz > 0) {
+    mkc_log (check->log, MKC_LOG_CHECK, "--- compile log (%zd)\n", retsz);
+    if (retsz < 2000) {
+      mkc_log (check->log, MKC_LOG_CHECK, "%s\n", rbuff);
+    } else {
+      mkc_log (check->log, MKC_LOG_CHECK_VERBOSE, "%s\n", rbuff);
+    }
+    mkc_log (check->log, MKC_LOG_CHECK, "---\n");
+  }
+  mkc_log (check->log, MKC_LOG_CHECK, "  rc: %d\n", rc);
+
+  /* never want the return code to overlap with various enums */
+  if (rc > 0) {
+    rc = - rc;
+  }
+
+  free (tbuff);
+  free (compstr);
+  free (outfile);
+  if (rallocated) {
+    free (rbuff);
+  }
+  return rc;
+}
+
+static int
+mkc_compile_link (mkc_check_t *check, mkc_compiler_t compiler,
+    const char *fname, const char *flags [],
+    char *rbuff, size_t rsz)
+{
+  int               rc;
+  size_t            retsz;
+  bool              rallocated = false;
+  char              *compstr;
+  char              *outfile;
+  char              *objfile;
+  mkc_alternate_t  * alt;
+
+
+  if (rbuff == NULL) {
+    rsz = MKC_SMALL_BUFF_SZ;
+    rbuff = malloc (rsz);
+    if (rbuff == NULL) {
+      mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+      return MKC_ERR_FAILURE;
+    }
+    *rbuff = '\0';
+    rallocated = true;
+  }
+
+  rc = mkc_compile_only (check, compiler, fname, flags, rbuff, rsz);
+  if (rc > 0) {
+    rc = - rc;
+  }
+  if (rc != 0) {
+    if (rallocated) {
+      free (rbuff);
+    }
+    return rc;
+  }
+
+  compstr = malloc (MKC_PATH_MAX);
+  if (compstr == NULL) {
+    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return MKC_ERR_FAILURE;
+  }
+  objfile = malloc (MKC_PATH_MAX);
+  if (objfile == NULL) {
+    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    free (compstr);
+    return MKC_ERR_FAILURE;
+  }
+  outfile = malloc (MKC_PATH_MAX);
+  if (outfile == NULL) {
+    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    free (objfile);
+    free (compstr);
+    return MKC_ERR_FAILURE;
+  }
+
+  mkc_check_get_compstr (check, compiler, compstr, MKC_PATH_MAX);
+
+  check->targc = 0;
+  mkc_check_append_arg (check, compstr);
+  mkc_check_append_arg (check, "-o");
+  mkc_path_build (MKC_PATH_MKC_TMP, outfile, MKC_PATH_MAX, "mkctest.exe", check->mkcerr);
+  mkc_check_append_arg (check, outfile);
+  mkc_path_build (MKC_PATH_MKC_TMP, objfile, MKC_PATH_MAX, "mkctest.o", check->mkcerr);
+  mkc_check_append_arg (check, objfile);
+
+  alt = check->attr->curralt;
+  mkc_check_append_list_arg (check, alt->linkflags);
+
+  mkc_check_append_arg (check, NULL);
+  if (mkc_error_chk_err (check->mkcerr)) {
+    if (rallocated) {
+      free (rbuff);
+    }
+    return MKC_ERR_FAILURE;
+  }
+
+  mkc_check_log_command (check, "link");
+
+  rc = mkc_os_process_pipe (check->targv,
+      OS_PROC_WAIT | OS_PROC_NOWINDOW, rbuff, rsz, &retsz);
+
+  mkc_log (check->log, MKC_LOG_CHECK, "  rc: %d\n", rc);
+  if (retsz > 0) {
+    mkc_log (check->log, MKC_LOG_CHECK, "--- link log\n");
+    mkc_log (check->log, MKC_LOG_CHECK, "%s\n", rbuff);
+    mkc_log (check->log, MKC_LOG_CHECK, "---\n");
+  }
+
+  /* never want the return code to overlap with various enums */
+  if (rc > 0) {
+    rc = - rc;
+  }
+
+  free (objfile);
+  free (outfile);
+  free (compstr);
+  if (rallocated) {
+    free (rbuff);
+  }
+
+  return rc;
+}
+
+static int
+mkc_compile_run (mkc_check_t *check, mkc_compiler_t compiler,
+    const char *fname, const char *flags [],
+    char *rbuff, size_t rsz)
+{
+  int         rc;
+  bool        rallocated = false;
+  size_t      retsz;
+  char        *exefile;
+
+  rc = mkc_compile_link (check, compiler, fname, flags, NULL, 0);
+
+  if (rc != 0) {
+    return rc;
+  }
+
+  exefile = malloc (MKC_PATH_MAX);
+  if (exefile == NULL) {
+    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return MKC_ERR_FAILURE;
+  }
+
+  check->targc = 0;
+  mkc_path_build (MKC_PATH_MKC_TMP, exefile, MKC_PATH_MAX, "mkctest.exe", check->mkcerr);
+  mkc_check_append_arg (check, exefile);
+  mkc_check_append_arg (check, NULL);
+  if (mkc_error_chk_err (check->mkcerr)) {
+    free (exefile);
+    return MKC_ERR_FAILURE;
+  }
+
+  mkc_check_log_command (check, "run");
+
+  if (rbuff == NULL) {
+    rsz = MKC_SMALL_BUFF_SZ;
+    rbuff = malloc (rsz);
+    if (rbuff == NULL) {
+      mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+      return MKC_ERR_FAILURE;
+    }
+    rallocated = true;
+  }
+
+  rc = mkc_os_process_pipe (check->targv,
+      OS_PROC_WAIT | OS_PROC_NOWINDOW, rbuff, rsz, &retsz);
+
+  mkc_log (check->log, MKC_LOG_CHECK, "  run: rc: %d\n", rc);
+  if (retsz > 0) {
+    mkc_log (check->log, MKC_LOG_CHECK, "--- run log\n");
+    mkc_log (check->log, MKC_LOG_CHECK, "%s\n", rbuff);
+    mkc_log (check->log, MKC_LOG_CHECK, "---\n");
+  }
+
+  free (exefile);
+  if (rallocated) {
+    free (rbuff);
+  }
+
+  return rc;
+}
+

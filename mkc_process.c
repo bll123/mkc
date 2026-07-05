@@ -1259,6 +1259,8 @@ mkc_process_check (mkc_process_t *process, mkc_value_t *valconst,
   }
 
   if (successtype) {
+    /* the check returns 0 on success */
+    /* convert this to a boolean */
     mkc_pvar_set_integer (pvar, tmp, rc == 0 ? true : false, MKC_VCTXT_CHECK);
     mkc_message ("-- check %s: %s : %s - %s\n",
         typenames [asttype], txt, tmp, mkc_success_msg (rc));
@@ -1266,6 +1268,7 @@ mkc_process_check (mkc_process_t *process, mkc_value_t *valconst,
         typenames [asttype], txt, tmp, mkc_success_msg (rc));
   }
   if (valtype) {
+    /* the check is run, and the return code is a value */
     mkc_pvar_set_integer (pvar, tmp, rc, MKC_VCTXT_CHECK);
     mkc_message ("-- check %s: %s : %s : %d\n", typenames [asttype], txt, tmp, rc);
     mkc_log (process->log, MKC_LOG_CHECK,
@@ -1774,10 +1777,19 @@ mkc_process_create_name (mkc_process_t *process, mkc_astnode_token_t asttype,
   const char      * str;
   va_list         ap;
   mkc_alternate_t * alt;
+  mkc_listidx_t   iteridx;
+  mkc_listidx_t   aidx;
 
   va_start (ap, tag);
 
-  alt = process->attr.curralt;
+  /* get the first alternate in the list */
+  /* curralt is pointing to the last */
+  /* the name of the check comes from the first alternate, */
+  /* which has the settings of the base test */
+  mkc_list_iter_start (process->attr.alternates, &iteridx);
+  aidx = mkc_list_iter_next (process->attr.alternates, &iteridx);
+  alt = mkc_list_get_by_idx (process->attr.alternates, aidx);
+
   /* for chk-package, the name replaces the name of the package */
   if (alt->name != NULL && asttype != MKC_T_CHK_PACKAGE) {
     stpecpy (buff, buff + sz, alt->name);

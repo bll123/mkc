@@ -4,15 +4,20 @@
 ### Syntax: name (attribute)
 
 The __name__ attribute is an attribute for [check](SyntaxCheck)
-statements and for [project](SyntaxProject) statements.
+statements, [project](SyntaxProject) statements and
+[alternate](SyntaxAttrAlternate) attributes.
 
-    name <new-name>;
+    name <name>;
 
 For [check](SyntaxCheck) statements, the __name__ attribute replaces
-the generated name of the check with _new-name_.
+the generated name of the check with _name_.
 
 For [project](SyntaxProject) statements, the __name__ attribute
 defines the name of the project.
+
+For [alternate](SyntaxAttrAlternate) attributes, the __name__
+attribute specifies an additional check name that will be set if the
+alternate succeeds.
 
 Repeatable: no
 

@@ -20,6 +20,7 @@ Generated Name: Prefix: __\_define\___
 
 ##### Attributes
 
+* [alternate](SyntaxAttrAlternate)
 * [header](SyntaxAttrHeader)
 * [name](SyntaxAttrName)
 * [compiler_flags](SyntaxAttrCompileFlag)

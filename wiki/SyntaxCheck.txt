@@ -9,6 +9,7 @@
 
 Check statements may allow the following attribute statements:
 
+* [alternate](SyntaxAttrAlternate)
 * [compiler_flags](SyntaxAttrCompileFlag)
 * [header](SyntaxAttrHeader)
 * [link_flags](SyntaxAttrLinkFlag)
@@ -53,6 +54,38 @@ statement.
     check_size int64_t {
       link_flags '-lintl';
     }
+
+##### Alternates
+
+The [alternate](SyntaxAttrAlternate) is a powerful method to run
+checks with alternate settings.
+
+Each alternate attribute block may contain the
+[header](SyntaxAttrHeader), [compiler_flags](SyntaxAttrCompileFlag),
+or [link_flags](SyntaxAttrLinkFlag) attributes.
+
+For example, the following code checks for the _statfs_ function.  On
+Linux, this requires the `sys/vfs.h` header (or `sys/statfs.h`).  On
+MacOS and \*BSD, the `sys/mount.h` header should be used.
+
+    check_function statfs {
+      alternate {
+        # linux
+        name _header_sys_vfs;
+        header sys/vfs.h;
+      }
+      alternate {
+        # macos, freebsd
+        name _header_sys_mount;
+        header sys/mount.h;
+      }
+    }
+
+On success, the _\_function\_statfs_ generated name will be set.
+
+If the first alternate succeeds, the _\_header\_sys\_vfs_ variable
+will be set.  If the second alternate succeeds, the
+_\_header\_sys\_mount_ variable will be set.
 
 ##### Checks
 

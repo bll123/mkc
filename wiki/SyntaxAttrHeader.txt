@@ -9,7 +9,7 @@ The headers specified will be added to the check.
     header <header-name> [<header-name> ...];
 
 The __header__ attribute is used with a [check](SyntaxCheck)
-statement.
+statement or with an [alternate](SyntaxAttrAlternate) attribute.
 
 Multiple __header__ attribute statements may be included.
 

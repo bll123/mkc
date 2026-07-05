@@ -2,10 +2,14 @@
 <br>[Syntax](Syntax)
 <br>[Checks](SyntaxCheck)
 
-### Check Size
+### Check Argument Count
 
 Checks the number of arguments a function requires.  This check does
 not work on macros.
+
+A function that exists but is declared as `func (void)` will
+return a value of 1.  A function that does not exist will return a
+value of 0.
 
     check_arg_count <function-name>;
     check_arg_count <function-name> { <attribute-statements> }
@@ -21,6 +25,7 @@ Generated Name: Prefix: __\_arg\_count\___
 
 ##### Attributes
 
+* [alternate](SyntaxAttrAlternate)
 * [header](SyntaxAttrHeader)
 * [name](SyntaxAttrName)
 * [compiler_flags](SyntaxAttrCompileFlag)

@@ -5,6 +5,7 @@
   ok d
   ok e
   ok f
+  ok unknown
   ok stat
   ok fprintf
   ok atoll
