@@ -3,7 +3,7 @@
 # Copyright 2021-2025 Brad Lanam Pleasant Hill CA
 #
 
-if [ ! -d web ] || [ ! -d wiki ]; then
+if [ \( ! -d web \) -o \( ! -d wiki \) ]; then
   echo "wrong dir"
   exit 1
 fi

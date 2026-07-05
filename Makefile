@@ -12,12 +12,8 @@ INST_SHR_INC_DIR = $(DESTDIR)$(PREFIX)/share/mkc/include
 # target will exist
 .PHONY: all
 all:
-	@-grep '^mkc-all' Makefile >/dev/null 2>&1; rc=$$?; \
-	if [ $$rc -eq 0 ]; then \
-	  $(MAKE) mkc-all; \
-	else \
-	  $(MAKE) bootstrap ; \
-	fi
+	@# will need to figure this out later...
+	$(MAKE) bootstrap
 
 .PHONY: bootstrap
 bootstrap:

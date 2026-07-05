@@ -6,6 +6,7 @@
 <br>[Syntax](Syntax)
 <br>[Internal Variables](InternalVariables)
 <br>[Command Line Arguments](CommandLineArg)
+<br>[Profiles](Profiles)
 
 </div>
 
