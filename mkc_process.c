@@ -1603,23 +1603,26 @@ mkc_process_chk_shell_extract (mkc_process_t *process, mkc_value_t *valpath)
 }
 
 void
-mkc_process_local_set (mkc_process_t *process, const char *nm,
-    const char *sval, mkc_profidx_t pidx)
+mkc_process_local_set (mkc_process_t *process, mkc_value_t *nmval,
+    mkc_value_t *argval, mkc_profidx_t pidx)
 {
   mkc_profidx_t   opidx;
+  char            nm [MKC_VNAME_MAX];
 
   if (process == NULL) {
     return;
   }
-  if (nm == NULL) {
+  if (nmval == NULL) {
     mkc_error_set (process->mkcerr, MKC_ERR_NULL_ARGUMENT, 0, NULL);
     return;
   }
 
+  mkc_pvar_value_get_str (process->pvar, nmval, nm, sizeof (nm));
+
   opidx = mkc_profile_get_active (process->profiles);
-  mkc_profile_local_reset (process->profiles);
+//  mkc_profile_local_reset (process->profiles);
   mkc_pvar_profile_set_idx (process->pvar, pidx);
-  mkc_pvar_set_str (process->pvar, nm, sval, MKC_VCTXT_TEMP);
+  mkc_pvar_set (process->pvar, nm, argval, MKC_VCTXT_TEMP);
   mkc_pvar_profile_set_idx (process->pvar, opidx);
 }
 
@@ -2300,12 +2303,13 @@ mkc_process_find_executables (mkc_process_t *process)
   while (tpath != NULL) {
     char          *tmp;
     mkc_value_t   tvalue;
+    mkc_listidx_t loc = MKC_LIST_NOTFOUND;
 
     tmp = strdup (tpath);
     mkc_normalize_path (tmp, strlen (tmp));
     tvalue.sval = tmp;
     tvalue.vtype = MKC_VT_STRING;
-    mkc_list_append (pathlist, &tvalue, sizeof (mkc_value_t));
+    mkc_list_append (pathlist, &tvalue, sizeof (mkc_value_t), &loc);
     tpath = mkc_strtok (NULL, pathdelim, &tokstr);
   }
 

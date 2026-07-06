@@ -73,6 +73,7 @@ char const * const typenames [MKC_T_MAX] = {
   [MKC_T_STMT_EXIT] = "stmt_exit",
   [MKC_T_STMT_FOREACH] = "stmt_foreach",
   [MKC_T_STMT_FUNCTION] = "stmt_function",
+  [MKC_T_STMT_FUNCTION_CALL] = "stmt_function_call",
   [MKC_T_STMT_IF] = "stmt_if",
   [MKC_T_STMT_LOADCACHE] = "stmt_load_cache",
   [MKC_T_STMT_MARK] = "stmt_mark",

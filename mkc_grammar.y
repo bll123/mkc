@@ -169,15 +169,13 @@
 %type <astnode> pathname
 
 %type <astnode> valuelist pathlist
-%type <astnode> range
-
-%type <astnode> funcargs
 
 %type <astnode> stmtblock_or_semi stmtblock stmtlist stmt
 %type <astnode> directive
 // program control
 %type <astnode> ifexpr stmt_if elseif elseclause loopcontrol
 %type <astnode> stmt_foreach stmt_function stmt_while
+%type <astnode> funcargs range stmt_function_call
 // commands
 %type <astnode> stmt_config stmt_loadcache
 %type <astnode> stmt_mark stmt_print stmt_profile stmt_project stmt_set
@@ -235,9 +233,9 @@ stmt[v]:
     {
       $v = $a;
     }
-  | stmt_function
+  | stmt_function[a]
     {
-      $v = NULL;
+      $v = $a;
     }
 // internal statements
   | stmt_loadcache[a]
@@ -246,6 +244,10 @@ stmt[v]:
     }
 // statements
   | stmt_config[a]
+    {
+      $v = $a;
+    }
+  | stmt_function_call[a]
     {
       $v = $a;
     }
@@ -542,7 +544,12 @@ stmt_while[v]:
   ;
 
 stmt_function[v]:
-    T_STMT_FUNCTION varname[a] T_LEFT_PAREN funcargs[l] T_RIGHT_PAREN
+    T_STMT_FUNCTION varname[a] stmtblock[b]
+    {
+      $v = mkc_ast_mk_function (ast, $a, NULL, $b,
+          yylloc.first_line, yylloc.first_column);
+    }
+  | T_STMT_FUNCTION varname[a] T_LEFT_PAREN funcargs[l] T_RIGHT_PAREN
         stmtblock[b]
     {
       $v = mkc_ast_mk_function (ast, $a, $l, $b,
@@ -550,12 +557,16 @@ stmt_function[v]:
     }
   ;
 
-funcargs:
-    varname
+funcargs[v]:
+    varname[a]
     {
+      $v = mkc_ast_mk_value_list (ast, NULL, $a,
+          yylloc.first_line, yylloc.first_column);
     }
-  | funcargs varname
+  | funcargs[l] varname[a]
     {
+      $v = mkc_ast_mk_value_list (ast, $l, $a,
+          yylloc.first_line, yylloc.first_column);
     }
   ;
 
@@ -583,6 +594,19 @@ directive[v]:
   | T_STMT_OPTION varname[a] varvalue[b] T_SEMICOLON
     {
       $v = NULL;
+    }
+  ;
+
+stmt_function_call[v]:
+    varname[a] T_LEFT_PAREN T_RIGHT_PAREN T_SEMICOLON
+    {
+      $v = mkc_ast_mk_function_call (ast, $a, NULL,
+          yylloc.first_line, yylloc.first_column);
+    }
+  | varname[a] T_LEFT_PAREN valuelist[l] T_RIGHT_PAREN T_SEMICOLON
+    {
+      $v = mkc_ast_mk_function_call (ast, $a, $l,
+          yylloc.first_line, yylloc.first_column);
     }
   ;
 

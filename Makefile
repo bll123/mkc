@@ -23,6 +23,10 @@ bootstrap:
 sanitize:
 	@$(MAKE) -f $(BOOTSTRAPMAKE) sanitize
 
+.PHONY: debug
+debug:
+	@$(MAKE) -f $(BOOTSTRAPMAKE) debug
+
 # remove the generated files
 .PHONY: distclean
 distclean:

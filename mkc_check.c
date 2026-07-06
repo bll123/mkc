@@ -1029,7 +1029,7 @@ mkc_do_test (mkc_check_test_t ctype,
   mkc_alternate_t * alt;
   mkc_listidx_t   iteridx;
   mkc_listidx_t   aidx;
-  test_func_t     func;
+  test_func_t     func = NULL;
   bool            first = true;
 
   alternates = check->attr->alternates;

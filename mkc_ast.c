@@ -49,27 +49,51 @@ typedef struct mkc_ast_main_t {
   mkc_astnode_t       *stmtlist;
 } mkc_ast_main_t;
 
-typedef struct mkc_ast_print_t {
-  mkc_astnode_t       *vala;
-} mkc_ast_print_t;
-
-typedef struct mkc_ast_debug_t {
-  mkc_astnode_t       *dbga;
-  mkc_astnode_t       *dbgb;
-} mkc_ast_debug_t;
-
-typedef struct mkc_ast_exit_t {
-  mkc_astnode_t       *vala;
-} mkc_ast_exit_t;
+/* statements */
 
 typedef struct mkc_ast_conf_t {
   mkc_astnode_t       *stmtblock;
   bool                definezero;
 } mkc_ast_conf_t;
 
-typedef struct mkc_ast_project_t {
+typedef struct mkc_ast_debug_t {
+  mkc_astnode_t       *dbga;
+  mkc_astnode_t       *dbgb;
+} mkc_ast_debug_t;
+
+typedef struct mkc_ast_elseif_t {
+  mkc_astnode_t       *expr;
   mkc_astnode_t       *stmtblock;
-} mkc_ast_project_t;
+} mkc_ast_elseif_t;
+
+typedef struct mkc_ast_exit_t {
+  mkc_astnode_t       *vala;
+} mkc_ast_exit_t;
+
+typedef struct mkc_ast_foreach_t {
+  mkc_astnode_t     *nm;
+  mkc_astnode_t     *valuelist;
+  mkc_astnode_t     *range;
+  mkc_astnode_t     *stmtblock;
+} mkc_ast_foreach_t;
+
+typedef struct mkc_ast_function_t {
+  mkc_astnode_t     *nm;
+  mkc_astnode_t     *argnames;
+  mkc_astnode_t     *stmtblock;
+} mkc_ast_function_t;
+
+typedef struct mkc_ast_function_call_t {
+  mkc_astnode_t     *nm;
+  mkc_astnode_t     *funcargs;
+} mkc_ast_function_call_t;
+
+typedef struct mkc_ast_if_t {
+  mkc_astnode_t       *expr;
+  mkc_astnode_t       *stmtblock;
+  mkc_astnode_t       *elseif;
+  mkc_astnode_t       *elseblock;
+} mkc_ast_if_t;
 
 typedef struct mkc_ast_loadcache_t {
   mkc_astnode_t       *version;
@@ -81,29 +105,18 @@ typedef struct mkc_ast_mark_t {
   mkc_astnode_t       *valb;
 } mkc_ast_mark_t;
 
-typedef struct mkc_ast_if_t {
-  mkc_astnode_t       *expr;
-  mkc_astnode_t       *stmtblock;
-  mkc_astnode_t       *elseif;
-  mkc_astnode_t       *elseblock;
-} mkc_ast_if_t;
+typedef struct mkc_ast_print_t {
+  mkc_astnode_t       *vala;
+} mkc_ast_print_t;
 
-typedef struct mkc_ast_elseif_t {
-  mkc_astnode_t       *expr;
-  mkc_astnode_t       *stmtblock;
-} mkc_ast_elseif_t;
-
-typedef struct mkc_ast_foreach_t {
+typedef struct mkc_ast_profile_t {
   mkc_astnode_t     *nm;
-  mkc_astnode_t     *valuelist;
-  mkc_astnode_t     *range;
   mkc_astnode_t     *stmtblock;
-} mkc_ast_foreach_t;
+} mkc_ast_profile_t;
 
-typedef struct mkc_ast_while_t {
-  mkc_astnode_t     *expr;
-  mkc_astnode_t     *stmtblock;
-} mkc_ast_while_t;
+typedef struct mkc_ast_project_t {
+  mkc_astnode_t       *stmtblock;
+} mkc_ast_project_t;
 
 typedef struct mkc_ast_set_t {
   mkc_astnode_t     *nm;
@@ -111,10 +124,12 @@ typedef struct mkc_ast_set_t {
   mkc_astnode_t     *stmtblock;
 } mkc_ast_set_t;
 
-typedef struct mkc_ast_profile_t {
-  mkc_astnode_t     *nm;
+typedef struct mkc_ast_while_t {
+  mkc_astnode_t     *expr;
   mkc_astnode_t     *stmtblock;
-} mkc_ast_profile_t;
+} mkc_ast_while_t;
+
+/* checks */
 
 typedef struct mkc_ast_check_t {
   mkc_astnode_t     *vala;
@@ -132,15 +147,13 @@ typedef struct mkc_ast_chk_package_t {
   mkc_astnode_t     *stmtblock;
 } mkc_ast_chk_package_t;
 
-typedef struct mkc_ast_chk_struct_member_t {
+typedef struct mkc_ast_chk_member_t {
   mkc_astnode_t     *vala;
   mkc_astnode_t     *valb;
   mkc_astnode_t     *stmtblock;
-} mkc_ast_chk_struct_member_t;
+} mkc_ast_chk_member_t;
 
-typedef struct mkc_ast_attr_header_t {
-  mkc_astnode_t     *hdrlist;
-} mkc_ast_attr_header_t;
+/* attributes */
 
 typedef struct mkc_ast_attribute_t {
   mkc_astnode_t     *name;
@@ -153,6 +166,10 @@ typedef struct mkc_ast_attr_alternate_t {
 typedef struct mkc_ast_attr_compflag_t {
   mkc_astnode_t     *compflaglist;
 } mkc_ast_attr_compflag_t;
+
+typedef struct mkc_ast_attr_header_t {
+  mkc_astnode_t     *hdrlist;
+} mkc_ast_attr_header_t;
 
 typedef struct mkc_ast_attr_linkflag_t {
   mkc_astnode_t     *linkflaglist;
@@ -174,11 +191,13 @@ typedef struct mkc_astnode_t {
     mkc_ast_check_t             chk_check;
     mkc_ast_check_flag_t        chk_flag;
     mkc_ast_chk_package_t       chk_package;
-    mkc_ast_chk_struct_member_t chk_member;
+    mkc_ast_chk_member_t        chk_member;
     mkc_ast_conf_t              stmt_conf;
     mkc_ast_debug_t             stmt_debug;
     mkc_ast_exit_t              stmt_exit;
     mkc_ast_foreach_t           stmt_foreach;
+    mkc_ast_function_t          stmt_function;
+    mkc_ast_function_call_t     stmt_function_call;
     mkc_ast_if_t                stmt_if;
     mkc_ast_elseif_t            stmt_elseif;
     mkc_ast_loadcache_t         stmt_loadcache;
@@ -210,6 +229,7 @@ typedef struct mkc_astmain_t {
   mkc_error_t           * mkcerr;
   mkc_log_t             * log;
   mkc_option_t          * mkcoptions;
+  mkc_list_t            * funclist;
   mkc_value_t           value;
   int32_t               allocsz;
   int32_t               sz;
@@ -226,6 +246,7 @@ static int32_t mkc_ast_process (mkc_astmain_t *, mkc_astnode_t *astnode, int32_t
 MKC_NODISCARD static mkc_astnode_t * mkc_astnode_init (mkc_astmain_t *astmain, int type, int32_t lineno, int colno);
 static void mkc_astnode_free (void *astnode);
 static mkc_value_t *mkc_ast_get_value (mkc_astmain_t *astmain, mkc_astnode_t *astnode);
+static int mkc_ast_func_compare (void *a, void *b);
 
 MKC_NODISCARD
 mkc_astmain_t *
@@ -239,6 +260,8 @@ mkc_ast_init (mkc_log_t *log, mkc_option_t *mkcoptions, mkc_error_t *mkcerr)
   }
   memset (astmain, 0, sizeof (mkc_astmain_t));
 
+  astmain->funclist = mkc_list_init (MKC_LIST_SORTED,
+      NULL, mkc_ast_func_compare, mkcerr);
   astmain->mkcoptions = mkcoptions;
 
   astmain->profiles = mkc_profile_init (log, mkcerr, mkcoptions);
@@ -311,6 +334,7 @@ mkc_ast_free (mkc_astmain_t *astmain)
   if (astmain->context != NULL) {
     mkc_context_free (astmain->context);
   }
+  mkc_list_free (astmain->funclist);
   free (astmain);
 }
 
@@ -422,7 +446,7 @@ mkc_ast_mk_value_list (mkc_astmain_t *astmain,
 MKC_NODISCARD
 mkc_astnode_t *
 mkc_ast_mk_stmtlist (mkc_astmain_t *astmain,
-    mkc_astnode_t *stmtlist, mkc_astnode_t *vala,
+    mkc_astnode_t *stmtlist, mkc_astnode_t *stmt,
     int32_t lineno, int colno)
 {
   mkc_astnode_t   *astnode = NULL;
@@ -444,7 +468,7 @@ mkc_ast_mk_stmtlist (mkc_astmain_t *astmain,
   tlist = stmtlist->stmtlist.stmtlist;
   /* the node is already created, there's no need to store the */
   /* entire structure, just store the pointer */
-  mkc_list_set (tlist, &vala, sizeof (mkc_astnode_t *), &loc);
+  mkc_list_set (tlist, &stmt, sizeof (mkc_astnode_t *), &loc);
 
   return stmtlist;
 }
@@ -861,13 +885,46 @@ mkc_ast_mk_loop_control (mkc_astmain_t *astmain, mkc_astnode_token_t asttype,
 MKC_NODISCARD
 mkc_astnode_t *
 mkc_ast_mk_function (mkc_astmain_t *astmain,
-    mkc_astnode_t *nm, mkc_astnode_t *arglist, mkc_astnode_t *stmtblock,
+    mkc_astnode_t *nm, mkc_astnode_t *argnames, mkc_astnode_t *stmtblock,
     int32_t lineno, int colno)
 {
+  mkc_astnode_t   *astnode;
+
   mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
       "ast-mk: function\n");
 
-  return NULL;
+  astnode = mkc_astnode_init (astmain, MKC_T_STMT_FUNCTION, lineno, colno);
+  if (astnode == NULL) {
+    return NULL;
+  }
+
+  astnode->stmt_function.nm = nm;
+  astnode->stmt_function.argnames = argnames;
+  astnode->stmt_function.stmtblock = stmtblock;
+
+  return astnode;
+}
+
+MKC_NODISCARD
+mkc_astnode_t *
+mkc_ast_mk_function_call (mkc_astmain_t *astmain,
+    mkc_astnode_t *nm, mkc_astnode_t *funcargs,
+    int32_t lineno, int colno)
+{
+  mkc_astnode_t   *astnode;
+
+  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
+      "ast-mk: function-call\n");
+
+  astnode = mkc_astnode_init (astmain, MKC_T_STMT_FUNCTION_CALL, lineno, colno);
+  if (astnode == NULL) {
+    return NULL;
+  }
+
+  astnode->stmt_function_call.nm = nm;
+  astnode->stmt_function_call.funcargs = funcargs;
+
+  return astnode;
 }
 
 MKC_NODISCARD
@@ -1334,6 +1391,94 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
         mkc_ast_process (astmain, astnode->stmt_foreach.stmtblock, ifcond, loopcond, depth + 1);
       }
 #endif
+      break;
+    }
+
+    case MKC_T_STMT_FUNCTION: {
+      mkc_listidx_t   loc = MKC_LIST_NOTFOUND;
+mkc_value_t *value;
+value = mkc_ast_get_value (astmain, astnode->stmt_function.nm);
+fprintf (stderr, "add func %s\n", value->sval);
+      /* no need to store the entire structure, just store the pointer */
+      mkc_list_set (astmain->funclist, &astnode, sizeof (mkc_astnode_t *), &loc);
+      break;
+    }
+
+    case MKC_T_STMT_FUNCTION_CALL: {
+      mkc_astnode_t   tfunc;
+      mkc_listidx_t   fidx;
+      mkc_listidx_t   loc = MKC_LIST_NOTFOUND;
+      mkc_astnode_t   **funcp;
+      mkc_astnode_t   *func;
+      mkc_value_t     *value;
+      mkc_profidx_t   plocalidx;
+      mkc_list_t      *nmlist = NULL;
+      mkc_list_t      *alist = NULL;
+      mkc_listidx_t   aiteridx;
+      mkc_listidx_t   nmiteridx;
+      mkc_listidx_t   aidx;
+      mkc_listidx_t   nmidx;
+
+      value = mkc_ast_get_value (astmain, astnode->stmt_function_call.nm);
+      tfunc.stmt_function.nm = astnode->stmt_function_call.nm;
+      tfunc.asttype = MKC_T_STMT_FUNCTION;
+fprintf (stderr, "funccall %s\n", value->sval);
+      func = &tfunc;
+
+      /* the list is a list of pointers to mkc_astnode_t */
+      fidx = mkc_list_find (astmain->funclist, &func, &loc);
+      if (fidx == MKC_LIST_NOTFOUND) {
+        mkc_error_set (astmain->mkcerr, MKC_ERR_FUNCTION_NOT_FOUND, 0, NULL);
+        break;
+      }
+
+fprintf (stderr, "func %s found\n", value->sval);
+      funcp = mkc_list_get_by_idx (astmain->funclist, fidx);
+      func = *funcp;
+      plocalidx = mkc_profile_local_create (astmain->profiles);
+
+      value = mkc_ast_get_value (astmain, astnode->stmt_function_call.funcargs);
+      if (value != NULL) {
+        alist = value->list;
+      }
+      value = mkc_ast_get_value (astmain, func->stmt_function.argnames);
+      if (value != NULL) {
+        nmlist = value->list;
+      }
+      if ((alist == NULL && nmlist != NULL) ||
+          (alist != NULL && nmlist == NULL) ||
+          (alist != NULL &&
+              mkc_list_size (alist) != mkc_list_size (nmlist))) {
+        mkc_error_set (astmain->mkcerr, MKC_ERR_FUNCTION_ARG_MISMATCH, 0, NULL);
+        break;
+      }
+
+      /* put the arguments into the local profile */
+      mkc_list_iter_start (alist, &aiteridx);
+      mkc_list_iter_start (nmlist, &nmiteridx);
+      while ((aidx = mkc_list_iter_next (alist, &aiteridx)) != MKC_ITER_FINISH) {
+        mkc_astnode_t   *anode;
+        mkc_astnode_t   *nmnode;
+        mkc_value_t     *tval;
+        mkc_value_t     *nmval;
+
+        nmidx = mkc_list_iter_next (nmlist, &nmiteridx);
+
+        if (mkc_error_chk_err (astmain->mkcerr)) {
+          break;
+        }
+
+        anode = mkc_list_get_by_idx (alist, aidx);
+        nmnode = mkc_list_get_by_idx (nmlist, nmidx);
+
+        tval = mkc_ast_get_value (astmain, anode);
+        nmval = mkc_ast_get_value (astmain, nmnode);
+        mkc_process_local_set (astmain->process, nmval, tval, plocalidx);
+      }
+      mkc_ast_process (astmain, func->stmt_function.stmtblock, ifcond, loopcond, depth + 1);
+
+      mkc_profile_local_pop (astmain->profiles);
+
       break;
     }
 
@@ -1862,4 +2007,29 @@ mkc_ast_get_value (mkc_astmain_t *astmain, mkc_astnode_t *astnode)
   }
 
   return value;
+}
+
+static int
+mkc_ast_func_compare (void *a, void *b)
+{
+  mkc_astnode_t   **np;
+  mkc_astnode_t   *fa;
+  mkc_astnode_t   *fb;
+  mkc_value_t     *va;
+  mkc_value_t     *vb;
+  const char      *sa;
+  const char      *sb;
+
+  np = a;
+  fa = *np;
+  fa = fa->stmt_function.nm;
+  np = b;
+  fb = *np;
+  fb = fb->stmt_function.nm;
+  va = &fa->value.value;
+  vb = &fb->value.value;
+  sa = va->sval;
+  sb = vb->sval;
+
+  return strcmp (sa, sb);
 }

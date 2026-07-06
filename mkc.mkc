@@ -20,11 +20,8 @@ project {
 
 # configure
 
-# mkc currently uses the glib regular expression interface
-# this may change in the future
-check_package 'glib-2.0' {
-  name glib;
-}
+# glib can also be used, but glib just uses pcre2.
+# the glib code can be dug out of the source code history.
 check_package 'libpcre2-posix' {
   name pcre;
 }
@@ -88,12 +85,9 @@ check_define S_IRWXU {
 }
 
 # since it is known that other regular expression packages
-# will be used in the future, set a variable indicating that
+# may be used in the future, set a variable indicating that
 # regular expressions are available.
 set _have_regex false;
-if (${_package_glib}) {
-  set _have_regex true;
-}
 if (${_package_pcre}) {
   set _have_regex true;
 }

@@ -8,10 +8,6 @@ MAKEFILE = bootstrap.mk
 # macports pkgconf does not appear to work properly
 PKGCONF = pkg-config
 
-# MKC_REGEX_PKG = glib-2.0
-# MKC_REGEX_OBJ = mkc_regex_glib.o
-# MKC_REGEX_SRC = mkc_regex_glib.c
-
 MKC_REGEX_PKG = libpcre2-8
 MKC_REGEX_OBJ = mkc_regex_pcre.o
 MKC_REGEX_SRC = mkc_regex_pcre.c
@@ -30,14 +26,18 @@ BASE_CFLAGS = -Wall -Wextra -Wno-unused-parameter \
 BASE_LDFLAGS = -Wall -Wextra
 BASE_LIBS =
 
-INIT_CFLAGS = $(BASE_OPTFLAGS) $(BASE_CFLAGS) -DMKC_BOOTSTRAP=1
-INIT_LDFLAGS = $(BASE_OPTFLAGS) $(BASE_LDFLAGS)
-INIT_LIBS =
+INIT_DEF = -DMKC_BOOTSTRAP=1
 
 CONF_CFLAGS = $(BASE_OPTFLAGS) $(BASE_CFLAGS) \
     $$($(PKGCONF) --cflags $(MKC_REGEX_PKG))
 CONF_LDFLAGS = $(BASE_OPTFLAGS) $(BASE_LDFLAGS)
 CONF_LIBS = $$($(PKGCONF) --libs $(MKC_REGEX_PKG))
+
+DBG_OPTFLAGS = -g -ggdb3 -O0
+DBG_CFLAGS = $(DBG_OPTFLAGS) $(BASE_CFLAGS) \
+    $$($(PKGCONF) --cflags $(MKC_REGEX_PKG))
+DBG_LDFLAGS = $(DBG_OPTFLAGS) $(BASE_LDFLAGS)
+DBG_LIBS = $$($(PKGCONF) --libs $(MKC_REGEX_PKG))
 
 SAN_OPTFLAGS = -g -ggdb3 -Og
 SAN_CFLAGS = $(SAN_OPTFLAGS) $(BASE_CFLAGS) \
@@ -59,18 +59,30 @@ SAN_LIBS = $$(pkgconf --libs $(MKC_REGEX_PKG)) -lrt
 WIN=F
 WINOBJ=mkc_os_win_process.o
 
-.PHONY: all
-all:
-	@$(MAKE) -f $(MAKEFILE) bootstrap-final
+.PHONY: start
+start:
+	@$(MAKE) -f $(MAKEFILE) \
+	    CFLAGS="$(CONF_CFLAGS)" \
+	    LDFLAGS="$(CONF_LDFLAGS)" \
+	    LIBS="$(CONF_LIBS)" \
+	    real-start
+
+.PHONY: real-start
+real-start:
+	@$(MAKE) -f $(MAKEFILE) \
+	    CFLAGS="$(CFLAGS)" \
+	    LDFLAGS="$(LDFLAGS)" \
+	    LIBS="$(LIBS)" \
+	    bootstrap-final
 
 # the initial pass
 # there is no mkc_config.h file; MKC_BOOTSTRAP must be defined
 $(BOOTSTRAP_INIT): $(BOOTSTRAP_TMPDIR) $(BOOTSTRAP_MKC_FILES)
 	@echo "make: -- bootstrap mkc (initial)"
 	@$(MAKE) -f $(MAKEFILE) \
-	    CFLAGS="$(INIT_CFLAGS)" \
-	    LDFLAGS="$(INIT_LDFLAGS)" \
-	    LIBS="$(INIT_LIBS)" \
+	    CFLAGS="$(CFLAGS) $(INIT_DEF)" \
+	    LDFLAGS="$(LDFLAGS)" \
+	    LIBS="$(LIBS)" \
 	    TARGET=all oscheck
 	@touch $(BOOTSTRAP_INIT)
 
@@ -84,16 +96,20 @@ $(BOOTSTRAP_INIT): $(BOOTSTRAP_TMPDIR) $(BOOTSTRAP_MKC_FILES)
 # remove any modules that use mkc_config.h for the final re-compile
 $(BOOTSTRAP_NOREGEX): $(BOOTSTRAP_TMPDIR) $(BOOTSTRAP_MKC_FILES) \
 		$(BOOTSTRAP_INIT)
-	@$(MAKE) -f $(MAKEFILE) bootstrap-noregex
+	@$(MAKE) -f $(MAKEFILE) \
+	    CFLAGS="$(CFLAGS)" \
+	    LDFLAGS="$(LDFLAGS)" \
+	    LIBS="$(LIBS)" \
+	    bootstrap-noregex
 
 .PHONY: bootstrap-noregex
 bootstrap-noregex: mkc_config.h
 	@echo "make: -- bootstrap mkc (noregex)"
 	@$(MAKE) -f $(MAKEFILE) initialclean
 	@$(MAKE) -f $(MAKEFILE) \
-	    CFLAGS="$(CONF_CFLAGS)" \
-	    LDFLAGS="$(CONF_LDFLAGS)" \
-	    LIBS="$(CONF_LIBS)" \
+	    CFLAGS="$(CFLAGS)" \
+	    LDFLAGS="$(LDFLAGS)" \
+	    LIBS="$(LIBS)" \
 	    TARGET=all oscheck
 	@# make sure mkc_config.h is re-built
 	@rm -f mkc_config.h
@@ -109,19 +125,26 @@ bootstrap-noregex: mkc_config.h
 bootstrap-final: $(BOOTSTRAP_TMPDIR) $(BOOTSTRAP_MKC_FILES) \
 		$(BOOTSTRAP_NOREGEX) mkc_config.h
 	@$(MAKE) -f $(MAKEFILE) \
-	    CFLAGS="$(CONF_CFLAGS)" \
-	    LDFLAGS="$(CONF_LDFLAGS)" \
-	    LIBS="$(CONF_LIBS)" \
+	    CFLAGS="$(CFLAGS)" \
+	    LDFLAGS="$(LDFLAGS)" \
+	    LIBS="$(LIBS)" \
 	    TARGET=all oscheck
 
 .PHONY: sanitize
-sanitize: $(BOOTSTRAP_TMPDIR) $(BOOTSTRAP_MKC_FILES) \
-		$(BOOTSTRAP_NOREGEX) mkc_config.h
+sanitize:
 	@$(MAKE) -f $(MAKEFILE) \
 	    CFLAGS="$(SAN_CFLAGS)" \
 	    LDFLAGS="$(SAN_LDFLAGS)" \
 	    LIBS="$(SAN_LIBS)" \
-	    TARGET=all oscheck
+	    real-start
+
+.PHONY: debug
+debug:
+	@$(MAKE) -f $(MAKEFILE) \
+	    CFLAGS="$(DBG_CFLAGS)" \
+	    LDFLAGS="$(DBG_LDFLAGS)" \
+	    LIBS="$(DBG_LIBS)" \
+	    real-start
 
 mkc_config.h: mkc.mkc
 	@./mkc --no-cache mkc.mkc
@@ -283,8 +306,8 @@ mkc_ast.o: include/mkc_process.h include/mkc_string.h
 mkc_asttoken.o: include/mkc_asttoken.h
 mkc_check.o:  include/mkc_check.h include/mkc_compiler.h
 mkc_check.o: include/mkc_error.h 
-mkc_check.o: include/mkc_nodiscard.h include/mkc_log.h 
-mkc_check.o: include/mkc_profile.h include/mkc_list.h include/mkc_option.h
+mkc_check.o: include/mkc_nodiscard.h include/mkc_list.h include/mkc_log.h
+mkc_check.o:  include/mkc_profile.h include/mkc_option.h
 mkc_check.o: include/mkc_var.h include/mkc_pvar.h include/mkc_const.h
 mkc_check.o: include/mkc_def.h  
 mkc_check.o: include/mkc_env.h include/mkc_fileop.h include/mkc_os_process.h
@@ -336,8 +359,8 @@ mkc_path.o: include/mkc_nodiscard.h include/mkc_fileop.h
 mkc_path.o: include/mkc_path.h include/mkc_string.h
 mkc_process.o: include/mkc_asttoken.h include/mkc_check.h
 mkc_process.o: include/mkc_compiler.h include/mkc_error.h
-mkc_process.o: include/mkc_nodiscard.h include/mkc_log.h 
-mkc_process.o: include/mkc_profile.h include/mkc_list.h include/mkc_option.h
+mkc_process.o: include/mkc_nodiscard.h include/mkc_list.h include/mkc_log.h
+mkc_process.o:  include/mkc_profile.h include/mkc_option.h
 mkc_process.o: include/mkc_var.h include/mkc_pvar.h include/mkc_const.h
 mkc_process.o: include/mkc_context.h include/mkc_def.h 
 mkc_process.o: include/mkc_env.h include/mkc_fileop.h include/mkc_path.h

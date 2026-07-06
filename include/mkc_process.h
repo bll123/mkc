@@ -56,7 +56,7 @@ int32_t mkc_process_check_flag (mkc_process_t *process, mkc_value_t *valflag, in
 int32_t mkc_process_chk_struct_member (mkc_process_t *process, mkc_value_t *valstructnm, mkc_value_t *valmembernm);
 void mkc_process_chk_shell_extract (mkc_process_t *process, mkc_value_t *valpath);
 
-void mkc_process_local_set (mkc_process_t *process, const char *nm, const char *sval, mkc_profidx_t pidx);
+void mkc_process_local_set (mkc_process_t *process, mkc_value_t *nmval, mkc_value_t *argval, mkc_profidx_t pidx);
 bool mkc_process_profile_is_current (mkc_process_t *process, mkc_value_t *valnm);
 int32_t mkc_process_get_while_limit (mkc_process_t *process);
 void mkc_process_save_cache (mkc_process_t *process);

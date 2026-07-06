@@ -258,7 +258,7 @@ mkc_profile_local_create (mkc_profile_t *profiles)
   }
 
   pentry = mkc_list_append (profiles->list, &tentry,
-      sizeof (mkc_prof_entry_t));
+      sizeof (mkc_prof_entry_t), &loc);
   if (pentry == NULL) {
     mkc_error_set (profiles->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
     return MKC_ERR_FAILURE;
@@ -269,6 +269,7 @@ mkc_profile_local_create (mkc_profile_t *profiles)
   profiles->localstack [profiles->localstacksz] = loc;
   profiles->localstacksz += 1;
   profiles->localidx = 0;
+fprintf (stderr, "local-push: %d %d %d\n", profiles->localstacksz, profiles->localidx, loc);
 
   return loc;
 }
@@ -286,12 +287,12 @@ mkc_profile_local_pop (mkc_profile_t *profiles)
   profiles->localstacksz -= 1;
   profiles->localidx = 0;
   stackidx = profiles->localstacksz;
+fprintf (stderr, "local-pop: %d %d %d\n", profiles->localstacksz, profiles->localidx, profiles->localstack [stackidx]);
   pentry = mkc_list_get_by_idx (profiles->list, profiles->localstack [stackidx]);
 
   mkc_log (profiles->log, MKC_LOG_PROFILE,
       "profile: pop-local: %s (%d)\n", pentry->name, pentry->pidx);
-
-  mkc_profile_entry_free (pentry);
+  mkc_list_pop (profiles->list, profiles->localstack [stackidx]);
 }
 
 mkc_profidx_t

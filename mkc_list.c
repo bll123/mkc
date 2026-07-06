@@ -116,7 +116,7 @@ mkc_list_set (mkc_list_t *list, void *data, size_t sz, mkc_listidx_t *loc)
   }
 
   if (list->type == MKC_LIST_UNSORTED) {
-    data = mkc_list_append (list, data, sz);
+    data = mkc_list_append (list, data, sz, loc);
     return data;
   }
 
@@ -178,7 +178,7 @@ mkc_list_set (mkc_list_t *list, void *data, size_t sz, mkc_listidx_t *loc)
 /* an append to a sorted list will not update the sort-index */
 /* the data is simply appended to the list */
 void *
-mkc_list_append (mkc_list_t *list, void *data, size_t sz)
+mkc_list_append (mkc_list_t *list, void *data, size_t sz, mkc_listidx_t *loc)
 {
   int             rc = MKC_LIST_NOTFOUND;
   mkc_listidx_t   dataloc;
@@ -188,6 +188,7 @@ mkc_list_append (mkc_list_t *list, void *data, size_t sz)
   }
 
   dataloc = list->sz;
+  *loc = dataloc;
   list->itemsz = sz;
 
   if (rc == MKC_LIST_NOTFOUND &&
