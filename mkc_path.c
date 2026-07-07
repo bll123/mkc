@@ -26,6 +26,18 @@ static char mkc_dirs [MKC_DIR_MAX][MKC_PATH_MAX] = {
   [MKC_DIR_SHARE] = "",
 };
 
+const char * const pathdesc [MKC_PATH_BUILD_MAX] = {
+  [MKC_PATH_CONFIG] = "config",
+  [MKC_PATH_EXEC_PATH] = "exec",
+  [MKC_PATH_HOME] = "home",
+  [MKC_PATH_MKC_FILES] = "mkc_files",
+  [MKC_PATH_MKC_TMP] = "mkc_tmp",
+  [MKC_PATH_MKC_INCLUDE] = "mkc_include",
+  [MKC_PATH_MKC_TEMPLATES] = "mkc_templates",
+  [MKC_PATH_SHARE] = "share",
+  [MKC_PATH_PREFIX] = "prefix",
+};
+
 static bool gmkcpathinit = false;
 
 static void mkc_path_init (mkc_error_t *mkcerr);

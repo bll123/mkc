@@ -13,9 +13,8 @@
 The __function__ statement associates an optional
 _argument&#8209;list_ and a set of statements with _function&#8209;name_.
 
-The _argument-list_ specifies one or more arguments.  These arguments
-are local to the function's statement block, and are accessed as a
-variable.
+The _argument-list_ specifies one or more variable names.  These
+variables are local to the function's statement block.
 
 ##### Function Examples
 

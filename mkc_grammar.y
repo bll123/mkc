@@ -163,26 +163,36 @@
 %token T_ATTR_SOURCE          "source"
 %token T_ATTR_VERSION         "version"
 
-%type <astnode> expr
-%type <astnode> integer stringvalue basicvalue
-%type <astnode> varname
+%type <astnode> integer variable string
 
-/* a varvalue can be any sort of value, including a list */
+/* a basicvalue is an integer, string or ${variable} */
+/* used for expressions */
+%type <astnode> basicvalue
+
+/* a varname may be a variable-name or ${variable} */
+%type <astnode> varname varnamelist variablename
+
+/* a varvalue can be an expression or ${variable} */
 %type <astnode> varvalue
 
-/* a varlist is: [ value-list ] */
-%type <astlist> varlist
+/* a varany can be an expression, basic-value, varname or ${variable} */
+/* it is used where a name without any quotes can be used */
+%type <astnode> varany
+
+/* a list is a list of values encludes in brackets: [ val ... ] */
+%type <astlist> list
 
 /* valuelist: a list of varvalues */
 %type <astnode> valuelist
 %type <astnode> pathname pathlist
+%type <astnode> expr
 
 %type <astnode> stmtblock_or_semi stmtblock stmtlist stmt
 %type <astnode> directive
 // program control
 %type <astnode> ifexpr stmt_if elseif elseclause loopcontrol
 %type <astnode> stmt_foreach stmt_function stmt_while
-%type <astnode> varnamelist stmt_function_call range
+%type <astnode> stmt_function_call range
 // commands
 %type <astnode> stmt_config stmt_loadcache
 %type <astnode> stmt_mark stmt_print stmt_profile stmt_project stmt_set
@@ -197,6 +207,7 @@
 %type <astnode> attr_negate attr_output attr_replace attr_source attr_version
 
 // precedence rules: the lowest precedence comes first
+%precedence VALUE
 %left T_OP_OR
 %left T_OP_AND
 %left T_OP_NUM_EQ T_OP_NUM_NE T_OP_STR_EQ T_OP_STR_NE T_OP_STR_EQ_REGEX T_OP_STR_NE_REGEX
@@ -526,14 +537,24 @@ stmt_foreach[v]:
       $v = mkc_ast_mk_foreach (ast, $a, $b, $c,
           yylloc.first_line, yylloc.first_column);
     }
-  | T_STMT_FOREACH varnamelist[a] T_IN varlist[l] stmtblock[c]
-    {
-      $v = mkc_ast_mk_foreach (ast, $a, $l, $c,
-          yylloc.first_line, yylloc.first_column);
-    }
   | T_STMT_FOREACH varnamelist[a] T_IN range[b] stmtblock[c]
     {
       $v = mkc_ast_mk_foreach_range (ast, $a, $b, $c,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+range[v]:
+    T_RANGE T_LEFT_PAREN varvalue[a] varvalue[b] T_RIGHT_PAREN
+    {
+      $v = mkc_ast_mk_value (ast, MKC_T_VAL_TRUE, NULL,
+          yylloc.first_line, yylloc.first_column);
+      $v = mkc_ast_mk_range (ast, $a, $b, $v,
+          yylloc.first_line, yylloc.first_column);
+    }
+  | T_RANGE T_LEFT_PAREN varvalue[a] varvalue[b] varvalue[c] T_RIGHT_PAREN
+    {
+      $v = mkc_ast_mk_range (ast, $a, $b, $c,
           yylloc.first_line, yylloc.first_column);
     }
   ;
@@ -560,19 +581,6 @@ stmt_function[v]:
     }
   ;
 
-varnamelist[v]:
-    varname[a]
-    {
-      $v = mkc_ast_mk_value_list (ast, NULL, $a,
-          yylloc.first_line, yylloc.first_column);
-    }
-  | varnamelist[l] varname[a]
-    {
-      $v = mkc_ast_mk_value_list (ast, $l, $a,
-          yylloc.first_line, yylloc.first_column);
-    }
-  ;
-
 // statements
 
 stmt_config[v]:
@@ -594,8 +602,9 @@ directive[v]:
       $v = mkc_ast_mk_debug (ast, $a, $b,
           yylloc.first_line, yylloc.first_column);
     }
-  | T_STMT_OPTION varname[a] varvalue[b] T_SEMICOLON
+  | T_STMT_OPTION varname[a] varany[b] T_SEMICOLON
     {
+      /* not implemented */
       $v = NULL;
     }
   ;
@@ -608,12 +617,8 @@ stmt_function_call[v]:
     }
   | varname[a] varvalue[b] T_SEMICOLON
     {
+      /* it is unknown if the value is a singleton or a list */
       $v = mkc_ast_mk_function_call (ast, $a, $b,
-          yylloc.first_line, yylloc.first_column);
-    }
-  | varname[a] varlist[l] T_SEMICOLON
-    {
-      $v = mkc_ast_mk_function_call (ast, $a, $l,
           yylloc.first_line, yylloc.first_column);
     }
   ;
@@ -680,14 +685,9 @@ stmt_project[v]:
   ;
 
 stmt_set[v]:
-    T_STMT_SET varname[a] expr[b] stmtblock_or_semi[c]
+    T_STMT_SET varname[a] varvalue[b] stmtblock_or_semi[c]
     {
       $v = mkc_ast_mk_set (ast, $a, $b, $c,
-          yylloc.first_line, yylloc.first_column);
-    }
-  | T_STMT_SET varname[a] varlist[l] stmtblock_or_semi[c]
-    {
-      $v = mkc_ast_mk_set (ast, $a, $l, $c,
           yylloc.first_line, yylloc.first_column);
     }
   ;
@@ -695,7 +695,7 @@ stmt_set[v]:
 // checks
 
 chk_argcount[v]:
-    T_CHK_ARG_COUNT varvalue[a] stmtblock_or_semi[b]
+    T_CHK_ARG_COUNT varany[a] stmtblock_or_semi[b]
     {
       $v = mkc_ast_mk_check (ast, $a, $b, MKC_T_CHK_ARG_COUNT,
           yylloc.first_line, yylloc.first_column);
@@ -716,7 +716,7 @@ chk_compflag[v]:
   ;
 
 chk_const[v]:
-    T_CHK_CONST varvalue[a] stmtblock_or_semi[b]
+    T_CHK_CONST varany[a] stmtblock_or_semi[b]
     {
       $v = mkc_ast_mk_check (ast, $a, $b, MKC_T_CHK_CONST,
           yylloc.first_line, yylloc.first_column);
@@ -724,7 +724,7 @@ chk_const[v]:
   ;
 
 chk_define[v]:
-    T_CHK_DEFINE varvalue[a] stmtblock_or_semi[b]
+    T_CHK_DEFINE varany[a] stmtblock_or_semi[b]
     {
       $v = mkc_ast_mk_check (ast, $a, $b, MKC_T_CHK_DEFINE,
           yylloc.first_line, yylloc.first_column);
@@ -753,7 +753,7 @@ chk_linkflag[v]:
   ;
 
 chk_package[v]:
-    T_CHK_PACKAGE varvalue[a] stmtblock_or_semi[b]
+    T_CHK_PACKAGE varany[a] stmtblock_or_semi[b]
     {
       $v = mkc_ast_mk_chk_package (ast, $a, $b,
           yylloc.first_line, yylloc.first_column);
@@ -761,7 +761,7 @@ chk_package[v]:
   ;
 
 chk_size[v]:
-    T_CHK_SIZE varvalue[a] stmtblock_or_semi[b]
+    T_CHK_SIZE varany[a] stmtblock_or_semi[b]
     {
       $v = mkc_ast_mk_check (ast, $a, $b, MKC_T_CHK_SIZE,
           yylloc.first_line, yylloc.first_column);
@@ -769,7 +769,7 @@ chk_size[v]:
   ;
 
 chk_type[v]:
-    T_CHK_TYPE varvalue[a] stmtblock_or_semi[b]
+    T_CHK_TYPE varany[a] stmtblock_or_semi[b]
     {
       $v = mkc_ast_mk_check (ast, $a, $b, MKC_T_CHK_TYPE,
           yylloc.first_line, yylloc.first_column);
@@ -777,7 +777,7 @@ chk_type[v]:
   ;
 
 chk_member[v]:
-    T_CHK_STRUCT_MEMBER varvalue[a] varvalue[b] stmtblock_or_semi[c]
+    T_CHK_STRUCT_MEMBER varany[a] varany[b] stmtblock_or_semi[c]
     {
       $v = mkc_ast_mk_chk_struct_member (ast, $a, $b, $c,
           yylloc.first_line, yylloc.first_column);
@@ -785,7 +785,7 @@ chk_member[v]:
   ;
 
 chk_function[v]:
-    T_CHK_FUNCTION varvalue[a] stmtblock_or_semi[b]
+    T_CHK_FUNCTION varname[a] stmtblock_or_semi[b]
     {
       $v = mkc_ast_mk_check (ast, $a, $b, MKC_T_CHK_FUNCTION,
           yylloc.first_line, yylloc.first_column);
@@ -820,7 +820,7 @@ attr_compilerflags[v]:
   ;
 
 attr_compiler[v]:
-    T_ATTR_COMPILER varvalue[a] T_SEMICOLON
+    T_ATTR_COMPILER varany[a] T_SEMICOLON
     {
       $v = mkc_ast_mk_attribute (ast, $a, MKC_T_ATTR_COMPILER,
           yylloc.first_line, yylloc.first_column);
@@ -829,7 +829,7 @@ attr_compiler[v]:
 
 /* context for set */
 attr_context[v]:
-    T_ATTR_CONTEXT varvalue[a] T_SEMICOLON
+    T_ATTR_CONTEXT varany[a] T_SEMICOLON
     {
       $v = mkc_ast_mk_attribute (ast, $a, MKC_T_ATTR_CONTEXT,
           yylloc.first_line, yylloc.first_column);
@@ -881,7 +881,7 @@ attr_linkflags[v]:
 
 /* method for configure/install/etc. */
 attr_method[v]:
-    T_ATTR_METHOD varvalue[a] T_SEMICOLON
+    T_ATTR_METHOD varany[a] T_SEMICOLON
     {
       $v = mkc_ast_mk_attribute (ast, $a, MKC_T_ATTR_METHOD,
           yylloc.first_line, yylloc.first_column);
@@ -890,7 +890,7 @@ attr_method[v]:
 
 /* a name is the user requested name that overrides the generated name */
 attr_name[v]:
-    T_ATTR_NAME varname[a] T_SEMICOLON
+    T_ATTR_NAME varany[a] T_SEMICOLON
     {
       $v = mkc_ast_mk_attribute (ast, $a, MKC_T_ATTR_NAME,
           yylloc.first_line, yylloc.first_column);
@@ -946,21 +946,10 @@ attr_version[v]:
     }
   ;
 
-pathlist[v]:
-    pathname[a]
-    {
-      $v = mkc_ast_mk_value_list (ast, NULL, $a,
-          yylloc.first_line, yylloc.first_column);
-    }
-  | pathlist[l] pathname[a]
-    {
-      $v = mkc_ast_mk_value_list (ast, $l, $a,
-          yylloc.first_line, yylloc.first_column);
-    }
-  ;
+/* operations */
 
 expr[v]:
-    varvalue[a]
+    basicvalue[a]
     {
       $v = $a;
     }
@@ -1100,58 +1089,36 @@ expr[v]:
     }
   ;
 
-pathname[v]:
-    T_ID_PATH_NAME[a]
+varany[v]:
+    expr[a] %prec VALUE
     {
-      $v = mkc_ast_mk_value (ast, MKC_T_ID_PATH_NAME, $a,
-          yylloc.first_line, yylloc.first_column);
+      $v = $a;
     }
-  | varvalue[a]
+  | list[a]
+    {
+      $v = $a;
+    }
+  | variablename[a]
     {
       $v = $a;
     }
   ;
 
 varvalue[v]:
-    varname[a]
+    expr[a] %prec VALUE
     {
       $v = $a;
     }
-  | basicvalue[a]
+  | list[a]
     {
       $v = $a;
-    }
-  | T_VARIABLE[a]
-    {
-      $v = mkc_ast_mk_value (ast, MKC_T_VARIABLE, $a,
-          yylloc.first_line, yylloc.first_column);
-    }
-  | T_VAL_ENV_VARIABLE[a]
-    {
-      $v = mkc_ast_mk_value (ast, MKC_T_VAL_ENV_VARIABLE, $a,
-          yylloc.first_line, yylloc.first_column);
     }
   ;
 
-varlist[v]:
+list[v]:
     T_LEFT_BRACKET valuelist[a] T_RIGHT_BRACKET
     {
       $v = $a;
-    }
-  ;
-
-range[v]:
-    T_RANGE T_LEFT_PAREN varvalue[a] varvalue[b] T_RIGHT_PAREN
-    {
-      $v = mkc_ast_mk_value (ast, MKC_T_VAL_TRUE, NULL,
-          yylloc.first_line, yylloc.first_column);
-      $v = mkc_ast_mk_range (ast, $a, $b, $v,
-          yylloc.first_line, yylloc.first_column);
-    }
-  | T_RANGE T_LEFT_PAREN varvalue[a] varvalue[b] varvalue[c] T_RIGHT_PAREN
-    {
-      $v = mkc_ast_mk_range (ast, $a, $b, $c,
-          yylloc.first_line, yylloc.first_column);
     }
   ;
 
@@ -1168,18 +1135,100 @@ valuelist[v]:
     }
   ;
 
-basicvalue[v]:
-    stringvalue[a]
+pathlist[v]:
+    pathname[a]
+    {
+      $v = mkc_ast_mk_value_list (ast, NULL, $a,
+          yylloc.first_line, yylloc.first_column);
+    }
+  | pathlist[l] pathname[a]
+    {
+      $v = mkc_ast_mk_value_list (ast, $l, $a,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+pathname[v]:
+    T_ID_PATH_NAME[a]
+    {
+      $v = mkc_ast_mk_value (ast, MKC_T_ID_PATH_NAME, $a,
+          yylloc.first_line, yylloc.first_column);
+    }
+  | string[a]
     {
       $v = $a;
     }
-  | integer[a]
+  | variable[a]
     {
       $v = $a;
     }
   ;
 
-stringvalue[v]:
+varnamelist[v]:
+    varname[a]
+    {
+      $v = mkc_ast_mk_value_list (ast, NULL, $a,
+          yylloc.first_line, yylloc.first_column);
+    }
+  | varnamelist[l] varname[a]
+    {
+      $v = mkc_ast_mk_value_list (ast, $l, $a,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+varname[v]:
+    variablename[a]
+    {
+      $v = $a;
+    }
+  | string[a]
+    {
+      $v = $a;
+    }
+  | variable[a]
+    {
+      $v = $a;
+    }
+  ;
+
+variablename[v]:
+    T_ID_VAR_NAME[a]
+    {
+      $v = mkc_ast_mk_value (ast, MKC_T_ID_VAR_NAME, $a,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+basicvalue[v]:
+    integer[a]
+    {
+      $v = $a;
+    }
+  | string[a]
+    {
+      $v = $a;
+    }
+  | variable[a]
+    {
+      $v = $a;
+    }
+  ;
+
+variable[v]:
+    T_VARIABLE[a]
+    {
+      $v = mkc_ast_mk_value (ast, MKC_T_VARIABLE, $a,
+          yylloc.first_line, yylloc.first_column);
+    }
+  | T_VAL_ENV_VARIABLE[a]
+    {
+      $v = mkc_ast_mk_value (ast, MKC_T_VAL_ENV_VARIABLE, $a,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+string[v]:
     T_VAL_QUOTED_STRING[a]
     {
       $v = mkc_ast_mk_value (ast, MKC_T_VAL_QUOTED_STRING, $a,
@@ -1188,14 +1237,6 @@ stringvalue[v]:
   | T_VAL_STATIC_STRING[a]
     {
       $v = mkc_ast_mk_value (ast, MKC_T_VAL_STATIC_STRING, $a,
-          yylloc.first_line, yylloc.first_column);
-    }
-  ;
-
-varname[v]:
-    T_ID_VAR_NAME[a]
-    {
-      $v = mkc_ast_mk_value (ast, MKC_T_ID_VAR_NAME, $a,
           yylloc.first_line, yylloc.first_column);
     }
   ;

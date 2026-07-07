@@ -20,12 +20,12 @@ extern "C" {
 
 typedef enum {
   MKC_VT_INVALID,
-  MKC_VT_RANGE,
   /* basic types */
   /* these are present in the variable list */
   MKC_VT_INTEGER,
   MKC_VT_STRING,
   MKC_VT_LIST,
+  MKC_VT_RANGE,
   /* used by the parser and processor */
   MKC_VT_STATIC_STRING,
   MKC_VT_QUOTED_STRING,

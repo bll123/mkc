@@ -6,11 +6,11 @@ project {
 
 check_constant alwaysdef {
   compiler_flags '-Itests/tmp';
-  header '190-retest-a.h';
+  header '210-retest-a.h';
 }
 check_constant maybedef {
   compiler_flags '-Itests/tmp';
-  header '190-retest-b.h';
+  header '210-retest-b.h';
 }
 
 if (${_constant_alwaysdef}) {

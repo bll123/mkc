@@ -63,9 +63,11 @@ typedef enum {
 
 typedef struct mkc_error_t mkc_error_t;
 
+#define mkc_error_set(mkcerr, err, syserr, str) r_mkc_error_set (mkcerr, err, syserr, str, __func__, __LINE__);
+
 MKC_NODISCARD mkc_error_t *mkc_error_init (void);
 void mkc_error_free (mkc_error_t *mkcerr);
-void mkc_error_set (mkc_error_t *mkcerr, mkc_err_code_t err, int32_t syserr, const char *str);
+void r_mkc_error_set (mkc_error_t *mkcerr, mkc_err_code_t err, int32_t syserr, const char *str, const char *func, int32_t flineno);
 void mkc_error_set_line_col (mkc_error_t *mkcerr, int32_t lineno, int colno);
 bool mkc_error_chk_err (mkc_error_t *mkcerr);
 bool mkc_error_chk_ok (mkc_error_t *mkcerr);

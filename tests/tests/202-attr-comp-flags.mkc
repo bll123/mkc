@@ -3,20 +3,20 @@
 # checks the compiler_flags attribute, uses check_size to test it.
 
 check_size 'chk_a' {
-  header 201-attr-comp-flags.h;
+  header 202-attr-comp-flags.h;
   compiler_flags '-Itests/data';
 }
 
 # this will fail, as the flags are not a single argument.
 check_size 'chk_a' {
   name chk_b;
-  header 201-attr-comp-flags.h;
+  header 202-attr-comp-flags.h;
   compiler_flags '-I tests/data';
 }
 
 check_size 'chk_a' {
   name chk_c;
-  header 201-attr-comp-flags.h;
+  header 202-attr-comp-flags.h;
   compiler_flags '-I' 'tests/data';
 }
 

@@ -56,6 +56,8 @@ typedef struct mkc_foreach_t {
   mkc_value_t         *range;
   mkc_profidx_t       plocalidx;
   mkc_listidx_t       iteridx;
+  mkc_value_t         tnvalue;
+  mkc_value_t         tavalue;
   mkc_astnode_token_t type;
 } mkc_foreach_t;
 
@@ -180,6 +182,7 @@ static void mkc_process_dbg_print_var (mkc_process_t *process, const char *pname
 static void mkc_process_dbg_print_prof (mkc_process_t *process);
 static void mkc_process_dbg_print_path (mkc_process_t *process);
 static void mkc_process_dbg_print_int_var (mkc_process_t *process);
+static void mkc_process_dbg_print_config (mkc_process_t *process);
 static char * mkc_process_configure_substitute (mkc_process_t *process, char *data);
 static void mkc_process_substitutions (mkc_process_t *process, mkc_value_t *value);
 static void mkc_process_alternate_free (void *talt);
@@ -651,6 +654,9 @@ mkc_process_stmt_debug (mkc_process_t *process,
   if (strcmp (tbuff, "printinternal") == 0) {
     mkc_process_dbg_print_int_var (process);
   }
+  if (strcmp (tbuff, "printconfig") == 0) {
+    mkc_process_dbg_print_config (process);
+  }
 
   return false;
 }
@@ -662,6 +668,7 @@ mkc_process_stmt_foreach_setup (mkc_process_t *process,
 {
   mkc_foreach_t   *pforeach;
 
+fprintf (stderr, "proc: fe-setup\n");
   if (process == NULL) {
     return NULL;
   }
@@ -683,27 +690,23 @@ mkc_process_stmt_foreach_setup (mkc_process_t *process,
   pforeach->iteridx = MKC_ITER_FINISH;
 
   if (valnm != NULL) {
-    mkc_value_t   tvalue;
-
-    memcpy (&tvalue, valnm, sizeof (mkc_value_t));
-    mkc_process_substitutions (process, &tvalue);
-    if (tvalue.vtype != MKC_VT_LIST) {
+    memcpy (&pforeach->tnvalue, valnm, sizeof (mkc_value_t));
+    mkc_process_substitutions (process, &pforeach->tnvalue);
+    if (pforeach->tnvalue.vtype != MKC_VT_LIST) {
       mkc_error_set (process->mkcerr, MKC_ERR_INVALID_ARGUMENT, 0, NULL);
       return NULL;
     }
-    pforeach->namelist = tvalue.list;
+    pforeach->namelist = pforeach->tnvalue.list;
   }
   if (vallist != NULL) {
-    mkc_value_t   tvalue;
-
     pforeach->type = MKC_T_VAL_LIST;
-    memcpy (&tvalue, vallist, sizeof (mkc_value_t));
-    mkc_process_substitutions (process, &tvalue);
-    if (tvalue.vtype != MKC_VT_LIST) {
+    memcpy (&pforeach->tavalue, vallist, sizeof (mkc_value_t));
+    mkc_process_substitutions (process, &pforeach->tavalue);
+    if (pforeach->tavalue.vtype != MKC_VT_LIST) {
       mkc_error_set (process->mkcerr, MKC_ERR_INVALID_ARGUMENT, 0, NULL);
       return NULL;
     }
-    pforeach->list = tvalue.list;
+    pforeach->list = pforeach->tavalue.list;
     mkc_list_iter_start (pforeach->list, &pforeach->iteridx);
   }
   if (range != NULL) {
@@ -720,6 +723,7 @@ mkc_process_stmt_foreach (mkc_process_t *process, mkc_foreach_t *pforeach)
   mkc_listidx_t   niteridx;
   mkc_listidx_t   nidx;
 
+fprintf (stderr, "proc: fe\n");
   mkc_list_iter_start (pforeach->namelist, &niteridx);
   while ((nidx = mkc_list_iter_next (pforeach->namelist, &niteridx)) != MKC_ITER_FINISH) {
     mkc_value_t     *nval = NULL;
@@ -754,6 +758,9 @@ mkc_process_stmt_foreach (mkc_process_t *process, mkc_foreach_t *pforeach)
 void
 mkc_process_stmt_foreach_finish (mkc_process_t *process, mkc_foreach_t *pforeach)
 {
+fprintf (stderr, "proc: fe-finish\n");
+  mkc_process_temp_value_free (&pforeach->tnvalue);
+  mkc_process_temp_value_free (&pforeach->tavalue);
   free (pforeach);
   mkc_profile_local_pop (process->profiles);
 }
@@ -769,6 +776,8 @@ mkc_process_stmt_function_call (mkc_process_t *process,
   mkc_listidx_t   nmiteridx;
   mkc_listidx_t   aidx;
   mkc_listidx_t   nmidx;
+  mkc_value_t     tvalue;
+  bool            allocated = false;
 
   plocalidx = mkc_profile_local_create (process->profiles);
 
@@ -776,21 +785,26 @@ mkc_process_stmt_function_call (mkc_process_t *process,
     nmlist = valarglist->list;
   }
   if (valfuncargs != NULL) {
-    mkc_value_t   tvalue;
-
     memcpy (&tvalue, valfuncargs, sizeof (mkc_value_t));
     mkc_process_substitutions (process, &tvalue);
-    if (tvalue.vtype != MKC_VT_LIST) {
-      mkc_error_set (process->mkcerr, MKC_ERR_FUNCTION_INVALID_ARG, 0, NULL);
-      return;
+    if (tvalue.vtype == MKC_VT_LIST) {
+      alist = tvalue.list;
+    } else {
+      mkc_listidx_t   loc;
+
+      alist = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, process->mkcerr);
+      mkc_list_set (alist, &tvalue, sizeof (mkc_value_t), &loc);
+      allocated = true;
     }
-    alist = tvalue.list;
   }
   if ((alist == NULL && nmlist != NULL) ||
       (alist != NULL && nmlist == NULL) ||
       (alist != NULL &&
           mkc_list_size (alist) != mkc_list_size (nmlist))) {
     mkc_error_set (process->mkcerr, MKC_ERR_FUNCTION_ARG_MISMATCH, 0, NULL);
+    if (allocated) {
+      mkc_list_free (alist);
+    }
     return;
   }
 
@@ -812,6 +826,11 @@ mkc_process_stmt_function_call (mkc_process_t *process,
 
     mkc_process_local_set (process, nmval, aval, plocalidx);
   }
+
+  if (allocated) {
+    mkc_list_free (alist);
+  }
+  mkc_process_temp_value_free (&tvalue);
 }
 
 void
@@ -1811,7 +1830,6 @@ mkc_process_local_set (mkc_process_t *process, mkc_value_t *nmval,
   mkc_pvar_value_get_str (process->pvar, nmval, nm, sizeof (nm));
 
   opidx = mkc_profile_get_active (process->profiles);
-  mkc_profile_local_reset (process->profiles);
   mkc_pvar_profile_set_idx (process->pvar, pidx);
   mkc_pvar_set (process->pvar, nm, argval, MKC_VCTXT_TEMP);
   mkc_pvar_profile_set_idx (process->pvar, opidx);
@@ -2750,7 +2768,7 @@ mkc_process_dbg_print_path (mkc_process_t *process)
   fprintf (stdout, "== paths\n");
   for (int i = 0; i < MKC_PATH_BUILD_MAX; ++i) {
     mkc_path_build (i, tbuff, sizeof (tbuff), NULL, process->mkcerr);
-    fprintf (stdout, "path %d %s\n", i, tbuff);
+    fprintf (stdout, "  %s %s\n", pathdesc [i], tbuff);
   }
 }
 
@@ -2766,6 +2784,74 @@ mkc_process_dbg_print_int_var (mkc_process_t *process)
   fprintf (stdout, "  header-type %d\n", process->headertype);
   fprintf (stdout, "  cache-loaded %d\n", process->cacheloaded);
   fprintf (stdout, "  cache-invalidated %d\n", process->cacheinvalidated);
+}
+
+static void
+mkc_process_dbg_print_config (mkc_process_t *process)
+{
+  fprintf (stdout, "== config\n");
+#if defined (VERSION)
+  fprintf (stdout, "  VERSION %s\n", VERSION);
+  fprintf (stdout, "  BUILD %s\n", BUILD);
+  fprintf (stdout, "  BUILDDATE %s\n", BUILDDATE);
+  fprintf (stdout, "  RELEASELEVEL %s\n", RELEASELEVEL);
+#else
+  fprintf (stdout, "  VERSION not defined\n");
+#endif
+#if defined (_package_pcre)
+  fprintf (stdout, "  _package_pcre %d\n", _package_pcre);
+#endif
+#if defined (_have_regex)
+  fprintf (stdout, "  _have_regex %d\n", _have_regex);
+#endif
+#if defined (_function_fork)
+  fprintf (stdout, "  _function_fork %d\n", _function_fork);
+#endif
+#if defined (_function_nanosleep)
+  fprintf (stdout, "  _function_nanosleep %d\n", _function_nanosleep);
+#endif
+#if defined (_function_setenv)
+  fprintf (stdout, "  _function_setenv %d\n", _function_setenv);
+#endif
+#if defined (_function_symlink)
+  fprintf (stdout, "  _function_symlink %d\n", _function_symlink);
+#endif
+#if defined (_function_GetCommandLineW)
+  fprintf (stdout, "  _function_GetCommandLineW %d\n", _function_GetCommandLineW);
+#endif
+#if defined (_function_CopyFileW)
+  fprintf (stdout, "  _function_CopyFileW %d\n", _function_CopyFileW);
+#endif
+#if defined (_function_Sleep)
+  fprintf (stdout, "  _function_Sleep %d\n", _function_Sleep);
+#endif
+#if defined (_function__wetenv_s)
+  fprintf (stdout, "  _function__wetenv_s %d\n", _function__wetenv_s);
+#endif
+#if defined (_function__wputenv_s)
+  fprintf (stdout, "  _function__wputenv_s %d\n", _function__wputenv_s);
+#endif
+#if defined (_function__wrename)
+  fprintf (stdout, "  _function__wrename %d\n", _function__wrename);
+#endif
+#if defined (_function__wstat64)
+  fprintf (stdout, "  _function__wstat64 %d\n", _function__wstat64);
+#endif
+#if defined (_function__wunlink)
+  fprintf (stdout, "  _function__wunlink %d\n", _function__wunlink);
+#endif
+#if defined (_function_MultiByteToWideChar)
+  fprintf (stdout, "  _function_MultiByteToWideChar %d\n", _function_MultiByteToWideChar);
+#endif
+#if defined (_function_WideCharToMultiByte)
+  fprintf (stdout, "  _function_WideCharToMultiByte %d\n", _function_WideCharToMultiByte);
+#endif
+#if defined (_arg_count_mkdir)
+  fprintf (stdout, "  _arg_count_mkdir %d\n", _arg_count_mkdir);
+#endif
+#if defined (_define_S_IRWXU)
+  fprintf (stdout, "  _define_S_IRWXU %d\n", _define_S_IRWXU);
+#endif
 }
 
 static char *

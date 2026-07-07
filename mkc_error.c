@@ -59,10 +59,12 @@ static char const * const mkcerrormsg [] = {
 
 typedef struct mkc_error_t {
   char            *str;
-  mkc_err_code_t  err;
+  const char      *func;
+  int32_t         flineno;
   int32_t         lineno;
-  int             colno;
   int32_t         syserr;
+  int             colno;
+  mkc_err_code_t  err;
 } mkc_error_t;
 
 MKC_NODISCARD
@@ -76,9 +78,11 @@ mkc_error_init (void)
     return NULL;
   }
   mkcerr->str = NULL;
+  mkcerr->func = NULL;
   mkcerr->err = MKC_OK;
   mkcerr->syserr = 0;
   mkcerr->lineno = 0;
+  mkcerr->flineno = 0;
   mkcerr->colno = 0;
 
   return mkcerr;
@@ -96,8 +100,8 @@ mkc_error_free (mkc_error_t *mkcerr)
 }
 
 void
-mkc_error_set (mkc_error_t *mkcerr, mkc_err_code_t err,
-    int syserr, const char *str)
+r_mkc_error_set (mkc_error_t *mkcerr, mkc_err_code_t err,
+    int syserr, const char *str, const char *func, int flineno)
 {
   if (mkcerr == NULL) {
     return;
@@ -107,6 +111,8 @@ mkc_error_set (mkc_error_t *mkcerr, mkc_err_code_t err,
   mkcerr->syserr = syserr;
   datafree (mkcerr->str);
   mkcerr->str = NULL;
+  mkcerr->func = func;
+  mkcerr->flineno = flineno;
   if (str != NULL) {
     mkcerr->str = strdup (str);
   }
@@ -181,6 +187,9 @@ mkc_error_print (mkc_error_t *mkcerr)
   }
   if (mkcerr->str != NULL) {
     fprintf (stderr, "; %s", mkcerr->str);
+  }
+  if (mkcerr->func != NULL) {
+    fprintf (stderr, "; %s:%d", mkcerr->func, mkcerr->flineno);
   }
 
   fprintf (stderr, "\n");

@@ -3,3 +3,4 @@ mkcdebug printvar internal;
 mkcdebug printvar default;
 mkcdebug printpath;
 mkcdebug printinternal;
+mkcdebug printconfig;

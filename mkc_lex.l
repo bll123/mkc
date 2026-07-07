@@ -66,6 +66,7 @@ UONLY   {U2}|{U3}|{U4}
 
 TXT_PLUS_HYPHEN   [+-]
 /* variable names are allowed to have _, +, - */
+VAR_ALPHA         [A-Za-z_]
 VAR_ALNUM         [0-9A-Za-z_]
 VAR_INNER         [0-9A-Za-z${}_]
 /* filenames and directory names may include: _ - + . */
@@ -75,6 +76,7 @@ PATH_ALNUM        [0-9A-Za-z_./]
 /* these ranges also include various unicode space characters */
 /* and other characters that may not be great for names */
 /* let the users deal with that */
+VAR_UGA             {VAR_ALPHA}|{U2}|{U3}|{U4}
 VAR_UG              {VAR_ALNUM}|{U2}|{U3}|{U4}
 VAR_INNER_UG        {VAR_INNER}|{U2}|{U3}|{U4}
 PATH_UG             {PATH_ALNUM}|{U2}|{U3}|{U4}
@@ -178,17 +180,17 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 "source"                    { return T_ATTR_SOURCE; }
 "version"                   { return T_ATTR_VERSION; }
 
-({DIGIT}+)          {
+({DIGIT}+) {
     yylval->sval = strdup (yytext);
     return T_VAL_INTEGER;
   }
 
-({VAR_UG}({VAR_UG}|{TXT_PLUS_HYPHEN})*)     {
+({VAR_UGA}({VAR_UG}|{TXT_PLUS_HYPHEN})*) {
     yylval->sval = strdup (yytext);
     return T_ID_VAR_NAME;
   }
 
-({PATH_UG}({PATH_UG}|{TXT_PLUS_HYPHEN})*)     {
+({PATH_UG}({PATH_UG}|{TXT_PLUS_HYPHEN})*[./]({PATH_UG}|{TXT_PLUS_HYPHEN})*) {
     yylval->sval = strdup (yytext);
     return T_ID_PATH_NAME;
   }

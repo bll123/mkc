@@ -96,6 +96,7 @@ mkc_varlist_init (mkc_log_t *log, mkc_error_t *mkcerr)
   varlist->debug = false;
   varlist->mkcerr = mkcerr;
   varlist->log = log;
+  varlist->fromcache = false;
 
   return varlist;
 }
@@ -313,6 +314,10 @@ mkc_var_get_value (mkc_varlist_t *varlist, const char *name)
   mkc_var_t     *var;
   mkc_value_t   *value;
   mkc_listidx_t loc = MKC_LIST_NOTFOUND;
+
+  if (varlist == NULL) {
+    return NULL;
+  }
 
   vidx = mkc_var_find (varlist, name, &loc);
   if (vidx == MKC_VAR_NOTFOUND) {
@@ -545,6 +550,10 @@ mkc_var_find (mkc_varlist_t *varlist, const char *name, mkc_listidx_t *loc)
 {
   mkc_var_t     tvar;
   mkc_varidx_t  rc;
+
+  if (varlist == NULL) {
+    return MKC_ERR_FAILURE;
+  }
 
   tvar.name = (char *) name;
   rc = mkc_list_find (varlist->list, &tvar, loc);

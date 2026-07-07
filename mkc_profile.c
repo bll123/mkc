@@ -40,7 +40,6 @@ typedef struct mkc_profile_t {
   mkc_profidx_t     active_idx;
   mkc_profidx_t     current_idx;
   int               stacksz;
-  int               localidx;
   int               localstacksz;
 } mkc_profile_t;
 
@@ -61,7 +60,6 @@ mkc_profile_init (mkc_log_t *log, mkc_error_t *mkcerr, mkc_option_t *mkcoptions)
   }
 
   profiles->stacksz = 0;
-  profiles->localidx = 0;
   profiles->localstacksz = 0;
   profiles->mkcerr = mkcerr;
   profiles->log = log;
@@ -270,7 +268,6 @@ mkc_profile_local_create (mkc_profile_t *profiles)
       "profile: create-local: %s (%d)\n", tbuff, loc);
   profiles->localstack [profiles->localstacksz] = loc;
   profiles->localstacksz += 1;
-  profiles->localidx = 0;
 
   return loc;
 }
@@ -286,7 +283,6 @@ mkc_profile_local_pop (mkc_profile_t *profiles)
   }
 
   profiles->localstacksz -= 1;
-  profiles->localidx = 0;
   stackidx = profiles->localstacksz;
   pentry = mkc_list_get_by_idx (profiles->list, profiles->localstack [stackidx]);
 
@@ -515,16 +511,6 @@ mkc_profile_get_active (mkc_profile_t *profiles)
 }
 
 void
-mkc_profile_local_reset (mkc_profile_t *profiles)
-{
-  if (profiles == NULL) {
-    return;
-  }
-
-  profiles->localidx = 0;
-}
-
-void
 mkc_profile_iter_hierarchy_start (mkc_profile_t *profiles,
     mkc_profiter_t *profiter)
 {
@@ -563,7 +549,8 @@ mkc_profile_iter_hierarchy_next (mkc_profile_t *profiles,
     return MKC_ERR_FAILURE;
   }
 
-  if (profiles->localidx < profiles->localstacksz) {
+fprintf (stderr, "prof: iter-h: localidx: %d l-stk-sz: %d\n", profiter->localidx, profiles->localstacksz);
+  if (profiter->localidx < profiles->localstacksz) {
     /* note that profiter->pidx is not used for the local profiles */
     pidx = profiles->localstack [profiter->localidx];
     profiter->localidx += 1;

@@ -73,7 +73,6 @@ mkc_profidx_t mkc_profile_get_active (mkc_profile_t *profiles);
 void mkc_profile_iter_hierarchy_start (mkc_profile_t *profiles, mkc_profiter_t *profiter);
 int mkc_profile_iter_hierarchy_next (mkc_profile_t *profiles, mkc_profiter_t *profiter);
 
-void mkc_profile_local_reset (mkc_profile_t *profiles);
 const char * mkc_profile_curr_disp (mkc_profile_t *profiles, char *buff, size_t sz);
 
 bool mkc_profile_is_current (mkc_profile_t *profiles, const char *name);

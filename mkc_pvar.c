@@ -502,6 +502,11 @@ mkc_pvar_value_get_integer (mkc_pvar_t *pvar, mkc_value_t *value)
 {
   int32_t     ival = 0;
 
+  if (value == NULL) {
+    mkc_error_set (pvar->mkcerr, MKC_ERR_NULL_ARGUMENT, 0, NULL);
+    return 0;
+  }
+
   switch (value->vtype) {
     case MKC_VT_INVALID: {
       mkc_error_set (pvar->mkcerr, MKC_ERR_UNKNOWN_VARIABLE, 0, NULL);
@@ -548,6 +553,11 @@ mkc_pvar_value_get_str (mkc_pvar_t *pvar,
     mkc_value_t *value, char *buff, size_t sz)
 {
   *buff = '\0';
+
+  if (value == NULL) {
+    mkc_error_set (pvar->mkcerr, MKC_ERR_NULL_ARGUMENT, 0, NULL);
+    return;
+  }
 
   switch (value->vtype) {
     case MKC_VT_INVALID: {
