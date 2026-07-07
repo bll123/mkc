@@ -17,6 +17,7 @@
 ^pkg\.log$
 ^tests/tmp/
 ^tmp/
+^topochk$
 ^web/lastwiki\.txt$
 ^w$
 ^ww$

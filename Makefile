@@ -69,7 +69,7 @@ depend:
 	    -Iinclude *.c 2>/dev/null
 	cat $(BOOTSTRAPMAKE) | \
 	    sed -e 's,[/]usr[/]include[/][^ ]*,,g' \
-	        -e 's,mkc_config.h,,g' \
+	        -e '/^[a-z][a-z_]*\.o: s, mkc_config.h,,g' \
 	        -e '/^[a-z][a-z_]*\.o:[ ]*$$/ d' \
 	    > $(BOOTSTRAPMAKE).n
 	mv $(BOOTSTRAPMAKE).n $(BOOTSTRAPMAKE)
