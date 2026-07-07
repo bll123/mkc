@@ -1393,7 +1393,6 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       int32_t   count = 0;
       int32_t   limit = 10000;
 
-fprintf (stderr, "ast: foreach\n");
       limit = mkc_process_get_loop_limit (astmain->process);
       valnm = mkc_ast_get_value (astmain, astnode->stmt_foreach.nm);
       if (astnode->stmt_foreach.valuelist != NULL) {

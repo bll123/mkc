@@ -668,7 +668,6 @@ mkc_process_stmt_foreach_setup (mkc_process_t *process,
 {
   mkc_foreach_t   *pforeach;
 
-fprintf (stderr, "proc: fe-setup\n");
   if (process == NULL) {
     return NULL;
   }
@@ -723,7 +722,6 @@ mkc_process_stmt_foreach (mkc_process_t *process, mkc_foreach_t *pforeach)
   mkc_listidx_t   niteridx;
   mkc_listidx_t   nidx;
 
-fprintf (stderr, "proc: fe\n");
   mkc_list_iter_start (pforeach->namelist, &niteridx);
   while ((nidx = mkc_list_iter_next (pforeach->namelist, &niteridx)) != MKC_ITER_FINISH) {
     mkc_value_t     *nval = NULL;
@@ -758,7 +756,6 @@ fprintf (stderr, "proc: fe\n");
 void
 mkc_process_stmt_foreach_finish (mkc_process_t *process, mkc_foreach_t *pforeach)
 {
-fprintf (stderr, "proc: fe-finish\n");
   mkc_process_temp_value_free (&pforeach->tnvalue);
   mkc_process_temp_value_free (&pforeach->tavalue);
   free (pforeach);

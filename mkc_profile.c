@@ -549,7 +549,6 @@ mkc_profile_iter_hierarchy_next (mkc_profile_t *profiles,
     return MKC_ERR_FAILURE;
   }
 
-fprintf (stderr, "prof: iter-h: localidx: %d l-stk-sz: %d\n", profiter->localidx, profiles->localstacksz);
   if (profiter->localidx < profiles->localstacksz) {
     /* note that profiter->pidx is not used for the local profiles */
     pidx = profiles->localstack [profiter->localidx];

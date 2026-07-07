@@ -169,7 +169,7 @@
 /* used for expressions */
 %type <astnode> basicvalue
 
-/* a varname may be a variable-name or ${variable} */
+/* a varname may be a variable-name, a string or ${variable} */
 %type <astnode> varname varnamelist variablename
 
 /* a varvalue can be an expression or ${variable} */
@@ -184,6 +184,7 @@
 
 /* valuelist: a list of varvalues */
 %type <astnode> valuelist
+/* a pathname may be a path, a string or ${variable} */
 %type <astnode> pathname pathlist
 %type <astnode> expr
 
