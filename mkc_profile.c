@@ -257,6 +257,8 @@ mkc_profile_local_create (mkc_profile_t *profiles)
     return MKC_ERR_FAILURE;
   }
 
+  /* local profiles are appended to the sorted list, and cannot */
+  /* be found using the usual profile search */
   pentry = mkc_list_append (profiles->list, &tentry,
       sizeof (mkc_prof_entry_t), &loc);
   if (pentry == NULL) {
@@ -269,7 +271,6 @@ mkc_profile_local_create (mkc_profile_t *profiles)
   profiles->localstack [profiles->localstacksz] = loc;
   profiles->localstacksz += 1;
   profiles->localidx = 0;
-fprintf (stderr, "local-push: %d %d %d\n", profiles->localstacksz, profiles->localidx, loc);
 
   return loc;
 }
@@ -287,7 +288,6 @@ mkc_profile_local_pop (mkc_profile_t *profiles)
   profiles->localstacksz -= 1;
   profiles->localidx = 0;
   stackidx = profiles->localstacksz;
-fprintf (stderr, "local-pop: %d %d %d\n", profiles->localstacksz, profiles->localidx, profiles->localstack [stackidx]);
   pentry = mkc_list_get_by_idx (profiles->list, profiles->localstack [stackidx]);
 
   mkc_log (profiles->log, MKC_LOG_PROFILE,
@@ -485,7 +485,7 @@ mkc_profile_set_active (mkc_profile_t *profiles, mkc_profidx_t pidx)
     return;
   }
 
-  if (pidx < 0 || pidx >= mkc_list_size (profiles->list)) {
+  if (pidx < 0 || pidx > mkc_list_size (profiles->list)) {
     mkc_error_set (profiles->mkcerr, MKC_ERR_OUT_OF_RANGE, 0, NULL);
     return;
   }
@@ -564,6 +564,7 @@ mkc_profile_iter_hierarchy_next (mkc_profile_t *profiles,
   }
 
   if (profiles->localidx < profiles->localstacksz) {
+    /* note that profiter->pidx is not used for the local profiles */
     pidx = profiles->localstack [profiter->localidx];
     profiter->localidx += 1;
     return pidx;
@@ -573,7 +574,7 @@ mkc_profile_iter_hierarchy_next (mkc_profile_t *profiles,
 
   if (pidx == MKC_PROF_NOT_FOUND) {
     /* the first time, the active profile is one of */
-    /* target/compiler, user/compiler or user/general */
+    /* target/compiler, current/compiler or current/general */
     /* if a target type profile, use the target */
     /* otherwise, use current/compiler */
     /* note that a current/compiler profile may not exist */
@@ -584,7 +585,7 @@ mkc_profile_iter_hierarchy_next (mkc_profile_t *profiles,
       return pidx;
     }
 
-    /* find the most specific user profile */
+    /* find the most specific current profile */
     pidx = mkc_profile_find (profiles, profiter->pname, profiles->dfltcompiler);
     /* this is the situation where the profile may not exist */
     if (pidx == MKC_PROF_NOT_FOUND) {

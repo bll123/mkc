@@ -372,7 +372,6 @@ mkc_pvar_get_value (mkc_pvar_t *pvar, const char *vname)
     return NULL;
   }
 
-
   pidx = mkc_profile_get_active (pvar->profiles);
   varlist = mkc_profile_get_varlist (pvar->profiles, pidx);
   value = mkc_var_get_value (varlist, vname);

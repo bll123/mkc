@@ -1,0 +1,46 @@
+[Wiki Home](Home)
+<br>[Syntax](Syntax)
+
+[TOC]
+
+### Syntax: Functions and Function Calls
+
+##### Defining a Function
+
+    function <function-name> { <statements> }
+    function <function-name> ( <argument-list> ) { <statements> }
+
+The __function__ statement associates an optional
+_argument&#8209;list_ and a set of statements with _function&#8209;name_.
+
+The _argument-list_ specifies one or more arguments.  These arguments
+are local to the function's statement block, and are accessed as a
+variable.
+
+##### Function Examples
+
+    function helloworld {
+      print 'hello world';
+    }
+
+    function hello (arg) {
+      # remember to use double quotes
+      print "hello ${arg}";
+    }
+
+##### Calling a Function
+
+A function with no arguments is simply called by using the function
+name.
+
+    helloworld;
+
+A function with arguments is passed a list as the argument parameters.
+
+    hello [ 'to you' ];
+
+    set a [ 'to them' ];
+    hello ${a};
+
+[Wiki Home](Home)
+<br>[Syntax](Syntax)

@@ -1,0 +1,21 @@
+# Copyright 2026 Brad Lanam Pleasant Hill CA
+
+function fa {
+  print '== fa';
+}
+function fb (a1) {
+  print "== fb ${a1}";
+}
+function fc (a1 a2) {
+  print "== fc ${a1} ${a2}";
+}
+function fd (a1 a2 a3) {
+  print "== fd ${a1} ${a2} ${a3}";
+}
+
+fa;
+fb [ 'a1arg' ];
+fc [ 'a1arg' 'a2arg' ];
+fd [ 'a1arg' 'a2arg' 'a3arg' ];
+set ad [ 'a1arg' 'a2arg' 'a3arg' ];
+fd ${ad};

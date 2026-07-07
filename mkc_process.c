@@ -624,6 +624,62 @@ mkc_process_stmt_debug (mkc_process_t *process,
 }
 
 void
+mkc_process_stmt_function_call (mkc_process_t *process,
+    mkc_value_t *valarglist, mkc_value_t *valfuncargs)
+{
+  mkc_profidx_t   plocalidx;
+  mkc_list_t      *nmlist = NULL;
+  mkc_list_t      *alist = NULL;
+  mkc_listidx_t   aiteridx;
+  mkc_listidx_t   nmiteridx;
+  mkc_listidx_t   aidx;
+  mkc_listidx_t   nmidx;
+
+  plocalidx = mkc_profile_local_create (process->profiles);
+
+  if (valarglist != NULL) {
+    nmlist = valarglist->list;
+  }
+  if (valfuncargs != NULL) {
+    mkc_value_t   tvalue;
+
+    memcpy (&tvalue, valfuncargs, sizeof (mkc_value_t));
+    mkc_process_substitutions (process, &tvalue);
+    if (tvalue.vtype != MKC_VT_LIST) {
+      mkc_error_set (process->mkcerr, MKC_ERR_FUNCTION_INVALID_ARG, 0, NULL);
+      return;
+    }
+    alist = tvalue.list;
+  }
+  if ((alist == NULL && nmlist != NULL) ||
+      (alist != NULL && nmlist == NULL) ||
+      (alist != NULL &&
+          mkc_list_size (alist) != mkc_list_size (nmlist))) {
+    mkc_error_set (process->mkcerr, MKC_ERR_FUNCTION_ARG_MISMATCH, 0, NULL);
+    return;
+  }
+
+  /* put the arguments into the local profile */
+  mkc_list_iter_start (alist, &aiteridx);
+  mkc_list_iter_start (nmlist, &nmiteridx);
+  while ((aidx = mkc_list_iter_next (alist, &aiteridx)) != MKC_ITER_FINISH) {
+    mkc_value_t     *aval;
+    mkc_value_t     *nmval;
+
+    nmidx = mkc_list_iter_next (nmlist, &nmiteridx);
+
+    if (mkc_error_chk_err (process->mkcerr)) {
+      break;
+    }
+
+    aval = mkc_list_get_by_idx (alist, aidx);
+    nmval = mkc_list_get_by_idx (nmlist, nmidx);
+
+    mkc_process_local_set (process, nmval, aval, plocalidx);
+  }
+}
+
+void
 mkc_process_stmt_configure (mkc_process_t *process)
 {
   int       defzero = MKC_AUTO_SKIP_ZERO;
@@ -1620,7 +1676,7 @@ mkc_process_local_set (mkc_process_t *process, mkc_value_t *nmval,
   mkc_pvar_value_get_str (process->pvar, nmval, nm, sizeof (nm));
 
   opidx = mkc_profile_get_active (process->profiles);
-//  mkc_profile_local_reset (process->profiles);
+  mkc_profile_local_reset (process->profiles);
   mkc_pvar_profile_set_idx (process->pvar, pidx);
   mkc_pvar_set (process->pvar, nm, argval, MKC_VCTXT_TEMP);
   mkc_pvar_profile_set_idx (process->pvar, opidx);

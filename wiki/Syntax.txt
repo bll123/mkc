@@ -16,6 +16,7 @@
   * Statements
       * [Flow Control Statements](SyntaxControl)
         if, exit, while, foreach
+      * [Functions and Function Calls](SyntaxFunction)
       * [Include](SyntaxInclude)
       * [Print](SyntaxPrint)
       * [Project Statement](SyntaxProject)

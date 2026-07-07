@@ -1204,7 +1204,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
 
   mkc_error_set_line_col (astmain->mkcerr, astnode->lineno, astnode->colno);
 
-//fprintf (stderr, "%*sast-proc: %s\n", astmain->depth * 2, " ", typenames [astnode->asttype]);
+  //fprintf (stderr, "%*sast-proc: %s\n", astmain->depth * 2, " ", typenames [astnode->asttype]);
   mkc_log_loc (astmain->log, MKC_LOG_AST_PROCESS, astnode->lineno, astnode->colno,
       "%*sast-proc: %s\n", astmain->depth * 2, " ", typenames [astnode->asttype]);
 
@@ -1396,9 +1396,6 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
 
     case MKC_T_STMT_FUNCTION: {
       mkc_listidx_t   loc = MKC_LIST_NOTFOUND;
-mkc_value_t *value;
-value = mkc_ast_get_value (astmain, astnode->stmt_function.nm);
-fprintf (stderr, "add func %s\n", value->sval);
       /* no need to store the entire structure, just store the pointer */
       mkc_list_set (astmain->funclist, &astnode, sizeof (mkc_astnode_t *), &loc);
       break;
@@ -1410,19 +1407,11 @@ fprintf (stderr, "add func %s\n", value->sval);
       mkc_listidx_t   loc = MKC_LIST_NOTFOUND;
       mkc_astnode_t   **funcp;
       mkc_astnode_t   *func;
-      mkc_value_t     *value;
-      mkc_profidx_t   plocalidx;
-      mkc_list_t      *nmlist = NULL;
-      mkc_list_t      *alist = NULL;
-      mkc_listidx_t   aiteridx;
-      mkc_listidx_t   nmiteridx;
-      mkc_listidx_t   aidx;
-      mkc_listidx_t   nmidx;
+      mkc_value_t     *valfuncargs;
+      mkc_value_t     *valarglist;
 
-      value = mkc_ast_get_value (astmain, astnode->stmt_function_call.nm);
       tfunc.stmt_function.nm = astnode->stmt_function_call.nm;
       tfunc.asttype = MKC_T_STMT_FUNCTION;
-fprintf (stderr, "funccall %s\n", value->sval);
       func = &tfunc;
 
       /* the list is a list of pointers to mkc_astnode_t */
@@ -1432,51 +1421,13 @@ fprintf (stderr, "funccall %s\n", value->sval);
         break;
       }
 
-fprintf (stderr, "func %s found\n", value->sval);
       funcp = mkc_list_get_by_idx (astmain->funclist, fidx);
       func = *funcp;
-      plocalidx = mkc_profile_local_create (astmain->profiles);
 
-      value = mkc_ast_get_value (astmain, astnode->stmt_function_call.funcargs);
-      if (value != NULL) {
-        alist = value->list;
-      }
-      value = mkc_ast_get_value (astmain, func->stmt_function.argnames);
-      if (value != NULL) {
-        nmlist = value->list;
-      }
-      if ((alist == NULL && nmlist != NULL) ||
-          (alist != NULL && nmlist == NULL) ||
-          (alist != NULL &&
-              mkc_list_size (alist) != mkc_list_size (nmlist))) {
-        mkc_error_set (astmain->mkcerr, MKC_ERR_FUNCTION_ARG_MISMATCH, 0, NULL);
-        break;
-      }
-
-      /* put the arguments into the local profile */
-      mkc_list_iter_start (alist, &aiteridx);
-      mkc_list_iter_start (nmlist, &nmiteridx);
-      while ((aidx = mkc_list_iter_next (alist, &aiteridx)) != MKC_ITER_FINISH) {
-        mkc_astnode_t   *anode;
-        mkc_astnode_t   *nmnode;
-        mkc_value_t     *tval;
-        mkc_value_t     *nmval;
-
-        nmidx = mkc_list_iter_next (nmlist, &nmiteridx);
-
-        if (mkc_error_chk_err (astmain->mkcerr)) {
-          break;
-        }
-
-        anode = mkc_list_get_by_idx (alist, aidx);
-        nmnode = mkc_list_get_by_idx (nmlist, nmidx);
-
-        tval = mkc_ast_get_value (astmain, anode);
-        nmval = mkc_ast_get_value (astmain, nmnode);
-        mkc_process_local_set (astmain->process, nmval, tval, plocalidx);
-      }
+      valarglist = mkc_ast_get_value (astmain, func->stmt_function.argnames);
+      valfuncargs = mkc_ast_get_value (astmain, astnode->stmt_function_call.funcargs);
+      mkc_process_stmt_function_call (astmain->process, valarglist, valfuncargs);
       mkc_ast_process (astmain, func->stmt_function.stmtblock, ifcond, loopcond, depth + 1);
-
       mkc_profile_local_pop (astmain->profiles);
 
       break;

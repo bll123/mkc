@@ -27,6 +27,7 @@ fi
 BOOTSTRAPMAKE=$1
 TMPFILE=tmp/bootstrapsetup-tmp.txt
 TMPVARLIST=tmp/tmpvarlist.txt
+TMPFLIST=tmp/tmpfilelist.txt
 
 LORDER=`which lorder`
 if [ "$LORDER" = "" ]; then
@@ -60,22 +61,22 @@ echo '' >> ${TMPFILE}
 updbootstrapmake ${nm}
 
 nm=NOREGEXOBJ
+> ${TMPFLIST}
 echo "${nm} = \\" > ${TMPFILE}
 # regular expressions are available
 # anything that uses _arg_count_ must be re-compiled
 # this will probably need to be expanded in the future.
-grep -E -l 'if (_arg_count)' *.c | \
-    sed -e 's,\.c$,\.o,' \
-        -e 's,^,\t,' \
-        -e '$ ! s,$, \\,' \
-    >> ${TMPFILE}
+grep -E -l 'if (_arg_count)' *.c \
+    >> ${TMPFLIST}
 
 # anything that uses one of the shell variables, in this case,
 # any variable that is in VERSION.txt
-grep '^[A-Z]=' VERSION.txt | \
-    sed -e 's,=.*,,' \
+grep '^[A-Z][A-Z]*=' VERSION.txt | \
+    sed -e 's,=.*,,' -e 's,^,[^A-Z_],' -e 's,$,[^A-Z_],' \
     > ${TMPVARLIST}
-grep -f ${TMPVARLIST} *.c |
+grep -l -f ${TMPVARLIST} *.c \
+    >> ${TMPFLIST}
+cat ${TMPFLIST} |
     sed -e 's,\.c$,\.o,' \
         -e 's,^,\t,' \
         -e '$ ! s,$, \\,' \
@@ -98,5 +99,5 @@ if [ -f mkc ]; then
   updbootstrapmake ${nm}
 fi
 
-rm -f ${TMPFILE} ${TMPVARLIST}
+rm -f ${TMPFILE} ${TMPVARLIST} ${TMPFLIST}
 exit 0

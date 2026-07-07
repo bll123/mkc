@@ -93,7 +93,8 @@ $(BOOTSTRAP_INIT): $(BOOTSTRAP_TMPDIR) $(BOOTSTRAP_MKC_FILES)
 # re-compile any module that uses mkc_config.h
 # and re-build mkc_config.h
 # the mkc_config.h that is created is now correct and complete
-# remove any modules that use mkc_config.h for the final re-compile
+# remove any modules that used regular expression checks for the final 
+# build
 $(BOOTSTRAP_NOREGEX): $(BOOTSTRAP_TMPDIR) $(BOOTSTRAP_MKC_FILES) \
 		$(BOOTSTRAP_INIT)
 	@$(MAKE) -f $(MAKEFILE) \
@@ -248,7 +249,8 @@ INITIALOBJ = \
 # be sure it is followed by a blank line
 # NOREGEXOBJ keep this line
 NOREGEXOBJ = \
-	mkc_dirop.o
+	mkc_dirop.o \
+	mkc_main.o
 
 mkc: $(MKCOBJECTS)
 	$(CC) $(LDFLAGS) -o $@ $(MKCOBJECTS) $(LIBS)

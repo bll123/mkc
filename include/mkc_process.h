@@ -32,6 +32,7 @@ int32_t mkc_process_unary_op (mkc_process_t *process, int type, mkc_value_t *val
 
 void mkc_process_stmt_configure (mkc_process_t *process);
 int mkc_process_stmt_debug (mkc_process_t *process, mkc_value_t *value, mkc_value_t *subvalue);
+void mkc_process_stmt_function_call (mkc_process_t *process, mkc_value_t *valarglist, mkc_value_t *valfuncargs);
 void mkc_process_stmt_loadcache (mkc_process_t *process, mkc_value_t *valvers, bool fromcache);
 void mkc_process_stmt_mark (mkc_process_t *process, mkc_value_t *vala, mkc_value_t *valb);
 void mkc_process_stmt_print (mkc_process_t *process, mkc_value_t *value, int depth);

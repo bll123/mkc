@@ -17,7 +17,7 @@ all:
 
 .PHONY: bootstrap
 bootstrap:
-	@$(MAKE) -f $(BOOTSTRAPMAKE) all
+	@$(MAKE) -f $(BOOTSTRAPMAKE) start
 
 .PHONY: sanitize
 sanitize:
