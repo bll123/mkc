@@ -1,0 +1,18 @@
+# Copyright 2026 Brad Lanam Pleasant Hill CA
+
+foreach a in range (1 4) {
+  print "a: ${a}";
+}
+foreach b in [ 1 2 3 ]{
+  print "b: ${b}";
+}
+set c [ 1 2 3 ];
+foreach c in ${c} {
+  print "c: ${c}";
+}
+foreach d in range (0 8 2) {
+  print "d: ${d}";
+}
+foreach e f in [ 1 2 3 4 5 6 ] {
+  print "e,f: ${e} ${f}";
+}

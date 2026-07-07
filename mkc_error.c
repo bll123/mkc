@@ -33,6 +33,7 @@ static char const * const mkcerrormsg [] = {
   [MKC_ERR_INVALID_OP] = "invalid operation",
   [MKC_ERR_INVALID_PROFILE] = "invalid profile",
   [MKC_ERR_INVALID_VALUE] = "invalid value",
+  [MKC_ERR_LOOP_LIMIT_EXCEEDED] = "loop limit exceeded",
   [MKC_ERR_MISMATCHED_ARGUMENT] = "mismatched argument",
   [MKC_ERR_NULL_ARGUMENT] = "null argument",
   [MKC_ERR_OUT_OF_MEMORY] = "out of memory",
@@ -54,7 +55,6 @@ static char const * const mkcerrormsg [] = {
   [MKC_ERR_UNHANDLED_VALUE] = "unhandled value",
   [MKC_ERR_UNKNOWN_VARIABLE] = "unknown variable",
   [MKC_ERR_USER_EXIT] = "user exit",
-  [MKC_ERR_WHILE_LIMIT_EXCEEDED] = "while limit exceeded",
 };
 
 typedef struct mkc_error_t {

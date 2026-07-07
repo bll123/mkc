@@ -502,27 +502,41 @@ mkc_pvar_value_get_integer (mkc_pvar_t *pvar, mkc_value_t *value)
 {
   int32_t     ival = 0;
 
-  if (value->vtype == MKC_VT_INVALID) {
-    mkc_error_set (pvar->mkcerr, MKC_ERR_UNKNOWN_VARIABLE, 0, NULL);
-  } else if (value->vtype == MKC_VT_INTEGER) {
-    ival = value->ival;
-  } else if (value->vtype == MKC_VT_LIST) {
-    mkc_error_set (pvar->mkcerr, MKC_ERR_MISMATCHED_ARGUMENT, 0, NULL);
-    return 0;
-  } else if (value->vtype == MKC_VT_ENV_VARIABLE) {
-    char    tbuff [MKC_PATH_MAX];
+  switch (value->vtype) {
+    case MKC_VT_INVALID: {
+      mkc_error_set (pvar->mkcerr, MKC_ERR_UNKNOWN_VARIABLE, 0, NULL);
+      break;
+    }
+    case MKC_VT_RANGE: {
+      mkc_error_set (pvar->mkcerr, MKC_ERR_INVALID_ARGUMENT, 0, NULL);
+      break;
+    }
+    case MKC_VT_INTEGER: {
+      ival = value->ival;
+      break;
+    }
+    case MKC_VT_LIST: {
+      mkc_error_set (pvar->mkcerr, MKC_ERR_MISMATCHED_ARGUMENT, 0, NULL);
+      ival = 0;
+      break;
+    }
+    case MKC_VT_ENV_VARIABLE: {
+      char    tbuff [MKC_PATH_MAX];
 
-    mkc_pvar_get_env_str (pvar, value->sval, tbuff, sizeof (tbuff));
-    ival = atol (tbuff);
-  } else if (value->vtype == MKC_VT_VARIABLE) {
-    ival = mkc_pvar_get_variable_integer (pvar, value);
-  } else if (value->vtype == MKC_VT_STRING ||
-      value->vtype == MKC_VT_STATIC_STRING ||
-      value->vtype == MKC_VT_QUOTED_STRING) {
-    mkc_error_set (pvar->mkcerr, MKC_ERR_INVALID_VALUE, 0, NULL);
-  } else {
-    mkc_error_set (pvar->mkcerr, MKC_ERR_UNHANDLED_VALUE, 0, NULL);
-    fprintf (stderr, "ERR: unhandled value: %d\n", value->vtype);
+      mkc_pvar_get_env_str (pvar, value->sval, tbuff, sizeof (tbuff));
+      ival = atol (tbuff);
+      break;
+    }
+    case MKC_VT_VARIABLE: {
+      ival = mkc_pvar_get_variable_integer (pvar, value);
+      break;
+    }
+    case MKC_VT_STRING:
+    case MKC_VT_STATIC_STRING:
+    case MKC_VT_QUOTED_STRING: {
+      mkc_error_set (pvar->mkcerr, MKC_ERR_INVALID_VALUE, 0, NULL);
+      break;
+    }
   }
 
   mkc_log (pvar->log, MKC_LOG_PROCESS, "  pv-get-int: %d\n", ival);
@@ -535,31 +549,49 @@ mkc_pvar_value_get_str (mkc_pvar_t *pvar,
 {
   *buff = '\0';
 
-  if (value->vtype == MKC_VT_INVALID) {
-    mkc_error_set (pvar->mkcerr, MKC_ERR_UNKNOWN_VARIABLE, 0, NULL);
-  } else if (value->vtype == MKC_VT_INTEGER) {
-    /* integers must be converted to strings, */
-    /* so that substitutions can be done in a quoted string */
-    snprintf (buff, sz, "%d", value->ival);
-  } else if (value->vtype == MKC_VT_STRING) {
-    stpecpy (buff, buff + sz, value->sval);
-  } else if (value->vtype == MKC_VT_STATIC_STRING) {
-    stpecpy (buff, buff + sz, value->sval);
-  } else if (value->vtype == MKC_VT_QUOTED_STRING) {
-    char    *tbuff;
+  switch (value->vtype) {
+    case MKC_VT_INVALID: {
+      mkc_error_set (pvar->mkcerr, MKC_ERR_UNKNOWN_VARIABLE, 0, NULL);
+      break;
+    }
+    case MKC_VT_RANGE: {
+      mkc_error_set (pvar->mkcerr, MKC_ERR_INVALID_ARGUMENT, 0, NULL);
+      break;
+    }
+    case MKC_VT_INTEGER: {
+      /* integers must be converted to strings, */
+      /* so that substitutions can be done in a quoted string */
+      snprintf (buff, sz, "%d", value->ival);
+      break;
+    }
+    case MKC_VT_STRING: {
+      stpecpy (buff, buff + sz, value->sval);
+      break;
+    }
+    case MKC_VT_STATIC_STRING: {
+      stpecpy (buff, buff + sz, value->sval);
+      break;
+    }
+    case MKC_VT_QUOTED_STRING: {
+      char    *tbuff;
 
-    tbuff = mkc_pvar_substitute (pvar, value->sval, true, 0);
-    stpecpy (buff, buff + sz, tbuff);
-    free (tbuff);
-  } else if (value->vtype == MKC_VT_LIST) {
-    mkc_error_set (pvar->mkcerr, MKC_ERR_MISMATCHED_ARGUMENT, 0, NULL);
-  } else if (value->vtype == MKC_VT_ENV_VARIABLE) {
-    mkc_pvar_get_env_str (pvar, value->sval, buff, sz);
-  } else if (value->vtype == MKC_VT_VARIABLE) {
-    mkc_pvar_get_variable_str (pvar, value, buff, sz);
-  } else {
-    mkc_error_set (pvar->mkcerr, MKC_ERR_UNHANDLED_VALUE, 0, NULL);
-    fprintf (stderr, "ERR: unhandled value: %d\n", value->vtype);
+      tbuff = mkc_pvar_substitute (pvar, value->sval, true, 0);
+      stpecpy (buff, buff + sz, tbuff);
+      free (tbuff);
+      break;
+    }
+    case MKC_VT_LIST: {
+      mkc_error_set (pvar->mkcerr, MKC_ERR_MISMATCHED_ARGUMENT, 0, NULL);
+      break;
+    }
+    case MKC_VT_ENV_VARIABLE: {
+      mkc_pvar_get_env_str (pvar, value->sval, buff, sz);
+      break;
+    }
+    case MKC_VT_VARIABLE: {
+      mkc_pvar_get_variable_str (pvar, value, buff, sz);
+      break;
+    }
   }
 
   mkc_log (pvar->log, MKC_LOG_PROCESS, "  pv-get-str: %s\n", buff);
@@ -596,7 +628,7 @@ mkc_pvar_is_list (mkc_pvar_t *pvar, const char *vname)
     return rc;
   }
 
-  if (value->vtype == MKC_VT_LIST) {
+  if (value->vtype == MKC_VT_LIST || value->vtype == MKC_VT_RANGE) {
     rc = true;
   }
   return rc;

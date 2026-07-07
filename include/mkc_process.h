@@ -20,6 +20,7 @@
 extern "C" {
 #endif
 
+typedef struct mkc_foreach_t mkc_foreach_t;
 typedef struct mkc_process_t mkc_process_t;
 
 MKC_NODISCARD mkc_process_t *mkc_process_init (mkc_profile_t *profiles, mkc_log_t *log, mkc_context_t *context, mkc_option_t *mkcoptions, mkc_error_t *mkcerr);
@@ -29,9 +30,13 @@ int32_t mkc_process_condition (mkc_process_t *process, mkc_value_t *value);
 int32_t mkc_process_num_op (mkc_process_t *process, int type, mkc_value_t *vala, mkc_value_t *valb);
 int32_t mkc_process_str_op (mkc_process_t *process, int type, mkc_value_t *stra, mkc_value_t *strb);
 int32_t mkc_process_unary_op (mkc_process_t *process, int type, mkc_value_t *vala);
+void mkc_process_range_init (mkc_process_t *process, mkc_value_t *range, mkc_value_t *valbeg, mkc_value_t *valend, mkc_value_t *valincr);
 
 void mkc_process_stmt_configure (mkc_process_t *process);
 int mkc_process_stmt_debug (mkc_process_t *process, mkc_value_t *value, mkc_value_t *subvalue);
+mkc_foreach_t *mkc_process_stmt_foreach_setup (mkc_process_t *process, mkc_value_t *valnm, mkc_value_t *vallist, mkc_value_t *range);
+bool mkc_process_stmt_foreach (mkc_process_t *process, mkc_foreach_t *procforeach);
+void mkc_process_stmt_foreach_finish (mkc_process_t *process, mkc_foreach_t *procforeach);
 void mkc_process_stmt_function_call (mkc_process_t *process, mkc_value_t *valarglist, mkc_value_t *valfuncargs);
 void mkc_process_stmt_loadcache (mkc_process_t *process, mkc_value_t *valvers, bool fromcache);
 void mkc_process_stmt_mark (mkc_process_t *process, mkc_value_t *vala, mkc_value_t *valb);
@@ -59,7 +64,7 @@ void mkc_process_chk_shell_extract (mkc_process_t *process, mkc_value_t *valpath
 
 void mkc_process_local_set (mkc_process_t *process, mkc_value_t *nmval, mkc_value_t *argval, mkc_profidx_t pidx);
 bool mkc_process_profile_is_current (mkc_process_t *process, mkc_value_t *valnm);
-int32_t mkc_process_get_while_limit (mkc_process_t *process);
+int32_t mkc_process_get_loop_limit (mkc_process_t *process);
 void mkc_process_save_cache (mkc_process_t *process);
 
 #if defined (__cplusplus) || defined (c_plusplus)

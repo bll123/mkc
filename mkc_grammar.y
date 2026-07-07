@@ -77,7 +77,6 @@
 %token T_OP_NUM_NE            "!="
 %token T_OP_OR                "||"
 %token T_OP_PLUS              "+"
-%token T_OP_RANGE             ".."
 %token T_OP_STR_EQ            "eq"
 %token T_OP_STR_EQ_REGEX      "eq~"
 %token T_OP_STR_GE            "ge"
@@ -109,9 +108,11 @@
 %token T_LOOP_CONTINUE        "continue"
 %token T_STMT_ELSE            "else"
 %token T_STMT_FOREACH         "foreach"
+%token T_IN                   "in"
 %token T_STMT_IF              "if"
 %token T_STMT_SET             "set"
 %token T_STMT_WHILE           "while"
+%token T_RANGE                "range"
 
 // directives
 %token T_STMT_CONFIGURE       "configure"
@@ -181,7 +182,7 @@
 // program control
 %type <astnode> ifexpr stmt_if elseif elseclause loopcontrol
 %type <astnode> stmt_foreach stmt_function stmt_while
-%type <astnode> funcargs range stmt_function_call
+%type <astnode> varnamelist stmt_function_call range
 // commands
 %type <astnode> stmt_config stmt_loadcache
 %type <astnode> stmt_mark stmt_print stmt_profile stmt_project stmt_set
@@ -196,7 +197,6 @@
 %type <astnode> attr_negate attr_output attr_replace attr_source attr_version
 
 // precedence rules: the lowest precedence comes first
-%nonassoc T_OP_RANGE
 %left T_OP_OR
 %left T_OP_AND
 %left T_OP_NUM_EQ T_OP_NUM_NE T_OP_STR_EQ T_OP_STR_NE T_OP_STR_EQ_REGEX T_OP_STR_NE_REGEX
@@ -521,27 +521,19 @@ elseclause[v]:
   ;
 
 stmt_foreach[v]:
-    T_STMT_FOREACH varname[a] varvalue[b] stmtblock[c]
+    T_STMT_FOREACH varnamelist[a] T_IN varvalue[b] stmtblock[c]
     {
       $v = mkc_ast_mk_foreach (ast, $a, $b, $c,
           yylloc.first_line, yylloc.first_column);
     }
-  | T_STMT_FOREACH varname[a] varlist[l] stmtblock[c]
+  | T_STMT_FOREACH varnamelist[a] T_IN varlist[l] stmtblock[c]
     {
       $v = mkc_ast_mk_foreach (ast, $a, $l, $c,
           yylloc.first_line, yylloc.first_column);
     }
-  | T_STMT_FOREACH varname[a] range[b] stmtblock[c]
+  | T_STMT_FOREACH varnamelist[a] T_IN range[b] stmtblock[c]
     {
       $v = mkc_ast_mk_foreach_range (ast, $a, $b, $c,
-          yylloc.first_line, yylloc.first_column);
-    }
-  ;
-
-range[v]:
-    varvalue[a] T_OP_RANGE varvalue[b]
-    {
-      $v = mkc_ast_mk_range (ast, $a, $b,
           yylloc.first_line, yylloc.first_column);
     }
   ;
@@ -560,7 +552,7 @@ stmt_function[v]:
       $v = mkc_ast_mk_function (ast, $a, NULL, $b,
           yylloc.first_line, yylloc.first_column);
     }
-  | T_STMT_FUNCTION varname[a] T_LEFT_PAREN funcargs[l] T_RIGHT_PAREN
+  | T_STMT_FUNCTION varname[a] T_LEFT_PAREN varnamelist[l] T_RIGHT_PAREN
         stmtblock[b]
     {
       $v = mkc_ast_mk_function (ast, $a, $l, $b,
@@ -568,13 +560,13 @@ stmt_function[v]:
     }
   ;
 
-funcargs[v]:
+varnamelist[v]:
     varname[a]
     {
       $v = mkc_ast_mk_value_list (ast, NULL, $a,
           yylloc.first_line, yylloc.first_column);
     }
-  | funcargs[l] varname[a]
+  | varnamelist[l] varname[a]
     {
       $v = mkc_ast_mk_value_list (ast, $l, $a,
           yylloc.first_line, yylloc.first_column);
@@ -1145,6 +1137,21 @@ varlist[v]:
     T_LEFT_BRACKET valuelist[a] T_RIGHT_BRACKET
     {
       $v = $a;
+    }
+  ;
+
+range[v]:
+    T_RANGE T_LEFT_PAREN varvalue[a] varvalue[b] T_RIGHT_PAREN
+    {
+      $v = mkc_ast_mk_value (ast, MKC_T_VAL_TRUE, NULL,
+          yylloc.first_line, yylloc.first_column);
+      $v = mkc_ast_mk_range (ast, $a, $b, $v,
+          yylloc.first_line, yylloc.first_column);
+    }
+  | T_RANGE T_LEFT_PAREN varvalue[a] varvalue[b] varvalue[c] T_RIGHT_PAREN
+    {
+      $v = mkc_ast_mk_range (ast, $a, $b, $c,
+          yylloc.first_line, yylloc.first_column);
     }
   ;
 

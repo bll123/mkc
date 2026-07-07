@@ -25,7 +25,7 @@ MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_value (mkc_astmain_t *astmain, int astt
 MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_value_list (mkc_astmain_t *astmain, mkc_astnode_t *list, mkc_astnode_t *vala, int32_t lineno, int colno);
 
 MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_op (mkc_astmain_t *astmain, mkc_astnode_t *vala, int op, mkc_astnode_t *valb, int32_t lineno, int colno);
-MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_range (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *valb, int32_t lineno, int colno);
+MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_range (mkc_astmain_t *astmain, mkc_astnode_t *beg, mkc_astnode_t *end, mkc_astnode_t *incr, int32_t lineno, int colno);
 MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_unary_op (mkc_astmain_t *astmain, mkc_astnode_t *value, int op, int32_t lineno, int colno);
 
 MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_elseif (mkc_astmain_t *astmain, mkc_astnode_t *expr, mkc_astnode_t *stmtblock, int32_t lineno, int colno);

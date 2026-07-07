@@ -113,7 +113,6 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 "{"           { return T_LEFT_BRACE; }
 "["           { return T_LEFT_BRACKET; }
 "("           { return T_LEFT_PAREN; }
-".."          { return T_OP_RANGE; }
 "}"           { return T_RIGHT_BRACE; }
 "]"           { return T_RIGHT_BRACKET; }
 ")"           { return T_RIGHT_PAREN; }
@@ -128,12 +127,14 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 "else"      { return T_STMT_ELSE; }
 "exit"      { return T_EXIT; }
 "foreach"   { return T_STMT_FOREACH; }
+"in"        { return T_IN; }
 "function"  { return T_STMT_FUNCTION; }
 "if"        { return T_STMT_IF; }
 "print"     { return T_STMT_PRINT; }
 "profile"   { return T_STMT_PROFILE; }
 "set"       { return T_STMT_SET; }
 "while"     { return T_STMT_WHILE; }
+"range"     { return T_RANGE; }
 
 "configure"   { return T_STMT_CONFIGURE; }
 "load_cache"  { return T_STMT_LOADCACHE; }

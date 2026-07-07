@@ -6,6 +6,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdbool.h>
 
 #include "mkc_error.h"
@@ -19,6 +20,7 @@ extern "C" {
 
 typedef enum {
   MKC_VT_INVALID,
+  MKC_VT_RANGE,
   /* basic types */
   /* these are present in the variable list */
   MKC_VT_INTEGER,
@@ -52,10 +54,19 @@ typedef struct mkc_var_t mkc_var_t;
 typedef struct mkc_varlist_t mkc_varlist_t;
 typedef mkc_listidx_t mkc_varidx_t;
 
+typedef struct mkc_range_t {
+  int32_t   beg;
+  int32_t   end;
+  int32_t   incr;
+  int32_t   var;
+  bool      finish;
+} mkc_range_t;
+
 typedef struct mkc_value_t {
   union {
     mkc_list_t  *list;
     char        *sval;
+    mkc_range_t range;
     int32_t     ival;
   };
   mkc_var_type_t  vtype;
@@ -82,6 +93,9 @@ bool mkc_var_is_list (mkc_varlist_t *varlist, const char *vname);
 
 void mkc_value_free (void *value);
 const char *mkc_value_to_str (mkc_value_t *value, char *buff, size_t sz);
+void mkc_value_range_init (mkc_value_t *value, int32_t beg, int32_t end, int32_t incr);
+int32_t mkc_value_range_get (mkc_value_t *value);
+bool mkc_value_range_finish (mkc_value_t *value);
 
 #if defined (__cplusplus) || defined (c_plusplus)
 }

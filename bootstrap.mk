@@ -328,6 +328,19 @@ mkc_error.o: include/mkc_string.h
 mkc_fileop.o:   include/mkc_def.h
 mkc_fileop.o: include/mkc_error.h include/mkc_nodiscard.h
 mkc_fileop.o: include/mkc_fileop.h include/mkc_string.h
+mkc_grammar.o: mkc_grammar.h  
+mkc_grammar.o: include/mkc_ast.h include/mkc_asttoken.h include/mkc_error.h
+mkc_grammar.o: include/mkc_nodiscard.h include/mkc_log.h 
+mkc_grammar.o: include/mkc_option.h include/mkc_var.h include/mkc_list.h
+mkc_grammar.o: include/mkc_def.h  
+mkc_grammar.o: include/mkc_fileop.h include/mkc_parse.h
+mkc_lex.o:   mkc_grammar.h
+mkc_lex.o:  include/mkc_ast.h
+mkc_lex.o: include/mkc_asttoken.h include/mkc_error.h include/mkc_nodiscard.h
+mkc_lex.o: include/mkc_log.h  include/mkc_option.h
+mkc_lex.o: include/mkc_var.h include/mkc_list.h include/mkc_def.h
+mkc_lex.o:   include/mkc_fileop.h
+mkc_lex.o: include/mkc_parse.h 
 mkc_list.o:   include/mkc_error.h
 mkc_list.o: include/mkc_nodiscard.h include/mkc_list.h include/mkc_string.h
 mkc_log.o: include/mkc_error.h include/mkc_nodiscard.h include/mkc_fileop.h
@@ -354,7 +367,10 @@ mkc_parse.o: include/mkc_ast.h include/mkc_asttoken.h include/mkc_error.h
 mkc_parse.o: include/mkc_nodiscard.h include/mkc_log.h 
 mkc_parse.o:  include/mkc_option.h
 mkc_parse.o: include/mkc_var.h include/mkc_list.h include/mkc_fileop.h
-mkc_parse.o: include/mkc_parse.h include/mkc_string.h
+mkc_parse.o: mkc_lex.h mkc_grammar.h 
+mkc_parse.o:  include/mkc_def.h 
+mkc_parse.o:  include/mkc_parse.h 
+mkc_parse.o: include/mkc_string.h
 mkc_path.o:  include/mkc_def.h
 mkc_path.o:   include/mkc_error.h
 mkc_path.o: include/mkc_nodiscard.h include/mkc_fileop.h 

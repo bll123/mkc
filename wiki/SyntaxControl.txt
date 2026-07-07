@@ -56,13 +56,22 @@ __break__ and __continue__ statements may appear in while loops.
 
 ##### foreach statement (not yet implemented)
 
-    foreach <var-name> <list> {
+    foreach <var-name> [<var-name> ...] in <list> {
       <statement-list>
     }
 
-    foreach <var-name> <integer-value-1>..<integer-value-2> {
+    foreach <var-name> in range (<begin> <end>) {
       <statement-list>
     }
+
+    foreach <var-name> in range (<begin> <end> <increment>) {
+      <statement-list>
+    }
+
+__break__ and __continue__ statements may appear in foreach loops.
+
+    break;
+    continue;
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

@@ -67,6 +67,7 @@ mkc_var_is_string_type (mkc_value_t *value)
 {
   /* everything other than invalid, integers and lists is a string */
   if (value->vtype != MKC_VT_INVALID &&
+      value->vtype != MKC_VT_RANGE &&
       value->vtype != MKC_VT_INTEGER &&
       value->vtype != MKC_VT_LIST) {
     return true;
@@ -435,6 +436,10 @@ mkc_value_to_str (mkc_value_t *value, char *buff, size_t sz)
       snprintf (buff, sz, "invalid");
       break;
     }
+    case MKC_VT_RANGE: {
+      snprintf (buff, sz, "%d..%d", value->range.beg, value->range.end);
+      break;
+    }
     case MKC_VT_INTEGER: {
       snprintf (buff, sz, "%d", value->ival);
       break;
@@ -476,6 +481,39 @@ mkc_value_to_str (mkc_value_t *value, char *buff, size_t sz)
   }
 
   return buff;
+}
+
+void
+mkc_value_range_init (mkc_value_t *value,
+    int32_t beg, int32_t end, int32_t incr)
+{
+  value->vtype = MKC_VT_RANGE;
+  value->range.finish = false;
+  value->range.var = 0;
+  value->range.beg = beg;
+  value->range.end = end;
+  value->range.incr = incr;
+}
+
+int32_t
+mkc_value_range_get (mkc_value_t *value)
+{
+  value->range.var += value->range.incr;
+  if (value->range.var >= value->range.end) {
+    value->range.finish = true;
+  }
+
+  return value->range.var;
+}
+
+bool
+mkc_value_range_finish (mkc_value_t *value)
+{
+  if (value->vtype != MKC_VT_RANGE) {
+    return true;
+  }
+
+  return value->range.finish;
 }
 
 /* internal routines */

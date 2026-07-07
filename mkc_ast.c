@@ -77,6 +77,14 @@ typedef struct mkc_ast_foreach_t {
   mkc_astnode_t     *stmtblock;
 } mkc_ast_foreach_t;
 
+typedef struct mkc_ast_range_t {
+  mkc_astnode_t     *beg;
+  mkc_astnode_t     *end;
+  mkc_astnode_t     *incr;
+  mkc_value_t       value;
+  bool              init;
+} mkc_ast_range_t;
+
 typedef struct mkc_ast_function_t {
   mkc_astnode_t     *nm;
   mkc_astnode_t     *argnames;
@@ -205,6 +213,7 @@ typedef struct mkc_astnode_t {
     mkc_ast_print_t             stmt_print;
     mkc_ast_profile_t           stmt_profile;
     mkc_ast_project_t           stmt_project;
+    mkc_ast_range_t             range;
     mkc_ast_set_t               stmt_set;
     mkc_ast_while_t             stmt_while;
     mkc_ast_list_t              list;
@@ -518,11 +527,33 @@ mkc_ast_mk_unary_op (mkc_astmain_t *astmain,
 
 MKC_NODISCARD
 mkc_astnode_t *
-mkc_ast_mk_range (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *valb, int32_t lineno, int colno)
+mkc_ast_mk_range (mkc_astmain_t *astmain,
+    mkc_astnode_t *beg, mkc_astnode_t *end, mkc_astnode_t *incr,
+    int32_t lineno, int colno)
 {
+  mkc_astnode_t     *astnode;
+  mkc_ast_value_t   *astvalue;
+  mkc_value_t      *value;
+
   mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
       "ast-mk: range\n");
-  return NULL;
+
+  astnode = mkc_astnode_init (astmain, MKC_T_RANGE, lineno, colno);
+  if (astnode == NULL) {
+    return NULL;
+  }
+
+  astvalue = &astnode->value;
+  value = &astvalue->value;
+  value->vctxt = MKC_VCTXT_TEMP;
+  value->vtype = MKC_VT_RANGE;
+
+  astnode->range.beg = beg;
+  astnode->range.end = end;
+  astnode->range.incr = incr;
+  astnode->range.init = true;
+
+  return astnode;
 }
 
 MKC_NODISCARD
@@ -1354,43 +1385,54 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
     }
 
     case MKC_T_STMT_FOREACH: {
-#if 0
-      mkc_value_t   *value;
-      mkc_listidx_t iteridx;
-      mkc_listidx_t lidx;
-      mkc_profidx_t plocalidx;
+      int32_t       rval = true;
+      mkc_value_t   *valnm;
+      mkc_value_t   *vallist = NULL;
+      mkc_value_t   *range = NULL;
+      mkc_foreach_t *procforeach;
+      int32_t   count = 0;
+      int32_t   limit = 10000;
 
-      value = mkc_ast_get_value (astmain, astnode->stmt_foreach.nm);
+      limit = mkc_process_get_loop_limit (astmain->process);
+      valnm = mkc_ast_get_value (astmain, astnode->stmt_foreach.nm);
+      if (astnode->stmt_foreach.valuelist != NULL) {
+        vallist = mkc_ast_get_value (astmain, astnode->stmt_foreach.valuelist);
+      }
+      if (astnode->stmt_foreach.range != NULL) {
+        mkc_astnode_t *rangenode;
+
+        rangenode = astnode->stmt_foreach.range;
+        range = &rangenode->range.value;
+        mkc_ast_process (astmain, rangenode, ifcond, &rval, depth);
+      }
+
+      procforeach = mkc_process_stmt_foreach_setup (astmain->process,
+          valnm, vallist, range);
       if (mkc_error_chk_err (astmain->mkcerr)) {
         break;
       }
 
-      value = mkc_ast_get_value (astmain, astnode->stmt_foreach.valuelist);
-      if (mkc_error_chk_err (astmain->mkcerr)) {
-        break;
-      }
-
-      plocalidx = mkc_profile_local_create (astmain->profiles);
-
-      mkc_list_iter_start (tlist, &iteridx);
-      while ((lidx = mkc_list_iter_next (tlist, &iteridx)) != MKC_ITER_FINISH) {
-        mkc_astnode_t   *listnode;
-        mkc_value_t     *tval;
-
+      mkc_context_push (astmain->context, MKC_CONTEXT_LOOP, astmain->mkcerr);
+      while (mkc_process_stmt_foreach (astmain->process, procforeach) &&
+          rval &&
+          count < limit) {
         if (mkc_error_chk_err (astmain->mkcerr)) {
           break;
         }
 
-        listnode = mkc_list_get_by_idx (tlist, lidx);
-        tval = mkc_ast_get_value (astmain, listnode);
-        if (mkc_error_chk_err (astmain->mkcerr)) {
+        if (! rval) {
+          /* a break statement was executed */
           break;
         }
-        mkc_process_local_set (astmain->process, nm,
-            tval->sval, plocalidx);
-        mkc_ast_process (astmain, astnode->stmt_foreach.stmtblock, ifcond, loopcond, depth + 1);
+
+        mkc_ast_process (astmain, astnode->stmt_foreach.stmtblock, ifcond, &rval, depth + 1);
+        ++count;
       }
-#endif
+      mkc_process_stmt_foreach_finish (astmain->process, procforeach);
+      mkc_context_pop (astmain->context);
+      if (count >= limit) {
+        mkc_error_set (astmain->mkcerr, MKC_ERR_LOOP_LIMIT_EXCEEDED, 0, NULL);
+      }
       break;
     }
 
@@ -1427,6 +1469,10 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       valarglist = mkc_ast_get_value (astmain, func->stmt_function.argnames);
       valfuncargs = mkc_ast_get_value (astmain, astnode->stmt_function_call.funcargs);
       mkc_process_stmt_function_call (astmain->process, valarglist, valfuncargs);
+      if (mkc_error_chk_err (astmain->mkcerr)) {
+        break;
+      }
+
       mkc_ast_process (astmain, func->stmt_function.stmtblock, ifcond, loopcond, depth + 1);
       mkc_profile_local_pop (astmain->profiles);
 
@@ -1544,7 +1590,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       int32_t   count = 0;
       int32_t   limit = 10000;
 
-      limit = mkc_process_get_while_limit (astmain->process);
+      limit = mkc_process_get_loop_limit (astmain->process);
       mkc_ast_process (astmain, astnode->stmt_while.expr, ifcond, &rval, depth);
       rval = mkc_process_condition (astmain->process, &astmain->value);
       mkc_context_push (astmain->context, MKC_CONTEXT_LOOP, astmain->mkcerr);
@@ -1560,7 +1606,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       }
       mkc_context_pop (astmain->context);
       if (count >= limit) {
-        mkc_error_set (astmain->mkcerr, MKC_ERR_WHILE_LIMIT_EXCEEDED, 0, NULL);
+        mkc_error_set (astmain->mkcerr, MKC_ERR_LOOP_LIMIT_EXCEEDED, 0, NULL);
       }
       break;
     }
@@ -1857,6 +1903,22 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       }
       astmain->value.ival = mkc_process_unary_op (astmain->process, astnode->asttype, &astmain->value);
       astmain->value.vtype = MKC_VT_INTEGER;
+      break;
+    }
+
+    case MKC_T_RANGE: {
+      mkc_value_t   *valbeg;
+      mkc_value_t   *valend;
+      mkc_value_t   *valincr;
+
+      valbeg = mkc_ast_get_value (astmain, astnode->range.beg);
+      valend = mkc_ast_get_value (astmain, astnode->range.end);
+      valincr = mkc_ast_get_value (astmain, astnode->range.incr);
+      if (astnode->range.init) {
+        mkc_process_range_init (astmain->process, &astnode->range.value,
+            valbeg, valend, valincr);
+        astnode->range.init = false;
+      }
       break;
     }
 
