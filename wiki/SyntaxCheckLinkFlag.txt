@@ -4,7 +4,7 @@
 
 [TOC]
 
-### Check Link Flag
+### check_link_flag
 
     check_link_flag '-fsanitize=address';
 

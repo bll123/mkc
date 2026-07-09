@@ -1,7 +1,7 @@
 [Wiki Home](Home)
 <br>[Syntax](Syntax)
 
-### Syntax: input (attribute)
+### input (attribute)
 
 The __input__ attribute is used to specify an input file.
 It is used in the [configure](SyntaxConfigure) statement.

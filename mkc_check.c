@@ -701,7 +701,7 @@ mkc_check_get_include_deps (mkc_check_t *check,
   }
 #if _have_regex
   if (check->rxincludedep == NULL) {
-    check->rxincludedep = mkc_regex_init ("^# *include *\"([^\"]+)\"$",
+    check->rxincludedep = mkc_regex_init ("^# *(include|import) *\"?([^\"]+)\"?$",
         MKC_REGEX_MULTILINE, check->mkcerr);
     if (mkc_error_chk_err (check->mkcerr)) {
       free (rbuff);
@@ -717,18 +717,17 @@ mkc_check_get_include_deps (mkc_check_t *check,
 
     match = mkc_regex_get (check->rxincludedep, rbuff, &matchcount);
     mkc_log (check->log, MKC_LOG_CHECK, "  get-inc-deps: matches: %d\n", matchcount);
-    if (matchcount != 2) {
+    if (matchcount != 3) {
       mkc_regex_get_free (match);
       break;
     }
 
-    tp = strdup (match [1]);
+    tp = strdup (match [2]);
     mkc_list_set (deplist, &tp, sizeof (char *), &loc);
 
     mkc_regex_get_free (match);
   }
 
-  mkc_regex_get_free (match);
   mkc_regex_free (check->rxargcount);
   check->rxargcount = NULL;
 #endif

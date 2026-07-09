@@ -95,7 +95,7 @@ check_type HANDLE {
   header windows.h;
 }
 
-# since it is known that other regular expression packages
+# since other regular expression packages
 # may be used in the future, set a variable indicating that
 # regular expressions are available.
 set _have_regex false;
@@ -110,8 +110,9 @@ configure {
 }
 
 check_include_dependencies {
-  path   'include';
-  path   '.';
+  path  'include';
+  path  '.';
+  match '\.h$';
 }
 
 exit 0;

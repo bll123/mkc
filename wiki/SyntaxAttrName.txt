@@ -1,7 +1,7 @@
 [Wiki Home](Home)
 <br>[Syntax](Syntax)
 
-### Syntax: name (attribute)
+### name (attribute)
 
 The __name__ attribute is an attribute for [check](SyntaxCheck)
 statements, [project](SyntaxProject) statements and

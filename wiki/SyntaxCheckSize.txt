@@ -2,7 +2,7 @@
 <br>[Syntax](Syntax)
 <br>[Checks](SyntaxCheck)
 
-### Check Size
+### check_size
 
     check_size <type-name>;
     check_size <type-name> { <attribute-statements> }

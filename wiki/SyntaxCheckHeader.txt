@@ -2,12 +2,19 @@
 <br>[Syntax](Syntax)
 <br>[Checks](SyntaxCheck)
 
-### Check Header
+### check_header
 
-Checks if _header_ exists as a macro.
+Checks if _header_ exists and can be compiled.
 
-    check_define <header>;
-    check_define <header> { <attribute-statements> }
+    check_header <header>;
+    check_header <header> { <attribute-statements> }
+
+On modern system this is generally not needed, as the following
+code can be used:
+
+    #if __has_include (<sys/stat.h>)
+    # include <sys/stat.h>
+    #endif
 
 Generated Name: Prefix: __\_header\___
 <br>Example: \_header\_sys\_stat
@@ -15,6 +22,18 @@ Generated Name: Prefix: __\_header\___
 ##### Examples
 
     check_header sys/stat.h;
+
+    check_header someheader.h {
+      alternate {
+        compiler_flags '-I/opt/include';
+      }
+      alternate {
+        compiler_flags '-I/usr/local/include';
+      }
+      alternate {
+        compiler_flags '-I/opt/homebrew/include';
+      }
+    }
 
 ##### Attributes
 

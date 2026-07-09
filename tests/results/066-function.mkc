@@ -1,5 +1,8 @@
 == fa
-== fb a1arg
-== fc a1arg a2arg
-== fd a1arg a2arg a3arg
-== fd a1arg a2arg a3arg
+== fb b1
+== fb b2
+== fc c1a c1b
+== fc c2a c2b
+== fd d1a d1a d1c
+== fd d2a d2a d2c
+== fd d3a d3a d3c

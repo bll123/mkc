@@ -1,7 +1,7 @@
 [Wiki Home](Home)
 <br>[Syntax](Syntax)
 
-### Syntax: Compiler Flags (attribute)
+### compiler_flags (attribute)
 
     compiler_flags '-flag' ['-flag' ...];
 

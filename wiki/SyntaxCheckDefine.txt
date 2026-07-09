@@ -2,7 +2,7 @@
 <br>[Syntax](Syntax)
 <br>[Checks](SyntaxCheck)
 
-### Check Define
+### check_define
 
 Checks if _macro-name_ exists as a macro.
 

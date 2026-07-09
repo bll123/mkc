@@ -1,7 +1,7 @@
 [Wiki Home](Home)
 <br>[Syntax](Syntax)
 
-### Syntax: Link Flags (attribute)
+### Link Flags (attribute)
 
 The __link\_flags__ attribute is used for a [check](SyntaxCheck)
 statement.

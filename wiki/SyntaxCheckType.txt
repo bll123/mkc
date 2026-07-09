@@ -2,7 +2,7 @@
 <br>[Syntax](Syntax)
 <br>[Checks](SyntaxCheck)
 
-### Check Type
+### check_type
 
 Checks if _type-name_ exists.
 

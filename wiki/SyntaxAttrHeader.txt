@@ -1,7 +1,7 @@
 [Wiki Home](Home)
 <br>[Syntax](Syntax)
 
-### Syntax: header (attribute)
+### header (attribute)
 
 The __header__ attribute specifies the required headers for a check.
 The headers specified will be added to the check.

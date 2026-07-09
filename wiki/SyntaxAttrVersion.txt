@@ -1,7 +1,7 @@
 [Wiki Home](Home)
 <br>[Syntax](Syntax)
 
-### Syntax: version (attribute)
+### version (attribute)
 
 The __version__ attribute is an attribute
 for the [project](SyntaxProject) statement.

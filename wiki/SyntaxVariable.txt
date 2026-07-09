@@ -35,8 +35,8 @@ Double quoted strings may contain embedded variables.
 
 ##### Path Names
 
-Path names may be left unquoted.  Path names with
-embedded spaces must be quoted.
+Path names may be left unquoted in many (but not all) cases.  Path
+names with embedded spaces must be quoted.
 
     check_size int64_t {
       header stdint.h;

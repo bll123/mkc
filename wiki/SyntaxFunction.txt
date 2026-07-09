@@ -3,7 +3,7 @@
 
 [TOC]
 
-### Syntax: Functions and Function Calls
+### Syntax: function and Function Calls
 
 ##### Defining a Function
 
@@ -11,9 +11,10 @@
     function <function-name> ( <argument-list> ) { <statements> }
 
 The __function__ statement associates an optional
-_argument&#8209;list_ and a set of statements with _function&#8209;name_.
+_argument&#8209;list_ and a set of statements with
+_function&#8209;name_.
 
-The _argument-list_ specifies one or more variable names.  These
+The _argument&#8209;list_ specifies one or more variable names.  These
 variables are local to the function's statement block.
 
 ##### Function Examples
@@ -27,6 +28,10 @@ variables are local to the function's statement block.
       print "hello ${arg}";
     }
 
+    function print2 (a b) {
+      print "${a} ${b}";
+    }
+
 ##### Calling a Function
 
 A function with no arguments is simply called by using the function
@@ -34,12 +39,15 @@ name.
 
     helloworld;
 
-A function with arguments is passed a list as the argument parameters.
+A function call with arguments is passed the arguments as a list or
+as separate arguments.
 
+    hello 'to you';
     hello [ 'to you' ];
-
     set a [ 'to them' ];
     hello ${a};
+
+    print2 'hello' 'world';
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

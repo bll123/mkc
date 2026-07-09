@@ -2,7 +2,7 @@
 <br>[Syntax](Syntax)
 <br>[Checks](SyntaxCheck)
 
-### Check Struct Member
+### check_struct_member
 
 Checks to see if _member-name_ exists in _struct-name_.
 

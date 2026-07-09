@@ -2,7 +2,7 @@
 <br>[Syntax](Syntax)
 <br>[Checks](SyntaxCheck)
 
-### Check Constant
+### check_constant
 
     check_constant <constant-name>;
     check_constant <constant-name> { <attribute-statements> }

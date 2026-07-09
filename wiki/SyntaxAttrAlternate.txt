@@ -1,7 +1,7 @@
 [Wiki Home](Home)
 <br>[Syntax](Syntax)
 
-### Syntax: alternate (attribute)
+### alternate (attribute)
 
 The __alternate__ attribute allows a check to test with different
 compiler flags, link flags and headers.

@@ -1,7 +1,7 @@
 [Wiki Home](Home)
 <br>[Syntax](Syntax)
 
-### Syntax: compiler (attribute)
+### compiler (attribute)
 
     compiler <compiler-name>;
 

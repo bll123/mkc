@@ -13,6 +13,7 @@ Check statements may allow the following attribute statements:
 * [compiler_flags](SyntaxAttrCompileFlag)
 * [header](SyntaxAttrHeader)
 * [link_flags](SyntaxAttrLinkFlag)
+* [match](SyntaxAttrMatch)
 * [name](SyntaxAttrName)
 * [negate](SyntaxCheckCompilerFlag)
 * [path](SyntaxAttrPath)
@@ -89,18 +90,20 @@ _\_header\_sys\_mount_ variable will be set.
 
 ##### Checks
 
-* [Check Argument Count](SyntaxCheckArgCount)
-* [Check/Add Compiler Flag](SyntaxCheckCompilerFlag)
-* [Check Constant](SyntaxCheckConstant)
-* [Check Define](SyntaxCheckDefine)
-* [Check Function](SyntaxCheckFunction)
-* [Check Header](SyntaxCheckHeader)
-* [Check/Add Link Flag](SyntaxCheckLinkFlag)
-* [Check Package](SyntaxCheckPackage)
-* [Check Size](SyntaxCheckSize)
-* [Check Shell Extract](SyntaxCheckShell)
-* [Check Struct Member](SyntaxCheckStructMember)
-* [Check Type](SyntaxCheckType)
+* [check_arg_count](SyntaxCheckArgCount)
+* [check_compiler_flag](SyntaxCheckCompilerFlag)
+  add_compiler_flag
+* [check_constant](SyntaxCheckConstant)
+* [check_define](SyntaxCheckDefine)
+* [check_function](SyntaxCheckFunction)
+* [check_header](SyntaxCheckHeader)
+* [check_link_flag](SyntaxCheckLinkFlag)
+  add_link_flag
+* [check_package](SyntaxCheckPackage)
+* [check_size](SyntaxCheckSize)
+* [check_shell_extract](SyntaxCheckShell)
+* [check_struct_member](SyntaxCheckStructMember)
+* [check_type](SyntaxCheckType)
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

@@ -4,7 +4,7 @@
 
 [TOC]
 
-### Check Compile Flag
+### check_compile_flag
 
 Checks to see if a compiler flag is valid, and if so, adds it to
 CFLAGS for the current profile.

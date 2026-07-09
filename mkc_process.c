@@ -74,7 +74,6 @@ typedef struct mkc_process_t {
   char                  * projectname;
   const char            * MKC_C_OBJEXT;
   const char            * MKC_C_EXEEXT;
-  mkc_regex_t           * rxisheader;
   mkc_regex_t           * rxshellvar;
   mkc_list_t            * user_rx_list;
   mkc_attribute_t       attr;
@@ -138,6 +137,7 @@ static mkc_ctxt_val_t attrcontext [MKC_ATTR_MAX] = {
   [MKC_ATTR_INPUT] = MKC_CONTEXT_CONFIGURE,
 // lib version will need to be fixed
   [MKC_ATTR_LIB_VERSION] = MKC_CONTEXT_PROJECT,
+// ### match is currently not in use.
   [MKC_ATTR_MATCH] = MKC_CONTEXT_CHK_INC_DEPS,
   [MKC_ATTR_METHOD] = MKC_CONTEXT_CONFIGURE,
   [MKC_ATTR_OUTPUT] = MKC_CONTEXT_CONFIGURE,
@@ -203,7 +203,7 @@ static void mkc_process_alternate_free (void *talt);
 static void mkc_process_temp_value_free (void *tvalue);
 static void mkc_process_topo_add_items (mkc_process_t *process, mkc_toposort_t *topo, mkc_list_t *hlist);
 static void mkc_process_topo_add_deps (mkc_process_t *process, mkc_toposort_t *topo, mkc_list_t *hlist);
-static mkc_list_t * mkc_process_get_include_list (mkc_process_t *process);
+static mkc_list_t * mkc_process_get_include_list (mkc_process_t *process, mkc_regex_t *rx);
 
 
 MKC_NODISCARD
@@ -228,7 +228,6 @@ mkc_process_init (mkc_profile_t *profiles, mkc_log_t *log,
   process->MKC_C_OBJEXT = ".o";
   process->MKC_C_EXEEXT = "";
   process->projectname = NULL;
-  process->rxisheader = NULL;
   process->rxshellvar = NULL;
   process->user_rx_list = mkc_list_init (MKC_LIST_SORTED,
       mkc_process_user_regex_free, mkc_process_user_regex_comp, mkcerr);
@@ -309,12 +308,6 @@ mkc_process_free (mkc_process_t *process)
   mkc_list_free (process->attr.alternates);
   mkc_list_free (process->attr.pathlist);
   mkc_list_free (process->attr.replacelist);
-
-  if (process->rxisheader != NULL) {
-#if _have_regex
-    mkc_regex_free (process->rxisheader);
-#endif
-  }
 
   if (process->rxshellvar != NULL) {
 #if _have_regex
@@ -709,26 +702,39 @@ mkc_process_stmt_chk_inc_deps (mkc_process_t *process)
 {
   mkc_list_t      *hlist = NULL;
   mkc_toposort_t  *topo;
+  mkc_regex_t     *rx;
   int             rc;
+
+  if (process->attr.str [MKC_ATTR_MATCH] == NULL) {
+    mkc_error_set (process->mkcerr, MKC_ERR_MISSING_ATTRIBUTE, 0, "match");
+    mkc_process_attr_clear (process);
+    return;
+  }
+
+  if (mkc_list_size (process->attr.pathlist) == 0) {
+    mkc_error_set (process->mkcerr, MKC_ERR_MISSING_ATTRIBUTE, 0, "path");
+    mkc_process_attr_clear (process);
+    return;
+  }
 
   /* check_include_dependencies may have a list of headers */
   /* specified with the header attribute */
   /* the header attribute is not that useful */
   /* a path will always be specified */
-  /* a match attribute may be specified */
+  /* a match attribute must be specified */
 
   topo = mkc_toposort_init (process->mkcerr);
 
 #if _have_regex
-  if (process->rxisheader == NULL) {
-    process->rxisheader = mkc_regex_init ("\\.h$", MKC_REGEX_NONE, process->mkcerr);
-    if (mkc_error_chk_err (process->mkcerr)) {
-      return;
-    }
-  }
+  rx = mkc_regex_init (process->attr.str [MKC_ATTR_MATCH],
+      MKC_REGEX_NONE, process->mkcerr);
 #endif
+  if (mkc_error_chk_err (process->mkcerr)) {
+    mkc_process_attr_clear (process);
+    return;
+  }
 
-  hlist = mkc_process_get_include_list (process);
+  hlist = mkc_process_get_include_list (process, rx);
   mkc_process_topo_add_items (process, topo, hlist);
   mkc_process_topo_add_deps (process, topo, hlist);
   mkc_list_free (hlist);
@@ -748,6 +754,7 @@ mkc_process_stmt_chk_inc_deps (mkc_process_t *process)
     }
   }
 
+  mkc_regex_free (rx);
   mkc_toposort_free (topo);
   mkc_process_attr_clear (process);
 }
@@ -758,7 +765,7 @@ mkc_process_stmt_configure (mkc_process_t *process)
   int       defzero = MKC_AUTO_SKIP_ZERO;
 
   if (process->attr.str [MKC_ATTR_METHOD] == NULL) {
-    mkc_error_set (process->mkcerr, MKC_ERR_PROC_NO_METHOD, 0, NULL);
+    mkc_error_set (process->mkcerr, MKC_ERR_MISSING_ATTRIBUTE, 0, "method");
     mkc_process_attr_clear (process);
     return;
   }
@@ -769,12 +776,12 @@ mkc_process_stmt_configure (mkc_process_t *process)
     mkc_process_configure_auto (process, defzero);
   } else if (strcmp (process->attr.str [MKC_ATTR_METHOD], "manual") == 0) {
     if (process->attr.str [MKC_ATTR_INPUT] == NULL) {
-      mkc_error_set (process->mkcerr, MKC_ERR_PROC_NO_INPUT, 0, NULL);
+      mkc_error_set (process->mkcerr, MKC_ERR_MISSING_ATTRIBUTE, 0, "input");
       mkc_process_attr_clear (process);
       return;
     }
     if (process->attr.str [MKC_ATTR_OUTPUT] == NULL) {
-      mkc_error_set (process->mkcerr, MKC_ERR_PROC_NO_OUTPUT, 0, NULL);
+      mkc_error_set (process->mkcerr, MKC_ERR_MISSING_ATTRIBUTE, 0, "output");
       mkc_process_attr_clear (process);
       return;
     }
@@ -1024,7 +1031,7 @@ mkc_process_stmt_project (mkc_process_t *process)
 
   alt = process->attr.curralt;
   if (alt->name == NULL || *(alt->name) == '\0') {
-    mkc_error_set (process->mkcerr, MKC_ERR_PROC_NO_NAME, 0, NULL);
+    mkc_error_set (process->mkcerr, MKC_ERR_MISSING_ATTRIBUTE, 0, "name");
     mkc_process_attr_clear (process);
     return;
   }
@@ -1332,7 +1339,7 @@ mkc_process_attr_header (mkc_process_t *process, mkc_value_t *value)
   }
 
   if (! mkc_context_check (process->context,
-      MKC_CONTEXT_CHECK | MKC_CONTEXT_ALTERNATE | MKC_CONTEXT_CHK_INC_DEPS)) {
+      MKC_CONTEXT_CHECK | MKC_CONTEXT_ALTERNATE)) {
     mkc_error_set (process->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
     return;
   }
@@ -1779,7 +1786,7 @@ mkc_process_chk_shell_extract (mkc_process_t *process, mkc_value_t *valpath)
   char        *path;
   char        varname [MKC_VNAME_MAX];
   char        *varvalue;
-  char        **match;
+  char        **match = NULL;
   int         matchcount;
 
   if (process == NULL) {
@@ -3091,7 +3098,6 @@ mkc_process_topo_add_deps (mkc_process_t *process,
     mkc_listidx_t   didx;
     mkc_listidx_t   piteridx;
     mkc_listidx_t   pathidx;
-    bool            found = false;
 
     temp = mkc_list_get_by_idx (hlist, hidx);
     hdr = *temp;
@@ -3111,22 +3117,17 @@ mkc_process_topo_add_deps (mkc_process_t *process,
       /* process the include file */
       mkc_check_get_include_deps (process->check,
           process->attr.currcompiler, tbuff, deplist);
-      found = true;
-    }
-
-    if (! found && mkc_file_exists (hdr)) {
-      stpecpy (tbuff, tbuff + MKC_PATH_MAX, hdr);
-      /* process the include file */
-      mkc_check_get_include_deps (process->check,
-          process->attr.currcompiler, tbuff, deplist);
+      break;
     }
 
     mkc_list_iter_start (deplist, &diteridx);
     while ((didx = mkc_list_iter_next (deplist, &diteridx)) != MKC_ITER_FINISH) {
-      mkc_value_t   *value;
+      char  **temp;
+      char  *dep;
 
-      value = mkc_list_get_by_idx (deplist, didx);
-      mkc_toposort_add_pair (topo, hdr, value->sval);
+      temp = mkc_list_get_by_idx (deplist, didx);
+      dep = *temp;
+      mkc_toposort_add_pair (topo, hdr, dep);
     }
 
     mkc_list_free (deplist);
@@ -3138,7 +3139,7 @@ mkc_process_topo_add_deps (mkc_process_t *process,
 }
 
 static mkc_list_t *
-mkc_process_get_include_list (mkc_process_t *process)
+mkc_process_get_include_list (mkc_process_t *process, mkc_regex_t *rx)
 {
   mkc_listidx_t   piteridx;
   mkc_listidx_t   pathidx;
@@ -3160,7 +3161,7 @@ mkc_process_get_include_list (mkc_process_t *process)
     path = valpath->sval;
 
 #if _have_regex
-    tlist = mkc_dir_match (path, process->rxisheader, process->mkcerr);
+    tlist = mkc_dir_match (path, rx, process->mkcerr);
 #endif
     if (hlist == NULL) {
       hlist = tlist;

@@ -2,11 +2,11 @@
 <br>[Syntax](Syntax)
 <br>[Checks](SyntaxCheck)
 
-### Check Function
+### check_function
 
-Checks if _function-name_ exists.  The function is determined to exist
-if there is a macro defined with that name, or if the function is
-found.
+Checks if _function&#8209;name_ exists.  The function is determined to
+exist if there is a macro defined with that name, or if the function
+is found.
 
     check_function <function-name>;
     check_function <function-name> { <attribute-statements> }

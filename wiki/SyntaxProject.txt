@@ -5,7 +5,11 @@
 
 The _project_ statement defines attributes for the project.
 
-    project { <attribute-list> };
+    project {
+      name <project-name>;
+      compiler <default-compiler>;
+      version <version-string>;
+    }
 
 The name of the project is defined with the [name](SyntaxName) attribute.
 The default compiler is defined with the [compiler](SyntaxCompiler) attribute.
@@ -13,8 +17,14 @@ The default compiler is defined with the [compiler](SyntaxCompiler) attribute.
 ##### Examples
 
     project {
-      name mkc;
+      name mkctest;
       compiler c;
+    }
+
+    project {
+      name mkctestb;
+      compiler c++;
+      version 0.3;
     }
 
 ##### Attributes

@@ -634,10 +634,9 @@ stmt_function_call[v]:
       $v = mkc_ast_mk_function_call (ast, $a, NULL,
           yylloc.first_line, yylloc.first_column);
     }
-  | varname[a] varvalue[b] T_SEMICOLON
+  | varname[a] valuelist[l] T_SEMICOLON
     {
-      /* it is unknown if the value is a singleton or a list */
-      $v = mkc_ast_mk_function_call (ast, $a, $b,
+      $v = mkc_ast_mk_function_call (ast, $a, $l,
           yylloc.first_line, yylloc.first_column);
     }
   ;

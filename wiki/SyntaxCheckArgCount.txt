@@ -2,7 +2,7 @@
 <br>[Syntax](Syntax)
 <br>[Checks](SyntaxCheck)
 
-### Check Argument Count
+### check_arg_count
 
 Checks the number of arguments a function requires.  This check does
 not work on macros.  This check provides a way to distinguish function
