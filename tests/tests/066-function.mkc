@@ -15,10 +15,5 @@ function fd (a1 a2 a3) {
 
 fa;
 fb 'b1';
-fb [ 'b2' ];
 fc 'c1a' 'c1b';
-fc [ 'c2a' 'c2b' ];
 fd 'd1a' 'd1b' 'd1c';
-fd [ 'd2a' 'd2b' 'd2c' ];
-set ad [ 'd3a' 'd3b' 'd3c' ];
-fd ${ad};

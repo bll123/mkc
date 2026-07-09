@@ -16,5 +16,5 @@ check_function other;
 
 configure {
   method auto;
-  output 'tests/tmp/304-configure-auto-nodef.h';
+  output 'tests/tmp/304-stmt-configure-auto-nodef.h';
 }

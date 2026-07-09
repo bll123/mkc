@@ -50,7 +50,7 @@ chk301 () {
 rm -f mkctest_config.h project_config.h 2>/dev/null
 
 # basic test to make sure mkctest_config.h is created
-dotest ${ddir}/301-configure.mkc
+dotest ${ddir}/301-stmt-configure.mkc
 rc=$?
 if [ $rc -ne 0 ]; then exit $rc; fi
 chk301 basic

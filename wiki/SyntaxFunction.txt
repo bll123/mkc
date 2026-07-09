@@ -39,12 +39,11 @@ name.
 
     helloworld;
 
-A function call with arguments is passed the arguments as a list or
-as separate arguments.
+A function call with arguments is passed the arguments as separate
+values.
 
     hello 'to you';
-    hello [ 'to you' ];
-    set a [ 'to them' ];
+    set a 'to them';
     hello ${a};
 
     print2 'hello' 'world';

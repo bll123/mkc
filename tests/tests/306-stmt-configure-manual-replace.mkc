@@ -20,6 +20,6 @@ configure {
   replace '@sqrt@' ${_function_sqrt};
   replace '@fstat@' ${_function_fstat};
   replace '@other@' ${_function_other};
-  input 'tests/data/306-configure-manual-replace.h';
-  output 'tests/tmp/306-configure-manual-replace.h';
+  input 'tests/data/306-stmt-configure-manual-replace.h';
+  output 'tests/tmp/306-stmt-configure-manual-replace.h';
 }

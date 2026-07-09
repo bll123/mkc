@@ -4,7 +4,7 @@
 # should all work.
 
 set a 5;
-include tests/data/300-include.mkc;
+include tests/data/300-stmt-include.mkc;
 set b 6;
 
 if (${a} == 5) {

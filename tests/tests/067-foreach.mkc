@@ -3,7 +3,7 @@
 foreach a in range (1 4) {
   print "a: ${a}";
 }
-foreach b in [ 1 2 3 ]{
+foreach b in [ 1 2 3 ] {
   print "b: ${b}";
 }
 set c [ 1 2 3 ];

@@ -678,7 +678,7 @@ void
 mkc_check_get_include_deps (mkc_check_t *check,
     mkc_compiler_t compiler, const char *fn, mkc_list_t *deplist)
 {
-  char            *rbuff;
+  char            *rbuff = NULL;
   size_t          rsz = MKC_LARGE_BUFF_SZ;
   size_t          fsz = 0;
 #if _have_regex
@@ -688,20 +688,14 @@ mkc_check_get_include_deps (mkc_check_t *check,
 
   mkc_log (check->log, MKC_LOG_CHECK, "== get-include-deps: %s\n", fn);
 
-  rbuff = malloc (rsz);
-  if (rbuff == NULL) {
-    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return;
-  }
-
   rbuff = mkc_read_file (fn, &fsz, check->mkcerr);
   if (mkc_error_chk_err (check->mkcerr)) {
-    free (rbuff);
+    datafree (rbuff);
     return;
   }
 #if _have_regex
   if (check->rxincludedep == NULL) {
-    check->rxincludedep = mkc_regex_init ("^# *(include|import) *\"?([^\"]+)\"?$",
+    check->rxincludedep = mkc_regex_init ("^# *(include|import) *\"?([^\"<>]+)\"?$",
         MKC_REGEX_MULTILINE, check->mkcerr);
     if (mkc_error_chk_err (check->mkcerr)) {
       free (rbuff);

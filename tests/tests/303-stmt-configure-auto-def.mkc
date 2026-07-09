@@ -17,5 +17,5 @@ check_function other;
 configure {
   method auto;
   define_zero;
-  output 'tests/tmp/303-configure-auto-def.h';
+  output 'tests/tmp/303-stmt-configure-auto-def.h';
 }

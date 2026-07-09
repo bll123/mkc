@@ -4,4 +4,4 @@ project {
   name mkctest;
 }
 
-include 'tests/data/301-configure-b.mkc';
+include 'tests/data/301-stmt-configure-b.mkc';

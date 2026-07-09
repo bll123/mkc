@@ -701,8 +701,8 @@ void
 mkc_process_stmt_chk_inc_deps (mkc_process_t *process)
 {
   mkc_list_t      *hlist = NULL;
-  mkc_toposort_t  *topo;
-  mkc_regex_t     *rx;
+  mkc_toposort_t  *topo = NULL;
+  mkc_regex_t     *rx = NULL;
   int             rc;
 
   if (process->attr.str [MKC_ATTR_MATCH] == NULL) {
@@ -754,7 +754,9 @@ mkc_process_stmt_chk_inc_deps (mkc_process_t *process)
     }
   }
 
+#if _have_regex
   mkc_regex_free (rx);
+#endif
   mkc_toposort_free (topo);
   mkc_process_attr_clear (process);
 }
@@ -837,7 +839,6 @@ mkc_process_stmt_function_call (mkc_process_t *process,
   mkc_listidx_t   aidx;
   mkc_listidx_t   nmidx;
   mkc_value_t     tvalue;
-  bool            allocated = false;
 
   plocalidx = mkc_profile_local_create (process->profiles);
 
@@ -847,24 +848,13 @@ mkc_process_stmt_function_call (mkc_process_t *process,
   if (valfuncargs != NULL) {
     memcpy (&tvalue, valfuncargs, sizeof (mkc_value_t));
     mkc_process_substitutions (process, &tvalue);
-    if (tvalue.vtype == MKC_VT_LIST) {
-      alist = tvalue.list;
-    } else {
-      mkc_listidx_t   loc;
-
-      alist = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, process->mkcerr);
-      mkc_list_set (alist, &tvalue, sizeof (mkc_value_t), &loc);
-      allocated = true;
-    }
+    alist = tvalue.list;
   }
   if ((alist == NULL && nmlist != NULL) ||
       (alist != NULL && nmlist == NULL) ||
       (alist != NULL &&
           mkc_list_size (alist) != mkc_list_size (nmlist))) {
     mkc_error_set (process->mkcerr, MKC_ERR_FUNCTION_ARG_MISMATCH, 0, NULL);
-    if (allocated) {
-      mkc_list_free (alist);
-    }
     return;
   }
 
@@ -883,13 +873,9 @@ mkc_process_stmt_function_call (mkc_process_t *process,
 
     aval = mkc_list_get_by_idx (alist, aidx);
     nmval = mkc_list_get_by_idx (nmlist, nmidx);
-
     mkc_process_local_set (process, nmval, aval, plocalidx);
   }
 
-  if (allocated) {
-    mkc_list_free (alist);
-  }
   mkc_process_temp_value_free (&tvalue);
 }
 
@@ -1781,7 +1767,7 @@ void
 mkc_process_chk_shell_extract (mkc_process_t *process, mkc_value_t *valpath)
 {
 #if _have_regex
-  char        *buff;
+  char        *buff = NULL;
   size_t      fsz = 0;
   char        *path;
   char        varname [MKC_VNAME_MAX];
@@ -1830,6 +1816,7 @@ mkc_process_chk_shell_extract (mkc_process_t *process, mkc_value_t *valpath)
 
   buff = mkc_read_file (path, &fsz, process->mkcerr);
   if (mkc_error_chk_err (process->mkcerr)) {
+    datafree (buff);
     return;
   }
 
@@ -1879,6 +1866,7 @@ mkc_process_chk_shell_extract (mkc_process_t *process, mkc_value_t *valpath)
 
   free (path);
   free (varvalue);
+  datafree (buff);
 #endif
 
   mkc_process_attr_clear (process);
@@ -3147,8 +3135,8 @@ mkc_process_get_include_list (mkc_process_t *process, mkc_regex_t *rx)
 
   mkc_list_iter_start (process->attr.pathlist, &piteridx);
   while ((pathidx = mkc_list_iter_next (process->attr.pathlist, &piteridx)) != MKC_ITER_FINISH) {
-    mkc_value_t   *valpath;
-    const char    *path;
+    mkc_value_t   *valpath = NULL;
+    const char    *path = NULL;
     mkc_list_t    *tlist = NULL;
     mkc_listidx_t iteridx;
     mkc_listidx_t idx;
