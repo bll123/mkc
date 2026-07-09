@@ -1,6 +1,6 @@
 /*
- * Copyright 2023-2025 Brad Lanam Pleasant Hill CA
- *    (from libmp4tag)
+ * Copyright 2023-2026 Brad Lanam Pleasant Hill CA
+ *    (from libmp4tag, ballroomdj4)
  */
 
 #ifndef MKC_BOOTSTRAP
@@ -19,6 +19,7 @@
 #include <limits.h>
 #include <wchar.h>
 #include <errno.h>
+#include <dirent.h>
 
 #if __has_include (<windows.h>)
 # define WIN32_LEAN_AND_MEAN 1
@@ -33,6 +34,14 @@
 #include "mkc_fileop.h"
 #include "mkc_nodiscard.h"
 #include "mkc_string.h"
+
+typedef struct mkc_dirhandle_t {
+  DIR       *dh;
+  char      *dirname;
+#if _type_HANDLE
+  HANDLE    dhandle;
+#endif
+} mkc_dirhandle_t;
 
 MKC_NODISCARD
 FILE *
@@ -61,7 +70,37 @@ mkc_fopen (const char *fname, const char *mode)
   return fh;
 }
 
-MKC_NODISCARD
+bool
+mkc_file_exists (const char *fname)
+{
+  int     rc = -1;
+  bool    brc = false;
+
+#if _function__wstat64 || (MKC_BOOTSTRAP && MKC_SYS_WIN)
+  {
+    struct __stat64  statbuf;
+    wchar_t       *tfname = NULL;
+
+    tfname = mkc_towide (fname);
+    if (tfname != NULL) {
+      rc = _wstat64 (tfname, &statbuf);
+      free (tfname);
+    }
+  }
+#else
+  {
+    struct stat statbuf;
+
+    rc = stat (fname, &statbuf);
+  }
+#endif
+  if (rc == 0) {
+    brc = true;
+  }
+
+  return brc;
+}
+
 time_t
 mkc_file_modtime (const char *fname)
 {
@@ -96,7 +135,6 @@ mkc_file_modtime (const char *fname)
   return tm;
 }
 
-MKC_NODISCARD
 ssize_t
 mkc_file_size (const char *fname)
 {
@@ -129,6 +167,31 @@ mkc_file_size (const char *fname)
   }
 #endif
   return sz;
+}
+
+bool
+mkc_is_link (const char *fname)
+{
+  int   rc = -1;
+  bool  brc = false;
+
+#if _function_symlink
+  {
+    struct stat   statbuf;
+
+    memset (&statbuf, '\0', sizeof (struct stat));
+    rc = stat (fname, &statbuf);
+    if (rc == 0 && (statbuf.st_mode & S_IFMT) != S_IFLNK) {
+      rc = -1;
+    }
+  }
+#endif
+  /* had some trouble with the optimizer, so spell out the values */
+  if (rc == 0) {
+    brc = true;
+  }
+
+  return brc;
 }
 
 MKC_NODISCARD
@@ -308,7 +371,7 @@ mkc_link_copy (const char *fname, const char *nfn, mkc_error_t *mkcerr)
 {
   int       rc = -1;
 
-#if _function_symlink || (MKC_BOOTSTRAP && ! MKC_SYS_WIN)
+#if _function_symlink
   rc = mkc_link_create (fname, nfn);
 #else
   rc = mkc_file_copy (fname, nfn, mkcerr);
@@ -347,7 +410,7 @@ mkc_normalize_path (char *path, size_t sz)
   return;
 }
 
-#if _function_symlink || (MKC_BOOTSTRAP && ! MKC_SYS_WIN)
+#if _function_symlink
 
 int
 mkc_link_create (const char *target, const char *linkpath)
@@ -360,11 +423,13 @@ mkc_link_create (const char *target, const char *linkpath)
 
 #endif /* lib_symlink */
 
+/* directory operations */
+
 bool
 mkc_is_directory (const char *fname)
 {
-  int   rc;
-  bool  brc = 0;
+  int   rc = -1;
+  bool  brc = false;
 
 #if _function__wstat64
   {
@@ -391,8 +456,143 @@ mkc_is_directory (const char *fname)
 #endif
   /* had some trouble with the optimizer, so spell out the values */
   if (rc == 0) {
-    brc = 1;
+    brc = true;
   }
 
   return brc;
+}
+
+MKC_NODISCARD
+mkc_dirhandle_t *
+mkc_dir_open (const char *dirname, mkc_error_t *mkcerr)
+{
+  mkc_dirhandle_t   *dirh;
+
+  dirh = malloc (sizeof (mkc_dirhandle_t));
+  if (dirh == NULL) {
+    mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return NULL;
+  }
+
+  dirh->dirname = NULL;
+  dirh->dh = NULL;
+
+#if _function_FindFirstFileW
+  {
+    size_t        len = 0;
+    char          *p;
+    char          *end;
+
+    dirh->dhandle = INVALID_HANDLE_VALUE;
+    len = strlen (dirname) + 3;
+    dirh->dirname = malloc (len);
+    if (dirh->dirname == NULL) {
+      mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+      return NULL;
+    }
+    p = dirh->dirname;
+    end = dirh->dirname + len;
+    p = stpecpy (p, end, dirname);
+    mkc_trim_char (dirh->dirname, '/');
+    p = stpecpy (p, end, "/*");
+  }
+#else
+  dirh->dirname = strdup (dirname);
+  if (dirh->dirname == NULL) {
+    mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return NULL;
+  }
+  dirh->dh = opendir (dirname);
+#endif
+
+  return dirh;
+}
+
+MKC_NODISCARD
+char *
+mkc_dir_iterate (mkc_dirhandle_t *dirh, mkc_error_t *mkcerr)
+{
+  char      *fname = NULL;
+
+  if (dirh == NULL) {
+    mkc_error_set (mkcerr, MKC_ERR_NULL_ARGUMENT, 0, NULL);
+    return NULL;
+  }
+
+#if _function_FindFirstFileW
+  {
+    WIN32_FIND_DATAW filedata;
+    BOOL             rc;
+
+    if (dirh->dhandle == INVALID_HANDLE_VALUE) {
+      wchar_t         *wdirname;
+
+      wdirname = mkc_towide (dirh->dirname);
+      if (wdirname == NULL) {
+        mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+        return NULL;
+      }
+      dirh->dhandle = FindFirstFileW (wdirname, &filedata);
+      rc = 0;
+      if (dirh->dhandle != INVALID_HANDLE_VALUE) {
+        rc = 1;
+      }
+      free (wdirname);
+    } else {
+      rc = FindNextFileW (dirh->dhandle, &filedata);
+    }
+
+    fname = NULL;
+    if (rc != 0) {
+      fname = mkc_fromwide (filedata.cFileName);
+      if (fname == NULL) {
+        mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+        return NULL;
+      }
+    }
+  }
+#else
+  {
+    struct dirent   *dirent = NULL;
+
+    if (dirh->dh == NULL) {
+      return NULL;
+    }
+
+    dirent = readdir (dirh->dh);
+    fname = NULL;
+    if (dirent != NULL) {
+      fname = strdup (dirent->d_name);
+      if (fname == NULL) {
+        mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+        return NULL;
+      }
+    }
+  }
+#endif
+
+  return fname;
+}
+
+void
+mkc_dir_close (mkc_dirhandle_t *dirh)
+{
+  if (dirh == NULL) {
+    return;
+  }
+
+#if _function_FindFirstFileW
+  if (dirh->dhandle != INVALID_HANDLE_VALUE) {
+    FindClose (dirh->dhandle);
+  }
+  dirh->dhandle = INVALID_HANDLE_VALUE;
+#else
+  if (dirh->dh != NULL) {
+    closedir (dirh->dh);
+  }
+  dirh->dh = NULL;
+#endif
+  datafree (dirh->dirname);
+  dirh->dirname = NULL;
+  free (dirh);
 }

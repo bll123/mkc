@@ -1,4 +1,4 @@
-/* this is a compile only test */
+/* this is a c-preprocessor test */
 /* the c-preprocessor output is processed to get the function arguments */
 
 /* clean up the argument list, remove all the extra stuff */

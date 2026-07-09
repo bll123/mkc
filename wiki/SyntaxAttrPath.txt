@@ -4,11 +4,12 @@
 ### Syntax: path (attribute)
 
 The __path__ attribute specifies an additional path.  It is used in
-the [check_package](SyntaxCheckPackage) statement.
+the [check_package](SyntaxCheckPackage) statement and the
+[check_include_dependencies](SyntaxStmtCheckIncDeps) statement.
 
     path <path>;
 
-Repeatable: no
+Repeatable: yes
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

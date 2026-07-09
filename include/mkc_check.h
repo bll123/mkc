@@ -29,18 +29,24 @@ typedef struct mkc_alternate_t {
   mkc_list_t      * linkflags;
 } mkc_alternate_t;
 
+typedef enum {
+  MKC_ATTR_INPUT,
+  MKC_ATTR_LIB_VERSION,
+  MKC_ATTR_MATCH,
+  MKC_ATTR_METHOD,
+  MKC_ATTR_OUTPUT,
+  MKC_ATTR_VCONTEXT,
+  MKC_ATTR_VERSION,
+  MKC_ATTR_MAX,
+} mkc_attr_type_t;
+
 typedef struct mkc_attribute_t {
   mkc_list_t      * alternates;
   mkc_alternate_t * curralt;
-  mkc_list_t      * replacelist;
   char            * currname;
-  char            * method;
-  char            * vcontext;
-  char            * input;
-  char            * output;
-  char            * path;
-  char            * version;
-  char            * libraryversion;
+  char            * str [MKC_ATTR_MAX];
+  mkc_list_t      * pathlist;
+  mkc_list_t      * replacelist;
   mkc_compiler_t  currcompiler;
   int             define_zero;
   int             headertype;
@@ -80,6 +86,8 @@ int mkc_chk_package (mkc_check_t *check, mkc_compiler_t compiler, const char *pk
 int mkc_chk_size (mkc_check_t *check, mkc_compiler_t compiler, const char *type);
 int mkc_chk_struct_member (mkc_check_t *check, mkc_compiler_t compiler, const char *structname, const char *membername);
 int mkc_chk_type (mkc_check_t *check, mkc_compiler_t compiler, const char *type);
+
+void mkc_check_get_include_deps (mkc_check_t *check, mkc_compiler_t compiler, const char *fn, mkc_list_t *deplist);
 
 #if defined (__cplusplus) || defined (c_plusplus)
 }

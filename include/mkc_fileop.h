@@ -16,9 +16,14 @@
 extern "C" {
 #endif
 
+typedef struct mkc_dirhandle_t mkc_dirhandle_t;
+
 MKC_NODISCARD FILE * mkc_fopen (const char *fname, const char *mode);
-MKC_NODISCARD ssize_t mkc_file_size (const char *fname);
-MKC_NODISCARD time_t mkc_file_modtime (const char *fname);
+bool mkc_file_exists (const char *fname);
+time_t mkc_file_modtime (const char *fname);
+ssize_t mkc_file_size (const char *fname);
+bool mkc_is_link (const char *fname);
+
 MKC_NODISCARD char * mkc_read_file (const char *fn, size_t *sz, mkc_error_t *mkcerr);
 int mkc_file_delete (const char *fname);
 int mkc_file_move (const char *fname, const char *nfn);
@@ -34,6 +39,9 @@ int mkc_link_create (const char *target, const char *linkpath);
 #endif /* _function_symlink*/
 
 bool mkc_is_directory (const char *fname);
+MKC_NODISCARD mkc_dirhandle_t * mkc_dir_open (const char *dirname, mkc_error_t *mkcerr);
+MKC_NODISCARD char * mkc_dir_iterate (mkc_dirhandle_t *dirh, mkc_error_t *mkcerr);
+void mkc_dir_close (mkc_dirhandle_t *dirh);
 
 #if defined (__cplusplus) || defined (c_plusplus)
 }

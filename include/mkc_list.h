@@ -8,7 +8,6 @@
 #include <stdint.h>
 
 #include "mkc_error.h"
-#include "mkc_list.h"
 #include "mkc_nodiscard.h"
 
 #if defined (__cplusplus) || defined (c_plusplus)

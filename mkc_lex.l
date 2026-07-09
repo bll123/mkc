@@ -138,6 +138,7 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 "while"     { return T_STMT_WHILE; }
 "range"     { return T_RANGE; }
 
+"check_include_dependencies"  { return T_STMT_CHK_INC_DEPS; }
 "configure"   { return T_STMT_CONFIGURE; }
 "load_cache"  { return T_STMT_LOADCACHE; }
 "mark"        { return T_STMT_MARK; }
@@ -171,6 +172,7 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 "input"                     { return T_ATTR_INPUT; }
 "library_version"           { return T_ATTR_LIBRARY_VERSION; }
 "link_flags"                { return T_ATTR_LINK_FLAGS; }
+"match"                     { return T_ATTR_MATCH; }
 "method"                    { return T_ATTR_METHOD; }
 "name"                      { return T_ATTR_NAME; }
 "negate"                    { return T_ATTR_NEGATE; }
@@ -191,6 +193,8 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
   }
 
 ({PATH_UG}({PATH_UG}|{TXT_PLUS_HYPHEN})*[./]({PATH_UG}|{TXT_PLUS_HYPHEN})*) {
+    /* a path must have a dot or slash in the path */
+    /* otherwise a quoted string must be used */
     yylval->sval = strdup (yytext);
     return T_ID_PATH_NAME;
   }

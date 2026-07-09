@@ -5,6 +5,7 @@
 #define INC_MKC_TOPO_H
 
 #include "mkc_list.h"
+#include "mkc_nodiscard.h"
 
 #if defined (__cplusplus) || defined (c_plusplus)
 extern "C" {
@@ -12,10 +13,10 @@ extern "C" {
 
 typedef struct mkc_toposort_t mkc_toposort_t;
 
-mkc_toposort_t * mkc_toposort_init (mkc_error_t *mkcerr);
+MKC_NODISCARD mkc_toposort_t * mkc_toposort_init (mkc_error_t *mkcerr);
 void mkc_toposort_free (mkc_toposort_t *topo);
 void mkc_toposort_add_item (mkc_toposort_t *topo, const char *item);
-void mkc_toposort_add_pair (mkc_toposort_t *topo, const char *item_a, const char *item_b);
+int mkc_toposort_add_pair (mkc_toposort_t *topo, const char *item_a, const char *item_b);
 int mkc_toposort (mkc_toposort_t *topo);
 void mkc_toposort_iter_start (mkc_toposort_t *topo);
 const char *mkc_toposort_iter_next (mkc_toposort_t *topo);

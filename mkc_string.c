@@ -18,7 +18,7 @@
 
 #include "mkc_string.h"
 
-#if ! _lib_stpecpy
+#if ! _function_stpecpy
 
 # define STPECPY_DEBUG 0
 
@@ -64,7 +64,7 @@ stpecpy (char *dst, char *end, const char *restrict src)
   return end;
 }
 
-#endif /* ! _lib_stpecpy */
+#endif /* ! _function_stpecpy */
 
 void
 mkc_strupper (char *buff)

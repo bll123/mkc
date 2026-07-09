@@ -10,7 +10,7 @@
 
 #include "mkc_def.h"
 #include "mkc_error.h"
-#include "mkc_topo.h"
+#include "mkc_toposort.h"
 #include "mkc_string.h"
 
 int
@@ -58,7 +58,11 @@ main (int argc, char *argv [])
     *p = '\0';
     p += 1;
 
-    mkc_toposort_add_pair (topo, buff, p);
+    rc = mkc_toposort_add_pair (topo, buff, p);
+    if (rc != MKC_OK) {
+      mkc_error_print (mkcerr);
+      exit (1);
+    }
   }
 
   fclose (fh);

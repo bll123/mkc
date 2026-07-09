@@ -12,7 +12,7 @@
 #include "mkc_error.h"
 #include "mkc_list.h"
 #include "mkc_string.h"
-#include "mkc_topo.h"
+#include "mkc_toposort.h"
 
 enum {
   MKC_TOPO_DONE = -1,
@@ -101,7 +101,7 @@ mkc_toposort_add_item (mkc_toposort_t *topo, const char *item)
   return;
 }
 
-void
+int
 mkc_toposort_add_pair (mkc_toposort_t *topo,
     const char *item_a, const char *item_b)
 {
@@ -110,18 +110,28 @@ mkc_toposort_add_pair (mkc_toposort_t *topo,
   mkc_topoitem_t    titem;
 
   if (topo == NULL) {
-    return;
+    return MKC_ERR_FAILURE;
   }
 
   titem.name = (char *) item_a;
   tpair.itemidx = mkc_list_find (topo->items, &titem, &loc);
+  if (tpair.itemidx == MKC_LIST_NOTFOUND) {
+    mkc_error_set (topo->mkcerr, MKC_ERR_FILE_NOT_FOUND, 0, item_a);
+    return MKC_ERR_FAILURE;
+  }
   titem.name = (char *) item_b;
   tpair.dependson = mkc_list_find (topo->items, &titem, &loc);
+  if (tpair.dependson == MKC_LIST_NOTFOUND) {
+    mkc_error_set (topo->mkcerr, MKC_ERR_FILE_NOT_FOUND, 0, item_b);
+    return MKC_ERR_FAILURE;
+  }
+
   mkc_list_set (topo->pairs, &tpair, sizeof (mkc_topopair_t), &loc);
 
-  return;
+  return MKC_OK;
 }
 
+/* uses Kahn's method */
 int
 mkc_toposort (mkc_toposort_t *topo)
 {
@@ -225,12 +235,12 @@ mkc_toposort_disp_cycle (mkc_toposort_t *topo, char *buff, size_t sz)
     mkc_topocount_t   *count;
 
     count = mkc_list_get_by_idx (topo->counts, cidx);
-    if (count->count > 0) {
+    if (count->count == 1) {
       mkc_topoitem_t   *item;
 
       item = mkc_list_get_by_idx (topo->items, count->idx);
       if (*buff) {
-        p = stpecpy (p, buff + sz, "->");
+        p = stpecpy (p, buff + sz, " : ");
       }
       p = stpecpy (p, buff + sz, item->name);
     }

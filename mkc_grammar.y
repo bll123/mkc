@@ -25,7 +25,6 @@
 #  include "mkc_fileop.h"
 #  include "mkc_list.h"
 #  include "mkc_parse.h"
-// #  include "mkc_var.h"
 
   typedef void *mkcyyscan_t;
 
@@ -115,6 +114,7 @@
 %token T_RANGE                "range"
 
 // directives
+%token T_STMT_CHK_INC_DEPS    "check_include_dependencies"
 %token T_STMT_CONFIGURE       "configure"
 %token T_STMT_DEBUG           "mkcdebug"
 %token T_STMT_INCLUDE         "include"
@@ -150,6 +150,7 @@
 %token T_ATTR_COMPILER        "compiler"
 %token T_ATTR_CONTEXT         "context"
 %token T_ATTR_DEFINE_ZERO     "define_zero"
+%token T_ATTR_MATCH           "match"
 %token T_ATTR_HEADER          "header"
 %token T_ATTR_INPUT           "input"
 %token T_ATTR_LIBRARY_VERSION "library_version"
@@ -195,7 +196,7 @@
 %type <astnode> stmt_foreach stmt_function stmt_while
 %type <astnode> stmt_function_call range
 // commands
-%type <astnode> stmt_config stmt_loadcache
+%type <astnode> stmt_chk_inc_deps stmt_config stmt_loadcache
 %type <astnode> stmt_mark stmt_print stmt_profile stmt_project stmt_set
 // checks
 %type <astnode> checkcommand chk_argcount chk_compflag chk_const
@@ -203,8 +204,9 @@
 %type <astnode> chk_member chk_package chk_shellcmc chk_size chk_type
 // attributes
 %type <astnode> attr attr_alternate attr_name attr_path attr_compiler
-%type <astnode> attr_compilerflags attr_context attr_define_zero attr_header
-%type <astnode> attr_input attr_libversion attr_linkflags attr_method
+%type <astnode> attr_compilerflags attr_context attr_define_zero
+%type <astnode> attr_header attr_input attr_libversion
+%type <astnode> attr_linkflags attr_match attr_method
 %type <astnode> attr_negate attr_output attr_replace attr_source attr_version
 
 // precedence rules: the lowest precedence comes first
@@ -261,6 +263,10 @@ stmt[v]:
       $v = $a;
     }
 // statements
+  | stmt_chk_inc_deps[a]
+    {
+      $v = $a;
+    }
   | stmt_config[a]
     {
       $v = $a;
@@ -331,6 +337,10 @@ attr[v]:
       $v = $a;
     }
   | attr_define_zero[a]
+    {
+      $v = $a;
+    }
+  | attr_match[a]
     {
       $v = $a;
     }
@@ -583,6 +593,14 @@ stmt_function[v]:
   ;
 
 // statements
+
+stmt_chk_inc_deps[v]:
+    T_STMT_CHK_INC_DEPS stmtblock[a]
+    {
+      $v = mkc_ast_mk_stmt_chk_inc_deps (ast, $a,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
 
 stmt_config[v]:
     T_STMT_CONFIGURE stmtblock[a]
@@ -842,6 +860,15 @@ attr_define_zero[v]:
     T_ATTR_DEFINE_ZERO T_SEMICOLON
     {
       $v = mkc_ast_mk_attribute (ast, NULL, MKC_T_ATTR_DEFINE_ZERO,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+/* define-zero flag for configure */
+attr_match[v]:
+    T_ATTR_MATCH varvalue[a] T_SEMICOLON
+    {
+      $v = mkc_ast_mk_attr_match (ast, $a,
           yylloc.first_line, yylloc.first_column);
     }
   ;

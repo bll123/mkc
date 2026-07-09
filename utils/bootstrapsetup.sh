@@ -40,14 +40,14 @@ updbootstrapmake () {
   name=$1
 
   cat ${BOOTSTRAPMAKE} | \
-      sed -e "/^${name}/,/^$/ d" | \
-      sed -e "/^# ${name}/ r ${TMPFILE}" \
+      sed -e "/^${name} = /,/^$/ d" | \
+      sed -e "/^# ${name} keep/ r ${TMPFILE}" \
       > ${BOOTSTRAPMAKE}.n
   mv ${BOOTSTRAPMAKE}.n ${BOOTSTRAPMAKE}
   rm -f ${TMPFILE}
 }
 
-nm=INTIALOBJ
+nm=INITIALOBJ
 echo "${nm} = \\" > ${TMPFILE}
 # mkc_grammar must be re-compiled, as it has a #if MKC_BOOTSTRAP
 echo '\tmkc_grammar.o \\' >> ${TMPFILE}
@@ -57,6 +57,8 @@ grep -E -l 'include "mkc_config.h' *.c | \
         -e 's,^,\t,' \
         -e '$ ! s,$, \\,' \
     >> ${TMPFILE}
+echo "== init"
+cat ${TMPFILE}
 echo '' >> ${TMPFILE}
 updbootstrapmake ${nm}
 
@@ -89,6 +91,7 @@ if [ -f mkc ]; then
   nm=MKCOBJECTS
   echo "${nm} = \\" > ${TMPFILE}
   ${LORDER} *.o |
+      grep -v 'topochk' |
       tsort |
       sed -e '/mkc_os_process/ a \\t$(MKC_WIN_OBJ)\ \\' \
           -e '/mkc_regex_pcre/ s,mkc_regex_pcre\.o,$(MKC_REGEX_OBJ),' \

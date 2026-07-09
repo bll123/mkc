@@ -33,20 +33,33 @@ check_function nanosleep {
   header time.h;
 }
 check_function setenv;
+check_function stpecpy;
 check_function symlink {
   header unistd.h;
 }
 
 # windows functions
-check_function GetCommandLineW {
-  compiler_flags '-DNOCRYPT=1' '-DNOGDI=1';
-  header windows.h;
-}
 check_function CopyFileW {
   compiler_flags '-DWIN32_LEAN_AND_MEAN=1';
   header windows.h;
 }
+check_function FindFirstFileW {
+  compiler_flags '-DWIN32_LEAN_AND_MEAN=1';
+  header windows.h;
+}
+check_function GetCommandLineW {
+  compiler_flags '-DNOCRYPT=1' '-DNOGDI=1';
+  header windows.h;
+}
+check_function MultiByteToWideChar {
+  compiler_flags '-DWIN32_LEAN_AND_MEAN=1';
+  header windows.h;
+}
 check_function Sleep {
+  compiler_flags '-DWIN32_LEAN_AND_MEAN=1';
+  header windows.h;
+}
+check_function WideCharToMultiByte {
   compiler_flags '-DWIN32_LEAN_AND_MEAN=1';
   header windows.h;
 }
@@ -67,14 +80,6 @@ check_function _wstat64 {
 check_function _wunlink {
   header io.h;
 }
-check_function MultiByteToWideChar {
-  compiler_flags '-DWIN32_LEAN_AND_MEAN=1';
-  header windows.h;
-}
-check_function WideCharToMultiByte {
-  compiler_flags '-DWIN32_LEAN_AND_MEAN=1';
-  header windows.h;
-}
 
 # mkdir() differs on unix and windows
 check_arg_count mkdir {
@@ -82,6 +87,12 @@ check_arg_count mkdir {
 }
 check_define S_IRWXU {
   header sys/stat.h;
+}
+
+# windows
+check_type HANDLE {
+  compiler_flags '-DWIN32_LEAN_AND_MEAN=1';
+  header windows.h;
 }
 
 # since it is known that other regular expression packages
@@ -96,6 +107,11 @@ mark _have_regex enable-output;
 configure {
   method auto;
   define_zero;
+}
+
+check_include_dependencies {
+  path   'include';
+  path   '.';
 }
 
 exit 0;

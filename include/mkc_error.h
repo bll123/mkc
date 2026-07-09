@@ -19,6 +19,7 @@ typedef enum {
   MKC_OK = 0,
   MKC_OK_CHANGE,
   MKC_ERR_COMPILER_FAILURE,
+  MKC_ERR_DEPENDENCY_CYCLE,
   MKC_ERR_DIR_NOT_A_DIR,
   MKC_ERR_DIR_NOT_CREATED,
   MKC_ERR_DIR_UNABLE_TO_OPEN,
@@ -63,7 +64,7 @@ typedef enum {
 
 typedef struct mkc_error_t mkc_error_t;
 
-#define mkc_error_set(mkcerr, err, syserr, str) r_mkc_error_set (mkcerr, err, syserr, str, __func__, __LINE__);
+#define mkc_error_set(mkcerr, err, syserr, str) r_mkc_error_set (mkcerr, err, syserr, str, __func__, __LINE__)
 
 MKC_NODISCARD mkc_error_t *mkc_error_init (void);
 void mkc_error_free (mkc_error_t *mkcerr);

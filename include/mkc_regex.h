@@ -11,13 +11,19 @@
 extern "C" {
 #endif
 
+typedef enum {
+  MKC_REGEX_NONE        = 0,
+  MKC_REGEX_MULTILINE   = (1 << 0),
+} mkc_regex_opt_t;
+
 typedef struct mkc_regex_t mkc_regex_t;
 
-MKC_NODISCARD mkc_regex_t * mkc_regex_init (const char *pattern, mkc_error_t *mkcerr);
+MKC_NODISCARD mkc_regex_t * mkc_regex_init (const char *pattern, mkc_regex_opt_t opts, mkc_error_t *mkcerr);
 void mkc_regex_free (mkc_regex_t *rx);
 MKC_NODISCARD char * mkc_regex_escape (const char *str);
 bool mkc_regex_match (mkc_regex_t *rx, const char *str);
 int mkc_regex_match_count (mkc_regex_t *rx, const char *str);
+void mkc_regex_get_reset (mkc_regex_t *rx);
 MKC_NODISCARD char ** mkc_regex_get (mkc_regex_t *rx, const char *str, int *mcount);
 void mkc_regex_get_free (char **val);
 MKC_NODISCARD char * mkc_regex_replace (mkc_regex_t *rx, const char *str, const char *repl);

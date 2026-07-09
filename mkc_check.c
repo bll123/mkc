@@ -45,6 +45,7 @@ typedef struct mkc_check_t {
   char              * pkgname;
   mkc_regex_t       * rxargcount;
   mkc_regex_t       * rxcomma;
+  mkc_regex_t       * rxincludedep;
   mkc_profidx_t     pidx_internal;
   mkc_profidx_t     pidx_dflt_comp;
   int               targc;
@@ -87,6 +88,7 @@ mkc_check_init (mkc_profile_t *profiles, mkc_pvar_t *pvar,
   check->pkgname = NULL;
   check->rxargcount = NULL;
   check->rxcomma = NULL;
+  check->rxincludedep = NULL;
 
   tpidx = mkc_profile_find (check->profiles,
       MKC_C_PROF_INTERNAL_NAME, MKC_COMPILER_GENERAL);
@@ -122,6 +124,11 @@ mkc_check_free (mkc_check_t *check)
   if (check->rxcomma != NULL) {
 #if _have_regex
     mkc_regex_free (check->rxcomma);
+#endif
+  }
+  if (check->rxincludedep != NULL) {
+#if _have_regex
+    mkc_regex_free (check->rxincludedep);
 #endif
   }
 
@@ -377,7 +384,7 @@ mkc_chk_arg_count (mkc_check_t *check, mkc_compiler_t compiler,
 
 #if _have_regex
   if (check->rxcomma == NULL) {
-    check->rxcomma = mkc_regex_init ("(,)", check->mkcerr);
+    check->rxcomma = mkc_regex_init ("(,)", MKC_REGEX_NONE, check->mkcerr);
     if (mkc_error_chk_err (check->mkcerr)) {
       free (rbuff);
       return MKC_ERR_FAILURE;
@@ -388,7 +395,7 @@ mkc_chk_arg_count (mkc_check_t *check, mkc_compiler_t compiler,
   snprintf (pattern, sizeof (pattern),
       "([ \t*]+%s[ \t]*\\([^)]*\\)[ \t\r\n]*;)", funcname);
   mkc_log (check->log, MKC_LOG_CHECK, "  arg-count: pattern: %s\n", pattern);
-  check->rxargcount = mkc_regex_init (pattern, check->mkcerr);
+  check->rxargcount = mkc_regex_init (pattern, MKC_REGEX_NONE, check->mkcerr);
   if (mkc_error_chk_err (check->mkcerr)) {
     free (rbuff);
     return MKC_ERR_FAILURE;
@@ -667,6 +674,71 @@ mkc_chk_header (mkc_check_t *check,
   return rc;
 }
 
+void
+mkc_check_get_include_deps (mkc_check_t *check,
+    mkc_compiler_t compiler, const char *fn, mkc_list_t *deplist)
+{
+  char            *rbuff;
+  size_t          rsz = MKC_LARGE_BUFF_SZ;
+  size_t          fsz = 0;
+#if _have_regex
+  char            **match;
+  int             matchcount = 0;
+#endif
+
+  mkc_log (check->log, MKC_LOG_CHECK, "== get-include-deps: %s\n", fn);
+
+  rbuff = malloc (rsz);
+  if (rbuff == NULL) {
+    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return;
+  }
+
+  rbuff = mkc_read_file (fn, &fsz, check->mkcerr);
+  if (mkc_error_chk_err (check->mkcerr)) {
+    free (rbuff);
+    return;
+  }
+#if _have_regex
+  if (check->rxincludedep == NULL) {
+    check->rxincludedep = mkc_regex_init ("^# *include *\"([^\"]+)\"$",
+        MKC_REGEX_MULTILINE, check->mkcerr);
+    if (mkc_error_chk_err (check->mkcerr)) {
+      free (rbuff);
+      return;
+    }
+  }
+
+  mkc_regex_get_reset (check->rxincludedep);
+
+  while (true) {
+    char            *tp;
+    mkc_listidx_t   loc;
+
+    match = mkc_regex_get (check->rxincludedep, rbuff, &matchcount);
+    mkc_log (check->log, MKC_LOG_CHECK, "  get-inc-deps: matches: %d\n", matchcount);
+    if (matchcount != 2) {
+      mkc_regex_get_free (match);
+      break;
+    }
+
+    tp = strdup (match [1]);
+    mkc_list_set (deplist, &tp, sizeof (char *), &loc);
+
+    mkc_regex_get_free (match);
+  }
+
+  mkc_regex_get_free (match);
+  mkc_regex_free (check->rxargcount);
+  check->rxargcount = NULL;
+#endif
+
+  mkc_chk_reset (check);
+  free (rbuff);
+}
+
+/* internal routines */
+
 static void
 mkc_check_file_sub_copy (mkc_check_t *check,
     char *tbuff, size_t sz,
@@ -796,12 +868,15 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
 {
   mkc_value_t       *value;
   char              *pkgconfpath;
+  char              *tpath;
   char              tmpname [MKC_VNAME_MAX];
   char              *rbuff;
   size_t            rsz;
   size_t            retsz;
   int               rc;
   mkc_alternate_t   * alt;
+  mkc_listidx_t     iteridx;
+  mkc_listidx_t     pathidx;
 
   pkgconfpath = malloc (MKC_PATH_MAX);
   if (pkgconfpath == NULL) {
@@ -828,15 +903,29 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
 
   check->targc = 0;
   mkc_check_append_arg (check, pkgconfpath);
-  if (check->attr->path != NULL) {
-    mkc_check_append_arg (check, "--with-path");
-    mkc_check_append_arg (check, check->attr->path);
+
+  tpath = malloc (MKC_PATH_MAX);
+  if (tpath == NULL) {
+    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return MKC_ERR_FAILURE;
   }
+
+  mkc_list_iter_start (check->attr->pathlist, &iteridx);
+  while ((pathidx = mkc_list_iter_next (check->attr->pathlist, &iteridx)) != MKC_ITER_FINISH) {
+    mkc_value_t   *path;
+
+    path = mkc_list_get_by_idx (check->attr->pathlist, pathidx);
+    mkc_pvar_value_get_str (check->pvar, path, tpath, MKC_PATH_MAX);
+    mkc_check_append_arg (check, "--with-path");
+    mkc_check_append_arg (check, tpath);
+  }
+
   mkc_check_append_arg (check, "--exists");
   mkc_check_append_arg (check, pkg);
   mkc_check_append_arg (check, NULL);
   if (mkc_error_chk_err (check->mkcerr)) {
     free (pkgconfpath);
+    free (tpath);
     return MKC_ERR_FAILURE;
   }
 
@@ -845,6 +934,7 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
   if (rbuff == NULL) {
     mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
     free (pkgconfpath);
+    free (tpath);
     return MKC_ERR_FAILURE;
   }
   mkc_check_log_command (check, "pkg-exists");
@@ -856,21 +946,30 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
   if (rc != MKC_OK) {
     free (pkgconfpath);
     free (rbuff);
+    free (tpath);
     return rc;
   }
 
   check->targc = 0;
   mkc_check_append_arg (check, pkgconfpath);
-  if (check->attr->path != NULL) {
+
+  mkc_list_iter_start (check->attr->pathlist, &iteridx);
+  while ((pathidx = mkc_list_iter_next (check->attr->pathlist, &iteridx)) != MKC_ITER_FINISH) {
+    mkc_value_t   *path;
+
+    path = mkc_list_get_by_idx (check->attr->pathlist, pathidx);
+    mkc_pvar_value_get_str (check->pvar, path, tpath, MKC_PATH_MAX);
     mkc_check_append_arg (check, "--with-path");
-    mkc_check_append_arg (check, check->attr->path);
+    mkc_check_append_arg (check, tpath);
   }
+
   mkc_check_append_arg (check, "--cflags");
   mkc_check_append_arg (check, pkg);
   mkc_check_append_arg (check, NULL);
   if (mkc_error_chk_err (check->mkcerr)) {
     free (pkgconfpath);
     free (rbuff);
+    free (tpath);
     mkc_chk_reset (check);
     return MKC_ERR_FAILURE;
   }
@@ -884,6 +983,7 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
   if (rc != MKC_OK) {
     free (pkgconfpath);
     free (rbuff);
+    free (tpath);
     mkc_chk_reset (check);
     return rc;
   }
@@ -898,22 +998,30 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
     mkc_strtrim (rbuff, retsz);
     snprintf (tmpname, sizeof (tmpname), "%s_CFLAGS", tmp);
     mkc_strclean (tmpname, 0);
-    mkc_pvar_set_list_from_str (check->pvar, tmpname, rbuff, MKC_VCTXT_CHECK);
+    mkc_pvar_set_list_from_str (check->pvar, tmpname, rbuff, MKC_VCTXT_MKC);
   }
 
   mkc_chk_reset (check);
   check->targc = 0;
   mkc_check_append_arg (check, pkgconfpath);
-  if (check->attr->path != NULL) {
+
+  mkc_list_iter_start (check->attr->pathlist, &iteridx);
+  while ((pathidx = mkc_list_iter_next (check->attr->pathlist, &iteridx)) != MKC_ITER_FINISH) {
+    mkc_value_t   *path;
+
+    path = mkc_list_get_by_idx (check->attr->pathlist, pathidx);
+    mkc_pvar_value_get_str (check->pvar, path, tpath, MKC_PATH_MAX);
     mkc_check_append_arg (check, "--with-path");
-    mkc_check_append_arg (check, check->attr->path);
+    mkc_check_append_arg (check, tpath);
   }
+
   mkc_check_append_arg (check, "--libs");
   mkc_check_append_arg (check, pkg);
   mkc_check_append_arg (check, NULL);
   if (mkc_error_chk_err (check->mkcerr)) {
     free (pkgconfpath);
     free (rbuff);
+    free (tpath);
     mkc_chk_reset (check);
     return MKC_ERR_FAILURE;
   }
@@ -935,12 +1043,13 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
     mkc_strtrim (rbuff, retsz);
     snprintf (tmpname, sizeof (tmpname), "%s_LIBS", tmp);
     mkc_strclean (tmpname, 0);
-    mkc_pvar_set_list_from_str (check->pvar, tmpname, rbuff, MKC_VCTXT_CHECK);
+    mkc_pvar_set_list_from_str (check->pvar, tmpname, rbuff, MKC_VCTXT_MKC);
   }
 
   mkc_chk_reset (check);
   free (pkgconfpath);
   free (rbuff);
+  free (tpath);
   return rc;
 }
 

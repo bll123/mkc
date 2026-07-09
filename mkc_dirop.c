@@ -29,7 +29,6 @@
 #include "mkc_dirop.h"
 #include "mkc_error.h"
 #include "mkc_fileop.h"
-#include "mkc_osdir.h"
 #include "mkc_string.h"
 
 static int mkc_dirop_make_recursive (const char *dirname, mkc_error_t *mkcerr);
@@ -49,9 +48,9 @@ mkc_dirop_make (const char *dirname, mkc_error_t *mkcerr)
 int
 mkc_dirop_delete (const char *dirname, int flags, mkc_error_t *mkcerr)
 {
-  dirhandle_t   *dh;
-  char          *fname;
-  char          temp [MKC_PATH_MAX];
+  mkc_dirhandle_t *dh;
+  char            *fname;
+  char            temp [MKC_PATH_MAX];
 
   if (mkc_is_directory (dirname)) {
     /* not an error */
@@ -63,13 +62,13 @@ mkc_dirop_delete (const char *dirname, int flags, mkc_error_t *mkcerr)
     return MKC_ERR_FAILURE;
   }
 
-  dh = mkc_osdir_open (dirname);
+  dh = mkc_dir_open (dirname, mkcerr);
   if (dh == NULL) {
     mkc_error_set (mkcerr, MKC_ERR_DIR_UNABLE_TO_OPEN, errno, dirname);
     return MKC_ERR_FAILURE;
   }
 
-  while ((fname = mkc_osdir_iterate (dh)) != NULL) {
+  while ((fname = mkc_dir_iterate (dh, mkcerr)) != NULL) {
     if (strcmp (fname, ".") == 0 ||
         strcmp (fname, "..") == 0) {
       free (fname);
@@ -81,13 +80,13 @@ mkc_dirop_delete (const char *dirname, int flags, mkc_error_t *mkcerr)
       if (mkc_is_directory (temp)) {
         if (! mkc_dirop_delete (temp, flags, mkcerr)) {
           free (fname);
-          mkc_osdir_close (dh);
+          mkc_dir_close (dh);
           return MKC_ERR_FAILURE;
         }
       } else {
         if ((flags & DIROP_ONLY_IF_EMPTY) == DIROP_ONLY_IF_EMPTY) {
           free (fname);
-          mkc_osdir_close (dh);
+          mkc_dir_close (dh);
           return MKC_ERR_FAILURE;
         }
         mkc_file_delete (temp);
@@ -96,7 +95,7 @@ mkc_dirop_delete (const char *dirname, int flags, mkc_error_t *mkcerr)
     free (fname);
   }
 
-  mkc_osdir_close (dh);
+  mkc_dir_close (dh);
 
   /* in case the dir is actually a link... */
   mkc_file_delete (dirname);
