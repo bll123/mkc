@@ -87,7 +87,7 @@ int mkc_chk_size (mkc_check_t *check, mkc_compiler_t compiler, const char *type)
 int mkc_chk_struct_member (mkc_check_t *check, mkc_compiler_t compiler, const char *structname, const char *membername);
 int mkc_chk_type (mkc_check_t *check, mkc_compiler_t compiler, const char *type);
 
-void mkc_check_get_include_deps (mkc_check_t *check, mkc_compiler_t compiler, const char *fn, mkc_list_t *deplist);
+void mkc_check_get_include_deps (mkc_check_t *check, mkc_compiler_t compiler, const char *rbuff, mkc_list_t *deplist);
 
 #if defined (__cplusplus) || defined (c_plusplus)
 }

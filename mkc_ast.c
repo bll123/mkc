@@ -1401,7 +1401,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       mkc_context_push (astmain->context, MKC_CONTEXT_CHK_INC, astmain->mkcerr);
       mkc_ast_process (astmain, astnode->stmt_chk_inc_guards.stmtblock, ifcond, loopcond, depth + 1);
       mkc_context_pop (astmain->context);
-//      mkc_process_stmt_chk_inc_guards (astmain->process);
+      mkc_process_stmt_chk_inc_guards (astmain->process);
       break;
     }
 

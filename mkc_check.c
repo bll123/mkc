@@ -676,28 +676,20 @@ mkc_chk_header (mkc_check_t *check,
 
 void
 mkc_check_get_include_deps (mkc_check_t *check,
-    mkc_compiler_t compiler, const char *fn, mkc_list_t *deplist)
+    mkc_compiler_t compiler, const char *rbuff, mkc_list_t *deplist)
 {
-  char            *rbuff = NULL;
-  size_t          fsz = 0;
 #if _have_regex
-  char            **match;
-  int             matchcount = 0;
+  char    **match;
+  int     matchcount = 0;
 #endif
 
-  mkc_log (check->log, MKC_LOG_CHECK, "== get-include-deps: %s\n", fn);
+  mkc_log (check->log, MKC_LOG_CHECK, "== get-include-deps\n");
 
-  rbuff = mkc_read_file (fn, &fsz, check->mkcerr);
-  if (mkc_error_chk_err (check->mkcerr)) {
-    datafree (rbuff);
-    return;
-  }
 #if _have_regex
   if (check->rxincludedep == NULL) {
     check->rxincludedep = mkc_regex_init ("^# *(include|import) *\"?([^\"<>]+)\"?$",
         MKC_REGEX_MULTILINE, check->mkcerr);
     if (mkc_error_chk_err (check->mkcerr)) {
-      free (rbuff);
       return;
     }
   }
@@ -726,7 +718,6 @@ mkc_check_get_include_deps (mkc_check_t *check,
 #endif
 
   mkc_chk_reset (check);
-  free (rbuff);
 }
 
 /* internal routines */

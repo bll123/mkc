@@ -320,6 +320,24 @@ mkc_list_ind_free (void *tdata)
   }
 }
 
+int
+mkc_list_ind_compare (void *ta, void *tb)
+{
+  char    **ia = ta;
+  char    **ib = tb;
+  char    *a;
+  char    *b;
+
+  if (ia == NULL || ib == NULL) {
+    return 0;
+  }
+
+  a = *ia;
+  b = *ib;
+
+  return strcmp (a, b);
+}
+
 /* internal routines */
 
 /* loc points to the idxsort entry, not the dataidx */

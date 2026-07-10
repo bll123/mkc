@@ -42,6 +42,7 @@ void * mkc_list_get_by_idx (mkc_list_t *list, mkc_listidx_t idx);
 void mkc_list_iter_start (mkc_list_t *list, mkc_listidx_t *iteridx);
 mkc_listidx_t mkc_list_iter_next (mkc_list_t *list, mkc_listidx_t *iteridx);
 void mkc_list_ind_free (void *data);
+int mkc_list_ind_compare (void *a, void *b);
 
 #if defined (__cplusplus) || defined (c_plusplus)
 }

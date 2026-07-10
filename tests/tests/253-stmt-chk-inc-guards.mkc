@@ -1,0 +1,6 @@
+# Copyright 2026 Brad Lanam Pleasant Hill CA
+
+check_include_guards {
+  path 'tests/data/253-stmt-chk-inc-deps-ok';
+  match '\.h$';
+}

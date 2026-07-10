@@ -31,6 +31,8 @@ static char const * const mkcerrormsg [] = {
   /* a mismatch in the number of arguments */
   [MKC_ERR_FUNCTION_ARG_MISMATCH] = "function argument mismatch",
   [MKC_ERR_FUNCTION_NOT_FOUND] = "function not found",
+  [MKC_ERR_INCLUDE_GUARD_DUPLICATE] = "include guard duplicated",
+  [MKC_ERR_INCLUDE_GUARD_NOTFOUND] = "include guard not found",
   [MKC_ERR_INVALID_ARGUMENT] = "invalid argument",
   [MKC_ERR_INVALID_OP] = "invalid operation",
   [MKC_ERR_INVALID_PROFILE] = "invalid profile",

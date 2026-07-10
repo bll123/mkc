@@ -201,8 +201,9 @@ static void mkc_process_substitutions (mkc_process_t *process, mkc_value_t *valu
 static void mkc_process_alternate_free (void *talt);
 static void mkc_process_temp_value_free (void *tvalue);
 static void mkc_process_topo_add_items (mkc_process_t *process, mkc_toposort_t *topo, mkc_list_t *hlist);
-static void mkc_process_topo_add_deps (mkc_process_t *process, mkc_toposort_t *topo, mkc_list_t *hlist);
+static void mkc_process_topo_add_deps (mkc_process_t *process, mkc_toposort_t *topo, char *rbuff, const char *hdr);
 static mkc_list_t * mkc_process_get_include_list (mkc_process_t *process, mkc_regex_t *rx);
+static char * mkc_process_iter_includes (mkc_process_t *process, mkc_list_t *hlist, mkc_listidx_t *hiteridx, char *hdr, size_t hsz);
 
 
 MKC_NODISCARD
@@ -697,7 +698,10 @@ mkc_process_stmt_chk_inc_deps (mkc_process_t *process)
   mkc_list_t      *hlist = NULL;
   mkc_toposort_t  *topo = NULL;
   mkc_regex_t     *rx = NULL;
+  mkc_listidx_t   hiteridx;
   int             rc;
+  char            *rbuff;
+  char            *hdr;
 
   if (process->attr.str [MKC_ATTR_MATCH] == NULL) {
     mkc_error_set (process->mkcerr, MKC_ERR_MISSING_ATTRIBUTE, 0, "match");
@@ -711,6 +715,13 @@ mkc_process_stmt_chk_inc_deps (mkc_process_t *process)
     return;
   }
 
+  hdr = malloc (MKC_PATH_MAX);
+  if (hdr == NULL) {
+    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    mkc_process_attr_clear (process);
+    return;
+  }
+
   topo = mkc_toposort_init (process->mkcerr);
 
 #if _have_regex
@@ -718,13 +729,20 @@ mkc_process_stmt_chk_inc_deps (mkc_process_t *process)
       MKC_REGEX_NONE, process->mkcerr);
 #endif
   if (mkc_error_chk_err (process->mkcerr)) {
+    free (hdr);
     mkc_process_attr_clear (process);
     return;
   }
 
   hlist = mkc_process_get_include_list (process, rx);
   mkc_process_topo_add_items (process, topo, hlist);
-  mkc_process_topo_add_deps (process, topo, hlist);
+
+  mkc_list_iter_start (hlist, &hiteridx);
+  while ((rbuff = mkc_process_iter_includes (process, hlist, &hiteridx,
+      hdr, MKC_PATH_MAX)) != NULL) {
+    mkc_process_topo_add_deps (process, topo, rbuff, hdr);
+    free (rbuff);
+  }
   mkc_list_free (hlist);
 
   rc = mkc_toposort (topo);
@@ -746,6 +764,7 @@ mkc_process_stmt_chk_inc_deps (mkc_process_t *process)
   mkc_regex_free (rx);
 #endif
   mkc_toposort_free (topo);
+  free (hdr);
   mkc_process_attr_clear (process);
 }
 
@@ -754,6 +773,12 @@ mkc_process_stmt_chk_inc_guards (mkc_process_t *process)
 {
   mkc_list_t      *hlist = NULL;
   mkc_regex_t     *rx;
+  mkc_listidx_t   hiteridx;
+  char            *rbuff;
+  char            *hdr;
+  char            **match = NULL;
+  int             matchcount;
+  mkc_list_t      *guardlist = NULL;
 
   if (process->attr.str [MKC_ATTR_MATCH] == NULL) {
     mkc_error_set (process->mkcerr, MKC_ERR_MISSING_ATTRIBUTE, 0, "match");
@@ -767,14 +792,25 @@ mkc_process_stmt_chk_inc_guards (mkc_process_t *process)
     return;
   }
 
+  hdr = malloc (MKC_PATH_MAX);
+  if (hdr == NULL) {
+    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    mkc_process_attr_clear (process);
+    return;
+  }
+
+  guardlist = mkc_list_init (MKC_LIST_SORTED, mkc_list_ind_free,
+      mkc_list_ind_compare, process->mkcerr);
+
 #if _have_regex
   if (process->rxincguard == NULL) {
     process->rxincguard = mkc_regex_init (
-        "^#ifndef ([A-Za-z_]+)^#define \\g1$",
+        "^# *ifndef +([[:alnum:]_][[:alnum:]_]*)[\r\n]+# *define +\\g1$",
         MKC_REGEX_MULTILINE, process->mkcerr);
   }
 #endif
   if (mkc_error_chk_err (process->mkcerr)) {
+    free (hdr);
     mkc_process_attr_clear (process);
     return;
   }
@@ -785,12 +821,47 @@ mkc_process_stmt_chk_inc_guards (mkc_process_t *process)
 #endif
   if (mkc_error_chk_err (process->mkcerr)) {
     mkc_process_attr_clear (process);
+    free (hdr);
     return;
   }
 
   hlist = mkc_process_get_include_list (process, rx);
-  mkc_list_free (hlist);
+  mkc_list_iter_start (hlist, &hiteridx);
+  while ((rbuff = mkc_process_iter_includes (process, hlist, &hiteridx,
+      hdr, MKC_PATH_MAX)) != NULL) {
+    char            *tp;
+    mkc_listidx_t   loc = MKC_LIST_NOTFOUND;
+    mkc_listidx_t   idx;
 
+    if (mkc_error_chk_err (process->mkcerr)) {
+      free (rbuff);
+      break;
+    }
+
+    mkc_regex_get_reset (process->rxincguard);
+    match = mkc_regex_get (process->rxincguard, rbuff, &matchcount);
+    if (matchcount != 2) {
+      mkc_error_set (process->mkcerr, MKC_ERR_INCLUDE_GUARD_NOTFOUND, 0, hdr);
+    }
+
+    if (matchcount == 2) {
+      tp = strdup (match [1]);
+      loc = MKC_LIST_NOTFOUND;
+      idx = mkc_list_find (guardlist, &tp, &loc);
+      if (idx != MKC_LIST_NOTFOUND) {
+        mkc_error_set (process->mkcerr, MKC_ERR_INCLUDE_GUARD_DUPLICATE, 0, hdr);
+      }
+
+      mkc_list_set (guardlist, &tp, sizeof (char *), &loc);
+    }
+    mkc_regex_get_free (match);
+    free (rbuff);
+  }
+
+  mkc_list_free (hlist);
+  mkc_list_free (guardlist);
+  mkc_regex_free (rx);
+  free (hdr);
   mkc_process_attr_clear (process);
 }
 
@@ -3084,67 +3155,28 @@ mkc_process_topo_add_items (mkc_process_t *process,
 
 static void
 mkc_process_topo_add_deps (mkc_process_t *process,
-    mkc_toposort_t *topo, mkc_list_t *hlist)
+    mkc_toposort_t *topo, char *rbuff, const char *hdr)
 {
-  mkc_listidx_t   hiteridx;
-  mkc_listidx_t   hidx;
-  char            *tbuff;
   mkc_list_t      *deplist;
-
-  tbuff = malloc (MKC_PATH_MAX);
-  if (tbuff == NULL) {
-    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return;
-  }
+  mkc_listidx_t   diteridx;
+  mkc_listidx_t   didx;
 
   deplist = mkc_list_init (MKC_LIST_UNSORTED, mkc_list_ind_free, NULL, process->mkcerr);
 
-  mkc_list_iter_start (hlist, &hiteridx);
-  while ((hidx = mkc_list_iter_next (hlist, &hiteridx)) != MKC_ITER_FINISH) {
-    char            **temp;
-    const char      *hdr;
-    mkc_listidx_t   diteridx;
-    mkc_listidx_t   didx;
-    mkc_listidx_t   piteridx;
-    mkc_listidx_t   pathidx;
+  mkc_check_get_include_deps (process->check,
+      process->attr.currcompiler, rbuff, deplist);
 
-    temp = mkc_list_get_by_idx (hlist, hidx);
-    hdr = *temp;
+  mkc_list_iter_start (deplist, &diteridx);
+  while ((didx = mkc_list_iter_next (deplist, &diteridx)) != MKC_ITER_FINISH) {
+    char  **temp;
+    char  *dep;
 
-    mkc_list_iter_start (process->attr.pathlist, &piteridx);
-    while ((pathidx = mkc_list_iter_next (process->attr.pathlist, &piteridx)) != MKC_ITER_FINISH) {
-      mkc_value_t   *valpath;
-      const char    *path;
-
-      valpath = mkc_list_get_by_idx (process->attr.pathlist, pathidx);
-      path = valpath->sval;
-
-      snprintf (tbuff, MKC_PATH_MAX, "%s/%s", path, hdr);
-      if (! mkc_file_exists (tbuff)) {
-        continue;
-      }
-      /* process the include file */
-      mkc_check_get_include_deps (process->check,
-          process->attr.currcompiler, tbuff, deplist);
-      break;
-    }
-
-    mkc_list_iter_start (deplist, &diteridx);
-    while ((didx = mkc_list_iter_next (deplist, &diteridx)) != MKC_ITER_FINISH) {
-      char  **temp;
-      char  *dep;
-
-      temp = mkc_list_get_by_idx (deplist, didx);
-      dep = *temp;
-      mkc_toposort_add_pair (topo, hdr, dep);
-    }
-
-    mkc_list_free (deplist);
-    deplist = mkc_list_init (MKC_LIST_UNSORTED, mkc_list_ind_free, NULL, process->mkcerr);
+    temp = mkc_list_get_by_idx (deplist, didx);
+    dep = *temp;
+    mkc_toposort_add_pair (topo, hdr, dep);
   }
 
   mkc_list_free (deplist);
-  free (tbuff);
 }
 
 static mkc_list_t *
@@ -3192,3 +3224,52 @@ mkc_process_get_include_list (mkc_process_t *process, mkc_regex_t *rx)
 #endif
   return hlist;
 }
+
+static char *
+mkc_process_iter_includes (mkc_process_t *process, mkc_list_t *hlist,
+    mkc_listidx_t *hiteridx, char *hdr, size_t hsz)
+{
+  mkc_listidx_t   hidx;
+  char            *tbuff;
+  char            *rbuff;
+
+  tbuff = malloc (MKC_PATH_MAX);
+  if (tbuff == NULL) {
+    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return NULL;
+  }
+
+  while ((hidx = mkc_list_iter_next (hlist, hiteridx)) != MKC_ITER_FINISH) {
+    char            **temp;
+    const char      *thdr;
+    mkc_listidx_t   piteridx;
+    mkc_listidx_t   pathidx;
+
+    temp = mkc_list_get_by_idx (hlist, hidx);
+    thdr = *temp;
+    stpecpy (hdr, hdr + hsz, thdr);
+
+    mkc_list_iter_start (process->attr.pathlist, &piteridx);
+    while ((pathidx = mkc_list_iter_next (process->attr.pathlist, &piteridx)) != MKC_ITER_FINISH) {
+      mkc_value_t   *valpath;
+      const char    *path;
+      size_t        fsz = 0;
+
+      valpath = mkc_list_get_by_idx (process->attr.pathlist, pathidx);
+      path = valpath->sval;
+
+      snprintf (tbuff, MKC_PATH_MAX, "%s/%s", path, thdr);
+      if (! mkc_file_exists (tbuff)) {
+        continue;
+      }
+
+      rbuff = mkc_read_file (tbuff, &fsz, process->mkcerr);
+      free (tbuff);
+      return rbuff;
+    }
+  }
+
+  free (tbuff);
+  return NULL;
+}
+
