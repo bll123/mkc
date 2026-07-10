@@ -42,6 +42,7 @@ MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_exit (mkc_astmain_t *astmain, mkc_astno
 void mkc_ast_process_include (mkc_astmain_t *astmain, mkc_astnode_t *vala, char *tbuff, size_t sz, int32_t lineno, int colno);
 
 MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_stmt_chk_inc_deps (mkc_astmain_t *astmain, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
+MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_stmt_chk_inc_guards (mkc_astmain_t *astmain, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
 MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_configure (mkc_astmain_t *astmain, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
 MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_debug (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *valb, int32_t lineno, int colno);
 MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_loadcache (mkc_astmain_t *astmain, mkc_astnode_t *vers, mkc_astnode_t *stmtblock, int32_t lineno, int colno);

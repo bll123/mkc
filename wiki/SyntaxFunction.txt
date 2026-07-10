@@ -8,14 +8,14 @@
 ##### Defining a Function
 
     function <function-name> { <statements> }
-    function <function-name> ( <argument-list> ) { <statements> }
+    function <function-name> ( <parameter-list> ) { <statements> }
 
 The __function__ statement associates an optional
-_argument&#8209;list_ and a set of statements with
+_parameter&#8209;list_ and a set of statements with
 _function&#8209;name_.
 
-The _argument&#8209;list_ specifies one or more variable names.  These
-variables are local to the function's statement block.
+The _parameter&#8209;list_ specifies one or more variable names.
+These variables are local to the function's statement block.
 
 ##### Function Examples
 

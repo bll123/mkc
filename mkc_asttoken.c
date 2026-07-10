@@ -68,6 +68,7 @@ char const * const typenames [MKC_T_MAX] = {
   [MKC_T_OP_UNARY_MINUS] = "op_unary_minus",
   [MKC_T_OP_UNARY_PLUS] = "op_unary_plus",
   [MKC_T_STMT_CHK_INC_DEPS] = "stmt_chk_inc_deps",
+  [MKC_T_STMT_CHK_INC_GUARDS] = "stmt_chk_inc_guards",
   [MKC_T_STMT_CONFIGURE] = "stmt_configure",
   [MKC_T_STMT_DEBUG] = "stmt_debug",
   [MKC_T_STMT_ELSEIF] = "stmt_elseif",

@@ -135,7 +135,7 @@ static mkc_ctxt_val_t attrcontext [MKC_ATTR_MAX] = {
   [MKC_ATTR_INPUT] = MKC_CONTEXT_CONFIGURE,
 // ### lib version will need to be fixed
   [MKC_ATTR_LIB_VERSION] = MKC_CONTEXT_PROJECT,
-  [MKC_ATTR_MATCH] = MKC_CONTEXT_CHK_INC_DEPS,
+  [MKC_ATTR_MATCH] = MKC_CONTEXT_CHK_INC,
   [MKC_ATTR_METHOD] = MKC_CONTEXT_CONFIGURE,
   [MKC_ATTR_OUTPUT] = MKC_CONTEXT_CONFIGURE,
   [MKC_ATTR_VCONTEXT] = MKC_CONTEXT_SET,
@@ -1244,7 +1244,7 @@ mkc_process_attr_compiler (mkc_process_t *process, mkc_value_t *name)
   /* the compiler attribute is only allowed in */
   /* project and profile statements */
   if (! mkc_context_check (process->context,
-      MKC_CONTEXT_PROJECT | MKC_CONTEXT_PROFILE | MKC_CONTEXT_CHK_INC_DEPS)) {
+      MKC_CONTEXT_PROJECT | MKC_CONTEXT_PROFILE | MKC_CONTEXT_CHK_INC)) {
     mkc_error_set (process->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
     return;
   }
@@ -1398,7 +1398,7 @@ mkc_process_attr_path (mkc_process_t *process, mkc_value_t *path)
   }
 
   if (! mkc_context_check (process->context,
-      MKC_CONTEXT_CHECK | MKC_CONTEXT_CHK_INC_DEPS)) {
+      MKC_CONTEXT_CHECK | MKC_CONTEXT_CHK_INC)) {
     mkc_error_set (process->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
     return;
   }

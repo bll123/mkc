@@ -139,6 +139,7 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 "range"     { return T_RANGE; }
 
 "check_include_dependencies"  { return T_STMT_CHK_INC_DEPS; }
+"check_include_guards"        { return T_STMT_CHK_INC_GUARDS; }
 "configure"   { return T_STMT_CONFIGURE; }
 "load_cache"  { return T_STMT_LOADCACHE; }
 "mark"        { return T_STMT_MARK; }

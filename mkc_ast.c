@@ -24,6 +24,14 @@
 #include "mkc_string.h"
 #include "mkc_var.h"
 
+/* generics */
+
+typedef struct mkc_ast_stmtblock_t {
+  mkc_astnode_t       *stmtblock;
+} mkc_ast_stmtblock_t;
+
+/* values and ops */
+
 typedef struct mkc_ast_op_t {
   mkc_astnode_t       *vala;
   mkc_astnode_t       *valb;
@@ -51,9 +59,8 @@ typedef struct mkc_ast_main_t {
 
 /* statements */
 
-typedef struct mkc_ast_stmt_chk_inc_deps_t {
-  mkc_astnode_t       *stmtblock;
-} mkc_ast_stmt_chk_inc_deps_t;
+typedef struct mkc_ast_stmtblock_t mkc_ast_stmt_chk_inc_deps_t;
+typedef struct mkc_ast_stmtblock_t mkc_ast_stmt_chk_inc_guards_t;
 
 typedef struct mkc_ast_conf_t {
   mkc_astnode_t       *stmtblock;
@@ -117,9 +124,7 @@ typedef struct mkc_ast_profile_t {
   mkc_astnode_t     *stmtblock;
 } mkc_ast_profile_t;
 
-typedef struct mkc_ast_project_t {
-  mkc_astnode_t       *stmtblock;
-} mkc_ast_project_t;
+typedef struct mkc_ast_stmtblock_t mkc_ast_stmt_project_t;
 
 typedef struct mkc_ast_set_t {
   mkc_astnode_t     *nm;
@@ -162,9 +167,7 @@ typedef struct mkc_ast_attribute_t {
   mkc_astnode_t     *name;
 } mkc_ast_attribute_t;
 
-typedef struct mkc_ast_attr_alternate_t {
-  mkc_astnode_t     *stmtblock;
-} mkc_ast_attr_alternate_t;
+typedef struct mkc_ast_stmtblock_t mkc_ast_attr_alternate_t;
 
 typedef struct mkc_ast_attr_compflag_t {
   mkc_astnode_t     *compflaglist;
@@ -201,6 +204,7 @@ typedef struct mkc_astnode_t {
     mkc_ast_chk_package_t       chk_package;
     mkc_ast_chk_member_t        chk_member;
     mkc_ast_stmt_chk_inc_deps_t stmt_chk_inc_deps;
+    mkc_ast_stmt_chk_inc_guards_t stmt_chk_inc_guards;
     mkc_ast_conf_t              stmt_conf;
     mkc_ast_debug_t             stmt_debug;
     mkc_ast_exit_t              stmt_exit;
@@ -213,7 +217,7 @@ typedef struct mkc_astnode_t {
     mkc_ast_mark_t              stmt_mark;
     mkc_ast_print_t             stmt_print;
     mkc_ast_profile_t           stmt_profile;
-    mkc_ast_project_t           stmt_project;
+    mkc_ast_stmt_project_t      stmt_project;
     mkc_ast_set_t               stmt_set;
     mkc_ast_while_t             stmt_while;
     mkc_ast_list_t              list;
@@ -610,7 +614,7 @@ mkc_ast_mk_stmt_chk_inc_deps (mkc_astmain_t *astmain,
   mkc_astnode_t   *astnode;
 
   mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
-      "ast-mk: mkcdebug\n");
+      "ast-mk: chk-inc-deps\n");
 
   astnode = mkc_astnode_init (astmain, MKC_T_STMT_CHK_INC_DEPS, lineno, colno);
   if (astnode == NULL) {
@@ -618,6 +622,25 @@ mkc_ast_mk_stmt_chk_inc_deps (mkc_astmain_t *astmain,
   }
 
   astnode->stmt_chk_inc_deps.stmtblock = stmtblock;
+  return astnode;
+}
+
+MKC_NODISCARD
+mkc_astnode_t *
+mkc_ast_mk_stmt_chk_inc_guards (mkc_astmain_t *astmain,
+    mkc_astnode_t *stmtblock, int32_t lineno, int colno)
+{
+  mkc_astnode_t   *astnode;
+
+  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
+      "ast-mk: chk-inc-guards\n");
+
+  astnode = mkc_astnode_init (astmain, MKC_T_STMT_CHK_INC_GUARDS, lineno, colno);
+  if (astnode == NULL) {
+    return NULL;
+  }
+
+  astnode->stmt_chk_inc_guards.stmtblock = stmtblock;
   return astnode;
 }
 
@@ -1367,10 +1390,18 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
     /* statements */
 
     case MKC_T_STMT_CHK_INC_DEPS: {
-      mkc_context_push (astmain->context, MKC_CONTEXT_CHK_INC_DEPS, astmain->mkcerr);
+      mkc_context_push (astmain->context, MKC_CONTEXT_CHK_INC, astmain->mkcerr);
       mkc_ast_process (astmain, astnode->stmt_chk_inc_deps.stmtblock, ifcond, loopcond, depth + 1);
       mkc_context_pop (astmain->context);
       mkc_process_stmt_chk_inc_deps (astmain->process);
+      break;
+    }
+
+    case MKC_T_STMT_CHK_INC_GUARDS: {
+      mkc_context_push (astmain->context, MKC_CONTEXT_CHK_INC, astmain->mkcerr);
+      mkc_ast_process (astmain, astnode->stmt_chk_inc_guards.stmtblock, ifcond, loopcond, depth + 1);
+      mkc_context_pop (astmain->context);
+//      mkc_process_stmt_chk_inc_guards (astmain->process);
       break;
     }
 
