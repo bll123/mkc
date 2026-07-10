@@ -73,6 +73,7 @@ typedef struct mkc_process_t {
   const char            * MKC_C_OBJEXT;
   const char            * MKC_C_EXEEXT;
   mkc_regex_t           * rxshellvar;
+  mkc_regex_t           * rxincguard;
   mkc_list_t            * user_rx_list;
   mkc_attribute_t       attr;
   /* internal */
@@ -227,6 +228,7 @@ mkc_process_init (mkc_profile_t *profiles, mkc_log_t *log,
   process->MKC_C_EXEEXT = "";
   process->projectname = NULL;
   process->rxshellvar = NULL;
+  process->rxincguard = NULL;
   process->user_rx_list = mkc_list_init (MKC_LIST_SORTED,
       mkc_process_user_regex_free, mkc_process_user_regex_comp, mkcerr);
 
@@ -310,6 +312,11 @@ mkc_process_free (mkc_process_t *process)
   if (process->rxshellvar != NULL) {
 #if _have_regex
     mkc_regex_free (process->rxshellvar);
+#endif
+  }
+  if (process->rxincguard != NULL) {
+#if _have_regex
+    mkc_regex_free (process->rxincguard);
 #endif
   }
   mkc_list_free (process->user_rx_list);
@@ -704,12 +711,6 @@ mkc_process_stmt_chk_inc_deps (mkc_process_t *process)
     return;
   }
 
-  /* check_include_dependencies may have a list of headers */
-  /* specified with the header attribute */
-  /* the header attribute is not that useful */
-  /* a path will always be specified */
-  /* a match attribute must be specified */
-
   topo = mkc_toposort_init (process->mkcerr);
 
 #if _have_regex
@@ -745,6 +746,51 @@ mkc_process_stmt_chk_inc_deps (mkc_process_t *process)
   mkc_regex_free (rx);
 #endif
   mkc_toposort_free (topo);
+  mkc_process_attr_clear (process);
+}
+
+void
+mkc_process_stmt_chk_inc_guards (mkc_process_t *process)
+{
+  mkc_list_t      *hlist = NULL;
+  mkc_regex_t     *rx;
+
+  if (process->attr.str [MKC_ATTR_MATCH] == NULL) {
+    mkc_error_set (process->mkcerr, MKC_ERR_MISSING_ATTRIBUTE, 0, "match");
+    mkc_process_attr_clear (process);
+    return;
+  }
+
+  if (mkc_list_size (process->attr.pathlist) == 0) {
+    mkc_error_set (process->mkcerr, MKC_ERR_MISSING_ATTRIBUTE, 0, "path");
+    mkc_process_attr_clear (process);
+    return;
+  }
+
+#if _have_regex
+  if (process->rxincguard == NULL) {
+    process->rxincguard = mkc_regex_init (
+        "^#ifndef ([A-Za-z_]+)^#define \\g1$",
+        MKC_REGEX_MULTILINE, process->mkcerr);
+  }
+#endif
+  if (mkc_error_chk_err (process->mkcerr)) {
+    mkc_process_attr_clear (process);
+    return;
+  }
+
+#if _have_regex
+  rx = mkc_regex_init (process->attr.str [MKC_ATTR_MATCH],
+      MKC_REGEX_NONE, process->mkcerr);
+#endif
+  if (mkc_error_chk_err (process->mkcerr)) {
+    mkc_process_attr_clear (process);
+    return;
+  }
+
+  hlist = mkc_process_get_include_list (process, rx);
+  mkc_list_free (hlist);
+
   mkc_process_attr_clear (process);
 }
 
