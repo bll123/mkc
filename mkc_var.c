@@ -457,10 +457,10 @@ mkc_value_range_init (mkc_value_t *value,
 {
   value->vtype = MKC_VT_RANGE;
   value->range.finish = false;
-  value->range.var = 0;
   value->range.beg = beg;
   value->range.end = end;
   value->range.incr = incr;
+  value->range.var = beg - incr;
 }
 
 int32_t
@@ -493,7 +493,6 @@ mkc_value_disp_type (mkc_value_t *value)
 
   return vtypenames [value->vtype];
 }
-
 
 /* internal routines */
 

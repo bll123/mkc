@@ -8,4 +8,7 @@ set e [ 'e' ];
 set f [ 5 ];
 set g ${e};
 set h ${f};
+set i 6;
+set j 7;
+set k [ ${i} ${j} ];
 mkcdebug printvar test;

@@ -54,7 +54,6 @@ SAN_LDFLAGS = $(SAN_OPTFLAGS) $(BASE_LDFLAGS) \
     -fsanitize-address-use-after-scope \
     -fsanitize-recover=address
 SAN_LIBS = $$(pkgconf --libs $(MKC_REGEX_PKG))
-SAN_EXTRA_LIBS = 
 SAN_LINUX_LIBS = -lrt
 
 
@@ -133,14 +132,19 @@ bootstrap-final: $(BOOTSTRAP_TMPDIR) $(BOOTSTRAP_MKC_FILES) \
 
 .PHONY: sanitize
 sanitize:
-	@if [ `./utils/chkforwin.sh` = T ]; then \
-	  SAN_EXTRA_LIBS=$(SAN_LINUX_LIBS) ; \
-	fi
-	@$(MAKE) -f $(MAKEFILE) \
+	@if [ `uname -s` = Linux ]; then \
+	  $(MAKE) -f $(MAKEFILE) \
 	    CFLAGS="$(SAN_CFLAGS)" \
 	    LDFLAGS="$(SAN_LDFLAGS)" \
-	    LIBS="$(SAN_LIBS) $(SAN_EXTRA_LIBS)" \
-	    real-start
+	    LIBS="$(SAN_LIBS) $(SAN_LINUX_LIBS)" \
+	    real-start ; \
+	else \
+	  $(MAKE) -f $(MAKEFILE) \
+	    CFLAGS="$(SAN_CFLAGS)" \
+	    LDFLAGS="$(SAN_LDFLAGS)" \
+	    LIBS="$(SAN_LIBS)" \
+	    real-start ; \
+	fi
 
 .PHONY: debug
 debug:

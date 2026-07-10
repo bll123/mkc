@@ -172,4 +172,3 @@ if (${MKC_FORTIFY}) {
   add_compile_flag '-U_FORTIFY_SOURCE';
   add_compile_flag '-D_FORTIFY_SOURCE=0';
 }
-

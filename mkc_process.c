@@ -59,8 +59,6 @@ typedef struct mkc_foreach_t {
   mkc_value_t         *range;
   mkc_profidx_t       plocalidx;
   mkc_listidx_t       iteridx;
-  mkc_value_t         tnvalue;
-  mkc_value_t         tavalue;
   mkc_astnode_token_t type;
 } mkc_foreach_t;
 
@@ -613,33 +611,27 @@ mkc_process_stmt_foreach_setup (mkc_process_t *process,
   pforeach->range = range;
   pforeach->list = NULL;
   pforeach->iteridx = MKC_ITER_FINISH;
-  pforeach->tnvalue.vtype = MKC_VT_INVALID;
-  pforeach->tavalue.vtype = MKC_VT_INVALID;
+  pforeach->type = MKC_T_VAL_LIST;
 
   if (valnm != NULL) {
-    memcpy (&pforeach->tnvalue, valnm, sizeof (mkc_value_t));
-    mkc_process_substitutions (process, &pforeach->tnvalue);
-    if (mkc_error_chk_err (process->mkcerr)) {
+    if (valnm->vtype != MKC_VT_LIST) {
+      mkc_error_set (process->mkcerr, MKC_ERR_MISMATCHED_ARGUMENT_TYPE, 0, NULL);
       return NULL;
     }
-    if (pforeach->tnvalue.vtype != MKC_VT_LIST) {
-      mkc_error_set (process->mkcerr, MKC_ERR_INVALID_ARGUMENT, 0, NULL);
-      return NULL;
-    }
-    pforeach->namelist = pforeach->tnvalue.list;
+    pforeach->namelist = valnm->list;
   }
   if (vallist != NULL) {
-    pforeach->type = MKC_T_VAL_LIST;
-    memcpy (&pforeach->tavalue, vallist, sizeof (mkc_value_t));
-    mkc_process_substitutions (process, &pforeach->tavalue);
-    if (mkc_error_chk_err (process->mkcerr)) {
+    mkc_value_t   *value;
+
+    value = vallist;
+    if (vallist->vtype == MKC_VT_VARIABLE) {
+      value = mkc_pvar_get_variable_value (process->pvar, vallist->sval);
+    }
+    if (value->vtype != MKC_VT_LIST && value->vtype != MKC_VT_RANGE) {
+      mkc_error_set (process->mkcerr, MKC_ERR_MISMATCHED_ARGUMENT_TYPE, 0, NULL);
       return NULL;
     }
-    if (pforeach->tavalue.vtype != MKC_VT_LIST) {
-      mkc_error_set (process->mkcerr, MKC_ERR_INVALID_ARGUMENT, 0, NULL);
-      return NULL;
-    }
-    pforeach->list = pforeach->tavalue.list;
+    pforeach->list = value->list;
     mkc_list_iter_start (pforeach->list, &pforeach->iteridx);
   }
   if (range != NULL) {
@@ -690,8 +682,6 @@ mkc_process_stmt_foreach (mkc_process_t *process, mkc_foreach_t *pforeach)
 void
 mkc_process_stmt_foreach_finish (mkc_process_t *process, mkc_foreach_t *pforeach)
 {
-  mkc_process_temp_value_free (&pforeach->tnvalue);
-  mkc_process_temp_value_free (&pforeach->tavalue);
   free (pforeach);
   mkc_profile_local_pop (process->profiles);
 }
@@ -852,61 +842,63 @@ mkc_process_stmt_debug (mkc_process_t *process,
 
 void
 mkc_process_stmt_function_call (mkc_process_t *process,
-    mkc_value_t *valarglist, mkc_value_t *valfuncargs)
+    mkc_value_t *valparams, mkc_value_t *valfuncargs)
 {
   mkc_profidx_t   plocalidx;
-  mkc_list_t      *nmlist = NULL;
+  mkc_list_t      *paramlist = NULL;
   mkc_list_t      *alist = NULL;
   mkc_listidx_t   aiteridx;
   mkc_listidx_t   nmiteridx;
   mkc_listidx_t   aidx;
   mkc_listidx_t   nmidx;
-  mkc_value_t     tvalue;
 
   plocalidx = mkc_profile_local_create (process->profiles);
 
-  if (valarglist != NULL) {
-    nmlist = valarglist->list;
-  }
-  if (valfuncargs != NULL) {
-    if (valfuncargs->vtype != MKC_VT_LIST) {
+  if (valparams != NULL) {
+    if (valparams->vtype != MKC_VT_LIST) {
       mkc_error_set (process->mkcerr, MKC_ERR_MISMATCHED_ARGUMENT_TYPE, 0, NULL);
       return;
     }
-    memcpy (&tvalue, valfuncargs, sizeof (mkc_value_t));
-    mkc_process_substitutions (process, &tvalue);
-    if (mkc_error_chk_err (process->mkcerr)) {
+    paramlist = valparams->list;
+  }
+  if (valfuncargs != NULL) {
+    mkc_value_t   *value;
+
+    value = valfuncargs;
+    if (valfuncargs->vtype == MKC_VT_VARIABLE) {
+      value = mkc_pvar_get_variable_value (process->pvar, valfuncargs->sval);
+    }
+    if (value->vtype != MKC_VT_LIST) {
+      mkc_error_set (process->mkcerr, MKC_ERR_MISMATCHED_ARGUMENT_TYPE, 0, NULL);
       return;
     }
-    alist = tvalue.list;
+    alist = value->list;
   }
-  if ((alist == NULL && nmlist != NULL) ||
-      (alist != NULL && nmlist == NULL) ||
+  if ((alist == NULL && paramlist != NULL) ||
+      (alist != NULL && paramlist == NULL) ||
       (alist != NULL &&
-          mkc_list_size (alist) != mkc_list_size (nmlist))) {
+          mkc_list_size (alist) != mkc_list_size (paramlist))) {
     mkc_error_set (process->mkcerr, MKC_ERR_FUNCTION_ARG_MISMATCH, 0, NULL);
     return;
   }
 
   /* put the arguments into the local profile */
   mkc_list_iter_start (alist, &aiteridx);
-  mkc_list_iter_start (nmlist, &nmiteridx);
+  mkc_list_iter_start (paramlist, &nmiteridx);
   while ((aidx = mkc_list_iter_next (alist, &aiteridx)) != MKC_ITER_FINISH) {
     mkc_value_t     *aval;
     mkc_value_t     *nmval;
 
-    nmidx = mkc_list_iter_next (nmlist, &nmiteridx);
+    nmidx = mkc_list_iter_next (paramlist, &nmiteridx);
 
     if (mkc_error_chk_err (process->mkcerr)) {
       break;
     }
 
     aval = mkc_list_get_by_idx (alist, aidx);
-    nmval = mkc_list_get_by_idx (nmlist, nmidx);
+    nmval = mkc_list_get_by_idx (paramlist, nmidx);
     mkc_process_local_set (process, nmval, aval, plocalidx);
   }
-
-  mkc_process_temp_value_free (&tvalue);
 }
 
 /* this function is called twice.  once with fromcache == true, */
