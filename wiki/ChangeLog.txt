@@ -6,6 +6,17 @@
 
 -->
 
+**0.3 2026-7-10**
+
+* Bug Fixes:
+    * Various
+* Changes:
+    * 'path' attribute is repeatable.
+* New features:
+    * Add 'check_include_dependencies'
+    * Add 'foreach'
+    * Add 'function'
+
 **0.2 2026-7-5**
 
 * Bug Fixes:

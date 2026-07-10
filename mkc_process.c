@@ -619,6 +619,9 @@ mkc_process_stmt_foreach_setup (mkc_process_t *process,
   if (valnm != NULL) {
     memcpy (&pforeach->tnvalue, valnm, sizeof (mkc_value_t));
     mkc_process_substitutions (process, &pforeach->tnvalue);
+    if (mkc_error_chk_err (process->mkcerr)) {
+      return NULL;
+    }
     if (pforeach->tnvalue.vtype != MKC_VT_LIST) {
       mkc_error_set (process->mkcerr, MKC_ERR_INVALID_ARGUMENT, 0, NULL);
       return NULL;
@@ -629,6 +632,9 @@ mkc_process_stmt_foreach_setup (mkc_process_t *process,
     pforeach->type = MKC_T_VAL_LIST;
     memcpy (&pforeach->tavalue, vallist, sizeof (mkc_value_t));
     mkc_process_substitutions (process, &pforeach->tavalue);
+    if (mkc_error_chk_err (process->mkcerr)) {
+      return NULL;
+    }
     if (pforeach->tavalue.vtype != MKC_VT_LIST) {
       mkc_error_set (process->mkcerr, MKC_ERR_INVALID_ARGUMENT, 0, NULL);
       return NULL;
@@ -869,6 +875,9 @@ mkc_process_stmt_function_call (mkc_process_t *process,
     }
     memcpy (&tvalue, valfuncargs, sizeof (mkc_value_t));
     mkc_process_substitutions (process, &tvalue);
+    if (mkc_error_chk_err (process->mkcerr)) {
+      return;
+    }
     alist = tvalue.list;
   }
   if ((alist == NULL && nmlist != NULL) ||
@@ -1091,6 +1100,10 @@ mkc_process_stmt_set (mkc_process_t *process,
 
   memcpy (&tvalue, value, sizeof (mkc_value_t));
   mkc_process_substitutions (process, &tvalue);
+  if (mkc_error_chk_err (process->mkcerr)) {
+    mkc_process_attr_clear (process);
+    return trc;
+  }
 
   if (process->attr.str [MKC_ATTR_VCONTEXT] != NULL) {
     const char    *tvc;
@@ -2975,7 +2988,10 @@ mkc_process_substitutions (mkc_process_t *process, mkc_value_t *value)
     mkc_value_t   *nvalue;
 
     nvalue = mkc_pvar_get_variable_value (process->pvar, value->sval);
-    memcpy (value, nvalue, sizeof (mkc_value_t));
+    value->vtype = MKC_VT_INVALID;
+    if (nvalue != NULL) {
+      memcpy (value, nvalue, sizeof (mkc_value_t));
+    }
   }
   if (value->vtype == MKC_VT_LIST) {
     mkc_listidx_t     iteridx;

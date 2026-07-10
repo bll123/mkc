@@ -34,7 +34,6 @@ static char const * const mkcerrormsg [] = {
   [MKC_ERR_INVALID_ARGUMENT] = "invalid argument",
   [MKC_ERR_INVALID_OP] = "invalid operation",
   [MKC_ERR_INVALID_PROFILE] = "invalid profile",
-  [MKC_ERR_INVALID_VALUE] = "invalid value",
   [MKC_ERR_LOOP_LIMIT_EXCEEDED] = "loop limit exceeded",
   [MKC_ERR_MISMATCHED_ARGUMENT_TYPE] = "mismatched argument type",
   [MKC_ERR_MISSING_ATTRIBUTE] = "missing attribute",
@@ -50,6 +49,7 @@ static char const * const mkcerrormsg [] = {
   [MKC_ERR_SEARCH_UNSORTED_LIST] = "searching an unsorted list",
   [MKC_ERR_STMT_NOT_ALLOWED] = "statement not allowed",
   [MKC_ERR_UNBALANCED_BRACES] = "unbalanced braces",
+  [MKC_ERR_UNEXPECTED_VALUE_TYPE] = "unexpected value type",
   /* unhandled-value is a serious internal error */
   [MKC_ERR_UNHANDLED_VALUE] = "unhandled value",
   [MKC_ERR_UNKNOWN_VARIABLE] = "unknown variable",
@@ -103,6 +103,11 @@ r_mkc_error_set (mkc_error_t *mkcerr, mkc_err_code_t err,
     int syserr, const char *str, const char *func, int flineno)
 {
   if (mkcerr == NULL) {
+    return;
+  }
+
+  if (mkcerr->err != MKC_OK) {
+    /* don't override and existing error */
     return;
   }
 
@@ -187,6 +192,7 @@ mkc_error_print (mkc_error_t *mkcerr)
   if (mkcerr->str != NULL) {
     fprintf (stderr, "; %s", mkcerr->str);
   }
+  /* this might be changed in the future */
   if (mkcerr->func != NULL) {
     fprintf (stderr, "; %s:%d", mkcerr->func, mkcerr->flineno);
   }

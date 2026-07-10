@@ -501,7 +501,7 @@ mkc_pvar_value_get_integer (mkc_pvar_t *pvar, mkc_value_t *value)
       break;
     }
     case MKC_VT_RANGE: {
-      mkc_error_set (pvar->mkcerr, MKC_ERR_INVALID_VALUE, 0, NULL);
+      mkc_error_set (pvar->mkcerr, MKC_ERR_UNEXPECTED_VALUE_TYPE, 0, NULL);
       break;
     }
     case MKC_VT_INTEGER: {
@@ -509,7 +509,7 @@ mkc_pvar_value_get_integer (mkc_pvar_t *pvar, mkc_value_t *value)
       break;
     }
     case MKC_VT_LIST: {
-      mkc_error_set (pvar->mkcerr, MKC_ERR_INVALID_VALUE, 0, NULL);
+      mkc_error_set (pvar->mkcerr, MKC_ERR_UNEXPECTED_VALUE_TYPE, 0, NULL);
       ival = 0;
       break;
     }
@@ -527,7 +527,7 @@ mkc_pvar_value_get_integer (mkc_pvar_t *pvar, mkc_value_t *value)
     case MKC_VT_STRING:
     case MKC_VT_STATIC_STRING:
     case MKC_VT_QUOTED_STRING: {
-      mkc_error_set (pvar->mkcerr, MKC_ERR_INVALID_VALUE, 0, NULL);
+      mkc_error_set (pvar->mkcerr, MKC_ERR_UNEXPECTED_VALUE_TYPE, 0, NULL);
       break;
     }
   }
@@ -553,7 +553,7 @@ mkc_pvar_value_get_str (mkc_pvar_t *pvar,
       break;
     }
     case MKC_VT_RANGE: {
-      mkc_error_set (pvar->mkcerr, MKC_ERR_INVALID_VALUE, 0, NULL);
+      mkc_error_set (pvar->mkcerr, MKC_ERR_UNEXPECTED_VALUE_TYPE, 0, NULL);
       break;
     }
     case MKC_VT_INTEGER: {
@@ -579,7 +579,7 @@ mkc_pvar_value_get_str (mkc_pvar_t *pvar,
       break;
     }
     case MKC_VT_LIST: {
-      mkc_error_set (pvar->mkcerr, MKC_ERR_INVALID_VALUE, 0, NULL);
+      mkc_error_set (pvar->mkcerr, MKC_ERR_UNEXPECTED_VALUE_TYPE, 0, NULL);
       break;
     }
     case MKC_VT_ENV_VARIABLE: {
@@ -710,7 +710,6 @@ mkc_pvar_substitute (mkc_pvar_t *pvar, const char *data,
 
       if (brpl == NULL) {
         mkc_error_set (pvar->mkcerr, MKC_ERR_UNBALANCED_BRACES, 0, NULL);
-        fprintf (stderr, "ERROR: unbalanced braces '%s'\n", data);
         datafree (buff);
         return NULL;
       }
