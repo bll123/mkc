@@ -78,7 +78,6 @@ void mkc_varlist_free (mkc_varlist_t *varlist);
 void mkc_var_set_fromcache (mkc_varlist_t *varlist, bool flag);
 const char *mkc_var_vctxt_str (mkc_var_ctxt_t vctxt);
 
-const char * mkc_var_name_alloc (mkc_varlist_t *varlist, const char *vname);
 int mkc_var_set (mkc_varlist_t *varlist, const char *vname, mkc_value_t *value);
 void mkc_var_set_context (mkc_varlist_t *varlist, const char *vname, int vctxt);
 
@@ -96,6 +95,8 @@ const char *mkc_value_to_str (mkc_value_t *value, char *buff, size_t sz);
 void mkc_value_range_init (mkc_value_t *value, int32_t beg, int32_t end, int32_t incr);
 int32_t mkc_value_range_get (mkc_value_t *value);
 bool mkc_value_range_finish (mkc_value_t *value);
+
+const char * mkc_value_disp_type (mkc_value_t *value);
 
 #if defined (__cplusplus) || defined (c_plusplus)
 }

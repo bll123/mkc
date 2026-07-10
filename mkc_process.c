@@ -36,6 +36,7 @@
 #include "mkc_string.h"
 #include "mkc_tmutil.h"
 #include "mkc_toposort.h"
+#include "mkc_var.h"      // for debugging
 
 enum {
   MKC_AUTO_DEFINE_ZERO,
@@ -135,9 +136,8 @@ static const char *compidnames [MKC_COMP_ID_MAX] = {
 
 static mkc_ctxt_val_t attrcontext [MKC_ATTR_MAX] = {
   [MKC_ATTR_INPUT] = MKC_CONTEXT_CONFIGURE,
-// lib version will need to be fixed
+// ### lib version will need to be fixed
   [MKC_ATTR_LIB_VERSION] = MKC_CONTEXT_PROJECT,
-// ### match is currently not in use.
   [MKC_ATTR_MATCH] = MKC_CONTEXT_CHK_INC_DEPS,
   [MKC_ATTR_METHOD] = MKC_CONTEXT_CONFIGURE,
   [MKC_ATTR_OUTPUT] = MKC_CONTEXT_CONFIGURE,
@@ -162,10 +162,11 @@ static char const * const MKC_C_PROJECT_NAME = "MKC_PROJECT_NAME";
 static char const * const MKC_C_PROJECT_VERS = "MKC_PROJECT_VERSION";
 static char const * const MKC_C_PROJECT_LIB_VERS = "MKC_PROJECT_LIBRARY_VERSION";
 static char const * const MKC_C_PATH_NAME = "MKC_PATH";
+
 /* these are duplicated */
 /* so that the static aggregator can be initialized */
 static char const * const MKC_C_P_PKGCONF = "MKC_PATH_PKGCONF";
-static char const * const MKC_C_P_PKGCONFig = "MKC_PATH_PKG_CONFIG";
+static char const * const MKC_C_P_PKGCONFIG = "MKC_PATH_PKG_CONFIG";
 
 typedef struct mkc_prog_chk_t {
   const char  * program;
@@ -175,7 +176,7 @@ typedef struct mkc_prog_chk_t {
 /* these are executables that are used by mkc */
 static mkc_prog_chk_t proglist [] = {
   { "pkgconf",      MKC_C_P_PKGCONF },
-  { "pkg-config",   MKC_C_P_PKGCONFig },
+  { "pkg-config",   MKC_C_P_PKGCONFIG },
   { NULL,           NULL },
 };
 
@@ -515,8 +516,22 @@ mkc_process_unary_op (mkc_process_t *process, int type, mkc_value_t *vala)
   }
 
   if (type != MKC_T_OP_IS_DEFINED && type != MKC_T_OP_IS_LIST) {
+    if (vala->vtype != MKC_VT_INTEGER) {
+      mkc_error_set (process->mkcerr, MKC_ERR_MISMATCHED_ARGUMENT_TYPE, 0, NULL);
+      return 0;
+    }
+
     ivala = mkc_pvar_value_get_integer (process->pvar, vala);
     if (mkc_error_chk_err (process->mkcerr)) {
+      return 0;
+    }
+  }
+  if (type == MKC_T_OP_IS_DEFINED || type == MKC_T_OP_IS_LIST) {
+    if (vala->vtype == MKC_VT_INTEGER ||
+        vala->vtype == MKC_VT_RANGE ||
+        vala->vtype == MKC_VT_INVALID ||
+        vala->vtype == MKC_VT_LIST) {
+      mkc_error_set (process->mkcerr, MKC_ERR_MISMATCHED_ARGUMENT_TYPE, 0, NULL);
       return 0;
     }
   }
@@ -598,6 +613,8 @@ mkc_process_stmt_foreach_setup (mkc_process_t *process,
   pforeach->range = range;
   pforeach->list = NULL;
   pforeach->iteridx = MKC_ITER_FINISH;
+  pforeach->tnvalue.vtype = MKC_VT_INVALID;
+  pforeach->tavalue.vtype = MKC_VT_INVALID;
 
   if (valnm != NULL) {
     memcpy (&pforeach->tnvalue, valnm, sizeof (mkc_value_t));
@@ -846,6 +863,10 @@ mkc_process_stmt_function_call (mkc_process_t *process,
     nmlist = valarglist->list;
   }
   if (valfuncargs != NULL) {
+    if (valfuncargs->vtype != MKC_VT_LIST) {
+      mkc_error_set (process->mkcerr, MKC_ERR_MISMATCHED_ARGUMENT_TYPE, 0, NULL);
+      return;
+    }
     memcpy (&tvalue, valfuncargs, sizeof (mkc_value_t));
     mkc_process_substitutions (process, &tvalue);
     alist = tvalue.list;
@@ -1067,7 +1088,6 @@ mkc_process_stmt_set (mkc_process_t *process,
     mkc_process_attr_clear (process);
     return trc;
   }
-
 
   memcpy (&tvalue, value, sizeof (mkc_value_t));
   mkc_process_substitutions (process, &tvalue);
@@ -1444,15 +1464,6 @@ mkc_process_profile_is_current (mkc_process_t *process, mkc_value_t *valnm)
   return rc;
 }
 
-mkc_value_t *
-mkc_process_get_value (mkc_process_t *process, const char *nm)
-{
-  mkc_value_t   *value;
-
-  value = mkc_pvar_get_by_profile (process->pvar, nm);
-  return value;
-}
-
 int32_t
 mkc_process_check (mkc_process_t *process, mkc_value_t *valconst,
     mkc_astnode_token_t asttype)
@@ -1462,7 +1473,6 @@ mkc_process_check (mkc_process_t *process, mkc_value_t *valconst,
   char        txt [MKC_VNAME_MAX];
   char        pfx [MKC_VNAME_MAX];
   mkc_pvar_t  *pvar;
-  const char  *tmp;
   int         iasttype = asttype;
   bool        successtype = false;
   bool        valtype = false;
@@ -1480,8 +1490,6 @@ mkc_process_check (mkc_process_t *process, mkc_value_t *valconst,
     mkc_process_attr_clear (process);
     return rc;
   }
-
-  tmp = mkc_pvar_name_alloc (pvar, tnm);
 
   switch (iasttype) {
     case MKC_T_CHK_ARG_COUNT: {
@@ -1534,18 +1542,18 @@ mkc_process_check (mkc_process_t *process, mkc_value_t *valconst,
   if (successtype) {
     /* the check returns 0 on success */
     /* convert this to a boolean */
-    mkc_pvar_set_integer (pvar, tmp, rc == 0 ? true : false, MKC_VCTXT_CHECK);
+    mkc_pvar_set_integer (pvar, tnm, rc == 0 ? true : false, MKC_VCTXT_CHECK);
     mkc_message ("-- check %s: %s : %s - %s\n",
-        typenames [asttype], txt, tmp, mkc_success_msg (rc));
+        typenames [asttype], txt, tnm, mkc_success_msg (rc));
     mkc_log (process->log, MKC_LOG_CHECK, "-- check %s: %s : %s - %s\n",
-        typenames [asttype], txt, tmp, mkc_success_msg (rc));
+        typenames [asttype], txt, tnm, mkc_success_msg (rc));
   }
   if (valtype) {
     /* the check is run, and the return code is a value */
-    mkc_pvar_set_integer (pvar, tmp, rc, MKC_VCTXT_CHECK);
-    mkc_message ("-- check %s: %s : %s : %d\n", typenames [asttype], txt, tmp, rc);
+    mkc_pvar_set_integer (pvar, tnm, rc, MKC_VCTXT_CHECK);
+    mkc_message ("-- check %s: %s : %s : %d\n", typenames [asttype], txt, tnm, rc);
     mkc_log (process->log, MKC_LOG_CHECK,
-        "-- check %s: %s : %s : %d\n", typenames [asttype], txt, tmp, rc);
+        "-- check %s: %s : %s : %d\n", typenames [asttype], txt, tnm, rc);
   }
 
   mkc_process_attr_clear (process);
@@ -1598,10 +1606,7 @@ mkc_process_check_flag (mkc_process_t *process,
   process->attr.negate = false;
 
   if (rc == 0) {
-    const char  *tmp;
-
-    tmp = mkc_pvar_name_alloc (pvar, tnm);
-    mkc_pvar_set_str (pvar, tmp, flag, MKC_VCTXT_FLAG);
+    mkc_pvar_set_str (pvar, tnm, flag, MKC_VCTXT_FLAG);
   }
 
   if (addchk == MKC_ADD) {
@@ -1650,10 +1655,7 @@ mkc_process_chk_compiler_flag (mkc_process_t *process,
   process->attr.negate = false;
 
   if (rc == 0) {
-    const char  *tmp;
-
-    tmp = mkc_pvar_name_alloc (pvar, tnm);
-    mkc_pvar_set_str (pvar, tmp, flag, MKC_VCTXT_FLAG);
+    mkc_pvar_set_str (pvar, tnm, flag, MKC_VCTXT_FLAG);
   }
 
   if (addchk == MKC_ADD) {
@@ -1699,10 +1701,7 @@ mkc_process_chk_link_flag (mkc_process_t *process,
         process->attr.currcompiler, flag);
   }
   if (rc == 0) {
-    const char  *tmp;
-
-    tmp = mkc_pvar_name_alloc (pvar, tnm);
-    mkc_pvar_set_str (pvar, tmp, flag, MKC_VCTXT_FLAG);
+    mkc_pvar_set_str (pvar, tnm, flag, MKC_VCTXT_FLAG);
   }
 
   if (addchk == MKC_ADD) {
@@ -1730,7 +1729,6 @@ mkc_process_chk_struct_member (mkc_process_t *process,
   char        structname [MKC_VNAME_MAX];
   char        membername [MKC_VNAME_MAX];
   mkc_pvar_t  *pvar;
-  const char  *tmp;
   char        tmpdisp [MKC_VNAME_MAX * 2];
 
   if (process == NULL) {
@@ -1751,8 +1749,7 @@ mkc_process_chk_struct_member (mkc_process_t *process,
 
   rc = mkc_chk_struct_member (process->check,
       process->attr.currcompiler, structname, membername);
-  tmp = mkc_pvar_name_alloc (pvar, tnm);
-  mkc_pvar_set_integer (pvar, tmp, rc == 0 ? true : false, MKC_VCTXT_CHECK);
+  mkc_pvar_set_integer (pvar, tnm, rc == 0 ? true : false, MKC_VCTXT_CHECK);
 
   mkc_message ("-- check struct member: %s.%s - %s\n",
       structname, membername, mkc_success_msg (rc));
@@ -1849,7 +1846,9 @@ mkc_process_chk_shell_extract (mkc_process_t *process, mkc_value_t *valpath)
       stpecpy (varvalue, varvalue + MKC_PATH_MAX, match [6]);
     }
 
-    tvalue = mkc_pvar_substitute (process->pvar, varvalue, true, 0);
+    /* from a shell script, the user would expect escape sequences to */
+    /* be substituted */
+    tvalue = mkc_pvar_substitute (process->pvar, varvalue, MKC_PV_SUB_ESCAPE, 0);
     if (tvalue == NULL) {
       continue;
     }
@@ -2918,7 +2917,7 @@ mkc_process_configure_substitute (mkc_process_t *process, char *data)
 
   rl = process->attr.replacelist;
   if (mkc_list_size (rl) == 0) {
-    ndata = mkc_pvar_substitute (process->pvar, data, true, 0);
+    ndata = mkc_pvar_substitute (process->pvar, data, MKC_PV_NO_ESCAPE, 0);
   } else {
     mkc_listidx_t   iteridx;
     mkc_listidx_t   lidx;
@@ -2973,16 +2972,10 @@ mkc_process_substitutions (mkc_process_t *process, mkc_value_t *value)
     value->sval = buff;
   }
   if (value->vtype == MKC_VT_VARIABLE) {
-    char          *tstr;
     mkc_value_t   *nvalue;
 
-    /* substitution must be run on the variable before the value is fetched */
-    tstr = mkc_pvar_substitute (process->pvar, value->sval, true, 0);
-    if (tstr != NULL) {
-      nvalue = mkc_process_get_value (process, tstr);
-      memcpy (value, nvalue, sizeof (mkc_value_t));
-      free (tstr);
-    }
+    nvalue = mkc_pvar_get_variable_value (process->pvar, value->sval);
+    memcpy (value, nvalue, sizeof (mkc_value_t));
   }
   if (value->vtype == MKC_VT_LIST) {
     mkc_listidx_t     iteridx;
@@ -3129,9 +3122,10 @@ mkc_process_topo_add_deps (mkc_process_t *process,
 static mkc_list_t *
 mkc_process_get_include_list (mkc_process_t *process, mkc_regex_t *rx)
 {
+  mkc_list_t      *hlist = NULL;
+#if _have_regex
   mkc_listidx_t   piteridx;
   mkc_listidx_t   pathidx;
-  mkc_list_t      *hlist = NULL;
 
   mkc_list_iter_start (process->attr.pathlist, &piteridx);
   while ((pathidx = mkc_list_iter_next (process->attr.pathlist, &piteridx)) != MKC_ITER_FINISH) {
@@ -3148,9 +3142,7 @@ mkc_process_get_include_list (mkc_process_t *process, mkc_regex_t *rx)
     valpath = mkc_list_get_by_idx (process->attr.pathlist, pathidx);
     path = valpath->sval;
 
-#if _have_regex
     tlist = mkc_dir_match (path, rx, process->mkcerr);
-#endif
     if (hlist == NULL) {
       hlist = tlist;
     } else {
@@ -3169,5 +3161,6 @@ mkc_process_get_include_list (mkc_process_t *process, mkc_regex_t *rx)
     }
   }
 
+#endif
   return hlist;
 }

@@ -1951,10 +1951,6 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
     case MKC_T_OP_UNARY_MINUS:
     case MKC_T_OP_UNARY_PLUS: {
       mkc_ast_process (astmain, astnode->unary_op.vala, ifcond, loopcond, depth);
-      if (astmain->value.vtype != MKC_VT_INTEGER) {
-        mkc_error_set (astmain->mkcerr, MKC_ERR_MISMATCHED_ARGUMENT, 0, NULL);
-        break;
-      }
       astmain->value.ival = mkc_process_unary_op (astmain->process, astnode->asttype, &astmain->value);
       astmain->value.vtype = MKC_VT_INTEGER;
       break;
@@ -1963,12 +1959,6 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
     case MKC_T_OP_IS_DEFINED:
     case MKC_T_OP_IS_LIST: {
       mkc_ast_process (astmain, astnode->unary_op.vala, ifcond, loopcond, depth);
-      if (astmain->value.vtype == MKC_VT_INTEGER ||
-          astmain->value.vtype == MKC_VT_LIST ||
-          astmain->value.vtype == MKC_VT_INVALID) {
-        mkc_error_set (astmain->mkcerr, MKC_ERR_MISMATCHED_ARGUMENT, 0, NULL);
-        break;
-      }
       astmain->value.ival = mkc_process_unary_op (astmain->process, astnode->asttype, &astmain->value);
       astmain->value.vtype = MKC_VT_INTEGER;
       break;

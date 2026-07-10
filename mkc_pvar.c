@@ -1,5 +1,7 @@
 /*
  * Copyright 2026 Brad Lanam Pleasant Hill CA
+ *
+ * interface for pre-profile variables
  */
 
 #include <stdio.h>
@@ -114,23 +116,6 @@ mkc_pvar_set_fromcache (mkc_pvar_t *pvar, bool flag)
   }
 
   pvar->fromcache = flag;
-}
-
-const char *
-mkc_pvar_name_alloc (mkc_pvar_t *pvar, const char *vname)
-{
-  const char      *tmp;
-  mkc_varlist_t   *varlist;
-  mkc_profidx_t   pidx;
-
-  if (pvar == NULL) {
-    return NULL;
-  }
-
-  pidx = mkc_profile_get_active (pvar->profiles);
-  varlist = mkc_profile_get_varlist (pvar->profiles, pidx);
-  tmp = mkc_var_name_alloc (varlist, vname);
-  return tmp;
 }
 
 int
@@ -431,6 +416,7 @@ mkc_pvar_get_variable_integer (mkc_pvar_t *pvar, mkc_value_t *value)
   int32_t       ival = 0;
   mkc_value_t   *tvalue;
 
+
   tvalue = mkc_pvar_get_variable_value (pvar, value->sval);
   if (tvalue == NULL) {
     mkc_error_set (pvar->mkcerr, MKC_ERR_UNKNOWN_VARIABLE, 0, NULL);
@@ -458,15 +444,14 @@ mkc_pvar_get_variable_str (mkc_pvar_t *pvar, mkc_value_t *value,
 
   *buff = '\0';
 
-  if (value->vtype == MKC_VT_ENV_VARIABLE) {
-    mkc_pvar_get_env_str (pvar, value->sval, buff, sz);
+  tvalue = mkc_pvar_get_variable_value (pvar, value->sval);
+  if (tvalue == NULL) {
+    mkc_error_set (pvar->mkcerr, MKC_ERR_UNKNOWN_VARIABLE, 0, NULL);
     return;
   }
 
-  tvalue = mkc_pvar_get_variable_value (pvar, value->sval);
-
-  if (tvalue == NULL) {
-    mkc_error_set (pvar->mkcerr, MKC_ERR_UNKNOWN_VARIABLE, 0, NULL);
+  if (tvalue->vtype == MKC_VT_ENV_VARIABLE) {
+    mkc_pvar_get_env_str (pvar, tvalue->sval, buff, sz);
     return;
   }
 
@@ -485,13 +470,16 @@ mkc_pvar_get_variable_str (mkc_pvar_t *pvar, mkc_value_t *value,
   }
 }
 
+/* get-variable-value does substitutions on the variable name */
+/* first. this routine should always be called before fetching the */
+/* variable */
 mkc_value_t *
 mkc_pvar_get_variable_value (mkc_pvar_t *pvar, const char *str)
 {
   char        *tstr;
   mkc_value_t *value;
 
-  tstr = mkc_pvar_substitute (pvar, str, true, 0);
+  tstr = mkc_pvar_substitute (pvar, str, MKC_PV_NO_ESCAPE, 0);
   value = mkc_pvar_get_by_profile (pvar, tstr);
   free (tstr);
   return value;
@@ -513,7 +501,7 @@ mkc_pvar_value_get_integer (mkc_pvar_t *pvar, mkc_value_t *value)
       break;
     }
     case MKC_VT_RANGE: {
-      mkc_error_set (pvar->mkcerr, MKC_ERR_INVALID_ARGUMENT, 0, NULL);
+      mkc_error_set (pvar->mkcerr, MKC_ERR_INVALID_VALUE, 0, NULL);
       break;
     }
     case MKC_VT_INTEGER: {
@@ -521,7 +509,7 @@ mkc_pvar_value_get_integer (mkc_pvar_t *pvar, mkc_value_t *value)
       break;
     }
     case MKC_VT_LIST: {
-      mkc_error_set (pvar->mkcerr, MKC_ERR_MISMATCHED_ARGUMENT, 0, NULL);
+      mkc_error_set (pvar->mkcerr, MKC_ERR_INVALID_VALUE, 0, NULL);
       ival = 0;
       break;
     }
@@ -565,7 +553,7 @@ mkc_pvar_value_get_str (mkc_pvar_t *pvar,
       break;
     }
     case MKC_VT_RANGE: {
-      mkc_error_set (pvar->mkcerr, MKC_ERR_INVALID_ARGUMENT, 0, NULL);
+      mkc_error_set (pvar->mkcerr, MKC_ERR_INVALID_VALUE, 0, NULL);
       break;
     }
     case MKC_VT_INTEGER: {
@@ -585,13 +573,13 @@ mkc_pvar_value_get_str (mkc_pvar_t *pvar,
     case MKC_VT_QUOTED_STRING: {
       char    *tbuff;
 
-      tbuff = mkc_pvar_substitute (pvar, value->sval, true, 0);
+      tbuff = mkc_pvar_substitute (pvar, value->sval, MKC_PV_SUB_ESCAPE, 0);
       stpecpy (buff, buff + sz, tbuff);
       free (tbuff);
       break;
     }
     case MKC_VT_LIST: {
-      mkc_error_set (pvar->mkcerr, MKC_ERR_MISMATCHED_ARGUMENT, 0, NULL);
+      mkc_error_set (pvar->mkcerr, MKC_ERR_INVALID_VALUE, 0, NULL);
       break;
     }
     case MKC_VT_ENV_VARIABLE: {
@@ -649,7 +637,7 @@ mkc_pvar_is_list (mkc_pvar_t *pvar, const char *vname)
 /* by the caller by calling mkc_pvar_get_by_profile () */
 char *
 mkc_pvar_substitute (mkc_pvar_t *pvar, const char *data,
-    bool subescapeflag, int depth)
+    mkc_pvar_escape_t subescapeflag, int depth)
 {
   size_t        len;
   char          *buff = NULL;
@@ -690,7 +678,7 @@ mkc_pvar_substitute (mkc_pvar_t *pvar, const char *data,
   if (srcp == endp) {
     buff = malloc (blen);
     *buff = '\0';
-    if (subescapeflag) {
+    if (subescapeflag == MKC_PV_SUB_ESCAPE) {
       mkc_pvar_sub_escapes (buff, blen);
     }
     return buff;
@@ -765,7 +753,7 @@ mkc_pvar_substitute (mkc_pvar_t *pvar, const char *data,
 //fprintf (stderr, "%*ssubstr-len: %zd\n", depth * 2, "", tlen);
       substr [tlen] = '\0';
 //fprintf (stderr, "%*ssubstr: '%s'\n", depth * 2, "", substr);
-      tstr = mkc_pvar_substitute (pvar, substr, true, depth + 1);
+      tstr = mkc_pvar_substitute (pvar, substr, MKC_PV_NO_ESCAPE, depth + 1);
       free (substr);
 //fprintf (stderr, "%*ststr: '%s'\n", depth * 2, "", tstr);
 
@@ -814,7 +802,7 @@ mkc_pvar_substitute (mkc_pvar_t *pvar, const char *data,
   }
 
 //fprintf (stderr, "%*sbuff-fin: '%s'\n", depth * 2, "", buff);
-  if (subescapeflag) {
+  if (subescapeflag == MKC_PV_SUB_ESCAPE) {
     mkc_pvar_sub_escapes (buff, blen);
   }
   return buff;

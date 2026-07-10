@@ -58,8 +58,6 @@ void mkc_process_attr_link_flags (mkc_process_t *process, mkc_value_t *value);
 void mkc_process_attr_path (mkc_process_t *process, mkc_value_t *path);
 void mkc_process_attr_replace (mkc_process_t *process, mkc_value_t *str, mkc_value_t *name);
 
-mkc_value_t * mkc_process_get_value (mkc_process_t *process, const char *nm);
-
 int32_t mkc_process_check (mkc_process_t *process, mkc_value_t *valtype, mkc_astnode_token_t asttype);
 int32_t mkc_process_check_flag (mkc_process_t *process, mkc_value_t *valflag, int addchk, mkc_astnode_token_t asttype);
 int32_t mkc_process_chk_struct_member (mkc_process_t *process, mkc_value_t *valstructnm, mkc_value_t *valmembernm);

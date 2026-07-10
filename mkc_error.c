@@ -28,6 +28,7 @@ static char const * const mkcerrormsg [] = {
   [MKC_ERR_FILE_NOT_FOUND] = "file not found",
   [MKC_ERR_FILE_READ_ERROR] = "file read error",
   [MKC_ERR_FILE_WRITE_ERROR] = "file write error",
+  /* a mismatch in the number of arguments */
   [MKC_ERR_FUNCTION_ARG_MISMATCH] = "function argument mismatch",
   [MKC_ERR_FUNCTION_NOT_FOUND] = "function not found",
   [MKC_ERR_INVALID_ARGUMENT] = "invalid argument",
@@ -35,7 +36,7 @@ static char const * const mkcerrormsg [] = {
   [MKC_ERR_INVALID_PROFILE] = "invalid profile",
   [MKC_ERR_INVALID_VALUE] = "invalid value",
   [MKC_ERR_LOOP_LIMIT_EXCEEDED] = "loop limit exceeded",
-  [MKC_ERR_MISMATCHED_ARGUMENT] = "mismatched argument",
+  [MKC_ERR_MISMATCHED_ARGUMENT_TYPE] = "mismatched argument type",
   [MKC_ERR_MISSING_ATTRIBUTE] = "missing attribute",
   [MKC_ERR_NULL_ARGUMENT] = "null argument",
   [MKC_ERR_OUT_OF_MEMORY] = "out of memory",

@@ -679,7 +679,6 @@ mkc_check_get_include_deps (mkc_check_t *check,
     mkc_compiler_t compiler, const char *fn, mkc_list_t *deplist)
 {
   char            *rbuff = NULL;
-  size_t          rsz = MKC_LARGE_BUFF_SZ;
   size_t          fsz = 0;
 #if _have_regex
   char            **match;
@@ -758,7 +757,7 @@ mkc_check_file_sub_copy (mkc_check_t *check,
     free (fbuff);
     return;
   }
-  ndata = mkc_pvar_substitute (check->pvar, data, false, 0);
+  ndata = mkc_pvar_substitute (check->pvar, data, MKC_PV_NO_ESCAPE, 0);
   mkc_log (check->log, MKC_LOG_CHECK, "--- code:\n");
   mkc_log (check->log, MKC_LOG_CHECK, "%s\n", ndata);
   mkc_log (check->log, MKC_LOG_CHECK, "---\n");

@@ -26,25 +26,21 @@ typedef struct mkc_varlist_t {
   mkc_list_t    * list;
   mkc_error_t   * mkcerr;
   mkc_log_t     * log;
-  char          ** names;
-  int32_t       name_allocsz;
-  int32_t       name_sz;
   bool          debug;
   bool          fromcache;
 } mkc_varlist_t;
 
-#if 0
 static char const * const vtypenames [] = {
   [MKC_VT_INVALID] = "invalid",
   [MKC_VT_INTEGER] = "integer",
   [MKC_VT_STRING] = "string",
   [MKC_VT_LIST] = "list",
+  [MKC_VT_RANGE] = "range",
   [MKC_VT_STATIC_STRING] = "static_string",
   [MKC_VT_QUOTED_STRING] = "quoted_string",
   [MKC_VT_VARIABLE] = "variable",
   [MKC_VT_ENV_VARIABLE] = "env_variable",
 };
-#endif
 
 static char const * const vctxtnames [] = {
   [MKC_VCTXT_CHECK] = "check",
@@ -90,9 +86,6 @@ mkc_varlist_init (mkc_log_t *log, mkc_error_t *mkcerr)
 
   varlist->list = mkc_list_init (MKC_LIST_SORTED,
       mkc_var_free, mkc_var_compare, mkcerr);
-  varlist->names = NULL;
-  varlist->name_allocsz = 0;
-  varlist->name_sz = 0;
   varlist->debug = false;
   varlist->mkcerr = mkcerr;
   varlist->log = log;
@@ -106,13 +99,6 @@ mkc_varlist_free (mkc_varlist_t *varlist)
 {
   if (varlist == NULL) {
     return;
-  }
-
-  if (varlist->names != NULL) {
-    for (int i = 0; i < varlist->name_sz; ++i) {
-      free (varlist->names [i]);
-    }
-    free (varlist->names);
   }
 
   if (varlist->list != NULL) {
@@ -141,36 +127,6 @@ mkc_var_vctxt_str (mkc_var_ctxt_t vctxt)
   return vctxtstr;
 }
 
-
-const char *
-mkc_var_name_alloc (mkc_varlist_t *varlist, const char *vname)
-{
-  int32_t       idx;
-
-  if (varlist == NULL || vname == NULL) {
-    return NULL;
-  }
-
-  if (varlist->name_sz >= varlist->name_allocsz) {
-    varlist->name_allocsz += 10;
-    varlist->names = realloc (varlist->names,
-        sizeof (char *) * varlist->name_allocsz);
-    if (varlist->names == NULL) {
-      mkc_error_set (varlist->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-      return NULL;
-    }
-  }
-
-  idx = varlist->name_sz;
-  varlist->names [idx] = strdup (vname);
-  if (varlist->names [idx] == NULL) {
-    mkc_error_set (varlist->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return NULL;
-  }
-  varlist->name_sz += 1;
-
-  return varlist->names [idx];
-}
 
 int
 mkc_var_set (mkc_varlist_t *varlist,
@@ -227,7 +183,9 @@ mkc_var_set (mkc_varlist_t *varlist,
     }
   }
 
-  mkc_value_free (tvalue);
+  if (tvalue->vtype != MKC_VT_INVALID) {
+    mkc_value_free (tvalue);
+  }
 
   tvalue->vctxt = value->vctxt;
   tvalue->vtype = nvtype;
@@ -420,12 +378,17 @@ mkc_value_free (void *tvalue)
     return;
   }
 
+  if (value->vtype == MKC_VT_INVALID) {
+    fprintf (stderr, "ERR: attempt to free value twice\n");
+  }
+
   if (value->vtype == MKC_VT_LIST && value->list != NULL) {
     mkc_list_free (value->list);
   }
   if (mkc_var_is_string_type (value) && value->sval != NULL) {
     free (value->sval);
   }
+  value->vtype = MKC_VT_INVALID;
 }
 
 const char *
@@ -520,6 +483,17 @@ mkc_value_range_finish (mkc_value_t *value)
 
   return value->range.finish;
 }
+
+const char *
+mkc_value_disp_type (mkc_value_t *value)
+{
+  if (value == NULL) {
+    return "null";
+  }
+
+  return vtypenames [value->vtype];
+}
+
 
 /* internal routines */
 

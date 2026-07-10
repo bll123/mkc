@@ -4,6 +4,7 @@
 
 char const * const MKC_C_PROF_INTERNAL_NAME = "internal";
 char const * const MKC_C_PROF_DEFAULT_NAME = "default";
+/* these are duplicated in mkc_process.c */
 char const * const MKC_C_PATH_PKGCONF = "MKC_PATH_PKGCONF";
 char const * const MKC_C_PATH_PKGCONFIG = "MKC_PATH_PKG_CONFIG";
 
