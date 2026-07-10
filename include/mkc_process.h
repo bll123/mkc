@@ -26,16 +26,16 @@ typedef struct mkc_process_t mkc_process_t;
 MKC_NODISCARD mkc_process_t *mkc_process_init (mkc_profile_t *profiles, mkc_log_t *log, mkc_context_t *context, mkc_option_t *mkcoptions, mkc_error_t *mkcerr);
 void mkc_process_free (mkc_process_t *process);
 
+void mkc_process_range_init (mkc_process_t *process, mkc_value_t *value, mkc_value_t *beg, mkc_value_t *end, mkc_value_t *incr);
 int32_t mkc_process_condition (mkc_process_t *process, mkc_value_t *value);
 int32_t mkc_process_num_op (mkc_process_t *process, int type, mkc_value_t *vala, mkc_value_t *valb);
 int32_t mkc_process_str_op (mkc_process_t *process, int type, mkc_value_t *stra, mkc_value_t *strb);
 int32_t mkc_process_unary_op (mkc_process_t *process, int type, mkc_value_t *vala);
 void mkc_process_include (mkc_process_t *process, mkc_value_t *vala, char *tbuff, size_t sz);
 
-mkc_foreach_t *mkc_process_stmt_foreach_setup (mkc_process_t *process, mkc_value_t *valnm, mkc_value_t *vallist, mkc_value_t *range);
+mkc_foreach_t *mkc_process_stmt_foreach_setup (mkc_process_t *process, mkc_value_t *valnm, mkc_value_t *vallist);
 bool mkc_process_stmt_foreach (mkc_process_t *process, mkc_foreach_t *procforeach);
 void mkc_process_stmt_foreach_finish (mkc_process_t *process, mkc_foreach_t *procforeach);
-void mkc_process_range_init (mkc_process_t *process, mkc_value_t *range, mkc_value_t *valbeg, mkc_value_t *valend, mkc_value_t *valincr);
 
 void mkc_process_stmt_chk_inc_deps (mkc_process_t *process);
 void mkc_process_stmt_configure (mkc_process_t *process);

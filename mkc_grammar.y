@@ -173,8 +173,9 @@
 /* a varname may be a variable-name, a string or ${variable} */
 %type <astnode> varname varnamelist variablename
 
-/* a varvalue can be an expression or ${variable} */
-%type <astnode> varvalue
+/* a varvalue can be an expression, a list, or a range */
+/* varvalue->expr->basicvalue->variable */
+%type <astnode> varvalue range
 
 /* a varany can be an expression, basic-value, varname or ${variable} */
 /* it is used where a name without any quotes can be used */
@@ -194,7 +195,7 @@
 // program control
 %type <astnode> ifexpr stmt_if elseif elseclause loopcontrol
 %type <astnode> stmt_foreach stmt_function stmt_while
-%type <astnode> stmt_function_call range
+%type <astnode> stmt_function_call
 // commands
 %type <astnode> stmt_chk_inc_deps stmt_config stmt_loadcache
 %type <astnode> stmt_mark stmt_print stmt_profile stmt_project stmt_set
@@ -546,26 +547,6 @@ stmt_foreach[v]:
     T_STMT_FOREACH varnamelist[a] T_IN varvalue[b] stmtblock[c]
     {
       $v = mkc_ast_mk_foreach (ast, $a, $b, $c,
-          yylloc.first_line, yylloc.first_column);
-    }
-  | T_STMT_FOREACH varnamelist[a] T_IN range[b] stmtblock[c]
-    {
-      $v = mkc_ast_mk_foreach_range (ast, $a, $b, $c,
-          yylloc.first_line, yylloc.first_column);
-    }
-  ;
-
-range[v]:
-    T_RANGE T_LEFT_PAREN varvalue[a] varvalue[b] T_RIGHT_PAREN
-    {
-      $v = mkc_ast_mk_value (ast, MKC_T_VAL_TRUE, NULL,
-          yylloc.first_line, yylloc.first_column);
-      $v = mkc_ast_mk_range (ast, $a, $b, $v,
-          yylloc.first_line, yylloc.first_column);
-    }
-  | T_RANGE T_LEFT_PAREN varvalue[a] varvalue[b] varvalue[c] T_RIGHT_PAREN
-    {
-      $v = mkc_ast_mk_range (ast, $a, $b, $c,
           yylloc.first_line, yylloc.first_column);
     }
   ;
@@ -1140,12 +1121,31 @@ varvalue[v]:
     {
       $v = $a;
     }
+  | range[a]
+    {
+      $v = $a;
+    }
   ;
 
 list[v]:
     T_LEFT_BRACKET valuelist[a] T_RIGHT_BRACKET
     {
       $v = $a;
+    }
+  ;
+
+range[v]:
+    T_RANGE T_LEFT_PAREN varvalue[a] varvalue[b] T_RIGHT_PAREN
+    {
+      $v = mkc_ast_mk_value (ast, MKC_T_VAL_TRUE, NULL,
+          yylloc.first_line, yylloc.first_column);
+      $v = mkc_ast_mk_value_range (ast, $a, $b, $v,
+          yylloc.first_line, yylloc.first_column);
+    }
+  | T_RANGE T_LEFT_PAREN varvalue[a] varvalue[b] varvalue[c] T_RIGHT_PAREN
+    {
+      $v = mkc_ast_mk_value_range (ast, $a, $b, $c,
+          yylloc.first_line, yylloc.first_column);
     }
   ;
 

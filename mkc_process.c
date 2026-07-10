@@ -55,11 +55,10 @@ typedef struct mkc_user_regex_t {
 /* foreach processing */
 typedef struct mkc_foreach_t {
   mkc_list_t          *namelist;
-  mkc_list_t          *list;
-  mkc_value_t         *range;
+  mkc_value_t         *list;      // list or range
+  mkc_value_t         tvalue;
   mkc_profidx_t       plocalidx;
   mkc_listidx_t       iteridx;
-  mkc_astnode_token_t type;
 } mkc_foreach_t;
 
 typedef struct mkc_process_t {
@@ -330,6 +329,21 @@ mkc_process_condition (mkc_process_t *process, mkc_value_t *value)
   return rval;
 }
 
+void
+mkc_process_range_init (mkc_process_t *process,
+    mkc_value_t *value, mkc_value_t *beg, mkc_value_t *end, mkc_value_t *incr)
+{
+  int32_t     ibeg, iend, iincr;
+
+  ibeg = mkc_pvar_value_get_integer (process->pvar, beg);
+  iend = mkc_pvar_value_get_integer (process->pvar, end);
+  iincr = mkc_pvar_value_get_integer (process->pvar, incr);
+  if (mkc_error_chk_err (process->mkcerr)) {
+    return;
+  }
+  mkc_value_range_init (value, ibeg, iend, iincr);
+}
+
 int32_t
 mkc_process_num_op (mkc_process_t *process, int type,
     mkc_value_t *vala, mkc_value_t *valb)
@@ -587,8 +601,7 @@ mkc_process_include (mkc_process_t *process, mkc_value_t *vala,
 
 mkc_foreach_t *
 mkc_process_stmt_foreach_setup (mkc_process_t *process,
-    mkc_value_t *valnm, mkc_value_t *vallist,
-    mkc_value_t *range)
+    mkc_value_t *valnm, mkc_value_t *vallist)
 {
   mkc_foreach_t   *pforeach;
 
@@ -608,10 +621,9 @@ mkc_process_stmt_foreach_setup (mkc_process_t *process,
 
   pforeach->plocalidx = mkc_profile_local_create (process->profiles);
   pforeach->namelist = NULL;
-  pforeach->range = range;
   pforeach->list = NULL;
   pforeach->iteridx = MKC_ITER_FINISH;
-  pforeach->type = MKC_T_VAL_LIST;
+  pforeach->tvalue.vtype = MKC_VT_INVALID;
 
   if (valnm != NULL) {
     if (valnm->vtype != MKC_VT_LIST) {
@@ -631,11 +643,8 @@ mkc_process_stmt_foreach_setup (mkc_process_t *process,
       mkc_error_set (process->mkcerr, MKC_ERR_MISMATCHED_ARGUMENT_TYPE, 0, NULL);
       return NULL;
     }
-    pforeach->list = value->list;
-    mkc_list_iter_start (pforeach->list, &pforeach->iteridx);
-  }
-  if (range != NULL) {
-    pforeach->type = MKC_T_RANGE;
+    pforeach->list = value;
+    mkc_value_iter_start (value, &pforeach->iteridx);
   }
 
   return pforeach;
@@ -644,39 +653,26 @@ mkc_process_stmt_foreach_setup (mkc_process_t *process,
 bool
 mkc_process_stmt_foreach (mkc_process_t *process, mkc_foreach_t *pforeach)
 {
-  mkc_value_t     tvalue;
   mkc_listidx_t   niteridx;
   mkc_listidx_t   nidx;
+  bool            cont = true;
 
   mkc_list_iter_start (pforeach->namelist, &niteridx);
   while ((nidx = mkc_list_iter_next (pforeach->namelist, &niteridx)) != MKC_ITER_FINISH) {
     mkc_value_t     *nval = NULL;
-    mkc_value_t     *tval = NULL;
+    mkc_listidx_t   rc;
 
     nval = mkc_list_get_by_idx (pforeach->namelist, nidx);
 
-    if (pforeach->type == MKC_T_RANGE) {
-      tvalue.ival = mkc_value_range_get (pforeach->range);
-      tvalue.vtype = MKC_VT_INTEGER;
-      if (mkc_value_range_finish (pforeach->range)) {
-        return false;
-      }
-      tval = &tvalue;
+    rc = mkc_value_iter_next (pforeach->list, &pforeach->tvalue, &pforeach->iteridx);
+    if (rc == MKC_ITER_FINISH) {
+      cont = false;
+      break;
     }
-    if (pforeach->type == MKC_T_VAL_LIST) {
-      mkc_listidx_t   lidx;
-
-      lidx = mkc_list_iter_next (pforeach->list, &pforeach->iteridx);
-      if (lidx == MKC_ITER_FINISH) {
-        return false;
-      }
-
-      tval = mkc_list_get_by_idx (pforeach->list, lidx);
-    }
-    mkc_process_local_set (process, nval, tval, pforeach->plocalidx);
+    mkc_process_local_set (process, nval, &pforeach->tvalue, pforeach->plocalidx);
   }
 
-  return true;
+  return cont;
 }
 
 void
@@ -684,28 +680,6 @@ mkc_process_stmt_foreach_finish (mkc_process_t *process, mkc_foreach_t *pforeach
 {
   free (pforeach);
   mkc_profile_local_pop (process->profiles);
-}
-
-void
-mkc_process_range_init (mkc_process_t *process, mkc_value_t *range,
-    mkc_value_t *valbeg, mkc_value_t *valend, mkc_value_t *valincr)
-{
-  int32_t     beg;
-  int32_t     end;
-  int32_t     incr;
-
-  if (process == NULL) {
-    return;
-  }
-  if (range == NULL) {
-    mkc_error_set (process->mkcerr, MKC_ERR_NULL_ARGUMENT, 0, NULL);
-    return;
-  }
-
-  beg = mkc_pvar_value_get_integer (process->pvar, valbeg);
-  end = mkc_pvar_value_get_integer (process->pvar, valend);
-  incr = mkc_pvar_value_get_integer (process->pvar, valincr);
-  mkc_value_range_init (range, beg, end, incr);
 }
 
 /* statements */

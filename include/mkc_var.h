@@ -55,11 +55,11 @@ typedef struct mkc_varlist_t mkc_varlist_t;
 typedef mkc_listidx_t mkc_varidx_t;
 
 typedef struct mkc_range_t {
-  int32_t   beg;
-  int32_t   end;
-  int32_t   incr;
-  int32_t   var;
-  bool      finish;
+  int32_t     beg;
+  int32_t     end;
+  int32_t     incr;
+  int32_t     var;
+  bool        finish;
 } mkc_range_t;
 
 typedef struct mkc_value_t {
@@ -93,8 +93,11 @@ bool mkc_var_is_list (mkc_varlist_t *varlist, const char *vname);
 void mkc_value_free (void *value);
 const char *mkc_value_to_str (mkc_value_t *value, char *buff, size_t sz);
 void mkc_value_range_init (mkc_value_t *value, int32_t beg, int32_t end, int32_t incr);
-int32_t mkc_value_range_get (mkc_value_t *value);
-bool mkc_value_range_finish (mkc_value_t *value);
+void mkc_value_range_iter_start (mkc_value_t *value, mkc_listidx_t *iteridx);
+int mkc_value_range_iter_next (mkc_value_t *value, mkc_value_t *rval, mkc_listidx_t *iteridx);
+
+void mkc_value_iter_start (mkc_value_t *value, mkc_listidx_t *iteridx);
+int mkc_value_iter_next (mkc_value_t *value, mkc_value_t *rval, mkc_listidx_t *iteridx);
 
 const char * mkc_value_disp_type (mkc_value_t *value);
 

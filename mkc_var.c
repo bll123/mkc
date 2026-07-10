@@ -455,33 +455,74 @@ void
 mkc_value_range_init (mkc_value_t *value,
     int32_t beg, int32_t end, int32_t incr)
 {
+  if (value == NULL) {
+    return;
+  }
+
   value->vtype = MKC_VT_RANGE;
   value->range.finish = false;
   value->range.beg = beg;
   value->range.end = end;
   value->range.incr = incr;
-  value->range.var = beg - incr;
 }
 
-int32_t
-mkc_value_range_get (mkc_value_t *value)
+void
+mkc_value_range_iter_start (mkc_value_t *value, mkc_listidx_t *iteridx)
 {
-  value->range.var += value->range.incr;
-  if (value->range.var >= value->range.end) {
-    value->range.finish = true;
+  if (value == NULL) {
+    return;
   }
 
-  return value->range.var;
+  *iteridx = value->range.beg - value->range.incr;
 }
 
-bool
-mkc_value_range_finish (mkc_value_t *value)
+int
+mkc_value_range_iter_next (mkc_value_t *value, mkc_value_t *rval,
+    mkc_listidx_t *iteridx)
 {
-  if (value->vtype != MKC_VT_RANGE) {
-    return true;
+  *iteridx += value->range.incr;
+  if (*iteridx >= value->range.end) {
+    *iteridx = MKC_ITER_FINISH;
   }
 
-  return value->range.finish;
+  rval->vtype = MKC_VT_INTEGER;
+  rval->ival = *iteridx;
+  return *iteridx;
+}
+
+void
+mkc_value_iter_start (mkc_value_t *value, mkc_listidx_t *iteridx)
+{
+  if (value->vtype == MKC_VT_LIST) {
+    mkc_list_iter_start (value->list, iteridx);
+  }
+  if (value->vtype == MKC_VT_RANGE) {
+    mkc_value_range_iter_start (value, iteridx);
+  }
+}
+
+int
+mkc_value_iter_next (mkc_value_t *value,
+    mkc_value_t *rval, mkc_listidx_t *iteridx)
+{
+  mkc_listidx_t   rc = MKC_ITER_FINISH;
+
+  if (value->vtype == MKC_VT_LIST) {
+    mkc_listidx_t   lidx;
+    mkc_value_t     *tvalue;
+
+    lidx = mkc_list_iter_next (value->list, iteridx);
+    rc = lidx;
+    if (lidx != MKC_ITER_FINISH) {
+      tvalue = mkc_list_get_by_idx (value->list, lidx);
+      memcpy (rval, tvalue, sizeof (mkc_value_t));
+    }
+  }
+  if (value->vtype == MKC_VT_RANGE) {
+    rc = mkc_value_range_iter_next (value, rval, iteridx);
+  }
+
+  return rc;
 }
 
 const char *
