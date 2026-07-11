@@ -1,0 +1,28 @@
+# Copyright 2026 Brad Lanam Pleasant Hill CA
+
+project {
+  name mkctest;
+  compiler c;
+}
+
+check_link_flag    '-fPIC';
+check_link_flag    '-lm';
+
+profile default {
+  compiler c;
+
+  check_link_flag '-g';
+}
+
+if (${lf_fPIC} ne '') {
+  print '  ok p';
+} else {
+  print '  fail p';
+}
+if (${lf_g} ne '') {
+  print '  ok g';
+} else {
+  print '  fail g';
+}
+
+mkcdebug printprofvar test;

@@ -1,5 +1,10 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
+project {
+  name mkctest;
+  compiler c;
+}
+
 check_compile_flag    '-Wunreachable-code';
 check_compile_flag    '-Wno-unreachable-code';
 check_compile_flag    '-Wsomething-bad';
@@ -9,10 +14,25 @@ check_compile_flag    '-Werror' {
   name HAVE_CF_ERROR;
 }
 if (${HAVE_CF_ERROR} ne '') {
-  print '  ok';
+  print '  ok n';
+} else {
+  print '  fail n';
 }
 if (is_defined (cf_error)) {
   print '  fail';
+}
+
+profile default {
+  compiler c;
+  check_compile_flag  '-Werror' {
+    name C_CF_ERROR;
+  }
+}
+
+if (${C_CF_ERROR} ne '') {
+  print '  ok c';
+} else {
+  print '  fail c';
 }
 
 mkcdebug printprofvar test;

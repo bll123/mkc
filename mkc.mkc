@@ -109,8 +109,6 @@ configure {
   define_zero;
 }
 
-exit 0;
-
 # set compile and link flags
 
 check_compile_flag '-pedantic';

@@ -1,6 +1,0 @@
-# Copyright 2026 Brad Lanam Pleasant Hill CA
-
-check_link_flag    '-fPIC';
-check_link_flag    '-lm';
-
-mkcdebug printprofvar test;
