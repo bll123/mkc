@@ -10,6 +10,9 @@ main (void)
   int           rc;
   struct stat   statbuf;
 
+  /* is there a better way to determine this? */
+  /* opinion: this should be added to /etc/os-release */
+
   rc = stat ("/lib64/libc.so", &statbuf);
   if (rc == 0) {
     return MKC_LIB_LOC_LIB64;

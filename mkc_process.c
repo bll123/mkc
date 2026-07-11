@@ -695,7 +695,94 @@ mkc_process_stmt_foreach_finish (mkc_process_t *process, mkc_foreach_t *pforeach
 int
 mkc_process_stmt_chk_inc_compile (mkc_process_t *process)
 {
-  return MKC_ERR_FAILURE;
+  int             rc = MKC_ERR_FAILURE;
+#if _have_regex
+  mkc_list_t      *hlist = NULL;
+  mkc_regex_t     *rx;
+  mkc_listidx_t   hiteridx;
+  char            *rbuff;
+  char            *hdr;
+  char            **match = NULL;
+  int             matchcount;
+  mkc_list_t      *guardlist = NULL;
+
+  if (process->attr.str [MKC_ATTR_MATCH] == NULL) {
+    mkc_error_set (process->mkcerr, MKC_ERR_MISSING_ATTRIBUTE, 0, "match");
+    mkc_process_attr_clear (process);
+    return rc;
+  }
+
+  if (mkc_list_size (process->attr.pathlist) == 0) {
+    mkc_error_set (process->mkcerr, MKC_ERR_MISSING_ATTRIBUTE, 0, "path");
+    mkc_process_attr_clear (process);
+    return rc;
+  }
+
+  hdr = malloc (MKC_PATH_MAX);
+  if (hdr == NULL) {
+    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    mkc_process_attr_clear (process);
+    return rc;
+  }
+
+  rx = mkc_regex_init (process->attr.str [MKC_ATTR_MATCH],
+      MKC_REGEX_NONE, process->mkcerr);
+  if (mkc_error_chk_err (process->mkcerr)) {
+    mkc_process_attr_clear (process);
+    free (hdr);
+    return rc;
+  }
+
+// ### build cflags for the compilation
+
+  rc = MKC_OK;
+  hlist = mkc_process_get_include_list (process, rx);
+  mkc_list_iter_start (hlist, &hiteridx);
+  while ((rbuff = mkc_process_iter_includes (process, hlist, &hiteridx,
+      hdr, MKC_PATH_MAX)) != NULL) {
+    char            *tp;
+    mkc_listidx_t   loc = MKC_LIST_NOTFOUND;
+    mkc_listidx_t   idx;
+
+    if (mkc_error_chk_err (process->mkcerr)) {
+      free (rbuff);
+      break;
+    }
+
+    mkc_regex_get_reset (process->rxincguard);
+    match = mkc_regex_get (process->rxincguard, rbuff, &matchcount);
+    if (matchcount != 2) {
+      mkc_error_set (process->mkcerr, MKC_ERR_INCLUDE_GUARD_NOTFOUND, 0, hdr);
+      rc = MKC_ERR_FAILURE;
+    }
+
+    if (matchcount == 2) {
+      tp = strdup (match [1]);
+      loc = MKC_LIST_NOTFOUND;
+      idx = mkc_list_find (guardlist, &tp, &loc);
+      if (idx != MKC_LIST_NOTFOUND) {
+        mkc_error_set (process->mkcerr, MKC_ERR_INCLUDE_GUARD_DUPLICATE, 0, hdr);
+        rc = MKC_ERR_FAILURE;
+      }
+
+      mkc_list_set (guardlist, &tp, sizeof (char *), &loc);
+    }
+    mkc_regex_get_free (match);
+    free (rbuff);
+  }
+
+  mkc_message ("-- check_include_guards - %s\n",
+      mkc_success_msg (rc));
+  mkc_log (process->log, MKC_LOG_CHECK, "-- check_include_guards - %s\n",
+      mkc_success_msg (rc));
+
+  mkc_list_free (hlist);
+  mkc_list_free (guardlist);
+  mkc_regex_free (rx);
+  free (hdr);
+#endif
+  mkc_process_attr_clear (process);
+  return rc;
 }
 
 int

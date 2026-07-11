@@ -5,11 +5,40 @@
 
 ### Syntax: Checks
 
+##### Checks
+
+* [check\_arg\_count](SyntaxCheckArgCount)
+* [check\_compiler\_flag](SyntaxCheckCompilerFlag)
+  add\_compiler\_flag
+* [check\_constant](SyntaxCheckConstant)
+* [check\_define](SyntaxCheckDefine)
+* [check\_function](SyntaxCheckFunction)
+* [check\_header](SyntaxCheckHeader)
+* [check\_link\_flag](SyntaxCheckLinkFlag)
+  add\_link\_flag
+* [check\_package](SyntaxCheckPackage)
+* [check\_size](SyntaxCheckSize)
+* [check\_shell\_extract](SyntaxCheckShell)
+* [check\_struct\_member](SyntaxCheckStructMember)
+* [check\_type](SyntaxCheckType)
+
+##### Standard Headers Included for a Check
+
+The following headers are included for the checks.  These headers
+cover many of the usual types and library calls.
+
+    #include <stdio.h>
+    #include <stdint.h>
+    #include <stdbool.h>
+    #include <stddef.h>
+    #include <stdlib.h>
+    #include <string.h>
+
 ##### Allowed Attributes
 
 Check statements may allow the following attribute statements.  Check
-the specific wiki page to see which attributes are allowed for the
-check.
+the specific wiki page for the check to see which attributes are
+allowed for the check.
 
 * [alternate](SyntaxAttrAlternate)
 * [compiler\_flags](SyntaxAttrCompileFlag)
@@ -38,7 +67,7 @@ are not alphabetic or digits with an underscore.
 ##### Changing the Name of a Check
 
 _mkc_ automatically generates names for each check. To change the name
-of a check, append a statement block and use the [name](SyntaxName)
+of a check, append a statement block and use the [name](SyntaxAttrName)
 statement.
 
     check_size int64_t {
@@ -63,9 +92,9 @@ statement.
 The [alternate](SyntaxAttrAlternate) is a powerful method to run
 checks with alternate settings.
 
-Each alternate attribute block may contain the
+Each alternate attribute block may contain the [name](SyntaxAttrName),
 [header](SyntaxAttrHeader), [compiler\_flags](SyntaxAttrCompileFlag),
-or [link\_flags](SyntaxAttrLinkFlag) attributes.
+and [link\_flags](SyntaxAttrLinkFlag) attributes.
 
 For example, the following code checks for the _statfs_ function.  On
 Linux, this requires the `sys/vfs.h` header (or `sys/statfs.h`).  On
@@ -84,28 +113,11 @@ MacOS and \*BSD, the `sys/mount.h` header should be used.
       }
     }
 
-On success, the _\_function\_statfs_ generated name will be set.
+On success, the generated _\_function\_statfs_ name will be set.
 
 If the first alternate succeeds, the _\_header\_sys\_vfs_ variable
 will be set.  If the second alternate succeeds, the
 _\_header\_sys\_mount_ variable will be set.
-
-##### Checks
-
-* [check\_arg\_count](SyntaxCheckArgCount)
-* [check\_compiler\_flag](SyntaxCheckCompilerFlag)
-  add\_compiler\_flag
-* [check\_constant](SyntaxCheckConstant)
-* [check\_define](SyntaxCheckDefine)
-* [check\_function](SyntaxCheckFunction)
-* [check\_header](SyntaxCheckHeader)
-* [check\_link\_flag](SyntaxCheckLinkFlag)
-  add\_link\_flag
-* [check\_package](SyntaxCheckPackage)
-* [check\_size](SyntaxCheckSize)
-* [check\_shell\_extract](SyntaxCheckShell)
-* [check\_struct\_member](SyntaxCheckStructMember)
-* [check\_type](SyntaxCheckType)
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)
