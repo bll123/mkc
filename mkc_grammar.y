@@ -114,6 +114,7 @@
 %token T_RANGE                "range"
 
 // directives
+%token T_STMT_CHK_INC_COMPILE "check_include_compilation"
 %token T_STMT_CHK_INC_DEPS    "check_include_dependencies"
 %token T_STMT_CHK_INC_GUARDS  "check_include_guards"
 %token T_STMT_CONFIGURE       "configure"
@@ -198,8 +199,8 @@
 %type <astnode> stmt_foreach stmt_function stmt_while
 %type <astnode> stmt_function_call
 // commands
-%type <astnode> stmt_chk_inc_deps stmt_chk_inc_guards stmt_config
-%type <astnode> stmt_loadcache
+%type <astnode> stmt_chk_inc_compile stmt_chk_inc_deps stmt_chk_inc_guards
+%type <astnode> stmt_config stmt_loadcache
 %type <astnode> stmt_mark stmt_print stmt_profile stmt_project stmt_set
 // checks
 %type <astnode> checkcommand chk_argcount chk_compflag chk_const
@@ -266,6 +267,10 @@ stmt[v]:
       $v = $a;
     }
 // statements
+  | stmt_chk_inc_compile[a]
+    {
+      $v = $a;
+    }
   | stmt_chk_inc_deps[a]
     {
       $v = $a;
@@ -581,10 +586,18 @@ stmt_function[v]:
 
 // statements
 
+stmt_chk_inc_compile[v]:
+    T_STMT_CHK_INC_COMPILE stmtblock[a]
+    {
+      $v = mkc_ast_mk_stmt_chk_include (ast, $a, MKC_T_STMT_CHK_INC_COMPILE,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
 stmt_chk_inc_deps[v]:
     T_STMT_CHK_INC_DEPS stmtblock[a]
     {
-      $v = mkc_ast_mk_stmt_chk_inc_deps (ast, $a,
+      $v = mkc_ast_mk_stmt_chk_include (ast, $a, MKC_T_STMT_CHK_INC_DEPS,
           yylloc.first_line, yylloc.first_column);
     }
   ;
@@ -592,7 +605,7 @@ stmt_chk_inc_deps[v]:
 stmt_chk_inc_guards[v]:
     T_STMT_CHK_INC_GUARDS stmtblock[a]
     {
-      $v = mkc_ast_mk_stmt_chk_inc_guards (ast, $a,
+      $v = mkc_ast_mk_stmt_chk_include (ast, $a, MKC_T_STMT_CHK_INC_GUARDS,
           yylloc.first_line, yylloc.first_column);
     }
   ;

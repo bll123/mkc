@@ -693,6 +693,12 @@ mkc_process_stmt_foreach_finish (mkc_process_t *process, mkc_foreach_t *pforeach
 /* statements */
 
 int
+mkc_process_stmt_chk_inc_compile (mkc_process_t *process)
+{
+  return MKC_ERR_FAILURE;
+}
+
+int
 mkc_process_stmt_chk_inc_deps (mkc_process_t *process)
 {
   mkc_list_t      *hlist = NULL;

@@ -59,8 +59,7 @@ typedef struct mkc_ast_main_t {
 
 /* statements */
 
-typedef struct mkc_ast_stmtblock_t mkc_ast_stmt_chk_inc_deps_t;
-typedef struct mkc_ast_stmtblock_t mkc_ast_stmt_chk_inc_guards_t;
+typedef struct mkc_ast_stmtblock_t mkc_ast_stmt_chk_inc;
 
 typedef struct mkc_ast_conf_t {
   mkc_astnode_t       *stmtblock;
@@ -203,8 +202,7 @@ typedef struct mkc_astnode_t {
     mkc_ast_check_flag_t        chk_flag;
     mkc_ast_chk_package_t       chk_package;
     mkc_ast_chk_member_t        chk_member;
-    mkc_ast_stmt_chk_inc_deps_t stmt_chk_inc_deps;
-    mkc_ast_stmt_chk_inc_guards_t stmt_chk_inc_guards;
+    mkc_ast_stmt_chk_inc        stmt_chk_inc;
     mkc_ast_conf_t              stmt_conf;
     mkc_ast_debug_t             stmt_debug;
     mkc_ast_exit_t              stmt_exit;
@@ -354,11 +352,14 @@ mkc_ast_free (mkc_astmain_t *astmain)
 /* for basic values, numbers, strings, variables */
 MKC_NODISCARD
 mkc_astnode_t *
-mkc_ast_mk_value (mkc_astmain_t *astmain, int asttype, char *str, int32_t lineno, int colno)
+mkc_ast_mk_value (mkc_astmain_t *astmain,
+    mkc_astnode_token_t asttype, char *str,
+    int32_t lineno, int colno)
 {
-  mkc_astnode_t    *astnode = NULL;
-  mkc_ast_value_t  *astvalue;
-  mkc_value_t      *value;
+  mkc_astnode_t     *astnode = NULL;
+  mkc_ast_value_t   *astvalue;
+  mkc_value_t       *value;
+  int               iasttype = asttype;
 
   mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
       "ast-mk: mk-value\n");
@@ -376,7 +377,7 @@ mkc_ast_mk_value (mkc_astmain_t *astmain, int asttype, char *str, int32_t lineno
   mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
       "ast-mk-value: %s %s\n", typenames [asttype], str);
 
-  switch (asttype) {
+  switch (iasttype) {
     case MKC_T_VAL_INTEGER: {
       value->ival = atol (str);
       value->vtype = MKC_VT_INTEGER;
@@ -523,7 +524,7 @@ mkc_ast_mk_stmtlist (mkc_astmain_t *astmain,
 MKC_NODISCARD
 mkc_astnode_t *
 mkc_ast_mk_op (mkc_astmain_t *astmain,
-      mkc_astnode_t *vala, int op, mkc_astnode_t *valb,
+      mkc_astnode_t *vala, mkc_astnode_token_t op, mkc_astnode_t *valb,
       int32_t lineno, int colno)
 {
   mkc_astnode_t  *astnode;
@@ -608,39 +609,21 @@ mkc_ast_mk_debug (mkc_astmain_t *astmain,
 
 MKC_NODISCARD
 mkc_astnode_t *
-mkc_ast_mk_stmt_chk_inc_deps (mkc_astmain_t *astmain,
-    mkc_astnode_t *stmtblock, int32_t lineno, int colno)
+mkc_ast_mk_stmt_chk_include (mkc_astmain_t *astmain,
+    mkc_astnode_t *stmtblock, mkc_astnode_token_t asttype,
+    int32_t lineno, int colno)
 {
   mkc_astnode_t   *astnode;
 
   mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
-      "ast-mk: chk-inc-deps\n");
+      "ast-mk: %s\n", typenames [asttype]);
 
-  astnode = mkc_astnode_init (astmain, MKC_T_STMT_CHK_INC_DEPS, lineno, colno);
+  astnode = mkc_astnode_init (astmain, asttype, lineno, colno);
   if (astnode == NULL) {
     return NULL;
   }
 
-  astnode->stmt_chk_inc_deps.stmtblock = stmtblock;
-  return astnode;
-}
-
-MKC_NODISCARD
-mkc_astnode_t *
-mkc_ast_mk_stmt_chk_inc_guards (mkc_astmain_t *astmain,
-    mkc_astnode_t *stmtblock, int32_t lineno, int colno)
-{
-  mkc_astnode_t   *astnode;
-
-  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
-      "ast-mk: chk-inc-guards\n");
-
-  astnode = mkc_astnode_init (astmain, MKC_T_STMT_CHK_INC_GUARDS, lineno, colno);
-  if (astnode == NULL) {
-    return NULL;
-  }
-
-  astnode->stmt_chk_inc_guards.stmtblock = stmtblock;
+  astnode->stmt_chk_inc.stmtblock = stmtblock;
   return astnode;
 }
 
@@ -1389,19 +1372,26 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
 
     /* statements */
 
-    case MKC_T_STMT_CHK_INC_DEPS: {
-      mkc_context_push (astmain->context, MKC_CONTEXT_CHK_INC, astmain->mkcerr);
-      mkc_ast_process (astmain, astnode->stmt_chk_inc_deps.stmtblock, ifcond, loopcond, depth + 1);
-      mkc_context_pop (astmain->context);
-      mkc_process_stmt_chk_inc_deps (astmain->process);
-      break;
-    }
-
+    case MKC_T_STMT_CHK_INC_COMPILE:
+    case MKC_T_STMT_CHK_INC_DEPS:
     case MKC_T_STMT_CHK_INC_GUARDS: {
       mkc_context_push (astmain->context, MKC_CONTEXT_CHK_INC, astmain->mkcerr);
-      mkc_ast_process (astmain, astnode->stmt_chk_inc_guards.stmtblock, ifcond, loopcond, depth + 1);
+      mkc_ast_process (astmain, astnode->stmt_chk_inc.stmtblock, ifcond, loopcond, depth + 1);
       mkc_context_pop (astmain->context);
-      mkc_process_stmt_chk_inc_guards (astmain->process);
+      switch (astnode->asttype) {
+        case MKC_T_STMT_CHK_INC_COMPILE: {
+          mkc_process_stmt_chk_inc_compile (astmain->process);
+          break;
+        }
+        case MKC_T_STMT_CHK_INC_DEPS: {
+          mkc_process_stmt_chk_inc_deps (astmain->process);
+          break;
+        }
+        case MKC_T_STMT_CHK_INC_GUARDS: {
+          mkc_process_stmt_chk_inc_guards (astmain->process);
+          break;
+        }
+      }
       break;
     }
 

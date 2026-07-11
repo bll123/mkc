@@ -4,8 +4,9 @@
 
 ##### 2026-7-11 pre-alpha 0.3
 
-The __alternate__ attribute is working.
 check_include_dependencies, check_include_guards are working.
+
+to do: be able to apply alternates to check_package.
 
 Currently, the pre-alpha code will only create a configuration file.
 
@@ -46,6 +47,11 @@ If you have a system that you want regularly tested, please
     * __Complete__: Package support (via pkg-config files).
     * __Complete__: Variable cache. The usual invalidation problems.
     * __Complete__: Check the number of arguments a function requires.
+    * Attributes:
+        * __Complete__: alternates
+        * __Complete__: compile flags
+        * __Complete__: headers
+        * __Complete__: link flags
     * Statements:
         * check_include_compilation
         * __Complete__: check_include_dependencies

@@ -37,6 +37,7 @@ mkc_foreach_t *mkc_process_stmt_foreach_setup (mkc_process_t *process, mkc_value
 bool mkc_process_stmt_foreach (mkc_process_t *process, mkc_foreach_t *procforeach);
 void mkc_process_stmt_foreach_finish (mkc_process_t *process, mkc_foreach_t *procforeach);
 
+int mkc_process_stmt_chk_inc_compile (mkc_process_t *process);
 int mkc_process_stmt_chk_inc_deps (mkc_process_t *process);
 int mkc_process_stmt_chk_inc_guards (mkc_process_t *process);
 void mkc_process_stmt_configure (mkc_process_t *process);
