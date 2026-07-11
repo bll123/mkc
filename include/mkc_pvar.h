@@ -36,6 +36,7 @@ int mkc_pvar_set (mkc_pvar_t *pvar, const char *vname, mkc_value_t *value, mkc_v
 int mkc_pvar_set_integer (mkc_pvar_t *pvar, const char *vname, int32_t ival, mkc_var_ctxt_t vctxt);
 int mkc_pvar_set_str (mkc_pvar_t *pvar, const char *vname, const char *str, mkc_var_ctxt_t vctxt);
 int mkc_pvar_set_list (mkc_pvar_t *pvar, const char *vname, mkc_list_t *list, mkc_var_ctxt_t vctxt);
+int mkc_pvar_append_str_list (mkc_pvar_t *pvar, const char *vname, const char *data, mkc_var_ctxt_t vctxt);
 int mkc_pvar_set_list_from_str (mkc_pvar_t *pvar, const char *vname, char *str, mkc_var_ctxt_t vctxt);
 void mkc_pvar_set_context (mkc_pvar_t *pvar, const char *vname, mkc_var_ctxt_t vctxt);
 

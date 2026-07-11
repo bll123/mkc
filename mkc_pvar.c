@@ -181,6 +181,32 @@ mkc_pvar_set_list (mkc_pvar_t *pvar,
 }
 
 int
+mkc_pvar_append_str_list (mkc_pvar_t *pvar, const char *vname,
+    const char *data, mkc_var_ctxt_t vctxt)
+{
+  mkc_value_t   *listval;
+  mkc_list_t    *list;
+  mkc_listidx_t loc;
+  mkc_value_t   tvalue;
+
+
+  listval = mkc_pvar_get_value (pvar, vname);
+  if (listval == NULL) {
+    list = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, pvar->mkcerr);
+    mkc_pvar_set_list (pvar, vname, list, vctxt);
+    listval = mkc_pvar_get_value (pvar, vname);
+    mkc_list_free (list);
+  }
+  list = listval->list;
+
+  tvalue.vtype = MKC_VT_STRING;
+  tvalue.sval = strdup (data);
+  mkc_list_set (list, &tvalue, sizeof (mkc_value_t), &loc);
+
+  return MKC_OK;
+}
+
+int
 mkc_pvar_set_list_from_str (mkc_pvar_t *pvar,
     const char *vname, char *str, mkc_var_ctxt_t vctxt)
 {

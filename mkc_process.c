@@ -703,6 +703,9 @@ mkc_process_stmt_chk_inc_deps (mkc_process_t *process)
   char            *rbuff;
   char            *hdr;
 
+  mkc_message ("-- check include dependencies\n");
+  mkc_log (process->log, MKC_LOG_GENERAL, "-- check include dependencies\n");
+
   if (process->attr.str [MKC_ATTR_MATCH] == NULL) {
     mkc_error_set (process->mkcerr, MKC_ERR_MISSING_ATTRIBUTE, 0, "match");
     mkc_process_attr_clear (process);
@@ -771,6 +774,7 @@ mkc_process_stmt_chk_inc_deps (mkc_process_t *process)
 void
 mkc_process_stmt_chk_inc_guards (mkc_process_t *process)
 {
+#if _have_regex
   mkc_list_t      *hlist = NULL;
   mkc_regex_t     *rx;
   mkc_listidx_t   hiteridx;
@@ -779,6 +783,9 @@ mkc_process_stmt_chk_inc_guards (mkc_process_t *process)
   char            **match = NULL;
   int             matchcount;
   mkc_list_t      *guardlist = NULL;
+
+  mkc_message ("-- check include guards\n");
+  mkc_log (process->log, MKC_LOG_GENERAL, "-- check include guards\n");
 
   if (process->attr.str [MKC_ATTR_MATCH] == NULL) {
     mkc_error_set (process->mkcerr, MKC_ERR_MISSING_ATTRIBUTE, 0, "match");
@@ -802,23 +809,20 @@ mkc_process_stmt_chk_inc_guards (mkc_process_t *process)
   guardlist = mkc_list_init (MKC_LIST_SORTED, mkc_list_ind_free,
       mkc_list_ind_compare, process->mkcerr);
 
-#if _have_regex
   if (process->rxincguard == NULL) {
     process->rxincguard = mkc_regex_init (
         "^# *ifndef +([[:alnum:]_][[:alnum:]_]*)[\r\n]+# *define +\\g1$",
         MKC_REGEX_MULTILINE, process->mkcerr);
   }
-#endif
+
   if (mkc_error_chk_err (process->mkcerr)) {
     free (hdr);
     mkc_process_attr_clear (process);
     return;
   }
 
-#if _have_regex
   rx = mkc_regex_init (process->attr.str [MKC_ATTR_MATCH],
       MKC_REGEX_NONE, process->mkcerr);
-#endif
   if (mkc_error_chk_err (process->mkcerr)) {
     mkc_process_attr_clear (process);
     free (hdr);
@@ -862,6 +866,7 @@ mkc_process_stmt_chk_inc_guards (mkc_process_t *process)
   mkc_list_free (guardlist);
   mkc_regex_free (rx);
   free (hdr);
+#endif
   mkc_process_attr_clear (process);
 }
 
@@ -914,7 +919,7 @@ mkc_process_stmt_debug (mkc_process_t *process,
   if (strcmp (tbuff, "printprof") == 0) {
     mkc_process_dbg_print_prof (process);
   }
-  if (strcmp (tbuff, "printvar") == 0) {
+  if (strcmp (tbuff, "printprofvar") == 0) {
     mkc_pvar_value_get_str (process->pvar, subvalue, tbuff, sizeof (tbuff));
     mkc_process_dbg_print_var (process, tbuff);
   }
@@ -1703,6 +1708,23 @@ mkc_process_check_flag (mkc_process_t *process,
 
   if (rc == 0) {
     mkc_pvar_set_str (pvar, tnm, flag, MKC_VCTXT_FLAG);
+
+    switch (iasttype) {
+      case MKC_T_CHK_COMP_FLAG: {
+        mkc_pvar_append_str_list (process->pvar, MKC_C_CFLAGS, flag, MKC_VCTXT_MKC);
+        break;
+      }
+      case MKC_T_CHK_LINK_FLAG: {
+        const char    *nm = MKC_C_LDFLAGS;
+
+        if (strncmp (flag, "-L", 2) == 0 ||
+            strncmp (flag, "-l", 2) == 0) {
+          nm = MKC_C_LIBS;
+        }
+        mkc_pvar_append_str_list (process->pvar, nm, flag, MKC_VCTXT_MKC);
+        break;
+      }
+    }
   }
 
   if (addchk == MKC_ADD) {
@@ -1715,101 +1737,6 @@ mkc_process_check_flag (mkc_process_t *process,
         typenames [asttype], flag, mkc_success_msg (rc));
     mkc_log (process->log, MKC_LOG_CHECK, "-- check %s: %s - %s\n",
         typenames [asttype], flag, mkc_success_msg (rc));
-  }
-
-  mkc_process_attr_clear (process);
-  return rc;
-}
-
-int32_t
-mkc_process_chk_compiler_flag (mkc_process_t *process,
-    mkc_value_t *valflag, int addchk)
-{
-  int         rc = MKC_OK;
-  char        tnm [MKC_VNAME_MAX];
-  char        flag [MKC_VNAME_MAX];
-  mkc_pvar_t  *pvar;
-
-  if (process == NULL) {
-    return MKC_ERR_FAILURE;
-  }
-
-  mkc_pvar_value_get_str (process->pvar, valflag, flag, sizeof (flag));
-  mkc_process_create_name (process, MKC_T_CHK_COMP_FLAG, tnm, sizeof (tnm), "cf_", flag, NULL);
-
-  pvar = process->pvar;
-
-  if (mkc_process_chk_cache (process, flag, tnm)) {
-    mkc_process_attr_clear (process);
-    return rc;
-  }
-
-  if (addchk == MKC_CHK) {
-    rc = mkc_chk_compiler_flag (process->check,
-        process->attr.currcompiler, flag, process->attr.negate);
-  }
-  process->attr.negate = false;
-
-  if (rc == 0) {
-    mkc_pvar_set_str (pvar, tnm, flag, MKC_VCTXT_FLAG);
-  }
-
-  if (addchk == MKC_ADD) {
-    mkc_message ("-- add compiler flag: %s\n", flag);
-    mkc_log (process->log, MKC_LOG_CHECK,
-        "-- add compiler flag: %s\n", flag);
-  }
-  if (addchk == MKC_CHK) {
-    mkc_message ("-- check compiler flag: %s - %s\n",
-        flag, mkc_success_msg (rc));
-    mkc_log (process->log, MKC_LOG_CHECK, "-- check compiler flag: %s - %s\n",
-        flag, mkc_success_msg (rc));
-  }
-
-  mkc_process_attr_clear (process);
-  return rc;
-}
-
-int32_t
-mkc_process_chk_link_flag (mkc_process_t *process,
-    mkc_value_t *valflag, int addchk)
-{
-  int         rc = MKC_OK;
-  char        tnm [MKC_VNAME_MAX];
-  char        flag [MKC_VNAME_MAX];
-  mkc_pvar_t  *pvar;
-
-  if (process == NULL) {
-    return MKC_ERR_FAILURE;
-  }
-
-  pvar = process->pvar;
-  mkc_pvar_value_get_str (process->pvar, valflag, flag, sizeof (flag));
-  mkc_process_create_name (process, MKC_T_CHK_LINK_FLAG, tnm, sizeof (tnm), "lf_", flag, NULL);
-
-  if (mkc_process_chk_cache (process, flag, tnm)) {
-    mkc_process_attr_clear (process);
-    return rc;
-  }
-
-  if (addchk == MKC_CHK) {
-    rc = mkc_chk_link_flag (process->check,
-        process->attr.currcompiler, flag);
-  }
-  if (rc == 0) {
-    mkc_pvar_set_str (pvar, tnm, flag, MKC_VCTXT_FLAG);
-  }
-
-  if (addchk == MKC_ADD) {
-    mkc_message ("-- add link flag: %s\n", flag);
-    mkc_log (process->log, MKC_LOG_CHECK,
-        "-- add link flag: %s\n", flag);
-  }
-  if (addchk == MKC_CHK) {
-    mkc_message ("-- check link flag: %s - %s\n",
-        flag, mkc_success_msg (rc));
-    mkc_log (process->log, MKC_LOG_CHECK, "-- check link flag: %s - %s\n",
-        flag, mkc_success_msg (rc));
   }
 
   mkc_process_attr_clear (process);
@@ -2810,15 +2737,12 @@ mkc_process_dbg_print_var (mkc_process_t *process, const char *pname)
 
   if (pname != NULL && strcmp (pname, "default") == 0) {
     pname = mkc_profile_get_name (process->profiles, opidx);
-  }
-  if (pname != NULL && strcmp (pname, "test") == 0) {
+  } else if (pname != NULL && strcmp (pname, "test") == 0) {
     intest = true;
     pname = mkc_profile_get_name (process->profiles, opidx);
-  }
-  if (pname != NULL && strcmp (pname, "internalall") == 0) {
+  } else if (pname != NULL && strcmp (pname, "internalall") == 0) {
     pname = MKC_C_PROF_INTERNAL_NAME;
-  }
-  if (pname != NULL && strcmp (pname, "internal") == 0) {
+  } else if (pname != NULL && strcmp (pname, "internal") == 0) {
     ininternal = true;
   }
 

@@ -2,7 +2,8 @@
  * Copyright 2021-2026 Brad Lanam Pleasant Hill CA
  *    (from ballroomdj4)
  */
-#pragma once
+#ifndef INC_MKC_REGEX_H
+#define INC_MKC_REGEX_H
 
 #include "mkc_error.h"
 #include "mkc_nodiscard.h"
@@ -32,3 +33,5 @@ MKC_NODISCARD char * mkc_regex_replace_literal (const char *str, const char *tgt
 #if defined (__cplusplus) || defined (c_plusplus)
 } /* extern C */
 #endif
+
+#endif /* INC_MKC_REGEX_H */

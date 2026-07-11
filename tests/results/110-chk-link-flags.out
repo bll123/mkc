@@ -1,2 +1,5 @@
 == default general
+  MKC_LDFLAGS [ '-fPIC' ]
+  MKC_LIBS [ '-lm' ]
   lf_fPIC '-fPIC'
+  lf_lm '-lm'

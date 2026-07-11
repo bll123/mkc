@@ -19,6 +19,6 @@ profile debug {
 }
 
 mkcdebug printprof;
-mkcdebug printvar test;
-mkcdebug printvar release;
-mkcdebug printvar debug;
+mkcdebug printprofvar test;
+mkcdebug printprofvar release;
+mkcdebug printprofvar debug;

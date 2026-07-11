@@ -14,6 +14,9 @@ extern char const * const MKC_C_PATH_PKGCONF;
 extern char const * const MKC_C_PATH_PKGCONFIG;
 
 extern char const * const MKC_C_PROFILE_NAME;
+extern char const * const MKC_C_CFLAGS;
+extern char const * const MKC_C_LDFLAGS;
+extern char const * const MKC_C_LIBS;
 
 #if defined (__cplusplus) || defined (c_plusplus)
 }

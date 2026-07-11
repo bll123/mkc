@@ -57,7 +57,7 @@ for tnm in ${tdir}/${pattern}; do
       ;;
     *.mkc)
       ttype=mkc
-      args=--no-cache
+      args="--no-cache --profile default"
       ;;
     *.sh)
       ttype=sh

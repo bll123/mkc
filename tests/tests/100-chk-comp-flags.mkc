@@ -3,8 +3,16 @@
 check_compile_flag    '-Wunreachable-code';
 check_compile_flag    '-Wno-unreachable-code';
 check_compile_flag    '-Wsomething-bad';
-# clang will generate a warning for this, gcc does not.
-# check_compile_flag    '-Wno-stuff';
-check_compile_flag    '-Wno-stuff-b' { negate; }
+check_compile_flag    '-Wno-stuff' { negate; }
 
-mkcdebug printvar test;
+check_compile_flag    '-Werror' {
+  name HAVE_CF_ERROR;
+}
+if (${HAVE_CF_ERROR} ne '') {
+  print '  ok';
+}
+if (is_defined (cf_error)) {
+  print '  fail';
+}
+
+mkcdebug printprofvar test;

@@ -8,10 +8,10 @@
     mkcdebug printconfig;           # prints mkc configuration
     mkcdebug printinternal;         # prints internal values
     mkcdebug printprof;             # prints profile names
-    mkcdebug printvar <profile>;    # user defined profile
-    mkcdebug printvar internal;
-    mkcdebug printvar internalall;  # including temporary variables
-    mkcdebug printvar test;         # most variables
+    mkcdebug printprofvar <profile>;    # user defined profile
+    mkcdebug printprofvar internal;
+    mkcdebug printprofvar internalall;  # including temporary variables
+    mkcdebug printprofvar test;         # most variables
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

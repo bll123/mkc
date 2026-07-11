@@ -109,15 +109,9 @@ configure {
   define_zero;
 }
 
-check_include_dependencies {
-  path  'include';
-  path  '.';
-  match '\.h$';
-}
-
 exit 0;
 
-# generate
+# set compile and link flags
 
 check_compile_flag '-pedantic';
 check_compile_flag '-pedantic-errors';
@@ -135,15 +129,18 @@ if (${MKC_COMP_ID_GCC}) {
   check_compile_flag '-Wdiscarded-qualifiers';
 }
 
-profile release {
+add_compile_flag '-g';
+add_link_flag '-g';
+
+profile dev {
   add_compile_flag '-O2';
 }
 profile debug {
   add_compile_flag '-O0';
 }
-
-add_compile_flag '-g';
-add_link_flag '-g';
+profile release {
+  add_compile_flag '-O2';
+}
 
 set MKC_FORTIFY true;
 profile sanitize {
@@ -172,3 +169,24 @@ if (${MKC_FORTIFY}) {
   add_compile_flag '-U_FORTIFY_SOURCE';
   add_compile_flag '-D_FORTIFY_SOURCE=0';
 }
+
+# more checks
+
+check_include_dependencies {
+  path  'include';
+  path  '.';
+  match '\.h$';
+}
+
+check_include_guards {
+  path  'include';
+  path  '.';
+  match '\.h$';
+}
+
+# generate
+
+# build
+
+# install
+

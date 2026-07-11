@@ -2,9 +2,10 @@
 
 ### Status
 
-##### 2026-7-5 pre-alpha 0.2
+##### 2026-7-11 pre-alpha 0.3
 
 The __alternate__ attribute is working.
+check_include_dependencies, check_include_guards are working.
 
 Currently, the pre-alpha code will only create a configuration file.
 
@@ -31,9 +32,8 @@ If you have a system that you want regularly tested, please
 * Phase 1
     * Check for compiler flags. (partial)
     * Check for link flags. (partial)
-    * Check for headers.
+    * __Complete__: Check for headers.
       Mostly not needed for modern systems.
-      (not yet implemented)
     * Check for library functions. (c: complete; c&plus;&plus; not implemented)
     * __Complete__: Check for defines.
     * __Complete__: Check for types.
@@ -47,29 +47,32 @@ If you have a system that you want regularly tested, please
     * __Complete__: Variable cache. The usual invalidation problems.
     * __Complete__: Check the number of arguments a function requires.
     * Statements:
+        * check_include_compilation
+        * __Complete__: check_include_dependencies
+        * __Complete__: check_include_guards
+        * __Complete__: foreach
+        * __Complete__: function
         * __Complete__: include
-        * __Complete__: while
         * __Complete__: print
         * __Complete__: set
+        * __Complete__: while
     * Test with the [libmp4tag](https://sourceforge.net/projects/libmp4tag/) package.
     * Test with _mkc_.
 * Phase 2
-    * Statements:
-        * foreach
-        * functions
+    * Generate Makefiles
+      This will be difficult.
+    * Build executables.
+    * Build shared libraries.
+    * Test with _libmp4tag_.
+* Phase 3
     * Test with _di_.
       _di_ checks a __lot__ of stuff.  Many checks will be missing.
       Start adding these checks in.
     * Test with _mkc_.
     * Test with _libmp4tag_.
-* Phase 3
-    * Generate Makefiles
-      This will be difficult.
-    * Handle sub-directories
 * Phase 4
-    * Build executables.
-    * Build shared libraries.
-    * Test with _libmp4tag_.
+    * Handle sub-directories
+* Phase 5
     * Test with _di_.
     * Test with _mkc_.
     * Start testing with _BallroomDJ 4_.
