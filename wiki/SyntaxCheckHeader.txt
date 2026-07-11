@@ -2,7 +2,7 @@
 <br>[Syntax](Syntax)
 <br>[Checks](SyntaxCheck)
 
-### check_header
+### check\_header
 
 Checks if _header_ exists and can be compiled.
 
@@ -40,7 +40,7 @@ Generated Name: Prefix: __\_header\___
 * [alternate](SyntaxAttrAlternate)
 * [header](SyntaxAttrHeader)
 * [name](SyntaxAttrName)
-* [compiler_flags](SyntaxAttrCompileFlag)
+* [compiler\_flags](SyntaxAttrCompileFlag)
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

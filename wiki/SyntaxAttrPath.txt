@@ -9,7 +9,7 @@ the [check_package](SyntaxCheckPackage) statement and the
 
     path <path>;
 
-Repeatable: yes
+Repeatable: __yes__
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

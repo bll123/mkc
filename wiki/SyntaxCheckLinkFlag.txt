@@ -4,7 +4,7 @@
 
 [TOC]
 
-### check_link_flag
+### check\_link\_flag
 
     check_link_flag '-fsanitize=address';
 
@@ -30,8 +30,8 @@ Adds a link flag without any check.
 
 * [header](SyntaxAttrHeader)
 * [name](SyntaxAttrName)
-* [compiler_flags](SyntaxAttrCompileFlag)
-* [link_flags](SyntaxAttrLinkFlag)
+* [compiler\_flags](SyntaxAttrCompileFlag)
+* [link\_flags](SyntaxAttrLinkFlag)
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

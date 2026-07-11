@@ -2,7 +2,7 @@
 <br>[Syntax](Syntax)
 <br>[Checks](SyntaxCheck)
 
-### check_function
+### check\_function
 
 Checks if _function&#8209;name_ exists.  The function is determined to
 exist if there is a macro defined with that name, or if the function
@@ -32,8 +32,8 @@ Generated Name: Prefix: __\_function\___
 * [alternate](SyntaxAttrAlternate)
 * [header](SyntaxAttrHeader)
 * [name](SyntaxAttrName)
-* [compiler_flags](SyntaxAttrCompileFlag)
-* [link_flags](SyntaxAttrLinkFlag)
+* [compiler\_flags](SyntaxAttrCompileFlag)
+* [link\_flags](SyntaxAttrLinkFlag)
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

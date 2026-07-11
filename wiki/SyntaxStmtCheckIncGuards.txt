@@ -1,0 +1,37 @@
+[Wiki Home](Home)
+<br>[Syntax](Syntax)
+
+### Syntax: check\_include\_guards
+
+__check\_include\_guards__ checks the include files to make sure
+a guard exists, and that there are no duplicate include guards.
+
+The following pattern is used to check for an include guard.
+
+    #ifndef <guard-name>
+    #define <guard-name>
+
+In the _.mkc_ file, use the following code to check the include guards.
+
+    check_include_guards {
+      path '<path>';
+      # note that the match expression is a full regular expression
+      # and not a basic regular expression.
+      match <pattern>;
+    }
+
+##### Examples
+
+    check_include_guards {
+      path 'include';
+      path '.';
+      match '\.h$';
+    }
+
+##### Attributes
+
+* [match](SyntaxAttrMatch)
+* [path](SyntaxAttrPath)
+
+[Wiki Home](Home)
+<br>[Syntax](Syntax)

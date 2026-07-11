@@ -2,7 +2,7 @@
 <br>[Syntax](Syntax)
 <br>[Checks](SyntaxCheck)
 
-### check_size
+### check\_size
 
     check_size <type-name>;
     check_size <type-name> { <attribute-statements> }
@@ -24,8 +24,8 @@ Generated Name: Prefix: __\_size\___
 * [alternate](SyntaxAttrAlternate)
 * [header](SyntaxAttrHeader)
 * [name](SyntaxAttrName)
-* [compiler_flags](SyntaxAttrCompileFlag)
-* [link_flags](SyntaxAttrLinkFlag)
+* [compiler\_flags](SyntaxAttrCompileFlag)
+* [link\_flags](SyntaxAttrLinkFlag)
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

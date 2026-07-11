@@ -15,6 +15,7 @@
   * [Expressions](SyntaxExpression)
   * Statements
       * [check_include_dependencies](SyntaxStmtCheckIncDeps)
+      * [check_include_guards](SyntaxStmtCheckIncGuards)
       * [Flow Control Statements](SyntaxControl)
         if, exit, while, foreach
       * [function and Function Calls](SyntaxFunction)

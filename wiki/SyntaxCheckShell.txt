@@ -2,7 +2,7 @@
 <br>[Syntax](Syntax)
 <br>[Checks](SyntaxCheck)
 
-### check_shell_extract
+### check\_shell\_extract
 
 Sets variables from a shell script.  Only variable assignments are
 processed.  Substitution is done, but environment variables are not

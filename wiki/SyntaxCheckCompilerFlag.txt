@@ -4,7 +4,7 @@
 
 [TOC]
 
-### check_compile_flag
+### check\_compile\_flag
 
 Checks to see if a compiler flag is valid, and if so, adds it to
 CFLAGS for the current profile.
@@ -41,7 +41,7 @@ Adds a compiler flag without any check for validity.
 * [header](SyntaxAttrHeader)
 * [name](SyntaxAttrName)
 * negate
-* [compiler_flags](SyntaxAttrCompileFlag)
+* [compiler\_flags](SyntaxAttrCompileFlag)
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

@@ -2,7 +2,7 @@
 <br>[Syntax](Syntax)
 <br>[Checks](SyntaxCheck)
 
-### check_arg_count
+### check\_arg\_count
 
 Checks the number of arguments a function requires.  This check does
 not work on macros.  This check provides a way to distinguish function
@@ -29,8 +29,8 @@ Generated Name: Prefix: __\_arg\_count\___
 * [alternate](SyntaxAttrAlternate)
 * [header](SyntaxAttrHeader)
 * [name](SyntaxAttrName)
-* [compiler_flags](SyntaxAttrCompileFlag)
-* [link_flags](SyntaxAttrLinkFlag)
+* [compiler\_flags](SyntaxAttrCompileFlag)
+* [link\_flags](SyntaxAttrLinkFlag)
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

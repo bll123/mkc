@@ -2,7 +2,7 @@
 <br>[Syntax](Syntax)
 <br>[Checks](SyntaxCheck)
 
-### check_package
+### check\_package
 
     check_package '<package-name>';
     check_package '<package-name>' { <attribute-statements> }

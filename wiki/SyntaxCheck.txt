@@ -7,12 +7,14 @@
 
 ##### Allowed Attributes
 
-Check statements may allow the following attribute statements:
+Check statements may allow the following attribute statements.  Check
+the specific wiki page to see which attributes are allowed for the
+check.
 
 * [alternate](SyntaxAttrAlternate)
-* [compiler_flags](SyntaxAttrCompileFlag)
+* [compiler\_flags](SyntaxAttrCompileFlag)
 * [header](SyntaxAttrHeader)
-* [link_flags](SyntaxAttrLinkFlag)
+* [link\_flags](SyntaxAttrLinkFlag)
 * [match](SyntaxAttrMatch)
 * [name](SyntaxAttrName)
 * [negate](SyntaxCheckCompilerFlag)
@@ -62,8 +64,8 @@ The [alternate](SyntaxAttrAlternate) is a powerful method to run
 checks with alternate settings.
 
 Each alternate attribute block may contain the
-[header](SyntaxAttrHeader), [compiler_flags](SyntaxAttrCompileFlag),
-or [link_flags](SyntaxAttrLinkFlag) attributes.
+[header](SyntaxAttrHeader), [compiler\_flags](SyntaxAttrCompileFlag),
+or [link\_flags](SyntaxAttrLinkFlag) attributes.
 
 For example, the following code checks for the _statfs_ function.  On
 Linux, this requires the `sys/vfs.h` header (or `sys/statfs.h`).  On
@@ -90,20 +92,20 @@ _\_header\_sys\_mount_ variable will be set.
 
 ##### Checks
 
-* [check_arg_count](SyntaxCheckArgCount)
-* [check_compiler_flag](SyntaxCheckCompilerFlag)
-  add_compiler_flag
-* [check_constant](SyntaxCheckConstant)
-* [check_define](SyntaxCheckDefine)
-* [check_function](SyntaxCheckFunction)
-* [check_header](SyntaxCheckHeader)
-* [check_link_flag](SyntaxCheckLinkFlag)
-  add_link_flag
-* [check_package](SyntaxCheckPackage)
-* [check_size](SyntaxCheckSize)
-* [check_shell_extract](SyntaxCheckShell)
-* [check_struct_member](SyntaxCheckStructMember)
-* [check_type](SyntaxCheckType)
+* [check\_arg\_count](SyntaxCheckArgCount)
+* [check\_compiler\_flag](SyntaxCheckCompilerFlag)
+  add\_compiler\_flag
+* [check\_constant](SyntaxCheckConstant)
+* [check\_define](SyntaxCheckDefine)
+* [check\_function](SyntaxCheckFunction)
+* [check\_header](SyntaxCheckHeader)
+* [check\_link\_flag](SyntaxCheckLinkFlag)
+  add\_link\_flag
+* [check\_package](SyntaxCheckPackage)
+* [check\_size](SyntaxCheckSize)
+* [check\_shell\_extract](SyntaxCheckShell)
+* [check\_struct\_member](SyntaxCheckStructMember)
+* [check\_type](SyntaxCheckType)
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)
