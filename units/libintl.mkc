@@ -1,0 +1,46 @@
+# Copyright 2026 Brad Lanam Pleasant Hill CA
+
+# Usage:
+#   check_libintl
+# Sets:
+#     _function_bindtextdomain
+#     _function_textdomain
+#     _function_gettext
+#   If any libraries are needed:
+#     libintl_LIBS
+#
+
+function check_libintl {
+  check_function bindtextdomain {
+    alternate {
+      header libintl.h;
+    }
+    alternate {
+      name mkc_libintl_intl;
+      header libintl.h;
+      link_flags '-lintl';
+    }
+    alternate {
+      name mkc_libintl_intl_iconv;
+      header libintl.h;
+      link_flags '-lintl' '-liconv';
+    }
+    success {
+      set libintl_LIBS [];
+      if (is_defined (mkc_libintl_intl)) {
+        set libintl_LIBS [ '-lintl' ];
+      }
+      if (is_defined (mkc_libintl_intl_iconv)) {
+        set libintl_LIBS [ '-lintl' '-liconv' ];
+      }
+      set _function_gettext true;
+      set _function_textdomain true;
+      set _header_libintl true;
+    }
+  }
+}
+
+profile mkc_test_libintl {
+  check_libintl;
+  mkcdebug printvar mkc_test_libintl;
+}

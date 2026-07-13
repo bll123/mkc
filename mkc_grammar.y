@@ -44,6 +44,8 @@
   YY_BUFFER_STATE mkcyy_create_buffer ( FILE *file, int size , mkcyyscan_t yyscanner );
   void mkcyypush_buffer_state ( YY_BUFFER_STATE new_buffer , mkcyyscan_t yyscanner );
   void mkcyypop_buffer_state ( mkcyyscan_t yyscanner );
+
+  static void mkc_parse_process_include (MKCYYLTYPE* mkcyyllocp, mkc_parse_t *parse, mkc_astmain_t *ast, mkc_astnode_t *path, mkc_astnode_t *node);
 }
 
 %union {
@@ -152,6 +154,7 @@
 %token T_ATTR_COMPILER        "compiler"
 %token T_ATTR_CONTEXT         "context"
 %token T_ATTR_DEFINE_ZERO     "define_zero"
+%token T_ATTR_FAILURE         "failure"
 %token T_ATTR_MATCH           "match"
 %token T_ATTR_HEADER          "header"
 %token T_ATTR_INPUT           "input"
@@ -164,6 +167,7 @@
 %token T_ATTR_PATH            "path"
 %token T_ATTR_REPLACE         "replace"
 %token T_ATTR_SOURCE          "source"
+%token T_ATTR_SUCCESS         "success"
 %token T_ATTR_VERSION         "version"
 
 %type <astnode> integer variable string
@@ -209,9 +213,10 @@
 // attributes
 %type <astnode> attr attr_alternate attr_name attr_path attr_compiler
 %type <astnode> attr_compilerflags attr_context attr_define_zero
-%type <astnode> attr_header attr_input attr_libversion
+%type <astnode> attr_failure attr_header attr_input attr_libversion
 %type <astnode> attr_linkflags attr_match attr_method
-%type <astnode> attr_negate attr_output attr_replace attr_source attr_version
+%type <astnode> attr_negate attr_output attr_replace attr_source
+%type <astnode> attr_success attr_version
 
 // precedence rules: the lowest precedence comes first
 %precedence VALUE
@@ -291,7 +296,7 @@ stmt[v]:
     {
       $v = $a;
     }
-  | includestmt
+  | stmt_include
     {
       $v = NULL;
     }
@@ -352,7 +357,7 @@ attr[v]:
     {
       $v = $a;
     }
-  | attr_match[a]
+  | attr_failure[a]
     {
       $v = $a;
     }
@@ -369,6 +374,10 @@ attr[v]:
       $v = $a;
     }
   | attr_linkflags[a]
+    {
+      $v = $a;
+    }
+  | attr_match[a]
     {
       $v = $a;
     }
@@ -397,6 +406,10 @@ attr[v]:
       $v = $a;
     }
   | attr_source[a]
+    {
+      $v = $a;
+    }
+  | attr_success[a]
     {
       $v = $a;
     }
@@ -472,7 +485,11 @@ checkcommand[v]:
 
 /* a statement-block may contain either statements or attribute statements */
 stmtblock[v]:
-    T_LEFT_BRACE stmtlist[a] T_RIGHT_BRACE
+    T_LEFT_BRACE T_RIGHT_BRACE
+    {
+      $v = NULL;
+    }
+  | T_LEFT_BRACE stmtlist[a] T_RIGHT_BRACE
     {
       $v = $a;
     }
@@ -649,24 +666,14 @@ stmt_function_call[v]:
     }
   ;
 
-includestmt:
-    T_STMT_INCLUDE pathname[a] T_SEMICOLON
+stmt_include:
+    T_STMT_INCLUDE pathname[a] pathname[b] T_SEMICOLON
     {
-      char    fn [MKC_PATH_MAX];
-
-      *fn = '\0';
-      mkc_ast_process_include (ast, $a, fn, sizeof (fn),
-          yylloc.first_line, yylloc.first_column);
-
-      if (*fn) {
-        FILE    *fh;
-
-        mkc_parse_set_filename (parse, fn);
-        fh = mkc_fopen (fn, "r");
-        if (fh != NULL) {
-          mkc_parse_start (parse, fh);
-        }
-      }
+      mkc_parse_process_include (&yyloc, parse, ast, $a, $b);
+    }
+  | T_STMT_INCLUDE pathname[a] T_SEMICOLON
+    {
+      mkc_parse_process_include (&yyloc, parse, ast, NULL, $a);
     }
   ;
 
@@ -871,11 +878,10 @@ attr_define_zero[v]:
     }
   ;
 
-/* define-zero flag for configure */
-attr_match[v]:
-    T_ATTR_MATCH varvalue[a] T_SEMICOLON
+attr_failure[v]:
+    T_ATTR_FAILURE stmtblock[a]
     {
-      $v = mkc_ast_mk_attr_match (ast, $a,
+      $v = mkc_ast_mk_attr_success_fail (ast, $a, MKC_T_ATTR_FAILURE,
           yylloc.first_line, yylloc.first_column);
     }
   ;
@@ -910,6 +916,14 @@ attr_linkflags[v]:
     T_ATTR_LINK_FLAGS valuelist[l] T_SEMICOLON
     {
       $v = mkc_ast_mk_attr_linkflags (ast, $l,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+attr_match[v]:
+    T_ATTR_MATCH varvalue[a] T_SEMICOLON
+    {
+      $v = mkc_ast_mk_attr_match (ast, $a,
           yylloc.first_line, yylloc.first_column);
     }
   ;
@@ -970,6 +984,14 @@ attr_source[v]:
     T_ATTR_SOURCE pathlist[l] T_SEMICOLON
     {
       $v = NULL;
+    }
+  ;
+
+attr_success[v]:
+    T_ATTR_SUCCESS stmtblock[a]
+    {
+      $v = mkc_ast_mk_attr_success_fail (ast, $a, MKC_T_ATTR_SUCCESS,
+          yylloc.first_line, yylloc.first_column);
     }
   ;
 
@@ -1155,7 +1177,12 @@ varvalue[v]:
   ;
 
 list[v]:
-    T_LEFT_BRACKET valuelist[a] T_RIGHT_BRACKET
+    T_LEFT_BRACKET T_RIGHT_BRACKET
+    {
+      $v = mkc_ast_mk_value_list (ast, NULL, NULL,
+          yylloc.first_line, yylloc.first_column);
+    }
+  | T_LEFT_BRACKET valuelist[a] T_RIGHT_BRACKET
     {
       $v = $a;
     }
@@ -1361,4 +1388,25 @@ mkc_parse_debug (mkc_parse_t *parse, bool debug)
   }
 
   mkcyydebug = debug;
+}
+
+static void
+mkc_parse_process_include (MKCYYLTYPE* mkcyyllocp, mkc_parse_t *parse,
+    mkc_astmain_t *ast, mkc_astnode_t *path, mkc_astnode_t *node)
+{
+  char    fn [MKC_PATH_MAX];
+
+  *fn = '\0';
+  mkc_ast_process_include (ast, path, node, fn, sizeof (fn),
+      mkcyyllocp->first_line, mkcyyllocp->first_column);
+
+  if (*fn) {
+    FILE    *fh;
+
+    mkc_parse_set_filename (parse, fn);
+    fh = mkc_fopen (fn, "r");
+    if (fh != NULL) {
+      mkc_parse_start (parse, fh);
+    }
+  }
 }

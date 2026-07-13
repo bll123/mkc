@@ -69,6 +69,7 @@ typedef struct mkc_value_t {
     mkc_range_t range;
     int32_t     ival;
   };
+  int32_t         id;
   mkc_var_type_t  vtype;
   mkc_var_ctxt_t  vctxt;
 } mkc_value_t;

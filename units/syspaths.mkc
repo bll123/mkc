@@ -1,0 +1,55 @@
+# Copyright 2026 Brad Lanam Pleasant Hill CA
+
+# Usage:
+#   check_system_paths;
+# Sets:
+#
+# MacOS:
+#   Checks the path for
+#     /opt/homebrew/bin     # homebrew on apple silicon
+#     /opt/local/bin        # macports
+#     /usr/local/bin        # homebrew on intel
+# FreeBSD:
+#   Checks the path for
+#     /usr/local/bin
+# NetBSD:
+#   Checks the path for
+#     /usr/pkg/bin
+#
+
+function check_system_paths {
+  foreach p in ${MKC_PATH} {
+    if (${MKC_SYS_MACOS}) {
+      if (${p} eq '/opt/homebrew/bin') {
+        # homebrew, apple silicon
+        add_compile_flag '-I/opt/homebrew/include';
+      }
+      if (${p} eq '/opt/local/bin') {
+        # macports
+        add_compile_flag '-I/opt/local/include';
+      }
+      if (${p} eq '/usr/local/bin') {
+        # homebrew, intel
+        add_compile_flag '-I/usr/local/include';
+      }
+      if (${p} eq '/usr/pkg/bin') {
+        add_compile_flag '-I/usr/pkg/include';
+      }
+    }
+    if (${MKC_SYS_ID_FREEBSD}) {
+      if (${p} eq '/usr/local/bin') {
+        add_compile_flag '-I/usr/local/bin';
+      }
+    }
+    if (${MKC_SYS_ID_NETBSD}) {
+      if (${p} eq '/opt/pkg/bin') {
+        add_compile_flag '-I/opt/pkg/bin';
+      }
+    }
+  }
+}
+
+profile mkc_test_syspaths {
+  check_system_paths;
+  mkcdebug printvar mkc_test_syspaths;
+}

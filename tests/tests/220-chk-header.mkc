@@ -1,9 +1,16 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
-check_header 'sys/stat.h';
+check_header 'sys/stat.h' {
+  success {
+    print '  ok a';
+  }
+  failure {
+    print '  fail a';
+  }
+}
 
 if (${_header_sys_stat}) {
-  print '  ok a';
+  print '  ok b';
 } else {
-  print '  fail a';
+  print '  fail b';
 }

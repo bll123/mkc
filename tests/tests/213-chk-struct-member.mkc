@@ -2,6 +2,21 @@
 
 check_struct_member 'struct stat' st_mode {
   header sys/stat.h;
+  success {
+    print '  ok a';
+  }
+  failure {
+    print '  fail a';
+  }
+}
+
+check_struct_member 'struct stat' st_something {
+  success {
+    print '  fail b';
+  }
+  failure {
+    print '  ok b';
+  }
 }
 
 if (${_member_struct_stat_st_mode} == 1) {

@@ -180,6 +180,7 @@ mkc_pvar_set_list (mkc_pvar_t *pvar,
   return rc;
 }
 
+/* will create the value/list if it does not exist */
 int
 mkc_pvar_append_str_list (mkc_pvar_t *pvar, const char *vname,
     const char *data, mkc_var_ctxt_t vctxt)
@@ -199,9 +200,11 @@ mkc_pvar_append_str_list (mkc_pvar_t *pvar, const char *vname,
   }
   list = listval->list;
 
-  tvalue.vtype = MKC_VT_STRING;
-  tvalue.sval = strdup (data);
-  mkc_list_set (list, &tvalue, sizeof (mkc_value_t), &loc);
+  if (data != NULL) {
+    tvalue.vtype = MKC_VT_STRING;
+    tvalue.sval = strdup (data);
+    mkc_list_set (list, &tvalue, sizeof (mkc_value_t), &loc);
+  }
 
   return MKC_OK;
 }
@@ -211,13 +214,9 @@ mkc_pvar_set_list_from_str (mkc_pvar_t *pvar,
     const char *vname, char *str, mkc_var_ctxt_t vctxt)
 {
   int           rc = MKC_ERR_FAILURE;
-  mkc_value_t   value;
-  mkc_list_t    *tlist = NULL;
   char          *p;
   char          *tokstr;
-  mkc_listidx_t loc = MKC_LIST_NOTFOUND;
 
-  tlist = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, pvar->mkcerr);
   p = mkc_strtok (str, " ", &tokstr);
   while (p != NULL) {
     if (mkc_error_chk_err (pvar->mkcerr)) {
@@ -225,18 +224,9 @@ mkc_pvar_set_list_from_str (mkc_pvar_t *pvar,
     }
 
     mkc_strtrim (p, 0);
-    value.sval = p;
-    value.vtype = MKC_VT_STRING;
-    mkc_list_set (tlist, &value, sizeof (mkc_value_t), &loc);
+    mkc_pvar_append_str_list (pvar, vname, p, vctxt);
     p = mkc_strtok (NULL, " ", &tokstr);
   }
-
-  value.list = tlist;
-  value.vtype = MKC_VT_LIST;
-  rc = mkc_pvar_set (pvar, vname, &value, vctxt);
-
-  /* var-set has made a copy of the list */
-  mkc_list_free (tlist);
 
   return rc;
 }

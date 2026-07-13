@@ -1,9 +1,22 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
-check_package unknown;
+check_package unknown {
+  success {
+    print '  fail a';
+  }
+  failure {
+    print '  ok a';
+  }
+}
 check_package zlib;
 check_package zlib {
   name z;
+  success {
+    print '  ok b';
+  }
+  failure {
+    print '  fail b';
+  }
 }
 
 if (${_package_unknown} == 0) {

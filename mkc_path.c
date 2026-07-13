@@ -30,10 +30,12 @@ const char * const pathdesc [MKC_PATH_BUILD_MAX] = {
   [MKC_PATH_CONFIG] = "config",
   [MKC_PATH_EXEC_PATH] = "exec",
   [MKC_PATH_HOME] = "home",
+  [MKC_PATH_MKC_TEMPLATES] = "mkc_templates",
   [MKC_PATH_MKC_FILES] = "mkc_files",
   [MKC_PATH_MKC_TMP] = "mkc_tmp",
   [MKC_PATH_MKC_INCLUDE] = "mkc_include",
-  [MKC_PATH_MKC_TEMPLATES] = "mkc_templates",
+  [MKC_PATH_MKC_UNITS] = "mkc_units",
+  [MKC_PATH_MKC_USER_UNITS] = "mkc_user_units",
   [MKC_PATH_SHARE] = "share",
   [MKC_PATH_PREFIX] = "prefix",
 };
@@ -41,6 +43,7 @@ const char * const pathdesc [MKC_PATH_BUILD_MAX] = {
 static bool gmkcpathinit = false;
 
 static void mkc_path_init (mkc_error_t *mkcerr);
+static char * mkc_path_config (char *buff, size_t sz);
 
 void
 mkc_path_build (mkc_path_t pathtype, char *buff, size_t sz,
@@ -52,12 +55,7 @@ mkc_path_build (mkc_path_t pathtype, char *buff, size_t sz,
 
   switch (pathtype) {
     case MKC_PATH_CONFIG: {
-      p = stpecpy (buff, buff + sz, mkc_dirs [MKC_DIR_HOME]);
-#if MKC_SYS_WIN
-      p = stpecpy (p, buff + sz, "/AppData/Roaming/mkc");
-#else
-      p = stpecpy (p, buff + sz, "/.config/mkc");
-#endif
+      p = mkc_path_config (buff, sz);
       break;
     }
     case MKC_PATH_EXEC_PATH: {
@@ -85,6 +83,18 @@ mkc_path_build (mkc_path_t pathtype, char *buff, size_t sz,
       /* this directory has the language templates for the checks */
       p = stpecpy (buff, buff + sz, mkc_dirs [MKC_DIR_SHARE]);
       p = stpecpy (p, buff + sz, "/templates");
+      break;
+    }
+    case MKC_PATH_MKC_UNITS: {
+      /* this directory contains the .mkc unit files */
+      p = stpecpy (buff, buff + sz, mkc_dirs [MKC_DIR_SHARE]);
+      p = stpecpy (p, buff + sz, "/units");
+      break;
+    }
+    case MKC_PATH_MKC_USER_UNITS: {
+      /* this directory contains the user's .mkc unit files */
+      p = mkc_path_config (buff, sz);
+      p = stpecpy (p, buff + sz, "/units");
       break;
     }
     case MKC_PATH_MKC_TMP: {
@@ -170,4 +180,19 @@ mkc_path_init (mkc_error_t *mkcerr)
   }
 
   gmkcpathinit = true;
+}
+
+static char *
+mkc_path_config (char *buff, size_t sz)
+{
+  char    *p;
+
+  p = stpecpy (buff, buff + sz, mkc_dirs [MKC_DIR_HOME]);
+#if MKC_SYS_WIN
+  p = stpecpy (p, buff + sz, "/AppData/Roaming/mkc");
+#else
+  p = stpecpy (p, buff + sz, "/.config/mkc");
+#endif
+
+  return p;
 }

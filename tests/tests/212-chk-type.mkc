@@ -1,7 +1,21 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
-check_type something_t;
-check_type int;
+check_type something_t {
+  success {
+    print '  fail a';
+  }
+  failure {
+    print '  ok a';
+  }
+}
+check_type int {
+  success {
+    print '  ok b';
+  }
+  failure {
+    print '  fail b';
+  }
+}
 check_type 'struct stat' {
   header sys/stat.h;
   name _have_stat;

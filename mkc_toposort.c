@@ -222,6 +222,7 @@ mkc_toposort_iter_next (mkc_toposort_t *topo)
   return item->name;
 }
 
+// ### this needs to be improved
 void
 mkc_toposort_disp_cycle (mkc_toposort_t *topo, char *buff, size_t sz)
 {

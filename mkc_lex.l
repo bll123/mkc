@@ -170,6 +170,7 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 "compiler_flags"            { return T_ATTR_COMP_FLAGS; }
 "context"                   { return T_ATTR_CONTEXT; }
 "define_zero"               { return T_ATTR_DEFINE_ZERO; }
+"failure"                   { return T_ATTR_FAILURE; }
 "header"                    { return T_ATTR_HEADER; }
 "input"                     { return T_ATTR_INPUT; }
 "library_version"           { return T_ATTR_LIBRARY_VERSION; }
@@ -182,6 +183,7 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 "path"                      { return T_ATTR_PATH; }
 "replace"                   { return T_ATTR_REPLACE; }
 "source"                    { return T_ATTR_SOURCE; }
+"success"                   { return T_ATTR_SUCCESS; }
 "version"                   { return T_ATTR_VERSION; }
 
 ({DIGIT}+) {

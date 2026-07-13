@@ -16,16 +16,18 @@ extern "C" {
 #endif
 
 typedef enum {
-  MKC_PATH_CONFIG,          /* $HOME/.config/mkc/ or */
-                            /* $USERPROFILE/AppData/Roaming/mkc */
+  MKC_PATH_CONFIG,              /* $HOME/.config/mkc/ or */
+                                /* $USERPROFILE/AppData/Roaming/mkc */
   MKC_PATH_EXEC_PATH,
   MKC_PATH_HOME,
-  MKC_PATH_MKC_FILES,       /* mkc_files */
-  MKC_PATH_MKC_TMP,         /* mkc_files/tmp */
-  MKC_PATH_MKC_INCLUDE,     /* .../share/mkc/include */
-  MKC_PATH_MKC_TEMPLATES,   /* .../share/mkc/templates */
-  MKC_PATH_SHARE,           /* .../share */
-  MKC_PATH_PREFIX,          /* one level above exec */
+  MKC_PATH_MKC_FILES,           /* mkc_files */
+  MKC_PATH_MKC_TMP,             /* mkc_files/tmp */
+  MKC_PATH_MKC_INCLUDE,         /* .../share/mkc/include */
+  MKC_PATH_MKC_TEMPLATES,       /* .../share/mkc/templates */
+  MKC_PATH_MKC_UNITS,           /* .../share/mkc/units */
+  MKC_PATH_MKC_USER_UNITS,      /* <config>/units */
+  MKC_PATH_SHARE,               /* .../share */
+  MKC_PATH_PREFIX,              /* one level above exec */
   MKC_PATH_BUILD_MAX,
 } mkc_path_t;
 

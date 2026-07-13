@@ -31,7 +31,7 @@ int32_t mkc_process_condition (mkc_process_t *process, mkc_value_t *value);
 int32_t mkc_process_num_op (mkc_process_t *process, int type, mkc_value_t *vala, mkc_value_t *valb);
 int32_t mkc_process_str_op (mkc_process_t *process, int type, mkc_value_t *stra, mkc_value_t *strb);
 int32_t mkc_process_unary_op (mkc_process_t *process, int type, mkc_value_t *vala);
-void mkc_process_include (mkc_process_t *process, mkc_value_t *vala, char *tbuff, size_t sz);
+void mkc_process_include (mkc_process_t *process, mkc_value_t *valpath, mkc_value_t *valfn, char *tbuff, size_t sz);
 
 mkc_foreach_t *mkc_process_stmt_foreach_setup (mkc_process_t *process, mkc_value_t *valnm, mkc_value_t *vallist);
 bool mkc_process_stmt_foreach (mkc_process_t *process, mkc_foreach_t *procforeach);
@@ -63,7 +63,7 @@ void mkc_process_attr_replace (mkc_process_t *process, mkc_value_t *str, mkc_val
 int32_t mkc_process_check (mkc_process_t *process, mkc_value_t *valtype, mkc_astnode_token_t asttype);
 int32_t mkc_process_check_flag (mkc_process_t *process, mkc_value_t *valflag, int addchk, mkc_astnode_token_t asttype);
 int32_t mkc_process_chk_struct_member (mkc_process_t *process, mkc_value_t *valstructnm, mkc_value_t *valmembernm);
-void mkc_process_chk_shell_extract (mkc_process_t *process, mkc_value_t *valpath);
+int32_t mkc_process_chk_shell_extract (mkc_process_t *process, mkc_value_t *valpath);
 
 void mkc_process_local_set (mkc_process_t *process, mkc_value_t *nmval, mkc_value_t *argval, mkc_profidx_t pidx);
 bool mkc_process_profile_is_current (mkc_process_t *process, mkc_value_t *valnm);

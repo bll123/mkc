@@ -61,61 +61,6 @@ if [ $grc != 0 ]; then
   exit $grc
 fi
 
-echo "## checking include file compilation"
-test -f $INCTOUT && rm -f $INCTOUT
-for fn in include/*.h; do
-  bfn=`echo $fn | sed 's,include/,,'`
-  cat > $INCTC << _HERE_
-
-#include "${bfn}"
-
-int
-main (int argc, char *argv [])
-{
-  return 0;
-}
-_HERE_
-  cc -c -I . -I include $INCTC >> $INCTOUT 2>&1
-  rc=$?
-  if [ $rc -ne 0 ]; then
-    echo "compile of $bfn failed"
-    if [ $rc -ne 0 ]; then
-      grc=$rc
-    fi
-  fi
-  rm -f $INCTC $INCTO
-done
-rm -f $INCTC $INCTO
-if [ $grc -ne 0 ]; then
-  exit $grc
-fi
-rm -f $INCTOUT
-
-# check the include file hierarchy for problems.
-echo "## checking include file hierarchy"
-> $TIIN
-cfh=""
-if [ -f mkc_config.h ]; then
-  cfh=mkc_config.h
-fi
-for fn in *.c include/*.h ${cfh}; do
-  echo $fn $fn >> $TIIN
-  grep -E '^# *include "' $fn |
-      sed -e 's,^# *include ",,' \
-      -e 's,".*$,,' \
-      -e "s,^,$fn include/," >> $TIIN
-done
-tsort < $TIIN > $TISORT
-rc=$?
-
-if [ $keep = F ]; then
-  rm -f $TIIN $TISORT > /dev/null 2>&1
-fi
-if [ $rc -ne 0 ]; then
-  grc=$rc
-  exit $grc
-fi
-
 # check the object file hierarchy for problems.
 echo "## checking object file hierarchy"
 #

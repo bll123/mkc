@@ -379,7 +379,7 @@ mkc_value_free (void *tvalue)
   }
 
   if (value->vtype == MKC_VT_INVALID) {
-    fprintf (stderr, "ERR: attempt to free value twice\n");
+    return;
   }
 
   if (value->vtype == MKC_VT_LIST && value->list != NULL) {

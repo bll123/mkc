@@ -137,6 +137,7 @@ mkc_profile_clear (mkc_profile_t *profiles, mkc_profidx_t pidx)
   }
 
   if (pidx < 0 || pidx >= mkc_list_size (profiles->list)) {
+    mkc_log (profiles->log, MKC_LOG_GENERAL, "profile: pidx: oor: %d\n", pidx);
     mkc_error_set (profiles->mkcerr, MKC_ERR_OUT_OF_RANGE, 0, NULL);
     return MKC_ERR_FAILURE;
   }
@@ -451,6 +452,7 @@ mkc_profile_pop (mkc_profile_t *profiles)
   }
 
   if (profiles->stacksz <= 0) {
+    mkc_log (profiles->log, MKC_LOG_GENERAL, "profile: stacksz: oor: %d\n", profiles->stacksz);
     mkc_error_set (profiles->mkcerr, MKC_ERR_OUT_OF_RANGE, 0, NULL);
     return MKC_ERR_FAILURE;
   }
@@ -481,7 +483,9 @@ mkc_profile_set_active (mkc_profile_t *profiles, mkc_profidx_t pidx)
     return;
   }
 
-  if (pidx < 0 || pidx > mkc_list_size (profiles->list)) {
+  if (pidx < 0 ||
+      pidx > mkc_list_size (profiles->list) + profiles->localstacksz) {
+    mkc_log (profiles->log, MKC_LOG_GENERAL, "profile: pidx: oor: %d\n", pidx);
     mkc_error_set (profiles->mkcerr, MKC_ERR_OUT_OF_RANGE, 0, NULL);
     return;
   }

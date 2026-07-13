@@ -72,8 +72,8 @@ typedef struct mkc_process_t {
   mkc_log_t             * log;
   mkc_option_t          * mkcoptions;
   char                  * projectname;
-  const char            * MKC_C_OBJEXT;
-  const char            * MKC_C_EXEEXT;
+  const char            * objext;
+  const char            * exeext;
   mkc_regex_t           * rxshellvar;
   mkc_regex_t           * rxincguard;
   mkc_list_t            * user_rx_list;
@@ -161,7 +161,7 @@ static char const * const MKC_C_IVARMACRO = "MKC_I_VARIADIC_MACRO";
 static char const * const MKC_C_PROJECT_NAME = "MKC_PROJECT_NAME";
 static char const * const MKC_C_PROJECT_VERS = "MKC_PROJECT_VERSION";
 static char const * const MKC_C_PROJECT_LIB_VERS = "MKC_PROJECT_LIBRARY_VERSION";
-static char const * const MKC_C_PATH_NAME = "MKC_PATH";
+static char const * const MKC_C_PATH = "MKC_PATH";
 static char ** mkc_process_get_cflags (mkc_process_t *process);
 
 /* these are duplicated */
@@ -190,6 +190,7 @@ static void mkc_process_set_defaults (mkc_process_t *process);
 static void mkc_process_configure_manual (mkc_process_t *process);
 static void mkc_process_configure_auto (mkc_process_t *process, int defzero);
 static bool mkc_process_chk_cache (mkc_process_t *process, const char *disp, const char *nm);
+static void mkc_process_get_path (mkc_process_t *process);
 static void mkc_process_find_executables (mkc_process_t *process);
 static mkc_user_regex_t *mkc_process_user_regex_init (mkc_process_t *process, const char *pattern);
 static void mkc_process_user_regex_free (void *turx);
@@ -198,7 +199,6 @@ static void mkc_process_dbg_print_var (mkc_process_t *process, const char *pname
 static void mkc_process_dbg_print_prof (mkc_process_t *process);
 static void mkc_process_dbg_print_path (mkc_process_t *process);
 static void mkc_process_dbg_print_int_var (mkc_process_t *process);
-static void mkc_process_dbg_print_config (mkc_process_t *process);
 static char * mkc_process_configure_substitute (mkc_process_t *process, char *data);
 static void mkc_process_substitutions (mkc_process_t *process, mkc_value_t *value);
 static void mkc_process_alternate_free (void *talt);
@@ -229,8 +229,8 @@ mkc_process_init (mkc_profile_t *profiles, mkc_log_t *log,
   process->mkcoptions = mkcoptions;
   process->check = NULL;
   process->pvar = NULL;
-  process->MKC_C_OBJEXT = ".o";
-  process->MKC_C_EXEEXT = "";
+  process->objext = ".o";
+  process->exeext = "";
   process->projectname = NULL;
   process->rxshellvar = NULL;
   process->rxincguard = NULL;
@@ -289,6 +289,7 @@ mkc_process_init (mkc_profile_t *profiles, mkc_log_t *log,
     return NULL;
   }
 
+  mkc_process_get_path (process);
   mkc_process_find_executables (process);
 
   mkc_pvar_profile_set_idx (process->pvar, pidx);
@@ -596,19 +597,39 @@ mkc_process_unary_op (mkc_process_t *process, int type, mkc_value_t *vala)
 }
 
 void
-mkc_process_include (mkc_process_t *process, mkc_value_t *vala,
-    char *tbuff, size_t sz)
+mkc_process_include (mkc_process_t *process,
+    mkc_value_t *valpath, mkc_value_t *valfn,
+    char *buff, size_t sz)
 {
+  char      *p = buff;
+  char      *tbuff;
+
+  *p = '\0';
+
   if (process == NULL) {
     return;
   }
-  if (vala == NULL) {
+  if (valfn == NULL) {
     mkc_error_set (process->mkcerr, MKC_ERR_NULL_ARGUMENT, 0, NULL);
     return;
   }
 
-  *tbuff = '\0';
-  mkc_pvar_value_get_str (process->pvar, vala, tbuff, sz);
+  tbuff = malloc (MKC_PATH_MAX);
+  if (tbuff == NULL) {
+    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return;
+  }
+
+  if (valpath != NULL) {
+    mkc_pvar_value_get_str (process->pvar, valpath, tbuff, MKC_PATH_MAX);
+    if (strcmp (tbuff, "mkc") == 0) {
+    } else {
+    }
+  }
+
+  mkc_pvar_value_get_str (process->pvar, valfn, tbuff, MKC_PATH_MAX);
+  p = stpecpy (p, buff + sz, tbuff);
+  free (tbuff);
 }
 
 /* control statements */
@@ -1015,9 +1036,6 @@ mkc_process_stmt_debug (mkc_process_t *process,
   if (strcmp (tbuff, "printinternal") == 0) {
     mkc_process_dbg_print_int_var (process);
   }
-  if (strcmp (tbuff, "printconfig") == 0) {
-    mkc_process_dbg_print_config (process);
-  }
 
   return false;
 }
@@ -1116,6 +1134,7 @@ mkc_process_stmt_loadcache (mkc_process_t *process,
     mkc_log (process->log, MKC_LOG_GENERAL, "-- cache invalidated\n");
     mkc_process_set_defaults (process);
     mkc_process_int_checks (process);
+    mkc_process_get_path (process);
     mkc_process_find_executables (process);
   }
 
@@ -1724,11 +1743,14 @@ mkc_process_check (mkc_process_t *process, mkc_value_t *valconst,
   if (successtype) {
     /* the check returns 0 on success */
     /* convert this to a boolean */
+
     mkc_pvar_set_integer (pvar, tnm, rc == 0 ? true : false, MKC_VCTXT_CHECK);
     mkc_message ("-- check %s: %s : %s - %s\n",
         typenames [asttype], txt, tnm, mkc_success_msg (rc));
     mkc_log (process->log, MKC_LOG_CHECK, "-- check %s: %s : %s - %s\n",
         typenames [asttype], txt, tnm, mkc_success_msg (rc));
+    /* set the return code for ast */
+    rc = rc == 0 ? MKC_OK : MKC_ERR_FAILURE;
   }
   if (valtype) {
     /* the check is run, and the return code is a value */
@@ -1736,9 +1758,12 @@ mkc_process_check (mkc_process_t *process, mkc_value_t *valconst,
     mkc_message ("-- check %s: %s : %s : %d\n", typenames [asttype], txt, tnm, rc);
     mkc_log (process->log, MKC_LOG_CHECK,
         "-- check %s: %s : %s : %d\n", typenames [asttype], txt, tnm, rc);
+    /* set the return code for ast */
+    rc = rc > 0 ? MKC_OK : MKC_ERR_FAILURE;
   }
 
   mkc_process_attr_clear (process);
+  /* a boolean value indicating success should be returned */
   return rc;
 }
 
@@ -1864,7 +1889,7 @@ mkc_process_chk_struct_member (mkc_process_t *process,
   return rc;
 }
 
-void
+int
 mkc_process_chk_shell_extract (mkc_process_t *process, mkc_value_t *valpath)
 {
 #if _have_regex
@@ -1875,21 +1900,22 @@ mkc_process_chk_shell_extract (mkc_process_t *process, mkc_value_t *valpath)
   char        *varvalue;
   char        **match = NULL;
   int         matchcount;
+  int         rc = MKC_ERR_FAILURE;
 
   if (process == NULL) {
-    return;
+    return rc;
   }
 
   path = malloc (MKC_PATH_MAX);
   if (path == NULL) {
     mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return;
+    return rc;
   }
 
   mkc_pvar_value_get_str (process->pvar, valpath, path, MKC_PATH_MAX);
 
   if (! mkc_file_exists (path)) {
-    return;
+    return rc;
   }
 
   if (process->rxshellvar == NULL) {
@@ -1904,7 +1930,7 @@ mkc_process_chk_shell_extract (mkc_process_t *process, mkc_value_t *valpath)
     /*  5: letter (inside of quotes) */
     /*  6: ... (no quotes) */
     if (mkc_error_chk_err (process->mkcerr)) {
-      return;
+      return rc;
     }
   }
 
@@ -1912,13 +1938,13 @@ mkc_process_chk_shell_extract (mkc_process_t *process, mkc_value_t *valpath)
   if (varvalue == NULL) {
     free (path);
     mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return;
+    return rc;
   }
 
   buff = mkc_read_file (path, &fsz, process->mkcerr);
   if (mkc_error_chk_err (process->mkcerr)) {
     datafree (buff);
-    return;
+    return rc;
   }
 
   mkc_regex_get_reset (process->rxshellvar);
@@ -1973,7 +1999,7 @@ mkc_process_chk_shell_extract (mkc_process_t *process, mkc_value_t *valpath)
 #endif
 
   mkc_process_attr_clear (process);
-  return;
+  return MKC_OK;
 }
 
 void
@@ -2314,11 +2340,11 @@ mkc_process_int_checks (mkc_process_t *process)
   mkc_pvar_profile_set_idx (process->pvar, process->pidx_internal);
 
   if (process->systype == MKC_SYS_WINDOWS) {
-    process->MKC_C_OBJEXT = ".obj";
-    process->MKC_C_EXEEXT = ".exe";
+    process->objext = ".obj";
+    process->exeext = ".exe";
   }
-  mkc_pvar_set_str (process->pvar, MKC_C_OBJEXT, process->MKC_C_OBJEXT, MKC_VCTXT_MKC);
-  mkc_pvar_set_str (process->pvar, MKC_C_EXEEXT, process->MKC_C_EXEEXT, MKC_VCTXT_MKC);
+  mkc_pvar_set_str (process->pvar, MKC_C_OBJEXT, process->objext, MKC_VCTXT_MKC);
+  mkc_pvar_set_str (process->pvar, MKC_C_EXEEXT, process->exeext, MKC_VCTXT_MKC);
 
   /* shared library extension : internal */
 
@@ -2632,17 +2658,11 @@ mkc_process_chk_cache (mkc_process_t *process,
 }
 
 static void
-mkc_process_find_executables (mkc_process_t *process)
+mkc_process_get_path (mkc_process_t *process)
 {
   mkc_profidx_t   opidx;
   char            *tbuff;
-  char            *testpath;
   char            *tpath;
-  mkc_prog_chk_t  *chk;
-  char            *p;
-  mkc_list_t      *pathlist;
-  mkc_listidx_t   iteridx;
-  mkc_listidx_t   lidx;
   char            *tokstr;
   const char      *pathdelim = ":";
 
@@ -2654,19 +2674,8 @@ mkc_process_find_executables (mkc_process_t *process)
     pathdelim = ";";
   }
 
-  pathlist = mkc_list_init (MKC_LIST_UNSORTED,
-      mkc_list_ind_free, NULL, process->mkcerr);
-  if (mkc_error_chk_err (process->mkcerr)) {
-    return;
-  }
-
   tbuff = malloc (MKC_SMALL_BUFF_SZ);
   if (tbuff == NULL) {
-    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return;
-  }
-  testpath = malloc (MKC_PATH_MAX);
-  if (testpath == NULL) {
     mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
     return;
   }
@@ -2675,17 +2684,42 @@ mkc_process_find_executables (mkc_process_t *process)
 
   tpath = mkc_strtok (tbuff, pathdelim, &tokstr);
   while (tpath != NULL) {
-    char          *tmp;
-    mkc_value_t   tvalue;
-    mkc_listidx_t loc = MKC_LIST_NOTFOUND;
-
-    tmp = strdup (tpath);
-    mkc_normalize_path (tmp, strlen (tmp));
-    tvalue.sval = tmp;
-    tvalue.vtype = MKC_VT_STRING;
-    mkc_list_append (pathlist, &tvalue, sizeof (mkc_value_t), &loc);
+    mkc_normalize_path (tpath, strlen (tpath));
+    mkc_pvar_append_str_list (process->pvar, MKC_C_PATH,
+        tpath, MKC_VCTXT_MKC);
     tpath = mkc_strtok (NULL, pathdelim, &tokstr);
   }
+
+  free (tbuff);
+
+  mkc_pvar_profile_set_idx (process->pvar, opidx);
+}
+
+static void
+mkc_process_find_executables (mkc_process_t *process)
+{
+  mkc_profidx_t   opidx;
+  char            *testpath;
+  char            *tpath;
+  mkc_prog_chk_t  *chk;
+  char            *p;
+  mkc_list_t      *pathlist;
+  mkc_listidx_t   iteridx;
+  mkc_listidx_t   lidx;
+  mkc_value_t     *valpath;
+
+
+  opidx = mkc_profile_get_active (process->profiles);
+  mkc_pvar_profile_set_idx (process->pvar, process->pidx_internal);
+
+  testpath = malloc (MKC_PATH_MAX);
+  if (testpath == NULL) {
+    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return;
+  }
+
+  valpath = mkc_pvar_get_by_profidx (process->pvar, MKC_C_PATH, process->pidx_internal);
+  pathlist = valpath->list;
 
   chk = proglist;
   while (chk->program != NULL) {
@@ -2699,7 +2733,7 @@ mkc_process_find_executables (mkc_process_t *process)
       p = stpecpy (testpath, testpath + MKC_PATH_MAX, tpath);
       p = stpecpy (p, testpath + MKC_PATH_MAX, "/");
       p = stpecpy (p, testpath + MKC_PATH_MAX, chk->program);
-      p = stpecpy (p, testpath + MKC_PATH_MAX, process->MKC_C_EXEEXT);
+      p = stpecpy (p, testpath + MKC_PATH_MAX, process->exeext);
 
       if (mkc_file_exists (testpath)) {
         mkc_pvar_set_str (process->pvar, chk->mkcvarname, testpath, MKC_VCTXT_MKC);
@@ -2709,13 +2743,7 @@ mkc_process_find_executables (mkc_process_t *process)
     chk += 1;
   }
 
-  mkc_pvar_profile_set_idx (process->pvar, process->pidx_internal);
-  mkc_pvar_set_list (process->pvar, MKC_C_PATH_NAME, pathlist, MKC_VCTXT_ENV);
-
-  free (tbuff);
   free (testpath);
-  /* pathlist has been copied by var-set */
-  mkc_list_free (pathlist);
 
   mkc_pvar_profile_set_idx (process->pvar, opidx);
 }
@@ -2938,80 +2966,6 @@ mkc_process_dbg_print_int_var (mkc_process_t *process)
   fprintf (stdout, "  cache-invalidated %d\n", process->cacheinvalidated);
 }
 
-static void
-mkc_process_dbg_print_config (mkc_process_t *process)
-{
-  fprintf (stdout, "== config\n");
-#if defined (VERSION)
-  fprintf (stdout, "  VERSION %s\n", VERSION);
-  fprintf (stdout, "  BUILD %s\n", BUILD);
-  fprintf (stdout, "  BUILDDATE %s\n", BUILDDATE);
-  fprintf (stdout, "  RELEASELEVEL %s\n", RELEASELEVEL);
-#else
-  fprintf (stdout, "  VERSION not defined\n");
-#endif
-#if defined (_package_pcre)
-  fprintf (stdout, "  _package_pcre %d\n", _package_pcre);
-#endif
-#if defined (_have_regex)
-  fprintf (stdout, "  _have_regex %d\n", _have_regex);
-#endif
-#if defined (_function_fork)
-  fprintf (stdout, "  _function_fork %d\n", _function_fork);
-#endif
-#if defined (_function_nanosleep)
-  fprintf (stdout, "  _function_nanosleep %d\n", _function_nanosleep);
-#endif
-#if defined (_function_setenv)
-  fprintf (stdout, "  _function_setenv %d\n", _function_setenv);
-#endif
-#if defined (_function_symlink)
-  fprintf (stdout, "  _function_symlink %d\n", _function_symlink);
-#endif
-#if defined (_function_CopyFileW)
-  fprintf (stdout, "  _function_CopyFileW %d\n", _function_CopyFileW);
-#endif
-#if defined (_function_FindFirstFileW)
-  fprintf (stdout, "  _function_FindFirstFileW %d\n", _function_FindFirstFileW);
-#endif
-#if defined (_function_GetCommandLineW)
-  fprintf (stdout, "  _function_GetCommandLineW %d\n", _function_GetCommandLineW);
-#endif
-#if defined (_function_Sleep)
-  fprintf (stdout, "  _function_Sleep %d\n", _function_Sleep);
-#endif
-#if defined (_function__wetenv_s)
-  fprintf (stdout, "  _function__wetenv_s %d\n", _function__wetenv_s);
-#endif
-#if defined (_function__wputenv_s)
-  fprintf (stdout, "  _function__wputenv_s %d\n", _function__wputenv_s);
-#endif
-#if defined (_function__wrename)
-  fprintf (stdout, "  _function__wrename %d\n", _function__wrename);
-#endif
-#if defined (_function__wstat64)
-  fprintf (stdout, "  _function__wstat64 %d\n", _function__wstat64);
-#endif
-#if defined (_function__wunlink)
-  fprintf (stdout, "  _function__wunlink %d\n", _function__wunlink);
-#endif
-#if defined (_function_MultiByteToWideChar)
-  fprintf (stdout, "  _function_MultiByteToWideChar %d\n", _function_MultiByteToWideChar);
-#endif
-#if defined (_function_WideCharToMultiByte)
-  fprintf (stdout, "  _function_WideCharToMultiByte %d\n", _function_WideCharToMultiByte);
-#endif
-#if defined (_arg_count_mkdir)
-  fprintf (stdout, "  _arg_count_mkdir %d\n", _arg_count_mkdir);
-#endif
-#if defined (_define_S_IRWXU)
-  fprintf (stdout, "  _define_S_IRWXU %d\n", _define_S_IRWXU);
-#endif
-#if defined (_type_HANDLE)
-  fprintf (stdout, "  _type_HANDLE %d\n", _type_HANDLE);
-#endif
-}
-
 static char *
 mkc_process_configure_substitute (mkc_process_t *process, char *data)
 {
@@ -3039,7 +2993,7 @@ mkc_process_configure_substitute (mkc_process_t *process, char *data)
       lidx = mkc_list_iter_next (rl, &iteridx);
       if (lidx == MKC_ITER_FINISH) {
         fprintf (stderr, "ERR: replace-list not paired\n");
-        mkc_error_set (process->mkcerr, MKC_ERR_FATAL_ERROR, 0, NULL);
+        mkc_error_set (process->mkcerr, MKC_ERR_FATAL_ERROR, 0, "replace list not paired");
         return NULL;
       }
       valval = mkc_list_get_by_idx (rl, lidx);
@@ -3350,6 +3304,7 @@ mkc_process_get_cflags (mkc_process_t *process)
   }
 
   mkc_pvar_profile_set_idx (process->pvar, opidx);
+  mkc_list_free (tlist);
 
   return cflags;
 }

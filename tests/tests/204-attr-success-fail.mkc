@@ -1,0 +1,20 @@
+# Copyright 2026 Brad Lanam Pleasant Hill CA
+
+# checks the success/fail attribute
+
+check_size unknown_t {
+  success {
+    print '  fail a';
+  }
+  failure {
+    print '  ok a';
+  }
+}
+check_size int {
+  success {
+    print '  ok b';
+  }
+  failure {
+    print '  fail b';
+  }
+}

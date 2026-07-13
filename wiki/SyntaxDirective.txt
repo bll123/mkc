@@ -5,7 +5,6 @@
 
 ##### Internal Debugging
 
-    mkcdebug printconfig;           # prints mkc configuration
     mkcdebug printinternal;         # prints internal values
     mkcdebug printprof;             # prints profile names
     mkcdebug printvar <profile>;    # user defined profile

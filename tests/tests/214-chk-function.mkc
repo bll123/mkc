@@ -4,6 +4,21 @@ check_function malloc;
 
 check_function fstat {
   header sys/stat.h;
+  success {
+    print '  ok a';
+  }
+  failure {
+    print '  fail a';
+  }
+}
+
+check_function unknown {
+  success {
+    print '  fail b';
+  }
+  failure {
+    print '  ok b';
+  }
 }
 
 # windows has '__max' defined, unix-like systems have 'MAX' in sys/param.h
