@@ -17,3 +17,7 @@ fa;
 fb 'b1';
 fc 'c1a' 'c1b';
 fd 'd1a' 'd1b' 'd1c';
+# this is not implemented at this time, because
+# then it would make it rather difficult to pass a list as an argument
+# set e [ 'e1a' 'e1b' 'e1c' ];
+# fd ${e};

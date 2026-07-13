@@ -52,6 +52,7 @@ typedef struct mkc_attribute_t {
   int             headertype;
   bool            negate;
   bool            localheader;
+  bool            printerrors;
 } mkc_attribute_t;
 
 typedef struct mkc_check_t mkc_check_t;

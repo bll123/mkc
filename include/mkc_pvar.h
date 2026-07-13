@@ -59,6 +59,7 @@ mkc_value_t *mkc_pvar_get_value (mkc_pvar_t *pvar, const char *vname);
 
 int32_t mkc_pvar_value_get_integer (mkc_pvar_t *pvar, mkc_value_t *value);
 void mkc_pvar_value_get_str (mkc_pvar_t *pvar, mkc_value_t *value, char *buff, size_t sz);
+mkc_value_t * mkc_pvar_value_get_list_value (mkc_pvar_t *pvar, mkc_value_t *value);
 bool mkc_pvar_is_defined (mkc_pvar_t *pvar, const char *vname);
 bool mkc_pvar_is_list (mkc_pvar_t *pvar, const char *vname);
 MKC_NODISCARD char * mkc_pvar_substitute (mkc_pvar_t *pvar, const char *vname, mkc_pvar_escape_t subescapeflag, int depth);

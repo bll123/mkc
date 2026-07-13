@@ -13,6 +13,6 @@ main (void) {
 #if defined (${MKC_TV_TEST_DEFINE})
   return 0;
 #else
-  generate a compilation error
+# error "${MKC_TV_TEST_DEFINE} is not defined"
 #endif
 }

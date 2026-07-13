@@ -660,8 +660,8 @@ mkc_chk_function (mkc_check_t *check, mkc_compiler_t compiler,
 }
 
 int
-mkc_chk_header (mkc_check_t *check,
-    mkc_compiler_t compiler, const char *header, const char * flags [])
+mkc_chk_header (mkc_check_t *check, mkc_compiler_t compiler,
+    const char *header, const char * flags [])
 {
   int             rc;
   mkc_profidx_t   opidx;
@@ -1294,11 +1294,15 @@ mkc_compile_only (mkc_check_t *check, mkc_compiler_t compiler,
   if (retsz > 0) {
     mkc_log (check->log, MKC_LOG_CHECK, "--- compile log (%zd)\n", retsz);
     if (retsz < 2000) {
-      mkc_log (check->log, MKC_LOG_CHECK, "%s\n", rbuff);
+      mkc_log (check->log, MKC_LOG_CHECK, "%s", rbuff);
     } else {
       mkc_log (check->log, MKC_LOG_CHECK_VERBOSE, "%s\n", rbuff);
     }
     mkc_log (check->log, MKC_LOG_CHECK, "---\n");
+
+    if (check->attr->printerrors) {
+      fprintf (stderr, "%s", rbuff);
+    }
   }
   mkc_log (check->log, MKC_LOG_CHECK, "  rc: %d\n", rc);
 

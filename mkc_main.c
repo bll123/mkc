@@ -42,7 +42,6 @@ typedef struct {
 static void copyargs (argcopy_t *argcopy, int argc, char *argv [], mkc_error_t *mkcerr);
 static void cleanargs (argcopy_t *argcopy);
 static mkc_err_code_t mkc_cleanup (mkc_astmain_t *astmain, argcopy_t *argcopy, mkc_log_t *log, mkc_error_t *error);
-static int mkc_main_set_dflt_profile (const char *profnm, mkc_error_t *mkcerr);
 void mkc_main_set_home (void);
 void mkc_main_set_exec_path (argcopy_t *argcopy);
 static void mkc_main_print_version (void);
@@ -77,7 +76,6 @@ main (int argc, char *argv [])
     { "prefix",               required_argument,  NULL, 6   },
     { "profile",              required_argument,  NULL, 'p' },
     { "retest",               no_argument,        NULL, 'r' },
-    { "set-default-profile",  required_argument,  NULL, 7   },
     { "version",              no_argument,        NULL, 'v'   },
     { NULL,                   no_argument,        NULL, 0   },
   };
@@ -97,17 +95,6 @@ main (int argc, char *argv [])
   mkcoptions.stage = NULL;
   mkcoptions.prefix = NULL;
   mkcoptions.retest = false;
-
-  mkc_path_build (MKC_PATH_CONFIG, tbuff, sizeof (tbuff),
-      "defaultprofile.txt", mkcerr);
-  fh = mkc_fopen (tbuff, "r");
-  if (fh != NULL) {
-    *tbuff = '\0';
-    fgets (tbuff, sizeof (tbuff), fh);
-    datafree (mkcoptions.dfltprofile);
-    mkcoptions.dfltprofile = strdup (tbuff);
-    fclose (fh);
-  }
 
   while ((c = getopt_long_only (argcopy.nargc, argcopy.utf8argv,
       "p:rv", mkc_cli_opts, &option_index)) != -1) {
@@ -149,15 +136,6 @@ main (int argc, char *argv [])
         break;
       }
       case 6: {
-        break;
-      }
-      case 7: {
-        if (optarg != NULL) {
-          rc = mkc_main_set_dflt_profile (argcopy.utf8argv [optind - 1], mkcerr);
-          rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
-          datafree (mkcoptions.dfltprofile);
-          exit (rc);
-        }
         break;
       }
       default: {
@@ -354,30 +332,6 @@ mkc_cleanup (mkc_astmain_t *astmain, argcopy_t *argcopy,
   rc = mkc_error_value (mkcerr);
   mkc_error_free (mkcerr);
 
-  return rc;
-}
-
-static int
-mkc_main_set_dflt_profile (const char *profnm, mkc_error_t *mkcerr)
-{
-  FILE  *fh;
-  char  tbuff [MKC_PATH_MAX];
-  int   rc = 0;
-
-  mkc_path_build (MKC_PATH_CONFIG, tbuff, sizeof (tbuff), NULL, mkcerr);
-  if (! mkc_is_directory (tbuff)) {
-    rc = mkc_dirop_make (tbuff, mkcerr);
-    if (rc != 0) {
-      return rc;
-    }
-  }
-  mkc_path_build (MKC_PATH_CONFIG, tbuff, sizeof (tbuff),
-      "defaultprofile.txt", mkcerr);
-  fh = mkc_fopen (tbuff, "w");
-  if (fh != NULL) {
-    fprintf (fh, "%s", profnm);
-    fclose (fh);
-  }
   return rc;
 }
 

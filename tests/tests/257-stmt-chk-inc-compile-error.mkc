@@ -1,0 +1,17 @@
+# Copyright 2026 Brad Lanam Pleasant Hill CA
+
+project {
+  name mkctest;
+  compiler c;
+}
+
+profile default {
+  compiler c;
+  add_compile_flag '-UMKCTEST';
+}
+
+check_include_compile {
+  compiler_flags  '-Itests/data/257-stmt-chk-inc-compile-error';
+  path  'tests/data/257-stmt-chk-inc-compile-error';
+  match '\.h$';
+}

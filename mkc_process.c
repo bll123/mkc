@@ -57,7 +57,7 @@ typedef struct mkc_user_regex_t {
 /* foreach processing */
 typedef struct mkc_foreach_t {
   mkc_list_t          *namelist;
-  mkc_value_t         *list;      // list or range
+  mkc_value_t         *listval;      // list or range
   mkc_value_t         tvalue;
   mkc_profidx_t       plocalidx;
   mkc_listidx_t       iteridx;
@@ -248,6 +248,8 @@ mkc_process_init (mkc_profile_t *profiles, mkc_log_t *log,
   }
   process->attr.negate = false;
   process->attr.define_zero = MKC_AUTO_SKIP_ZERO;
+  process->attr.localheader = false;
+  process->attr.printerrors = false;
 
   process->cacheloaded = false;
   process->cacheinvalidated = false;
@@ -633,29 +635,26 @@ mkc_process_stmt_foreach_setup (mkc_process_t *process,
 
   pforeach->plocalidx = mkc_profile_local_create (process->profiles);
   pforeach->namelist = NULL;
-  pforeach->list = NULL;
+  pforeach->listval = NULL;
   pforeach->iteridx = MKC_ITER_FINISH;
   pforeach->tvalue.vtype = MKC_VT_INVALID;
 
   if (valnm != NULL) {
-    if (valnm->vtype != MKC_VT_LIST) {
+    mkc_value_t   *value;
+
+    if (valnm->vtype == MKC_VT_RANGE) {
       mkc_error_set (process->mkcerr, MKC_ERR_MISMATCHED_ARGUMENT_TYPE, 0, NULL);
       return NULL;
     }
-    pforeach->namelist = valnm->list;
+
+    value = mkc_pvar_value_get_list_value (process->pvar, valnm);
+    pforeach->namelist = value->list;
   }
   if (vallist != NULL) {
     mkc_value_t   *value;
 
     value = vallist;
-    if (vallist->vtype == MKC_VT_VARIABLE) {
-      value = mkc_pvar_get_variable_value (process->pvar, vallist->sval);
-    }
-    if (value->vtype != MKC_VT_LIST && value->vtype != MKC_VT_RANGE) {
-      mkc_error_set (process->mkcerr, MKC_ERR_MISMATCHED_ARGUMENT_TYPE, 0, NULL);
-      return NULL;
-    }
-    pforeach->list = value;
+    pforeach->listval = mkc_pvar_value_get_list_value (process->pvar, vallist);
     mkc_value_iter_start (value, &pforeach->iteridx);
   }
 
@@ -676,7 +675,7 @@ mkc_process_stmt_foreach (mkc_process_t *process, mkc_foreach_t *pforeach)
 
     nval = mkc_list_get_by_idx (pforeach->namelist, nidx);
 
-    rc = mkc_value_iter_next (pforeach->list, &pforeach->tvalue, &pforeach->iteridx);
+    rc = mkc_value_iter_next (pforeach->listval, &pforeach->tvalue, &pforeach->iteridx);
     if (rc == MKC_ITER_FINISH) {
       cont = false;
       break;
@@ -736,6 +735,7 @@ mkc_process_stmt_chk_inc_compile (mkc_process_t *process)
   }
 
   process->attr.localheader = true;
+  process->attr.printerrors = true;
   cflags = mkc_process_get_cflags (process);
 
   hlist = mkc_process_get_include_list (process, rx);
@@ -748,8 +748,8 @@ mkc_process_stmt_chk_inc_compile (mkc_process_t *process)
 
     rc = mkc_chk_header (process->check, process->attr.currcompiler, hdr,
         (const char **) cflags);
-fprintf (stderr, "check-header: %d %s\n", rc, hdr);
     if (rc != MKC_OK) {
+      mkc_error_set (process->mkcerr, MKC_ERR_INCLUDE_COMPILE_FAIL, 0, hdr);
       break;
     }
   }
@@ -1037,23 +1037,18 @@ mkc_process_stmt_function_call (mkc_process_t *process,
   plocalidx = mkc_profile_local_create (process->profiles);
 
   if (valparams != NULL) {
-    if (valparams->vtype != MKC_VT_LIST) {
-      mkc_error_set (process->mkcerr, MKC_ERR_MISMATCHED_ARGUMENT_TYPE, 0, NULL);
-      return;
-    }
-    paramlist = valparams->list;
-  }
-  if (valfuncargs != NULL) {
     mkc_value_t   *value;
 
-    value = valfuncargs;
-    if (valfuncargs->vtype == MKC_VT_VARIABLE) {
-      value = mkc_pvar_get_variable_value (process->pvar, valfuncargs->sval);
-    }
-    if (value->vtype != MKC_VT_LIST) {
+    value = mkc_pvar_value_get_list_value (process->pvar, valparams);
+    if (value->vtype == MKC_VT_RANGE) {
       mkc_error_set (process->mkcerr, MKC_ERR_MISMATCHED_ARGUMENT_TYPE, 0, NULL);
       return;
     }
+    paramlist = value->list;
+  }
+  if (valfuncargs != NULL) {
+    mkc_value_t   *value = NULL;
+    value = mkc_pvar_value_get_list_value (process->pvar, valfuncargs);
     alist = value->list;
   }
   if ((alist == NULL && paramlist != NULL) ||
@@ -2750,6 +2745,7 @@ mkc_process_attr_clear (mkc_process_t *process)
   process->attr.define_zero = MKC_AUTO_SKIP_ZERO;
   process->attr.currcompiler = process->dfltcompiler;
   process->attr.localheader = false;
+  process->attr.printerrors = false;
 }
 
 static mkc_user_regex_t *
@@ -3331,17 +3327,11 @@ mkc_process_get_cflags (mkc_process_t *process)
     }
 
     mkc_pvar_profile_set_idx (process->pvar, *tpidx);
-fprintf (stderr, "get-cf: set prof to %d/%s\n", *tpidx, mkc_profile_get_name (process->profiles, *tpidx));
     value = mkc_pvar_get_by_profidx (process->pvar, MKC_C_CFLAGS, *tpidx);
     if (value == NULL || value->vtype != MKC_VT_LIST) {
       continue;
     }
 
-{
-char tbuff [MKC_VNAME_MAX];
-mkc_value_to_str (value, tbuff, sizeof (tbuff));
-fprintf (stderr, "cflags: %s\n", tbuff);
-}
     mkc_list_iter_start (value->list, &cfiter);
     while ((cfidx = mkc_list_iter_next (value->list, &cfiter)) != MKC_ITER_FINISH) {
       mkc_value_t   *cfval;

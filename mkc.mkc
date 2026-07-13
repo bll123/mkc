@@ -111,6 +111,20 @@ configure {
 
 # set compile and link flags
 
+add_compile_flag '-g';
+add_link_flag '-g';
+
+profile default {
+  add_compile_flag '-O2';
+}
+profile debug {
+  add_compile_flag '-O0';
+}
+profile release {
+  add_compile_flag '-O2';
+}
+# see also sanitize below
+
 check_compile_flag '-pedantic';
 check_compile_flag '-pedantic-errors';
 check_compile_flag '-Wall';
@@ -125,19 +139,6 @@ if (${MKC_COMP_ID_CLANG}) {
 if (${MKC_COMP_ID_GCC}) {
   check_compile_flag '-Wmaybe-uninitialized';
   check_compile_flag '-Wdiscarded-qualifiers';
-}
-
-add_compile_flag '-g';
-add_link_flag '-g';
-
-profile dev {
-  add_compile_flag '-O2';
-}
-profile debug {
-  add_compile_flag '-O0';
-}
-profile release {
-  add_compile_flag '-O2';
 }
 
 set MKC_FORTIFY true;

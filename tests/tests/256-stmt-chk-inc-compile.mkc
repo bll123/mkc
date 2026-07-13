@@ -1,0 +1,17 @@
+# Copyright 2026 Brad Lanam Pleasant Hill CA
+
+project {
+  name mkctest;
+  compiler c;
+}
+
+profile default {
+  compiler c;
+  add_compile_flag '-DMKCTEST=1';
+}
+
+check_include_compile {
+  compiler_flags  '-Itests/data/256-stmt-chk-inc-compile';
+  path  'tests/data/256-stmt-chk-inc-compile';
+  match '\.h$';
+}

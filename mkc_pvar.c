@@ -621,6 +621,51 @@ mkc_pvar_value_get_str (mkc_pvar_t *pvar,
   mkc_log (pvar->log, MKC_LOG_PROCESS, "  pv-get-str: %s\n", buff);
 }
 
+mkc_value_t *
+mkc_pvar_value_get_list_value (mkc_pvar_t *pvar, mkc_value_t *value)
+{
+  mkc_value_t    *rvalue = NULL;
+
+  if (value == NULL) {
+    mkc_error_set (pvar->mkcerr, MKC_ERR_NULL_ARGUMENT, 0, NULL);
+    return NULL;
+  }
+
+  switch (value->vtype) {
+    case MKC_VT_INVALID: {
+      mkc_error_set (pvar->mkcerr, MKC_ERR_UNKNOWN_VARIABLE, 0, NULL);
+      break;
+    }
+    case MKC_VT_ENV_VARIABLE:
+    case MKC_VT_INTEGER:
+    case MKC_VT_QUOTED_STRING:
+    case MKC_VT_STATIC_STRING:
+    case MKC_VT_STRING: {
+      mkc_error_set (pvar->mkcerr, MKC_ERR_UNEXPECTED_VALUE_TYPE, 0, NULL);
+      break;
+    }
+    case MKC_VT_LIST: {
+      rvalue = value;
+      break;
+    }
+    case MKC_VT_RANGE: {
+      rvalue = value;
+      break;
+    }
+    case MKC_VT_VARIABLE: {
+      value = mkc_pvar_get_variable_value (pvar, value->sval);
+      if (value->vtype == MKC_VT_LIST) {
+        rvalue = value;
+      } else {
+        mkc_error_set (pvar->mkcerr, MKC_ERR_UNEXPECTED_VALUE_TYPE, 0, NULL);
+      }
+      break;
+    }
+  }
+
+  return rvalue;
+}
+
 bool
 mkc_pvar_is_defined (mkc_pvar_t *pvar, const char *vname)
 {

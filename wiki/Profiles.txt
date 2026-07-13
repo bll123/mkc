@@ -18,8 +18,28 @@ should only be in a particular profile. e.g.
     }
 
     profile debug {
-      add_compiler_flag '-g';
+      add_compiler_flag '-O0';
     }
+
+One issue is when a flag, such as the optimization level used above
+should not be duplicated. e.g.
+
+    add_compiler_flag '-O2';  # default
+    profile debug {
+      add_compiler_flag '-O0';
+    }
+
+would end up adding both `-O2` and `-O0` to the command line.  Instead
+the default profile must be explicitly named in this case.
+
+    profile default {
+      add_compiler_flag '-O2';
+    }
+    profile debug {
+      add_compiler_flag '-O0';
+    }
+
+Now, the `-O2` flag is only added if no profile is selected.
 
 A check or variable may be made compiler specific by using the
 [compiler](SyntaxAttrCompiler) attribute.
