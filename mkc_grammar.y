@@ -114,7 +114,7 @@
 %token T_RANGE                "range"
 
 // directives
-%token T_STMT_CHK_INC_COMPILE "check_include_compilation"
+%token T_STMT_CHK_INC_COMPILE "check_include_compile"
 %token T_STMT_CHK_INC_DEPS    "check_include_dependencies"
 %token T_STMT_CHK_INC_GUARDS  "check_include_guards"
 %token T_STMT_CONFIGURE       "configure"

@@ -25,4 +25,4 @@ if (${lf_g} ne '') {
   print '  fail g';
 }
 
-mkcdebug printprofvar test;
+mkcdebug printvar test;

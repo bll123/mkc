@@ -14,6 +14,7 @@
   * [Values and Variables](SyntaxVariable)
   * [Expressions](SyntaxExpression)
   * Statements
+      * [check_include_compile](SyntaxStmtCheckIncCompile)
       * [check_include_dependencies](SyntaxStmtCheckIncDeps)
       * [check_include_guards](SyntaxStmtCheckIncGuards)
       * [Flow Control Statements](SyntaxControl)

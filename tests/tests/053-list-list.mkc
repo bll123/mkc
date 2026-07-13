@@ -6,4 +6,4 @@ set c ${a};
 set d ${b};
 set e ${c};
 set f [ ${a} ${b} ];
-mkcdebug printprofvar test;
+mkcdebug printvar test;

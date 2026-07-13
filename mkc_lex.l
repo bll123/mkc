@@ -138,7 +138,7 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 "while"     { return T_STMT_WHILE; }
 "range"     { return T_RANGE; }
 
-"check_include_compilation"   { return T_STMT_CHK_INC_COMPILE; }
+"check_include_compile"       { return T_STMT_CHK_INC_COMPILE; }
 "check_include_dependencies"  { return T_STMT_CHK_INC_DEPS; }
 "check_include_guards"        { return T_STMT_CHK_INC_GUARDS; }
 "configure"   { return T_STMT_CONFIGURE; }

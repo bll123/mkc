@@ -65,7 +65,7 @@ static void mkc_check_append_list_arg (mkc_check_t *check, mkc_list_t *list);
 
 typedef int (*test_func_t)(mkc_check_t *check, mkc_compiler_t compiler, const char *fname, const char *flags [], char *rbuff, size_t rsz);
 
-static int mkc_do_test (mkc_check_test_t type, mkc_check_t *check, mkc_compiler_t compiler, const char *fname, const char *flags[], char *rbuff, size_t rsz);
+static int mkc_do_test (mkc_check_test_t type, mkc_check_t *check, mkc_compiler_t compiler, const char *fname, const char * flags[], char *rbuff, size_t rsz);
 static int mkc_compile_only (mkc_check_t *check, mkc_compiler_t compiler, const char *fname, const char *flags[], char *rbuff, size_t rsz);
 static int mkc_compile_link (mkc_check_t *check, mkc_compiler_t compiler, const char *fname, const char *flags[], char *rbuff, size_t rsz);
 static int mkc_compile_run (mkc_check_t *check, mkc_compiler_t compiler, const char *fname, const char *flags[], char *rbuff, size_t rsz);
@@ -168,7 +168,6 @@ mkc_chk_compiler_works (mkc_check_t *check, mkc_compiler_t compiler)
 
   /* clang prints the deprecated error when compiling C with */
   /* c++ or objective-c */
-  /* 2026-5-29 when this is run, the compiler is not yet known */
   mkc_chk_append_comp_flag (check, "-Wno-deprecated");
 
   mkc_log (check->log, MKC_LOG_CHECK, "  == chk: compiler-works\n");
@@ -246,6 +245,7 @@ mkc_chk_system_type (mkc_check_t *check, mkc_compiler_t compiler)
   inc = malloc (MKC_PATH_MAX);
   if (inc == NULL) {
     mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    mkc_chk_reset (check);
     return MKC_SYS_UNKNOWN;
   }
   mkc_path_build (MKC_PATH_MKC_INCLUDE, inc, MKC_PATH_MAX, NULL, check->mkcerr);
@@ -269,6 +269,7 @@ mkc_chk_system_id (mkc_check_t *check, mkc_compiler_t compiler)
   inc = malloc (MKC_PATH_MAX);
   if (inc == NULL) {
     mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    mkc_chk_reset (check);
     return MKC_SYS_ID_NOTSET;
   }
   mkc_log (check->log, MKC_LOG_CHECK, "  == chk: system-id\n");
@@ -308,6 +309,7 @@ mkc_chk_library_location (mkc_check_t *check, mkc_compiler_t compiler)
   inc = malloc (MKC_PATH_MAX);
   if (inc == NULL) {
     mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    mkc_chk_reset (check);
     return 0;
   }
   mkc_log (check->log, MKC_LOG_CHECK, "  == chk: lib-location\n");
@@ -332,6 +334,7 @@ mkc_chk_compiler_id (mkc_check_t *check, mkc_compiler_t compiler)
   inc = malloc (MKC_PATH_MAX);
   if (inc == NULL) {
     mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    mkc_chk_reset (check);
     return 0;
   }
   mkc_log (check->log, MKC_LOG_CHECK, "  == chk: compiler-id\n");
@@ -371,6 +374,7 @@ mkc_chk_arg_count (mkc_check_t *check, mkc_compiler_t compiler,
   rbuff = malloc (rsz);
   if (rbuff == NULL) {
     mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    mkc_chk_reset (check);
     return MKC_OK;
   }
 
@@ -387,6 +391,7 @@ mkc_chk_arg_count (mkc_check_t *check, mkc_compiler_t compiler,
     check->rxcomma = mkc_regex_init ("(,)", MKC_REGEX_NONE, check->mkcerr);
     if (mkc_error_chk_err (check->mkcerr)) {
       free (rbuff);
+      mkc_chk_reset (check);
       return MKC_ERR_FAILURE;
     }
   }
@@ -398,6 +403,7 @@ mkc_chk_arg_count (mkc_check_t *check, mkc_compiler_t compiler,
   check->rxargcount = mkc_regex_init (pattern, MKC_REGEX_NONE, check->mkcerr);
   if (mkc_error_chk_err (check->mkcerr)) {
     free (rbuff);
+    mkc_chk_reset (check);
     return MKC_ERR_FAILURE;
   }
 
@@ -441,6 +447,7 @@ mkc_chk_compiler_flag (mkc_check_t *check,
   rbuff = malloc (rsz);
   if (rbuff == NULL) {
     mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    mkc_chk_reset (check);
     return MKC_ERR_FAILURE;
   }
   *rbuff = '\0';
@@ -540,6 +547,7 @@ mkc_chk_link_flag (mkc_check_t *check,
   rbuff = malloc (MKC_SMALL_BUFF_SZ);
   if (rbuff == NULL) {
     mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    mkc_chk_reset (check);
     return MKC_ERR_FAILURE;
   }
 
@@ -653,10 +661,12 @@ mkc_chk_function (mkc_check_t *check, mkc_compiler_t compiler,
 
 int
 mkc_chk_header (mkc_check_t *check,
-    mkc_compiler_t compiler, const char *header)
+    mkc_compiler_t compiler, const char *header, const char * flags [])
 {
   int             rc;
   mkc_profidx_t   opidx;
+  char            tbuff [MKC_VNAME_MAX];
+  char            bc, ec;
 
   mkc_log (check->log, MKC_LOG_CHECK,
       "== chk: header: %s\n", header);
@@ -664,12 +674,20 @@ mkc_chk_header (mkc_check_t *check,
   opidx = mkc_profile_get_active (check->profiles);
 
   mkc_pvar_profile_set_idx (check->pvar, check->pidx_internal);
-  mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_HEADER", header, MKC_VCTXT_TEMP);
+
+  bc = '<';
+  ec = '>';
+  if (check->attr->localheader) {
+    bc = '"';
+    ec = '"';
+  }
+  snprintf (tbuff, sizeof (tbuff), "%c%s%c", bc, header, ec);
+  mkc_pvar_set_str (check->pvar, "MKC_TV_TEST_HEADER", tbuff, MKC_VCTXT_TEMP);
 
   mkc_pvar_profile_set_idx (check->pvar, opidx);
 
   rc = mkc_do_test (MKC_CHK_TEST_COMPILE_LINK,
-      check, compiler, "c-header", NULL, NULL, 0);
+      check, compiler, "c-header", flags, NULL, 0);
   mkc_chk_reset (check);
   return rc;
 }
@@ -687,9 +705,11 @@ mkc_check_get_include_deps (mkc_check_t *check,
 
 #if _have_regex
   if (check->rxincludedep == NULL) {
-    check->rxincludedep = mkc_regex_init ("^# *(include|import) *\"?([^\"<>]+)\"?$",
+    check->rxincludedep = mkc_regex_init (
+        "^# *(include|import) *\"?([^\"<>]+)\"?$",
         MKC_REGEX_MULTILINE, check->mkcerr);
     if (mkc_error_chk_err (check->mkcerr)) {
+      mkc_chk_reset (check);
       return;
     }
   }
@@ -1112,7 +1132,7 @@ mkc_check_append_list_arg (mkc_check_t *check, mkc_list_t *list)
 static int
 mkc_do_test (mkc_check_test_t ctype,
     mkc_check_t *check, mkc_compiler_t compiler,
-    const char *fname, const char *flags [], char *rbuff, size_t rsz)
+    const char *fname, const char * flags [], char *rbuff, size_t rsz)
 {
   int             rc = MKC_ERR_FAILURE;
   int             altsz;

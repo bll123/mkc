@@ -41,6 +41,8 @@
 enum {
   MKC_AUTO_DEFINE_ZERO,
   MKC_AUTO_SKIP_ZERO,
+  MKC_INC_READ,
+  MKC_INC_NAME_ONLY,
 };
 
 enum {
@@ -160,6 +162,7 @@ static char const * const MKC_C_PROJECT_NAME = "MKC_PROJECT_NAME";
 static char const * const MKC_C_PROJECT_VERS = "MKC_PROJECT_VERSION";
 static char const * const MKC_C_PROJECT_LIB_VERS = "MKC_PROJECT_LIBRARY_VERSION";
 static char const * const MKC_C_PATH_NAME = "MKC_PATH";
+static char ** mkc_process_get_cflags (mkc_process_t *process);
 
 /* these are duplicated */
 /* so that the static aggregator can be initialized */
@@ -203,7 +206,8 @@ static void mkc_process_temp_value_free (void *tvalue);
 static void mkc_process_topo_add_items (mkc_process_t *process, mkc_toposort_t *topo, mkc_list_t *hlist);
 static void mkc_process_topo_add_deps (mkc_process_t *process, mkc_toposort_t *topo, char *rbuff, const char *hdr);
 static mkc_list_t * mkc_process_get_include_list (mkc_process_t *process, mkc_regex_t *rx);
-static char * mkc_process_iter_includes (mkc_process_t *process, mkc_list_t *hlist, mkc_listidx_t *hiteridx, char *hdr, size_t hsz);
+static char * mkc_process_iter_includes (mkc_process_t *process, mkc_list_t *hlist, mkc_listidx_t *hiteridx, char *hdr, size_t hsz, int readflag);
+void mkc_process_free_flags (char **flags);
 
 
 MKC_NODISCARD
@@ -700,11 +704,9 @@ mkc_process_stmt_chk_inc_compile (mkc_process_t *process)
   mkc_list_t      *hlist = NULL;
   mkc_regex_t     *rx;
   mkc_listidx_t   hiteridx;
-  char            *rbuff;
   char            *hdr;
-  char            **match = NULL;
-  int             matchcount;
-  mkc_list_t      *guardlist = NULL;
+  char            *rbuff = NULL;
+  char            **cflags = NULL;
 
   if (process->attr.str [MKC_ATTR_MATCH] == NULL) {
     mkc_error_set (process->mkcerr, MKC_ERR_MISSING_ATTRIBUTE, 0, "match");
@@ -733,51 +735,32 @@ mkc_process_stmt_chk_inc_compile (mkc_process_t *process)
     return rc;
   }
 
-// ### build cflags for the compilation
+  process->attr.localheader = true;
+  cflags = mkc_process_get_cflags (process);
 
-  rc = MKC_OK;
   hlist = mkc_process_get_include_list (process, rx);
   mkc_list_iter_start (hlist, &hiteridx);
-  while ((rbuff = mkc_process_iter_includes (process, hlist, &hiteridx,
-      hdr, MKC_PATH_MAX)) != NULL) {
-    char            *tp;
-    mkc_listidx_t   loc = MKC_LIST_NOTFOUND;
-    mkc_listidx_t   idx;
-
+  while ((rbuff = mkc_process_iter_includes (process, hlist,
+      &hiteridx, hdr, MKC_PATH_MAX, MKC_INC_NAME_ONLY)) != NULL) {
     if (mkc_error_chk_err (process->mkcerr)) {
-      free (rbuff);
       break;
     }
 
-    mkc_regex_get_reset (process->rxincguard);
-    match = mkc_regex_get (process->rxincguard, rbuff, &matchcount);
-    if (matchcount != 2) {
-      mkc_error_set (process->mkcerr, MKC_ERR_INCLUDE_GUARD_NOTFOUND, 0, hdr);
-      rc = MKC_ERR_FAILURE;
+    rc = mkc_chk_header (process->check, process->attr.currcompiler, hdr,
+        (const char **) cflags);
+fprintf (stderr, "check-header: %d %s\n", rc, hdr);
+    if (rc != MKC_OK) {
+      break;
     }
-
-    if (matchcount == 2) {
-      tp = strdup (match [1]);
-      loc = MKC_LIST_NOTFOUND;
-      idx = mkc_list_find (guardlist, &tp, &loc);
-      if (idx != MKC_LIST_NOTFOUND) {
-        mkc_error_set (process->mkcerr, MKC_ERR_INCLUDE_GUARD_DUPLICATE, 0, hdr);
-        rc = MKC_ERR_FAILURE;
-      }
-
-      mkc_list_set (guardlist, &tp, sizeof (char *), &loc);
-    }
-    mkc_regex_get_free (match);
-    free (rbuff);
   }
 
-  mkc_message ("-- check_include_guards - %s\n",
+  mkc_message ("-- check_include_compile - %s\n",
       mkc_success_msg (rc));
-  mkc_log (process->log, MKC_LOG_CHECK, "-- check_include_guards - %s\n",
+  mkc_log (process->log, MKC_LOG_CHECK, "-- check_include_compile - %s\n",
       mkc_success_msg (rc));
 
+  mkc_process_free_flags (cflags);
   mkc_list_free (hlist);
-  mkc_list_free (guardlist);
   mkc_regex_free (rx);
   free (hdr);
 #endif
@@ -832,7 +815,7 @@ mkc_process_stmt_chk_inc_deps (mkc_process_t *process)
 
   mkc_list_iter_start (hlist, &hiteridx);
   while ((rbuff = mkc_process_iter_includes (process, hlist, &hiteridx,
-      hdr, MKC_PATH_MAX)) != NULL) {
+      hdr, MKC_PATH_MAX, MKC_INC_READ)) != NULL) {
     mkc_process_topo_add_deps (process, topo, rbuff, hdr);
     free (rbuff);
   }
@@ -927,7 +910,7 @@ mkc_process_stmt_chk_inc_guards (mkc_process_t *process)
   hlist = mkc_process_get_include_list (process, rx);
   mkc_list_iter_start (hlist, &hiteridx);
   while ((rbuff = mkc_process_iter_includes (process, hlist, &hiteridx,
-      hdr, MKC_PATH_MAX)) != NULL) {
+      hdr, MKC_PATH_MAX, MKC_INC_READ)) != NULL) {
     char            *tp;
     mkc_listidx_t   loc = MKC_LIST_NOTFOUND;
     mkc_listidx_t   idx;
@@ -1022,7 +1005,7 @@ mkc_process_stmt_debug (mkc_process_t *process,
   if (strcmp (tbuff, "printprof") == 0) {
     mkc_process_dbg_print_prof (process);
   }
-  if (strcmp (tbuff, "printprofvar") == 0) {
+  if (strcmp (tbuff, "printvar") == 0) {
     mkc_pvar_value_get_str (process->pvar, subvalue, tbuff, sizeof (tbuff));
     mkc_process_dbg_print_var (process, tbuff);
   }
@@ -1514,7 +1497,7 @@ mkc_process_attr_comp_flags (mkc_process_t *process, mkc_value_t *value)
   }
 
   if (! mkc_context_check (process->context,
-      MKC_CONTEXT_CHECK | MKC_CONTEXT_ALTERNATE)) {
+      MKC_CONTEXT_CHECK | MKC_CONTEXT_ALTERNATE | MKC_CONTEXT_CHK_INC)) {
     mkc_error_set (process->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
     return;
   }
@@ -1718,7 +1701,7 @@ mkc_process_check (mkc_process_t *process, mkc_value_t *valconst,
     }
     case MKC_T_CHK_HEADER: {
       successtype = true;
-      rc = mkc_chk_header (process->check, process->attr.currcompiler, txt);
+      rc = mkc_chk_header (process->check, process->attr.currcompiler, txt, NULL);
       break;
     }
     case MKC_T_CHK_PACKAGE: {
@@ -2766,6 +2749,7 @@ mkc_process_attr_clear (mkc_process_t *process)
 
   process->attr.define_zero = MKC_AUTO_SKIP_ZERO;
   process->attr.currcompiler = process->dfltcompiler;
+  process->attr.localheader = false;
 }
 
 static mkc_user_regex_t *
@@ -3254,11 +3238,11 @@ mkc_process_get_include_list (mkc_process_t *process, mkc_regex_t *rx)
 
 static char *
 mkc_process_iter_includes (mkc_process_t *process, mkc_list_t *hlist,
-    mkc_listidx_t *hiteridx, char *hdr, size_t hsz)
+    mkc_listidx_t *hiteridx, char *hdr, size_t hsz, int readflag)
 {
   mkc_listidx_t   hidx;
   char            *tbuff;
-  char            *rbuff;
+  char            *rbuff = NULL;
 
   tbuff = malloc (MKC_PATH_MAX);
   if (tbuff == NULL) {
@@ -3290,7 +3274,13 @@ mkc_process_iter_includes (mkc_process_t *process, mkc_list_t *hlist,
         continue;
       }
 
-      rbuff = mkc_read_file (tbuff, &fsz, process->mkcerr);
+      if (readflag == MKC_INC_READ) {
+        rbuff = mkc_read_file (tbuff, &fsz, process->mkcerr);
+      }
+      if (readflag == MKC_INC_NAME_ONLY) {
+        /* point at something not-null to return */
+        rbuff = hdr;
+      }
       free (tbuff);
       return rbuff;
     }
@@ -3300,3 +3290,97 @@ mkc_process_iter_includes (mkc_process_t *process, mkc_list_t *hlist,
   return NULL;
 }
 
+static char **
+mkc_process_get_cflags (mkc_process_t *process)
+{
+  mkc_profidx_t   opidx;
+  mkc_profiter_t  profiter;
+  mkc_profidx_t   pidx;
+  mkc_list_t      *tlist;
+  mkc_listidx_t   psz;
+  char            **cflags = NULL;
+  int             cfsz = 0;
+  int             cfallocsz = 0;
+
+  opidx = mkc_profile_get_active (process->profiles);
+
+  tlist = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, process->mkcerr);
+
+  /* to get the cflags, the profile hierarchy needs to be */
+  /* traversed in reverse order */
+  /* iterate the profile as usual, then traverse the list in reverse order */
+  mkc_profile_iter_hierarchy_start (process->profiles, &profiter);
+  while ((pidx = mkc_profile_iter_hierarchy_next (process->profiles, &profiter)) >= 0) {
+    mkc_listidx_t   loc;
+
+    mkc_list_set (tlist, &pidx, sizeof (mkc_profidx_t), &loc);
+  }
+
+  psz = mkc_list_size (tlist);
+  for (int32_t i = psz - 1; i >= 0; --i) {
+    mkc_profidx_t   *tpidx;
+    mkc_listidx_t   cfiter;
+    mkc_listidx_t   cfidx;
+    mkc_value_t     *value;
+
+    tpidx = mkc_list_get_by_idx (tlist, i);
+
+    if (*tpidx == process->pidx_internal) {
+      /* the internal profile will not have any cflags */
+      continue;
+    }
+
+    mkc_pvar_profile_set_idx (process->pvar, *tpidx);
+fprintf (stderr, "get-cf: set prof to %d/%s\n", *tpidx, mkc_profile_get_name (process->profiles, *tpidx));
+    value = mkc_pvar_get_by_profidx (process->pvar, MKC_C_CFLAGS, *tpidx);
+    if (value == NULL || value->vtype != MKC_VT_LIST) {
+      continue;
+    }
+
+{
+char tbuff [MKC_VNAME_MAX];
+mkc_value_to_str (value, tbuff, sizeof (tbuff));
+fprintf (stderr, "cflags: %s\n", tbuff);
+}
+    mkc_list_iter_start (value->list, &cfiter);
+    while ((cfidx = mkc_list_iter_next (value->list, &cfiter)) != MKC_ITER_FINISH) {
+      mkc_value_t   *cfval;
+
+      cfval = mkc_list_get_by_idx (value->list, cfidx);
+
+      if (cfsz >= cfallocsz) {
+        cfallocsz += 10;
+        /* always make room for a trailing NULL */
+        cflags = realloc (cflags, sizeof (char *) * (cfallocsz + 1));
+      }
+      cflags [cfsz + 1] = NULL;
+      cflags [cfsz] = strdup (cfval->sval);
+      cfsz += 1;
+    }
+  }
+
+  mkc_pvar_profile_set_idx (process->pvar, opidx);
+
+  return cflags;
+}
+
+// ### make this generic, put into util...
+void
+mkc_process_free_flags (char **flags)
+{
+  char      *p;
+  int32_t   c;
+
+  if (flags == NULL) {
+    return;
+  }
+
+  c = 0;
+  p = flags [c];
+  while (p != NULL) {
+    free (p);
+    ++c;
+    p = flags [c];
+  }
+  free (flags);
+}

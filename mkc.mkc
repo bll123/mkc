@@ -182,7 +182,12 @@ check_include_guards {
   match '\.h$';
 }
 
-# generate
+check_include_compile {
+  compiler_flags '-Iinclude' '-I.';
+  path  'include';
+  path  '.';
+  match '\.h$';
+}
 
 # build
 

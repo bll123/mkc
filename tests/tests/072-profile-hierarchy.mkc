@@ -85,4 +85,4 @@ if (is_defined (m)) {
   exit 1;
 }
 
-mkcdebug printprofvar test;
+mkcdebug printvar test;

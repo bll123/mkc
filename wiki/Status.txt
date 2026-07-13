@@ -4,9 +4,8 @@
 
 ##### 2026-7-11 pre-alpha 0.3
 
-check_include_dependencies, check_include_guards are working.
-
-to do: be able to apply alternates to check_package.
+check_include_dependencies, check_include_guards,
+check_include_compile are working.
 
 Currently, the pre-alpha code will only create a configuration file.
 

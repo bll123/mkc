@@ -5,8 +5,8 @@
 ### Overview
 
 __mkc__ is build configuration tool.  It will create a configuration
-file based on the requested checks, generate makefiles for the project
-(not yet implemented), build the project (not yet implemented), and
+file based on the requested checks, build the project based on the
+configuration and targets that are defined (not yet implemented), and
 install the project (not yet implemented).
 
 See [Status](Status) for the current status and goals.

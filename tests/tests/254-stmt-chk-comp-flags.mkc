@@ -35,4 +35,4 @@ if (${C_CF_ERROR} ne '') {
   print '  fail c';
 }
 
-mkcdebug printprofvar test;
+mkcdebug printvar test;
