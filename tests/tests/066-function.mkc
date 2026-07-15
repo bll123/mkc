@@ -17,7 +17,26 @@ fa;
 fb 'b1';
 fc 'c1a' 'c1b';
 fd 'd1a' 'd1b' 'd1c';
-# this is not implemented at this time, because
-# then it would make it rather difficult to pass a list as an argument
-# set e [ 'e1a' 'e1b' 'e1c' ];
-# fd ${e};
+
+# test return
+
+function a {
+  print 'a1';
+  b;
+  print 'a2';
+}
+
+function b {
+  print 'b1';
+  c;
+  return;
+  print 'b2';
+}
+
+function c {
+  print 'c1';
+  return;
+  print 'c2';
+}
+
+a;
