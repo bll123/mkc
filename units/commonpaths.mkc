@@ -78,7 +78,7 @@ function check_common_paths {
       if (${p} eq '/usr/local/bin') {
         if (is_directory ('/usr/local/include') &&
             is_directory ('/usr/local/lib')) {
-          set MKC_COMMON_INCLUDE '-I/usr/local/bin';
+          set MKC_COMMON_INCLUDE '-I/usr/local/include';
           set MKC_COMMON_LIB '-L/usr/local/lib';
           break;
         }
@@ -88,7 +88,7 @@ function check_common_paths {
     if (${p} eq '/opt/pkg/bin') {
       if (is_directory ('/opt/pkg/include') &&
           is_directory ('/opt/pkg/lib')) {
-        set MKC_COMMON_INCLUDE '-I/opt/pkg/bin';
+        set MKC_COMMON_INCLUDE '-I/opt/pkg/include';
         set MKC_COMMON_LIB '-L/opt/pkg/lib';
         break;
       }

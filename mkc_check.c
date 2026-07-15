@@ -464,7 +464,7 @@ mkc_chk_compiler_flag (mkc_check_t *check,
   }
 
   mkc_chk_append_comp_flag (check, tbuff);
-  rc = mkc_compile_only (check, compiler, "int-main", NULL, rbuff, rsz);
+  rc = mkc_compile_only (check, compiler, "c-main", NULL, rbuff, rsz);
   if (rc == 0) {
     /* clang does not return an error code on a unknown warning */
     if (strstr (rbuff, "warning") != NULL) {
@@ -553,7 +553,7 @@ mkc_chk_link_flag (mkc_check_t *check,
 
   mkc_chk_append_link_flag (check, flag);
   mkc_log (check->log, MKC_LOG_CHECK, "== chk: link-flag: %s\n", flag);
-  rc = mkc_compile_link (check, compiler, "int-main", NULL, rbuff, MKC_PATH_MAX);
+  rc = mkc_compile_link (check, compiler, "c-main", NULL, rbuff, MKC_PATH_MAX);
   if (rc == 0) {
     /* clang does not return an error code on a unknown warning */
     if (strstr (rbuff, "warning") != NULL) {

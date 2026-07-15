@@ -1,5 +1,8 @@
+/* Copyright 2026 Brad Lanam Pleasant Hill CA */
+
 /* this is a compilation test */
 /* if the compilation fails, the type does not exist */
+
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>

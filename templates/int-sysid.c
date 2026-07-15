@@ -1,3 +1,7 @@
+/* Copyright 2026 Brad Lanam Pleasant Hill CA */
+
+/* this is a compile and execute test */
+
 #include <stdio.h>
 #include <stddef.h>
 #include <stdlib.h>

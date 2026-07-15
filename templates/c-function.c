@@ -1,7 +1,10 @@
+/* Copyright 2026 Brad Lanam Pleasant Hill CA */
+
 /* this is a compile and link test */
 /* if the compile or link fails, the function does not exist */
 
 /* include the headers that declare most of the standard functions */
+
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>

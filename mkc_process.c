@@ -541,11 +541,6 @@ mkc_process_unary_op (mkc_process_t *process, int type, mkc_value_t *vala)
     return 0;
   }
 
-  if (vala->vtype != MKC_VT_INTEGER) {
-    mkc_error_set (process->mkcerr, MKC_ERR_MISMATCHED_ARGUMENT_TYPE, 0, NULL);
-    return 0;
-  }
-
   ivala = mkc_pvar_value_get_integer (process->pvar, vala);
   if (mkc_error_chk_err (process->mkcerr)) {
     return 0;

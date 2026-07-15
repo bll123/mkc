@@ -1,3 +1,5 @@
+/* Copyright 2026 Brad Lanam Pleasant Hill CA */
+
 /* this is a c-preprocessor test */
 /* the c-preprocessor output is processed to get the function arguments */
 
