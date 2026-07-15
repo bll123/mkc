@@ -34,6 +34,14 @@ fi
 
 sfx="${VERSION}${rtag}"
 
+make distclean >> $LOG 2>&1
+(make;rc=$?;exit $rc) >> $LOG 2>&1
+rc=$?
+if [ $rc -ne 0 ]; then
+  echo "== build failed"
+  exit $rc
+fi
+
 echo "-- create source package ${sfx}"
 SRCDIR=mkc-${sfx}
 SRCDEST=${SRCDIR}

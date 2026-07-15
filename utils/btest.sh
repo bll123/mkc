@@ -39,7 +39,7 @@ echo "-- build ${tag}" >> $LOG
 echo "-- path: ${PATH}" >> $LOG
 make distclean >> $LOG 2>&1
 
-(make;rc=$?;exit $rc) >> $LOG 2>&1;rc=$?
+(make;rc=$?;exit $rc) >> $LOG 2>&1
 rc=$?
 if [ $rc -ne 0 ]; then
   echo "== build failed"
@@ -48,7 +48,7 @@ fi
 
 echo "-- test ${tag}"
 echo "-- test ${tag}" >> $LOG
-(./tests/runtests.sh;rc=$?;exit $rc) >> $LOG 2>&1;rc=$?
+(./tests/runtests.sh;rc=$?;exit $rc) >> $LOG 2>&1
 rc=$?
 if [ $rc -ne 0 ]; then
   echo "== tests failed"
