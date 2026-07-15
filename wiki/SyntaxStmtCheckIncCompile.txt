@@ -15,7 +15,7 @@ files will compile without any dependencies.
 
 ##### Examples
 
-    check_include_dependencies {
+    check_include_compile {
       compiler_flags '-Iinclude' '-I.';
       path 'include';
       path '.';

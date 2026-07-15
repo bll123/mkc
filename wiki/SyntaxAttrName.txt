@@ -10,13 +10,13 @@ statements, [project](SyntaxProject) statements and
     name <name>;
 
 For [check](SyntaxCheck) statements, the __name__ attribute replaces
-the generated name of the check with _name_.
+the generated name of the [check](SyntaxCheck) with _name_.
 
 For [project](SyntaxProject) statements, the __name__ attribute
 defines the name of the project.
 
 For [alternate](SyntaxAttrAlternate) attributes, the __name__
-attribute specifies an additional check name that will be set if the
+attribute specifies an additional name that will be set if the
 alternate succeeds.
 
 Repeatable: no

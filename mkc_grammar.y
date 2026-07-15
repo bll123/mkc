@@ -64,7 +64,9 @@
 %token T_LEFT_PAREN           "("
 %token T_OP_AND               "&&"
 %token T_OP_DIVIDE            "/"
+%token T_OP_FILE_EXISTS       "file_exists"
 %token T_OP_IS_DEFINED        "is_defined"
+%token T_OP_IS_DIRECTORY      "is_directory"
 %token T_OP_IS_LIST           "is_list"
 %token T_OP_MINUS             "-"
 %token T_OP_MODULO            "%"
@@ -227,7 +229,7 @@
 %left T_OP_MINUS T_OP_PLUS
 %left T_OP_MULTIPLY T_OP_DIVIDE T_OP_MODULO
 %precedence UNARY
-%nonassoc T_OP_IS_LIST T_OP_IS_DEFINED
+%nonassoc T_OP_FILE_EXISTS T_OP_IS_DEFINED T_OP_IS_DIRECTORY T_OP_IS_LIST
 
 %%
 mkc:
@@ -1134,9 +1136,19 @@ expr[v]:
     {
       $v = $a;
     }
+  | T_OP_FILE_EXISTS T_LEFT_PAREN pathname[a] T_RIGHT_PAREN
+    {
+      $v = mkc_ast_mk_unary_op (ast, $a, MKC_T_OP_FILE_EXISTS,
+          yylloc.first_line, yylloc.first_column);
+    }
   | T_OP_IS_DEFINED T_LEFT_PAREN varname[a] T_RIGHT_PAREN
     {
       $v = mkc_ast_mk_unary_op (ast, $a, MKC_T_OP_IS_DEFINED,
+          yylloc.first_line, yylloc.first_column);
+    }
+  | T_OP_IS_DIRECTORY T_LEFT_PAREN pathname[a] T_RIGHT_PAREN
+    {
+      $v = mkc_ast_mk_unary_op (ast, $a, MKC_T_OP_IS_DIRECTORY,
           yylloc.first_line, yylloc.first_column);
     }
   | T_OP_IS_LIST T_LEFT_PAREN varname[a] T_RIGHT_PAREN

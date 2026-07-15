@@ -19,7 +19,7 @@ Generated Name: Prefix: __lf\___
 
     add-link-flag '-DNO_DEPRECATED';
 
-Adds a link flag without any check.
+Adds a link flag without any validation.
 
 ##### Examples
 

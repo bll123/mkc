@@ -6,8 +6,13 @@
 
 **0.4 2026-7---**
 
-* New features:
-    * Add 'check_include_guards'
+* Bug Fixes:
+    * Fixed 'continue' statement.
+* New Features:
+    * Add 'check_include_guards'.
+    * Add 'check_include_compile'.
+    * Add 'success', 'failure' attribute.
+    * Units: 'units/commonpaths.mkc', 'units/libintl.mkc'.
 
 -->
 
@@ -17,7 +22,7 @@
     * Various
 * Changes:
     * 'path' attribute is repeatable.
-* New features:
+* New Features:
     * Add 'check_include_dependencies'
     * Add 'foreach'
     * Add 'function'

@@ -1,0 +1,105 @@
+# Copyright 2026 Brad Lanam Pleasant Hill CA
+
+# Usage:
+#   check_common_paths;
+# Sets:
+#
+# MacOS:
+#   Checks the path for
+#     /opt/homebrew/bin     # homebrew on apple silicon
+#     /opt/local/bin        # macports
+#     /usr/local/bin        # homebrew on intel
+#     /opt/pkg/bin          # pkgsrc
+# FreeBSD:
+#   Checks the path for
+#     /usr/local/bin
+# NetBSD:
+#   Checks the path for
+#     /usr/pkg/bin
+#
+# If a known path is found, and both the matching
+#   .../include and ../lib exist,
+# then the include path is added to the compiler flags, and
+# the lib path is added to the link flags.
+#
+# Only the first known path found is processed.
+#
+# Also sets (for use in checks):
+#   MKC_COMMON_INCLUDE
+#   MKC_COMMON_LIB
+# These will be set to empty strings if no common path is found.
+#
+
+function check_common_paths {
+  set MKC_COMMON_INCLUDE '';
+  set MKC_COMMON_LIB '';
+
+  foreach p in ${MKC_PATH} {
+    # macos
+    if (${MKC_SYS_MACOS}) {
+      if (${p} eq '/opt/homebrew/bin') {
+        if (is_directory ('/opt/homebrew/include') &&
+            is_directory ('/opt/homebrew/lib')) {
+          # homebrew, apple silicon
+          set MKC_COMMON_INCLUDE '-I/opt/homebrew/include';
+          set MKC_COMMON_LIB '-L/opt/homebrew/lib';
+          break;
+        }
+      }
+      if (${p} eq '/opt/local/bin') {
+        if (is_directory ('/opt/local/include') &&
+            is_directory ('/opt/local/lib')) {
+          # macports
+          set MKC_COMMON_INCLUDE '-I/opt/local/include';
+          set MKC_COMMON_LIB '-L/opt/local/lib';
+          break;
+        }
+      }
+      if (${p} eq '/usr/local/bin') {
+        if (is_directory ('/usr/local/include') &&
+            is_directory ('/usr/local/lib')) {
+          # homebrew, intel
+          set MKC_COMMON_INCLUDE '-I/usr/local/include';
+          set MKC_COMMON_LIB '-L/usr/local/lib';
+          break;
+        }
+      }
+      if (${p} eq '/usr/pkg/bin') {
+        if (is_directory ('/usr/pkg/include') &&
+            is_directory ('/usr/pkg/lib')) {
+          set MKC_COMMON_INCLUDE '-I/usr/pkg/include';
+          set MKC_COMMON_LIB '-L/usr/pkg/lib';
+          break;
+        }
+      }
+    }
+    # freebsd
+    if (${MKC_SYS_ID_FREEBSD}) {
+      if (${p} eq '/usr/local/bin') {
+        if (is_directory ('/usr/local/include') &&
+            is_directory ('/usr/local/lib')) {
+          set MKC_COMMON_INCLUDE '-I/usr/local/bin';
+          set MKC_COMMON_LIB '-L/usr/local/lib';
+          break;
+        }
+      }
+    }
+    # netbsd, et. al.
+    if (${p} eq '/opt/pkg/bin') {
+      if (is_directory ('/opt/pkg/include') &&
+          is_directory ('/opt/pkg/lib')) {
+        set MKC_COMMON_INCLUDE '-I/opt/pkg/bin';
+        set MKC_COMMON_LIB '-L/opt/pkg/lib';
+        break;
+      }
+    } # fin pkgsrc
+  } # foreach path
+
+  add_compile_flag ${MKC_COMMON_INCLUDE};
+  add_link_flag ${MKC_COMMON_LIB};
+}
+
+profile mkc_test_commonpaths {
+  check_common_paths;
+  mkcdebug printvar mkc_test_commonpaths;
+}

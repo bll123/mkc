@@ -44,6 +44,7 @@
   * Attributes
       * [alternate](SyntaxAttrAlternate)
       * [compiler_flags](SyntaxAttrCompileFlag)
+      * [failure](SyntaxAttrSuccessFail)
       * [compiler](SyntaxAttrCompiler)
       * [header](SyntaxAttrHeader)
       * [input](SyntaxAttrInput)
@@ -52,5 +53,6 @@
       * [name](SyntaxAttrName)
       * [output](SyntaxAttrOutput)
       * [path](SyntaxAttrPath)
+      * [success](SyntaxAttrSuccessFail)
 
 [Wiki Home](Home)

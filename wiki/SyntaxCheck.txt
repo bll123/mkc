@@ -42,16 +42,18 @@ allowed for the check.
 
 * [alternate](SyntaxAttrAlternate)
 * [compiler\_flags](SyntaxAttrCompileFlag)
+* [failure](SyntaxAttrSuccessFail)
 * [header](SyntaxAttrHeader)
 * [link\_flags](SyntaxAttrLinkFlag)
 * [match](SyntaxAttrMatch)
 * [name](SyntaxAttrName)
 * [negate](SyntaxCheckCompilerFlag)
 * [path](SyntaxAttrPath)
+* [success](SyntaxAttrSuccessFail)
 
 ##### Setting Required Headers for a Check
 
-The headers for a check may set by appending a statement block, and
+The headers for a _check_ may set by appending a statement block, and
 using the [header](SyntaxHeader) attribute.
 
     check_size int64_t {
@@ -60,14 +62,14 @@ using the [header](SyntaxHeader) attribute.
 
 ##### Generated Names
 
-_mkc_ automatically generates names for each check. Each check has an
-associated prefix.  The name of the check will replace characters that
-are not alphabetic or digits with an underscore.
+_mkc_ automatically generates names for each _check_. Each _check_ has
+an associated prefix.  The name of the _check_ will replace characters
+that are not alphabetic or digits with an underscore.
 
 ##### Changing the Name of a Check
 
-_mkc_ automatically generates names for each check. To change the name
-of a check, append a statement block and use the [name](SyntaxAttrName)
+_mkc_ automatically generates names for each _check_. To change the name
+of a _check_, append a statement block and use the [name](SyntaxAttrName)
 statement.
 
     check_size int64_t {
@@ -90,7 +92,7 @@ statement.
 ##### Alternates
 
 The [alternate](SyntaxAttrAlternate) is a powerful method to run
-checks with alternate settings.
+_checks_ with alternate settings.
 
 Each alternate attribute block may contain the [name](SyntaxAttrName),
 [header](SyntaxAttrHeader), [compiler\_flags](SyntaxAttrCompileFlag),
@@ -118,6 +120,28 @@ On success, the generated _\_function\_statfs_ name will be set.
 If the first alternate succeeds, the _\_header\_sys\_vfs_ variable
 will be set.  If the second alternate succeeds, the
 _\_header\_sys\_mount_ variable will be set.
+
+##### success and failure
+
+The __success__ and __failure__ attributes blocks will execute on
+success or failure of a [check](SyntaxCheck).
+
+    check_function statfs {
+      alternate {
+        name _header_sys_vfs;
+        header sys/vfs.h;
+      }
+      alternate {
+        name _header_sys_mount;
+        header sys/mount.h;
+      }
+      success {
+        print 'found statfs.';
+      }
+      failure {
+        print 'could not locate statfs.';
+      }
+    }
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

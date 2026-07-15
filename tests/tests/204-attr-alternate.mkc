@@ -2,58 +2,58 @@
 
 # checks the alternate attribute
 
-check_size chk203_a_t {
+check_size chk204_a_t {
   alternate {
-    name chk203_a_a;
+    name chk204_a_a;
     compiler_flags '-Itests/data';
-    header 203-attr-alternate-a.h;
+    header 204-attr-alternate-a.h;
   }
   alternate {
-    name chk203_a_b;
+    name chk204_a_b;
     compiler_flags '-Itests/data';
-    header 203-attr-alternate-b.h;
+    header 204-attr-alternate-b.h;
   }
 }
-check_size chk203_b_t {
+check_size chk204_b_t {
   alternate {
-    name chk203_b_a;
+    name chk204_b_a;
     compiler_flags '-Itests/data';
-    header 203-attr-alternate-a.h;
+    header 204-attr-alternate-a.h;
   }
   alternate {
-    name chk203_b_b;
+    name chk204_b_b;
     compiler_flags '-Itests/data';
-    header 203-attr-alternate-b.h;
+    header 204-attr-alternate-b.h;
   }
 }
 
-if (${_size_chk203_a_t} > 0) {
+if (${_size_chk204_a_t} > 0) {
   print '  ok a';
 } else {
   print '  fail a';
 }
-if (${chk203_a_a} == 1) {
+if (${chk204_a_a} == 1) {
   print '  ok aa';
 } else {
   print '  fail aa';
 }
-if (is_defined (chk203_a_b)) {
+if (is_defined (chk204_a_b)) {
   print '  fail ab';
 } else {
   print '  ok ab';
 }
 
-if (${_size_chk203_b_t} > 0) {
+if (${_size_chk204_b_t} > 0) {
   print '  ok b';
 } else {
   print '  fail b';
 }
-if (${chk203_b_b} == 1) {
+if (${chk204_b_b} == 1) {
   print '  ok bb';
 } else {
   print '  fail bb';
 }
-if (is_defined (chk203_b_a)) {
+if (is_defined (chk204_b_a)) {
   print '  fail ba';
 } else {
   print '  ok ba';

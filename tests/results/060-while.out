@@ -3,33 +3,39 @@
   ok 2
   ok 3
   ok 4
-  while fin
+ while fin
+  cont 0
+  cont 1
+  cont 2
+  cont 4
+ while-continue fin
   ok 0
   ok 1
   ok 2
-  ok 4
-  while-continue fin
-  ok 0
-  ok 1
-  ok 2
-  while-break fin
+ while-break fin
   outer 0
   inner 0
   inner 1
-  inner 2
   outer 1
   inner 0
   inner 1
-  inner 2
   outer 2
   inner 0
   inner 1
-  inner 2
-  nested fin
+ nested fin
   outer 0
   inner 0
   outer 1
   inner 0
   outer 2
   inner 0
-  nested inner-break fin
+  outer 3
+ nested inner-break fin
+  ok 0
+  ok 1
+  ok 2
+ while-b-break fin
+  ok 0
+  ok 1
+  ok 3
+ while-b-cont fin

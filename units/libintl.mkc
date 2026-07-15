@@ -6,23 +6,31 @@
 #     _function_bindtextdomain
 #     _function_textdomain
 #     _function_gettext
-#   If any libraries are needed:
 #     libintl_LIBS
 #
 
 function check_libintl {
-  check_function bindtextdomain {
+  # check for the real underlying function
+  # otherwise the library cannot be determined
+  # most of the functions are redefined as inline functions
+  check_function libintl_bindtextdomain {
     alternate {
       header libintl.h;
+      compiler_flags ${MKC_COMMON_INCLUDE};
+      link_flags ${MKC_COMMON_LIB};
     }
     alternate {
       name mkc_libintl_intl;
       header libintl.h;
+      compiler_flags ${MKC_COMMON_INCLUDE};
+      link_flags ${MKC_COMMON_LIB};
       link_flags '-lintl';
     }
     alternate {
       name mkc_libintl_intl_iconv;
       header libintl.h;
+      compiler_flags ${MKC_COMMON_INCLUDE};
+      link_flags ${MKC_COMMON_LIB};
       link_flags '-lintl' '-liconv';
     }
     success {
@@ -33,9 +41,16 @@ function check_libintl {
       if (is_defined (mkc_libintl_intl_iconv)) {
         set libintl_LIBS [ '-lintl' '-liconv' ];
       }
+      # if one libintl function exists, presumably they all exist.
+      # set the checks for a few of the common ones.
+      set _function_bindtextdomain true;
       set _function_gettext true;
       set _function_textdomain true;
       set _header_libintl true;
+      mark _function_bindtextdomain enable-output;
+      mark _function_gettext enable-output;
+      mark _function_textdomain enable-output;
+      mark _header_libintl enable-output;
     }
   }
 }

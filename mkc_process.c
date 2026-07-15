@@ -536,31 +536,19 @@ mkc_process_unary_op (mkc_process_t *process, int type, mkc_value_t *vala)
 {
   int32_t     result = 0;
   int32_t     ivala = 0;
-  char        tbuff [MKC_VNAME_MAX];
 
   if (process == NULL) {
     return 0;
   }
 
-  if (type != MKC_T_OP_IS_DEFINED && type != MKC_T_OP_IS_LIST) {
-    if (vala->vtype != MKC_VT_INTEGER) {
-      mkc_error_set (process->mkcerr, MKC_ERR_MISMATCHED_ARGUMENT_TYPE, 0, NULL);
-      return 0;
-    }
-
-    ivala = mkc_pvar_value_get_integer (process->pvar, vala);
-    if (mkc_error_chk_err (process->mkcerr)) {
-      return 0;
-    }
+  if (vala->vtype != MKC_VT_INTEGER) {
+    mkc_error_set (process->mkcerr, MKC_ERR_MISMATCHED_ARGUMENT_TYPE, 0, NULL);
+    return 0;
   }
-  if (type == MKC_T_OP_IS_DEFINED || type == MKC_T_OP_IS_LIST) {
-    if (vala->vtype == MKC_VT_INTEGER ||
-        vala->vtype == MKC_VT_RANGE ||
-        vala->vtype == MKC_VT_INVALID ||
-        vala->vtype == MKC_VT_LIST) {
-      mkc_error_set (process->mkcerr, MKC_ERR_MISMATCHED_ARGUMENT_TYPE, 0, NULL);
-      return 0;
-    }
+
+  ivala = mkc_pvar_value_get_integer (process->pvar, vala);
+  if (mkc_error_chk_err (process->mkcerr)) {
+    return 0;
   }
 
   switch (type) {
@@ -576,13 +564,58 @@ mkc_process_unary_op (mkc_process_t *process, int type, mkc_value_t *vala)
       result = ivala;
       break;
     }
+    default: {
+      result = 0;
+      mkc_error_set (process->mkcerr, MKC_ERR_INVALID_OP, 0, NULL);
+      break;
+    }
+  }
+
+  return result;
+}
+
+int32_t
+mkc_process_other_op (mkc_process_t *process, int type, mkc_value_t *vala)
+{
+  int32_t     result = 0;
+  char        *tbuff;
+
+  if (process == NULL) {
+    return 0;
+  }
+
+  if (vala->vtype == MKC_VT_INTEGER ||
+      vala->vtype == MKC_VT_RANGE ||
+      vala->vtype == MKC_VT_INVALID ||
+      vala->vtype == MKC_VT_LIST) {
+    mkc_error_set (process->mkcerr, MKC_ERR_MISMATCHED_ARGUMENT_TYPE, 0, NULL);
+    return 0;
+  }
+
+  tbuff = malloc (MKC_PATH_MAX);
+  if (tbuff == NULL) {
+    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return 0;
+  }
+
+  switch (type) {
+    case MKC_T_OP_FILE_EXISTS: {
+      mkc_pvar_value_get_str (process->pvar, vala, tbuff, MKC_PATH_MAX);
+      result = mkc_file_exists (tbuff);
+      break;
+    }
     case MKC_T_OP_IS_DEFINED: {
-      mkc_pvar_value_get_str (process->pvar, vala, tbuff, sizeof (tbuff));
+      mkc_pvar_value_get_str (process->pvar, vala, tbuff, MKC_PATH_MAX);
       result = mkc_pvar_is_defined (process->pvar, tbuff);
       break;
     }
+    case MKC_T_OP_IS_DIRECTORY: {
+      mkc_pvar_value_get_str (process->pvar, vala, tbuff, MKC_PATH_MAX);
+      result = mkc_is_directory (tbuff);
+      break;
+    }
     case MKC_T_OP_IS_LIST: {
-      mkc_pvar_value_get_str (process->pvar, vala, tbuff, sizeof (tbuff));
+      mkc_pvar_value_get_str (process->pvar, vala, tbuff, MKC_PATH_MAX);
       result = mkc_pvar_is_list (process->pvar, tbuff);
       break;
     }
@@ -593,6 +626,7 @@ mkc_process_unary_op (mkc_process_t *process, int type, mkc_value_t *vala)
     }
   }
 
+  free (tbuff);
   return result;
 }
 
@@ -1528,6 +1562,10 @@ mkc_process_attr_comp_flags (mkc_process_t *process, mkc_value_t *value)
     }
 
     lvalue = mkc_list_get_by_idx (value->list, lidx);
+    mkc_process_substitutions (process, lvalue);
+    if (! *(lvalue->sval)) {
+      continue;
+    }
     mkc_list_set (clist, lvalue, sizeof (mkc_value_t), &loc);
   }
 
@@ -1598,6 +1636,10 @@ mkc_process_attr_link_flags (mkc_process_t *process, mkc_value_t *value)
     }
 
     lvalue = mkc_list_get_by_idx (value->list, lidx);
+    mkc_process_substitutions (process, lvalue);
+    if (! *(lvalue->sval)) {
+      continue;
+    }
     mkc_list_set (llist, lvalue, sizeof (mkc_value_t), &loc);
   }
 
@@ -1783,6 +1825,12 @@ mkc_process_check_flag (mkc_process_t *process,
   }
 
   mkc_pvar_value_get_str (process->pvar, valflag, flag, sizeof (flag));
+
+  if (! *flag) {
+    /* empty flags are ignored */
+    return MKC_ERR_FAILURE;
+  }
+
   switch (iasttype) {
     case MKC_T_CHK_COMP_FLAG: { pfx = "cf_"; break; }
     case MKC_T_CHK_LINK_FLAG: { pfx = "lf_"; break; }
@@ -3266,6 +3314,7 @@ mkc_process_get_cflags (mkc_process_t *process)
     mkc_list_set (tlist, &pidx, sizeof (mkc_profidx_t), &loc);
   }
 
+  /* this is an unsorted list, the indices are in sequence */
   psz = mkc_list_size (tlist);
   for (int32_t i = psz - 1; i >= 0; --i) {
     mkc_profidx_t   *tpidx;

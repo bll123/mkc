@@ -1,0 +1,16 @@
+[Wiki Home](Home)
+<br>[Syntax](Syntax)
+
+### success, failure (attribute)
+
+The __success__ or __failure__ attribute specifies a block of
+statements to run on success or failure of a [check](SyntaxCheck). It
+is used in all [check](SyntaxCheck) statements.
+
+    success { <statement-list> }
+    failure { <statement-list> }
+
+Repeatable: no
+
+[Wiki Home](Home)
+<br>[Syntax](Syntax)

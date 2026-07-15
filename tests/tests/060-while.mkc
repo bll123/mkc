@@ -7,7 +7,7 @@ while (${count} < 5) {
   print "  ok ${count}";
   set count ${count} + 1;
 }
-print "  while fin";
+print ' while fin';
 
 # continue statement
 set count 0;
@@ -16,10 +16,10 @@ while (${count} < 5) {
     set count ${count} + 1;
     continue;
   }
-  print "  ok ${count}";
+  print "  cont ${count}";
   set count ${count} + 1;
 }
-print "  while-continue fin";
+print ' while-continue fin';
 
 # break statement
 set count 0;
@@ -30,25 +30,28 @@ while (${count} < 5) {
   print "  ok ${count}";
   set count ${count} + 1;
 }
-print "  while-break fin";
+print ' while-break fin';
 
 # nested while
 set i 0;
 while (${i} < 3) {
   print "  outer ${i}";
   set j 0;
-  while (${j} < 3) {
+  while (${j} < 2) {
     print "  inner ${j}";
     set j ${j} + 1;
   }
   set i ${i} + 1;
 }
-print "  nested fin";
+print ' nested fin';
 
-# nested while with break in inner loop
+# nested while with break in inner loop, break in outer loop
 set i 0;
-while (${i} < 3) {
+while (${i} < 5) {
   print "  outer ${i}";
+  if (${i} == 3) {
+    break;
+  }
   set j 0;
   while (${j} < 3) {
     if (${j} == 1) {
@@ -59,4 +62,40 @@ while (${i} < 3) {
   }
   set i ${i} + 1;
 }
-print "  nested inner-break fin";
+print ' nested inner-break fin';
+
+# buried break statement
+set count 0;
+while (${count} < 5) {
+  if (${count} == 3) {
+    if (${count} == 3) {
+      if (${count} == 3) {
+        break;
+      }
+      print '  fail';
+    }
+    print '  fail';
+  }
+  print "  ok ${count}";
+  set count ${count} + 1;
+}
+print ' while-b-break fin';
+
+# buried continue statement
+set count 0;
+while (${count} < 4) {
+  if (${count} == 2) {
+    if (${count} == 2) {
+      if (${count} == 2) {
+        set count ${count} + 1;
+        continue;
+      }
+      print '  fail';
+    }
+    print '  fail';
+  }
+  print "  ok ${count}";
+  set count ${count} + 1;
+}
+print ' while-b-cont fin';
+

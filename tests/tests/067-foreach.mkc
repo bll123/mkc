@@ -16,3 +16,47 @@ foreach d in range (0 8 2) {
 foreach e f in [ 1 2 3 4 5 6 ] {
   print "e,f: ${e} ${f}";
 }
+
+# continue statement
+foreach g in [ 1 2 3 4 ] {
+  if (${g} == 3) {
+    continue;
+  }
+  print "g: ${g}";
+}
+
+# break statement
+foreach h in [ 1 2 3 4 5 6 ] {
+  if (${h} == 3) {
+    break;
+  }
+  print "h: ${h}";
+}
+
+# buried break statement
+foreach i in [ 1 2 3 4 5 6 ] {
+  if (${i} == 3) {
+    if (${i} == 3) {
+      if (${i} == 3) {
+        break;
+      }
+      print '  fail';
+    }
+    print '  fail';
+  }
+  print "i: ${i}";
+}
+
+# buried continue statement
+foreach j in [ 1 2 3 4 ] {
+  if (${j} == 2) {
+    if (${j} == 2) {
+      if (${j} == 2) {
+        continue;
+      }
+      print '  fail';
+    }
+    print '  fail';
+  }
+  print "j: ${j}";
+}

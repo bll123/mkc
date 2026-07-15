@@ -15,7 +15,7 @@ CFLAGS for the current profile.
 Because _gcc_ will not create a warning or error when a compiler flag
 is prefixed with '-Wno-', it is necessary to check the compiler flag
 without the '-Wno-' prefix.  To do this, append a statement block to
-the check, and add the __negate__ attribute.
+the [check](SyntaxCheck), and add the __negate__ attribute.
 
 But be aware that some warning flags such as
 '-Wno-poison-system-directories' for MacOS/clang do not have an
@@ -29,7 +29,7 @@ Generated Name: Prefix: __cf\___
 
     add-compile-flag '-DNO_DEPRECATED';
 
-Adds a compiler flag without any check for validity.
+Adds a compiler flag without any validation.
 
 ##### Examples
 

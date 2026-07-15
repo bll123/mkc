@@ -3,8 +3,9 @@
 
 ### header (attribute)
 
-The __header__ attribute specifies the required headers for a check.
-The headers specified will be added to the check.
+The __header__ attribute specifies the required headers for a
+[check](SyntaxCheck). The headers specified will be added to the
+[check](SyntaxCheck).
 
     header <header-name> [<header-name> ...];
 

@@ -11,7 +11,7 @@ statement.
 The __link\_flags__ attribute is used with a [check](SyntaxCheck)
 statement or with an [alternate](SyntaxAttrAlternate) attribute.
 
-The flags specified will be added to the check.
+The flags specified will be added to the [check](SyntaxCheck).
 
 Repeatable: __yes__
 
