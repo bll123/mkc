@@ -28,10 +28,10 @@ void mkc_process_free (mkc_process_t *process);
 
 void mkc_process_range_init (mkc_process_t *process, mkc_value_t *value, mkc_value_t *beg, mkc_value_t *end, mkc_value_t *incr);
 int32_t mkc_process_condition (mkc_process_t *process, mkc_value_t *value);
-int32_t mkc_process_num_op (mkc_process_t *process, int type, mkc_value_t *vala, mkc_value_t *valb);
-int32_t mkc_process_str_op (mkc_process_t *process, int type, mkc_value_t *stra, mkc_value_t *strb);
-int32_t mkc_process_unary_op (mkc_process_t *process, int type, mkc_value_t *vala);
-int32_t mkc_process_other_op (mkc_process_t *process, int type, mkc_value_t *vala);
+int32_t mkc_process_num_op (mkc_process_t *process, mkc_astnode_token_t type, mkc_value_t *vala, mkc_value_t *valb);
+int32_t mkc_process_str_op (mkc_process_t *process, mkc_astnode_token_t type, mkc_value_t *stra, mkc_value_t *strb);
+int32_t mkc_process_unary_op (mkc_process_t *process, mkc_astnode_token_t type, mkc_value_t *vala);
+int32_t mkc_process_other_op (mkc_process_t *process, mkc_astnode_token_t type, mkc_value_t *vala);
 void mkc_process_include (mkc_process_t *process, mkc_value_t *valpath, mkc_value_t *valfn, char *tbuff, size_t sz);
 
 mkc_foreach_t *mkc_process_stmt_foreach_setup (mkc_process_t *process, mkc_value_t *valnm, mkc_value_t *vallist);
@@ -44,13 +44,14 @@ int mkc_process_stmt_chk_inc_guards (mkc_process_t *process);
 void mkc_process_stmt_configure (mkc_process_t *process);
 int mkc_process_stmt_debug (mkc_process_t *process, mkc_value_t *value, mkc_value_t *subvalue);
 void mkc_process_stmt_function_call (mkc_process_t *process, mkc_value_t *valparams, mkc_value_t *valfuncargs);
+void mkc_process_stmt_function_call_finish (mkc_process_t *process);
 void mkc_process_stmt_loadcache (mkc_process_t *process, mkc_value_t *valvers, bool fromcache);
 void mkc_process_stmt_mark (mkc_process_t *process, mkc_value_t *vala, mkc_value_t *valb);
 void mkc_process_stmt_print (mkc_process_t *process, mkc_value_t *value, int depth);
 void mkc_process_stmt_profile (mkc_process_t *process, mkc_value_t *valnm);
 void mkc_process_stmt_profile_post (mkc_process_t *process);
 void mkc_process_stmt_project (mkc_process_t *process);
-int mkc_process_stmt_set (mkc_process_t *process, mkc_value_t *valnm, mkc_value_t *value);
+int mkc_process_stmt_set (mkc_process_t *process, mkc_value_t *valnm, mkc_value_t *value, bool tempflag);
 
 void mkc_process_attr_alternate (mkc_process_t *process);
 void mkc_process_attribute (mkc_process_t *process, mkc_value_t *name, mkc_astnode_token_t asttype);

@@ -277,6 +277,10 @@ mkc_var_get_value (mkc_varlist_t *varlist, const char *name)
     return NULL;
   }
 
+  if (mkc_list_size (varlist->list) == 0) {
+    return NULL;
+  }
+
   vidx = mkc_var_find (varlist, name, &loc);
   if (vidx == MKC_VAR_NOTFOUND) {
     return NULL;
@@ -405,11 +409,12 @@ mkc_value_to_str (mkc_value_t *value, char *buff, size_t sz)
       break;
     }
     case MKC_VT_RANGE: {
-      snprintf (buff, sz, "%d..%d", value->range.beg, value->range.end);
+      snprintf (buff, sz, "%" PRId32 "..%" PRId32,
+          value->range.beg, value->range.end);
       break;
     }
     case MKC_VT_INTEGER: {
-      snprintf (buff, sz, "%d", value->ival);
+      snprintf (buff, sz, "%" PRId32, value->ival);
       break;
     }
     case MKC_VT_LIST: {

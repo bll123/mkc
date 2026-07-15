@@ -57,8 +57,6 @@ grep -E -l 'include "mkc_config.h' *.c | \
         -e 's,^,\t,' \
         -e '$ ! s,$, \\,' \
     >> ${TMPFILE}
-echo "== init"
-cat ${TMPFILE}
 echo '' >> ${TMPFILE}
 updbootstrapmake ${nm}
 

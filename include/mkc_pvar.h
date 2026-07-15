@@ -28,8 +28,8 @@ typedef struct mkc_pvar_t mkc_pvar_t;
 
 MKC_NODISCARD mkc_pvar_t *mkc_pvar_init (mkc_profile_t *profiles, mkc_log_t *log, mkc_error_t *mkcerr);
 void mkc_pvar_free (mkc_pvar_t *pvar);
-int mkc_pvar_profile_set (mkc_pvar_t *pvar, const char *pname, mkc_compiler_t compiler);
-int mkc_pvar_profile_set_idx (mkc_pvar_t *pvar, mkc_profidx_t pidx);
+int mkc_pvar_profile_select (mkc_pvar_t *pvar, const char *pname, mkc_compiler_t compiler);
+int mkc_pvar_profile_select_idx (mkc_pvar_t *pvar, mkc_profidx_t pidx);
 void mkc_pvar_set_fromcache (mkc_pvar_t *pvar, bool flag);
 
 int mkc_pvar_set (mkc_pvar_t *pvar, const char *vname, mkc_value_t *value, mkc_var_ctxt_t vctxt);

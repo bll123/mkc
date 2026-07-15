@@ -1,5 +1,6 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 mkcdebug printvar internal;
 mkcdebug printvar default;
+mkcdebug printvar temp;
 mkcdebug printpath;
 mkcdebug printinternal;

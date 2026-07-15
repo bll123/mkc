@@ -10,6 +10,7 @@ extern "C" {
 
 extern char const * const MKC_C_PROF_INTERNAL_NAME;
 extern char const * const MKC_C_PROF_DEFAULT_NAME;
+extern char const * const MKC_C_PROF_TEMP_NAME;
 extern char const * const MKC_C_PATH_PKGCONF;
 extern char const * const MKC_C_PATH_PKGCONFIG;
 

@@ -28,10 +28,11 @@ typedef enum {
   MKC_PROF_TYPE_TARGET,
   MKC_PROF_TYPE_CURRENT,
   MKC_PROF_TYPE_INTERNAL,
+  MKC_PROF_TYPE_TEMP,
 } mkc_prof_type_t;
 
 enum {
-  MKC_PROF_NOT_FOUND = -2,
+  MKC_PROF_NOT_FOUND = MKC_LIST_NOTFOUND,
 };
 
 typedef struct mkc_profiter_t {

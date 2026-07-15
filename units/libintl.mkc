@@ -7,6 +7,7 @@
 #     _function_textdomain
 #     _function_gettext
 #     libintl_LIBS
+#     libintl_FOUND
 #
 
 function check_libintl {
@@ -14,6 +15,10 @@ function check_libintl {
   # these make it difficult to find a function, as the
   # functions may or may not have the 'libintl_' prefix.
   # check with and without the prefix.
+  #
+  # if the 'libintl_' prefixes are active, a check for bindtextdomain
+  # will succeed without a library.
+  # check for libintl_bindtextdomain first.
 
   if (! is_defined (MKC_COMMON_INCLUDE)) {
     # these need to be set to something
@@ -21,7 +26,11 @@ function check_libintl {
     set MKC_COMMON_LIB '';
   }
 
-  set mkc_libintl_rc false;
+  set libintl_FOUND false;
+
+  set temporary mkc_libintl_rc false;
+  set temporary mkc_libintl_intl '';
+  set temporary mkc_libintl_intl_iconv '';
 
   check_function libintl_bindtextdomain {
     alternate {
@@ -30,14 +39,14 @@ function check_libintl {
       link_flags ${MKC_COMMON_LIB};
     }
     alternate {
-      name mkc_libintl_lib_intl;
+      name mkc_libintl_intl;
       header libintl.h;
       compiler_flags ${MKC_COMMON_INCLUDE};
       link_flags ${MKC_COMMON_LIB};
       link_flags '-lintl';
     }
     alternate {
-      name mkc_libintl_lib_both;
+      name mkc_libintl_intl_iconv;
       header libintl.h;
       compiler_flags ${MKC_COMMON_INCLUDE};
       link_flags ${MKC_COMMON_LIB};
@@ -56,14 +65,14 @@ function check_libintl {
         link_flags ${MKC_COMMON_LIB};
       }
       alternate {
-        name mkc_libintl_lib_intl;
+        name mkc_libintl_intl;
         header libintl.h;
         compiler_flags ${MKC_COMMON_INCLUDE};
         link_flags ${MKC_COMMON_LIB};
         link_flags '-lintl';
       }
       alternate {
-        name mkc_libintl_lib_both;
+        name mkc_libintl_intl_iconv;
         header libintl.h;
         compiler_flags ${MKC_COMMON_INCLUDE};
         link_flags ${MKC_COMMON_LIB};
@@ -76,11 +85,14 @@ function check_libintl {
   }
 
   if (${mkc_libintl_rc}) {
+    set libintl_FOUND true;
     set libintl_LIBS [];
-    if (is_defined (mkc_libintl_lib_intl)) {
+    if (${mkc_libintl_intl} ne '') {
       set libintl_LIBS [ '-lintl' ];
     }
-    if (is_defined (mkc_libintl_lib_both)) {
+    # i think this may have been on very old systems, and is
+    # no longer needed
+    if (${mkc_libintl_intl_iconv} ne '') {
       set libintl_LIBS [ '-lintl' '-liconv' ];
     }
     # if one libintl function exists, presumably they all exist.
@@ -99,4 +111,5 @@ function check_libintl {
 profile mkc_test_libintl {
   check_libintl;
   mkcdebug printvar mkc_test_libintl;
+  mkcdebug printvar temp;
 }

@@ -6,6 +6,11 @@
 
 **0.5 2026-7---**
 
+* Bug Fixes:
+    * Fix check/success/fail processing.
+* New Features:
+    * 'set temporary...'
+
 -->
 
 **0.4 2026-7-14**

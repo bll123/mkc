@@ -136,6 +136,7 @@ typedef struct mkc_ast_set_t {
   mkc_astnode_t     *nm;
   mkc_astnode_t     *vala;
   mkc_astnode_t     *stmtblock;
+  bool              tempflag;
 } mkc_ast_set_t;
 
 typedef struct mkc_ast_while_t {
@@ -269,6 +270,7 @@ typedef struct mkc_astmain_t {
   int                   maxrdepth;
   int                   delaystacksz;
   bool                  stopprocess;
+  bool                  successfail;
 } mkc_astmain_t;
 
 static int32_t mkcnodenum = 0;
@@ -280,6 +282,7 @@ static mkc_value_t *mkc_ast_get_value (mkc_astmain_t *astmain, mkc_astnode_t *as
 static int mkc_ast_func_compare (void *a, void *b);
 static void mkc_ast_process_delay_stack (mkc_astmain_t *astmain, int32_t *ifcond, int32_t *loopbreak, int depth);
 static void mkc_ast_delay (mkc_astmain_t *astmain, mkc_astnode_t *astnode);
+static void mkc_ast_set_successfail (mkc_astmain_t *astmain, mkc_astnode_token_t asttype);
 
 MKC_NODISCARD
 mkc_astmain_t *
@@ -743,6 +746,7 @@ MKC_NODISCARD
 mkc_astnode_t *
 mkc_ast_mk_set (mkc_astmain_t *astmain,
     mkc_astnode_t *nm, mkc_astnode_t *vala, mkc_astnode_t *stmtblock,
+    bool tempflag,
     int32_t lineno, int colno)
 {
   mkc_astnode_t   *astnode;
@@ -758,6 +762,7 @@ mkc_ast_mk_set (mkc_astmain_t *astmain,
   astnode->stmt_set.nm = nm;
   astnode->stmt_set.vala = vala;
   astnode->stmt_set.stmtblock = stmtblock;
+  astnode->stmt_set.tempflag = tempflag;
 
   return astnode;
 }
@@ -1600,7 +1605,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       }
 
       mkc_ast_process (astmain, func->stmt_function.stmtblock, ifcond, loopbreak, depth + 1);
-      mkc_profile_local_pop (astmain->profiles);
+      mkc_process_stmt_function_call_finish (astmain->process);
 
       break;
     }
@@ -1704,7 +1709,8 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       }
 
       mkc_ast_process (astmain, astnode->stmt_set.vala, ifcond, loopbreak, depth);
-      rc = mkc_process_stmt_set (astmain->process, valnm, &astmain->value);
+      rc = mkc_process_stmt_set (astmain->process, valnm, &astmain->value,
+          astnode->stmt_set.tempflag);
       if (mkc_context_check (astmain->context, MKC_CONTEXT_CACHE)) {
         if (rc == MKC_OK_CHANGE) {
           *loopbreak = MKC_LOOP_BREAK;
@@ -1830,8 +1836,10 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
         break;
       }
 
-      if ((astmain->value.ival == MKC_OK && astnode->asttype == MKC_T_ATTR_SUCCESS) ||
-          (astmain->value.ival != MKC_OK && astnode->asttype == MKC_T_ATTR_FAILURE)) {
+      if ((astmain->successfail &&
+           astnode->asttype == MKC_T_ATTR_SUCCESS) ||
+          (! astmain->successfail &&
+           astnode->asttype == MKC_T_ATTR_FAILURE)) {
         mkc_ast_process (astmain, astnode->attr_success_fail.stmtblock, ifcond, loopbreak, depth + 1);
       }
       break;
@@ -1910,6 +1918,8 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
           val, astnode->chk_flag.addchk, astnode->asttype);
       astmain->value.vtype = MKC_VT_INTEGER;
 
+      mkc_ast_set_successfail (astmain, astnode->asttype);
+
       mkc_ast_process_delay_stack (astmain, ifcond, loopbreak, depth);
       break;
     }
@@ -1923,6 +1933,8 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       }
       astmain->value.ival = mkc_process_chk_shell_extract (astmain->process, val);
       astmain->value.vtype = MKC_VT_INTEGER;
+
+      mkc_ast_set_successfail (astmain, astnode->asttype);
 
       mkc_ast_process_delay_stack (astmain, ifcond, loopbreak, depth);
       break;
@@ -1951,6 +1963,8 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
           val, astnode->asttype);
       astmain->value.vtype = MKC_VT_INTEGER;
 
+      mkc_ast_set_successfail (astmain, astnode->asttype);
+
       mkc_ast_process_delay_stack (astmain, ifcond, loopbreak, depth);
       break;
     }
@@ -1978,6 +1992,8 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       astmain->value.ival = mkc_process_chk_struct_member (astmain->process,
           vala, valb);
       astmain->value.vtype = MKC_VT_INTEGER;
+
+      mkc_ast_set_successfail (astmain, astnode->asttype);
 
       mkc_ast_process_delay_stack (astmain, ifcond, loopbreak, depth);
       break;
@@ -2101,6 +2117,8 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
   if (astmain->rdepth == 0) {
     mkc_log (astmain->log, MKC_LOG_STATISTICS,
         "-- max-recursion: %d\n", astmain->maxrdepth);
+    mkc_log (astmain->log, MKC_LOG_STATISTICS,
+        "-- nodes-processed: %" PRId32 "\n", astmain->nodecount);
     return mkc_error_value (astmain->mkcerr);
   }
 
@@ -2238,4 +2256,17 @@ mkc_ast_delay (mkc_astmain_t *astmain, mkc_astnode_t *astnode)
   astnode->delayed = true;
   astmain->delay_stack [astmain->delaystacksz] = astnode;
   astmain->delaystacksz += 1;
+}
+
+static void
+mkc_ast_set_successfail (mkc_astmain_t *astmain, mkc_astnode_token_t asttype)
+{
+  astmain->successfail = astmain->value.ival == 0 ? true : false;
+  if (asttype == MKC_T_CHK_SIZE ||
+      asttype == MKC_T_CHK_ARG_COUNT) {
+    astmain->successfail = true;
+    if (astmain->value.ival == 0) {
+      astmain->successfail = false;
+    }
+  }
 }

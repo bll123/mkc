@@ -6,6 +6,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <inttypes.h>
 #include <string.h>
 
 #include "mkc_compiler.h"
@@ -86,6 +87,10 @@ mkc_profile_init (mkc_log_t *log, mkc_error_t *mkcerr, mkc_option_t *mkcoptions)
   mkc_profile_create (profiles, MKC_C_PROF_INTERNAL_NAME,
       MKC_COMPILER_GENERAL, MKC_PROF_TYPE_INTERNAL);
 
+  /* create local temporary variables */
+  pidx = mkc_profile_create (profiles, MKC_C_PROF_TEMP_NAME,
+        MKC_COMPILER_GENERAL, MKC_PROF_TYPE_TEMP);
+
   /* create current/compiler */
   pidx = mkc_profile_create (profiles, mkcoptions->dfltprofile,
         profiles->dfltcompiler, MKC_PROF_TYPE_CURRENT);
@@ -137,7 +142,8 @@ mkc_profile_clear (mkc_profile_t *profiles, mkc_profidx_t pidx)
   }
 
   if (pidx < 0 || pidx >= mkc_list_size (profiles->list)) {
-    mkc_log (profiles->log, MKC_LOG_GENERAL, "profile: pidx: oor: %d\n", pidx);
+    mkc_log (profiles->log, MKC_LOG_GENERAL,
+        "profile: pidx: oor: %" PRId32 "\n", pidx);
     mkc_error_set (profiles->mkcerr, MKC_ERR_OUT_OF_RANGE, 0, NULL);
     return MKC_ERR_FAILURE;
   }
@@ -219,7 +225,7 @@ mkc_profile_create (mkc_profile_t *profiles, const char *pname,
   pentry->pidx = loc;
 
   mkc_log (profiles->log, MKC_LOG_PROFILE,
-      "profile: create: %s %s (%d)\n", pname,
+      "profile: create: %s %s (%" PRId32 ")\n", pname,
       mkc_compiler_get_name (compiler), loc);
 
   return loc;
@@ -266,7 +272,7 @@ mkc_profile_local_create (mkc_profile_t *profiles)
   }
 
   mkc_log (profiles->log, MKC_LOG_PROFILE,
-      "profile: create-local: %s (%d)\n", tbuff, loc);
+      "profile: create-local: %s (%" PRId32 ")\n", tbuff, loc);
   profiles->localstack [profiles->localstacksz] = loc;
   profiles->localstacksz += 1;
 
@@ -288,7 +294,7 @@ mkc_profile_local_pop (mkc_profile_t *profiles)
   pentry = mkc_list_get_by_idx (profiles->list, profiles->localstack [stackidx]);
 
   mkc_log (profiles->log, MKC_LOG_PROFILE,
-      "profile: pop-local: %s (%d)\n", pentry->name, pentry->pidx);
+      "profile: pop-local: %s (%" PRId32 ")\n", pentry->name, pentry->pidx);
   mkc_list_pop (profiles->list, profiles->localstack [stackidx]);
 }
 
@@ -437,7 +443,7 @@ mkc_profile_push (mkc_profile_t *profiles)
   profiles->stacksz += 1;
 
   mkc_log (profiles->log, MKC_LOG_PROFILE,
-      "profile: push (%d)\n", profiles->active_idx);
+      "profile: push (%" PRId32 ")\n", profiles->active_idx);
 
   return profiles->active_idx;
 }
@@ -452,7 +458,8 @@ mkc_profile_pop (mkc_profile_t *profiles)
   }
 
   if (profiles->stacksz <= 0) {
-    mkc_log (profiles->log, MKC_LOG_GENERAL, "profile: stacksz: oor: %d\n", profiles->stacksz);
+    mkc_log (profiles->log, MKC_LOG_GENERAL,
+        "profile: stacksz: oor: %" PRId32 "\n", profiles->stacksz);
     mkc_error_set (profiles->mkcerr, MKC_ERR_OUT_OF_RANGE, 0, NULL);
     return MKC_ERR_FAILURE;
   }
@@ -461,12 +468,12 @@ mkc_profile_pop (mkc_profile_t *profiles)
   profiles->active_idx = profiles->stack [profiles->stacksz];
 
   mkc_log (profiles->log, MKC_LOG_PROFILE,
-      "profile: pop (%d)\n", profiles->active_idx);
+      "profile: pop (%" PRId32 ")\n", profiles->active_idx);
 
   pentry = mkc_list_get_by_idx (profiles->list, profiles->active_idx);
   if (pentry->type == MKC_PROF_TYPE_CURRENT) {
     mkc_log (profiles->log, MKC_LOG_PROFILE,
-        "profile: current: %s %s (%d)\n", pentry->name,
+        "profile: current: %s %s (%" PRId32 ")\n", pentry->name,
         mkc_compiler_get_name (pentry->compiler), profiles->active_idx);
     profiles->current_idx = profiles->active_idx;
   }
@@ -485,22 +492,28 @@ mkc_profile_set_active (mkc_profile_t *profiles, mkc_profidx_t pidx)
 
   if (pidx < 0 ||
       pidx > mkc_list_size (profiles->list) + profiles->localstacksz) {
-    mkc_log (profiles->log, MKC_LOG_GENERAL, "profile: pidx: oor: %d\n", pidx);
+    mkc_log (profiles->log, MKC_LOG_GENERAL,
+        "profile: pidx: oor: %" PRId32 "\n", pidx);
     mkc_error_set (profiles->mkcerr, MKC_ERR_OUT_OF_RANGE, 0, NULL);
     return;
   }
 
   profiles->active_idx = pidx;
   pentry = mkc_list_get_by_idx (profiles->list, pidx);
+  if (pentry == NULL) {
+    mkc_log (profiles->log, MKC_LOG_PROFILE,
+        "profile: failed to find %" PRId32 "\n", pidx);
+    return;
+  }
   if (pentry->type == MKC_PROF_TYPE_CURRENT) {
     mkc_log (profiles->log, MKC_LOG_PROFILE,
-        "profile: current: %s %s (%d)\n", pentry->name,
+        "profile: current: %s %s (%" PRId32 ")\n", pentry->name,
         mkc_compiler_get_name (pentry->compiler), pidx);
     profiles->current_idx = pidx;
   }
 
   mkc_log (profiles->log, MKC_LOG_PROFILE,
-      "profile: active: %s %s (%d)\n",
+      "profile: active: %s %s (%" PRId32 ")\n",
       pentry->name, mkc_compiler_get_name (pentry->compiler), pidx);
 }
 
@@ -540,6 +553,7 @@ mkc_profile_iter_hierarchy_start (mkc_profile_t *profiles,
 /* returns the next profile in the hierarchy (that exists) */
 /*    local variable stack */
 /*    target / compiler */
+/*    temporary */
 /*    current-user-profile / compiler */
 /*    current-user-profile / general */
 /*    internal */
@@ -566,8 +580,7 @@ mkc_profile_iter_hierarchy_next (mkc_profile_t *profiles,
     /* the first time, the active profile is one of */
     /* target/compiler, current/compiler or current/general */
     /* if a target type profile, use the target */
-    /* otherwise, use current/compiler */
-    /* note that a current/compiler profile may not exist */
+    /* otherwise, use the temporary profile */
 
     if (profiter->ptype == MKC_PROF_TYPE_TARGET) {
       pidx = profiter->origpidx;
@@ -575,14 +588,8 @@ mkc_profile_iter_hierarchy_next (mkc_profile_t *profiles,
       return pidx;
     }
 
-    /* find the most specific current profile */
-    pidx = mkc_profile_find (profiles, profiter->pname, profiles->dfltcompiler);
-    /* this is the situation where the profile may not exist */
-    if (pidx == MKC_PROF_NOT_FOUND) {
-      pidx = mkc_profile_find (profiles, profiter->pname, MKC_COMPILER_GENERAL);
-    }
-
-    profiter->ptype = MKC_PROF_TYPE_CURRENT;
+    pidx = mkc_profile_find (profiles, MKC_C_PROF_TEMP_NAME, MKC_COMPILER_GENERAL);
+    profiter->ptype = MKC_PROF_TYPE_TEMP;
     profiter->pidx = pidx;
     return pidx;
   }
@@ -610,6 +617,13 @@ mkc_profile_iter_hierarchy_next (mkc_profile_t *profiles,
       break;
     }
     case MKC_PROF_TYPE_TARGET: {
+      /* temporary profile is next */
+      pidx = mkc_profile_find (profiles, MKC_C_PROF_TEMP_NAME, MKC_COMPILER_GENERAL);
+      profiter->ptype = MKC_PROF_TYPE_TEMP;
+      profiter->pidx = pidx;
+      break;
+    }
+    case MKC_PROF_TYPE_TEMP: {
       /* find the profile using the current profile name */
       pidx = mkc_profile_find (profiles, profiter->pname, profiles->dfltcompiler);
 

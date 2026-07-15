@@ -267,8 +267,7 @@ INITIALOBJ = \
 # NOREGEXOBJ keep this line
 NOREGEXOBJ = \
 	mkc_dirop.o \
-	mkc_main.o \
-	mkc_process.o
+	mkc_main.o
 
 mkc: $(MKCOBJECTS)
 	$(CC) $(LDFLAGS) -o $@ $(MKCOBJECTS) $(LIBS)
@@ -412,16 +411,17 @@ mkc_process.o: include/mkc_regex.h include/mkc_def.h
 mkc_process.o: include/mkc_env.h include/mkc_fileop.h include/mkc_path.h
 mkc_process.o: include/mkc_process.h include/mkc_string.h
 mkc_process.o: include/mkc_tmutil.h include/mkc_toposort.h
-mkc_profile.o: include/mkc_compiler.h include/mkc_const.h include/mkc_error.h
+mkc_profile.o:  include/mkc_compiler.h
+mkc_profile.o: include/mkc_const.h include/mkc_error.h
 mkc_profile.o: include/mkc_nodiscard.h include/mkc_list.h
 mkc_profile.o: include/mkc_option.h include/mkc_profile.h include/mkc_log.h
 mkc_profile.o:  include/mkc_var.h include/mkc_string.h
-mkc_pvar.o:   include/mkc_def.h
-mkc_pvar.o:   include/mkc_env.h
-mkc_pvar.o: include/mkc_error.h include/mkc_nodiscard.h include/mkc_profile.h
-mkc_pvar.o: include/mkc_compiler.h include/mkc_list.h include/mkc_log.h
-mkc_pvar.o:  include/mkc_option.h include/mkc_var.h
-mkc_pvar.o: include/mkc_pvar.h include/mkc_string.h
+mkc_pvar.o:   include/mkc_const.h
+mkc_pvar.o: include/mkc_def.h  
+mkc_pvar.o: include/mkc_env.h include/mkc_error.h include/mkc_nodiscard.h
+mkc_pvar.o: include/mkc_profile.h include/mkc_compiler.h include/mkc_list.h
+mkc_pvar.o: include/mkc_log.h  include/mkc_option.h
+mkc_pvar.o: include/mkc_var.h include/mkc_pvar.h include/mkc_string.h
 mkc_regex_pcre.o: include/mkc_def.h  include/mkc_error.h
 mkc_regex_pcre.o: include/mkc_nodiscard.h include/mkc_regex.h
 mkc_string.o: include/mkc_string.h include/mkc_nodiscard.h

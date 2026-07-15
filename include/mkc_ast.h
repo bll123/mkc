@@ -49,7 +49,7 @@ MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_mark (mkc_astmain_t *astmain, mkc_astno
 MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_print (mkc_astmain_t *astmain, mkc_astnode_t *vala, int32_t lineno, int colno);
 MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_profile (mkc_astmain_t *astmain, mkc_astnode_t *nm, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
 MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_project (mkc_astmain_t *astmain, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
-MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_set (mkc_astmain_t *astmain, mkc_astnode_t *nm, mkc_astnode_t *expr, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
+MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_set (mkc_astmain_t *astmain, mkc_astnode_t *nm, mkc_astnode_t *expr, mkc_astnode_t *stmtblock, bool tempflag, int32_t lineno, int colno);
 MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_set_value (mkc_astmain_t *astmain, mkc_astnode_t *nm, mkc_astnode_t *vala, int32_t lineno, int colno);
 
 /* checks */

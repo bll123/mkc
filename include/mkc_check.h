@@ -50,8 +50,8 @@ typedef struct mkc_attribute_t {
   mkc_compiler_t  currcompiler;
   int             define_zero;
   int             headertype;
-  bool            negate;
   bool            localheader;
+  bool            negate;
   bool            printerrors;
 } mkc_attribute_t;
 

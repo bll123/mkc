@@ -106,16 +106,19 @@
 %token <sval> T_VARIABLE          "${...}"
 
 // keywords
-%token T_EXIT                 "exit"
-%token T_LOOP_BREAK           "break"
-%token T_LOOP_CONTINUE        "continue"
+%token T_STMT_EXIT            "exit"
 %token T_STMT_ELSE            "else"
 %token T_STMT_FOREACH         "foreach"
-%token T_IN                   "in"
 %token T_STMT_IF              "if"
 %token T_STMT_SET             "set"
 %token T_STMT_WHILE           "while"
+
+%token T_LOOP_BREAK           "break"
+%token T_LOOP_CONTINUE        "continue"
+
+%token T_IN                   "in"
 %token T_RANGE                "range"
+%token T_TEMPORARY            "temporary"
 
 // directives
 %token T_STMT_CHK_INC_COMPILE "check_include_compile"
@@ -247,9 +250,9 @@ stmt[v]:
       $v = NULL;
     }
 // control statements
-  | T_EXIT[a] integer[b] T_SEMICOLON
+  | T_STMT_EXIT integer[a] T_SEMICOLON
     {
-      $v = mkc_ast_mk_exit (ast, $b,
+      $v = mkc_ast_mk_exit (ast, $a,
           yylloc.first_line, yylloc.first_column);
     }
   | stmt_if[a]
@@ -722,7 +725,12 @@ stmt_project[v]:
 stmt_set[v]:
     T_STMT_SET varname[a] varvalue[b] stmtblock_or_semi[c]
     {
-      $v = mkc_ast_mk_set (ast, $a, $b, $c,
+      $v = mkc_ast_mk_set (ast, $a, $b, $c, false,
+          yylloc.first_line, yylloc.first_column);
+    }
+  | T_STMT_SET T_TEMPORARY varname[a] varvalue[b] stmtblock_or_semi[c]
+    {
+      $v = mkc_ast_mk_set (ast, $a, $b, $c, true,
           yylloc.first_line, yylloc.first_column);
     }
   ;

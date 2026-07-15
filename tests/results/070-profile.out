@@ -3,6 +3,7 @@
   default c++
   default general
   internal general
+  temporary general
 == default c
   a 'd-c'
 == default c++

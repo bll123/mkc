@@ -11,6 +11,7 @@
 #include <inttypes.h>
 #include <string.h>
 
+#include "mkc_const.h"
 #include "mkc_def.h"
 #include "mkc_env.h"
 #include "mkc_error.h"
@@ -23,6 +24,7 @@ typedef struct mkc_pvar_t {
   mkc_profile_t   * profiles;
   mkc_error_t     * mkcerr;
   mkc_log_t       * log;
+  mkc_profidx_t   pidx_temp;
   bool            fromcache;
 } mkc_pvar_t;
 
@@ -49,6 +51,7 @@ mkc_pvar_init (mkc_profile_t *profiles, mkc_log_t *log, mkc_error_t *mkcerr)
   pvar->log = log;
   pvar->profiles = profiles;
   pvar->fromcache = false;
+  pvar->pidx_temp = mkc_profile_find (profiles, MKC_C_PROF_TEMP_NAME, MKC_COMPILER_GENERAL);
 
   return pvar;
 }
@@ -64,7 +67,7 @@ mkc_pvar_free (mkc_pvar_t *pvar)
 }
 
 int
-mkc_pvar_profile_set (mkc_pvar_t *pvar, const char *pname,
+mkc_pvar_profile_select (mkc_pvar_t *pvar, const char *pname,
     mkc_compiler_t compiler)
 {
   mkc_profidx_t   pidx;
@@ -90,7 +93,7 @@ mkc_pvar_profile_set (mkc_pvar_t *pvar, const char *pname,
 }
 
 int
-mkc_pvar_profile_set_idx (mkc_pvar_t *pvar, mkc_profidx_t pidx)
+mkc_pvar_profile_select_idx (mkc_pvar_t *pvar, mkc_profidx_t pidx)
 {
   if (pvar == NULL) {
     return MKC_PROF_NOT_FOUND;
@@ -130,8 +133,15 @@ mkc_pvar_set (mkc_pvar_t *pvar, const char *vname,
     return rc;
   }
 
-  pidx = mkc_profile_get_active (pvar->profiles);
-  varlist = mkc_profile_get_varlist (pvar->profiles, pidx);
+  /* if the variable is found in the temporary profile, */
+  /* then set the variable there, otherwise set the variable */
+  /* in the currently active profile */
+
+  varlist = mkc_profile_get_varlist (pvar->profiles, pvar->pidx_temp);
+  if (! mkc_var_is_defined (varlist, vname)) {
+    pidx = mkc_profile_get_active (pvar->profiles);
+    varlist = mkc_profile_get_varlist (pvar->profiles, pidx);
+  }
   value->vctxt = vctxt;
   rc = mkc_var_set (varlist, vname, value);
 
@@ -341,7 +351,7 @@ mkc_pvar_get_by_profile (mkc_pvar_t *pvar, const char *nm)
     }
   }
 
-  mkc_pvar_profile_set_idx (pvar, opidx);
+  mkc_pvar_profile_select_idx (pvar, opidx);
   return value;
 }
 
@@ -475,7 +485,7 @@ mkc_pvar_get_variable_str (mkc_pvar_t *pvar, mkc_value_t *value,
     stpecpy (buff, buff + sz, tvalue->sval);
   }
   if (tvalue->vtype == MKC_VT_INTEGER) {
-    snprintf (buff, sz, "%d", tvalue->ival);
+    snprintf (buff, sz, "%" PRId32, tvalue->ival);
   }
 
   {
@@ -548,7 +558,7 @@ mkc_pvar_value_get_integer (mkc_pvar_t *pvar, mkc_value_t *value)
     }
   }
 
-  mkc_log (pvar->log, MKC_LOG_PROCESS, "  pv-get-int: %d\n", ival);
+  mkc_log (pvar->log, MKC_LOG_PROCESS, "  pv-get-int: %" PRId32 "\n", ival);
   return ival;
 }
 
@@ -575,7 +585,7 @@ mkc_pvar_value_get_str (mkc_pvar_t *pvar,
     case MKC_VT_INTEGER: {
       /* integers must be converted to strings, */
       /* so that substitutions can be done in a quoted string */
-      snprintf (buff, sz, "%d", value->ival);
+      snprintf (buff, sz, "%" PRId32, value->ival);
       break;
     }
     case MKC_VT_STRING: {
@@ -826,7 +836,7 @@ mkc_pvar_substitute (mkc_pvar_t *pvar, const char *data,
         value = mkc_pvar_get_by_profile (pvar, tstr);
 //fprintf (stderr, "%*svalue-null %d\n", depth * 2, "", value == NULL ? 1 : 0);
         if (value != NULL && value->vtype == MKC_VT_INTEGER) {
-          snprintf (tbuff, sizeof (tbuff), "%d", value->ival);
+          snprintf (tbuff, sizeof (tbuff), "%" PRId32, value->ival);
           tval = tbuff;
         }
         if (value != NULL && value->vtype == MKC_VT_STRING) {

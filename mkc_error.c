@@ -197,7 +197,7 @@ mkc_error_print (mkc_error_t *mkcerr)
   }
   /* this might be changed in the future */
   if (mkcerr->func != NULL) {
-    fprintf (stderr, "; %s:%d", mkcerr->func, mkcerr->flineno);
+    fprintf (stderr, "; %s:%" PRId32 "", mkcerr->func, mkcerr->flineno);
   }
 
   fprintf (stderr, "\n");
