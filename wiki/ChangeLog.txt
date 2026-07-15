@@ -4,17 +4,20 @@
 
 <!--
 
-**0.4 2026-7---**
+**0.5 2026-7---**
+
+-->
+
+**0.4 2026-7-14**
 
 * Bug Fixes:
-    * Fixed 'continue' statement.
+    * Fix 'continue' statement.
+    * Fix unary-op type check.
 * New Features:
     * Add 'check_include_guards'.
     * Add 'check_include_compile'.
     * Add 'success', 'failure' attribute.
     * Units: 'units/commonpaths.mkc', 'units/libintl.mkc'.
-
--->
 
 **0.3 2026-7-10**
 

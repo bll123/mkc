@@ -51,7 +51,7 @@ DEVELOPMENT=
 _HERE_
 mv ${fn}.n ${fn}
 
-cp -pr include templates tests utils ${SRCDEST}
+cp -pr include templates tests units utils ${SRCDEST}
 cp -p *.c *.y *.l *.h *.md *.mk *.mkc *.txt Makefile ${SRCDEST}
 
 rm -f ${SRCDEST}/mkc_config.h

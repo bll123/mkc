@@ -6,9 +6,10 @@ MAKEFILE = install.mk
 PREFIX = 
 INST_BIN = $(PREFIX)/bin
 INST_SHARE = $(PREFIX)/share/mkc
-INST_SHARE_TMPL = $(INST_SHARE)/templates
-INST_SHARE_INC = $(INST_SHARE)/include
 INST_SHARE_EXAMPLES = $(INST_SHARE)/examples
+INST_SHARE_INC = $(INST_SHARE)/include
+INST_SHARE_TMPL = $(INST_SHARE)/templates
+INST_SHARE_UNITS = $(INST_SHARE)/templates
 
 CP = cp
 
@@ -36,10 +37,13 @@ other-install:
 .PHONY: real-install
 real-install:
 	test -d $(INST_BIN) || mkdir -p $(INST_BIN)
+	test -d $(INST_SHARE_EXAMPLES) || mkdir -p $(INST_SHARE_EXAMPLES)
 	test -d $(INST_SHARE_INC) || mkdir -p $(INST_SHARE_INC)
 	test -d $(INST_SHARE_TMPL) || mkdir -p $(INST_SHARE_TMPL)
-	test -d $(INST_SHARE_EXAMPLES) || mkdir -p $(INST_SHARE_EXAMPLES)
+	test -d $(INST_SHARE_UNITS) || mkdir -p $(INST_SHARE_UNITS)
 	$(CP) mkc$(EXEEXT) $(INST_BIN)
 	$(CP) include/mkc_compiler.h $(INST_SHARE_INC)
 	$(CP) include/mkc_def.h $(INST_SHARE_INC)
+	$(CP) -r examples $(INST_SHARE)
 	$(CP) -r templates $(INST_SHARE)
+	$(CP) -r units $(INST_SHARE)
