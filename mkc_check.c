@@ -636,7 +636,6 @@ mkc_chk_struct_member (mkc_check_t *check,
 
   rc = mkc_do_test (MKC_CHK_TEST_COMPILE_ONLY,
       check, compiler, "c-struct-member", NULL, NULL, 0);
-fprintf (stderr, "member: %s.%s %d\n", structname, membername, rc);
   mkc_chk_reset (check);
   return rc;
 }

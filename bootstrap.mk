@@ -374,15 +374,13 @@ mkc_list.o:   include/mkc_error.h
 mkc_list.o: include/mkc_nodiscard.h include/mkc_list.h include/mkc_string.h
 mkc_log.o: include/mkc_error.h include/mkc_nodiscard.h include/mkc_fileop.h
 mkc_log.o:  include/mkc_log.h include/mkc_string.h
-mkc_main.o:   include/mkc_ast.h
-mkc_main.o: include/mkc_asttoken.h include/mkc_error.h
+mkc_main.o: include/mkc_ast.h include/mkc_asttoken.h include/mkc_error.h
 mkc_main.o: include/mkc_nodiscard.h include/mkc_log.h 
 mkc_main.o: include/mkc_option.h include/mkc_var.h include/mkc_list.h
 mkc_main.o: include/mkc_const.h include/mkc_def.h 
-mkc_main.o:  include/mkc_dirop.h include/mkc_env.h
-mkc_main.o: include/mkc_fileop.h include/mkc_parse.h include/mkc_path.h
-mkc_main.o: include/mkc_profile.h include/mkc_compiler.h include/mkc_string.h
-mkc_main.o: include/mkc_tmutil.h
+mkc_main.o: include/mkc_dirop.h include/mkc_env.h include/mkc_fileop.h
+mkc_main.o: include/mkc_parse.h include/mkc_path.h include/mkc_profile.h
+mkc_main.o: include/mkc_compiler.h include/mkc_string.h include/mkc_tmutil.h
 mkc_os_process.o:  include/mkc_os_process.h
 mkc_os_process.o: include/mkc_nodiscard.h include/mkc_tmutil.h
 mkc_os_win_process.o:  include/mkc_def.h

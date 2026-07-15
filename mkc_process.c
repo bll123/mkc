@@ -963,7 +963,7 @@ mkc_process_stmt_chk_inc_guards (mkc_process_t *process)
 
   if (process->rxincguard == NULL) {
     process->rxincguard = mkc_regex_init (
-        "^# *ifndef +([[:alnum:]_][[:alnum:]_]*)[\r\n]+# *define +\\g1$",
+        "^# *ifndef +([[:alnum:]_][[:alnum:]_]*)[\r\n]+# *define +\\g1[\r]*$",
         MKC_REGEX_MULTILINE, process->mkcerr);
   }
 

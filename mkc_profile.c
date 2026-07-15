@@ -276,6 +276,7 @@ mkc_profile_local_create (mkc_profile_t *profiles)
   profiles->localstack [profiles->localstacksz] = loc;
   profiles->localstacksz += 1;
 
+
   return loc;
 }
 
@@ -547,7 +548,7 @@ mkc_profile_iter_hierarchy_start (mkc_profile_t *profiles,
   profiter->origpidx = pidx;
   profiter->ptype = pentry->type;
   profiter->pidx = MKC_PROF_NOT_FOUND;
-  profiter->localidx = 0;
+  profiter->localidx = profiles->localstacksz - 1;
 }
 
 /* returns the next profile in the hierarchy (that exists) */
@@ -567,10 +568,10 @@ mkc_profile_iter_hierarchy_next (mkc_profile_t *profiles,
     return MKC_ERR_FAILURE;
   }
 
-  if (profiter->localidx < profiles->localstacksz) {
+  if (profiter->localidx >= 0) {
     /* note that profiter->pidx is not used for the local profiles */
     pidx = profiles->localstack [profiter->localidx];
-    profiter->localidx += 1;
+    profiter->localidx -= 1;
     return pidx;
   }
 

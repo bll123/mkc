@@ -1,0 +1,30 @@
+# Copyright 2026 Brad Lanam Pleasant Hill CA
+
+# test function return
+
+function a {
+  print 'a1';
+  b;
+  print 'a2';
+}
+
+function b {
+  foreach t in [ 1 2 3 ] {
+    print "b${t}";
+    c;
+    return;
+  }
+  print 'b2';
+}
+
+function c {
+  foreach tt in [ 1 2 3 4 5 ] {
+    print "c${tt}";
+    if (${tt} == 2) {
+      return;
+    }
+  }
+  print 'c2';
+}
+
+a;

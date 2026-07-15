@@ -4,14 +4,21 @@
 
 <!--
 
-**0.5 2026-7---**
+**0.6 2026-7---**
+
+-->
+
+pre-alpha
+
+**0.5 2026-7-15**
 
 * Bug Fixes:
     * Fix check/success/fail processing.
+    * Fix local variable processing.
+    * Fix check_include_guards on windows.
 * New Features:
-    * 'set temporary...'
-
--->
+    * set temporary  ...
+    * return (function).
 
 **0.4 2026-7-14**
 

@@ -18,7 +18,7 @@ fb 'b1';
 fc 'c1a' 'c1b';
 fd 'd1a' 'd1b' 'd1c';
 
-# test return
+# test return (basic)
 
 function a {
   print 'a1';

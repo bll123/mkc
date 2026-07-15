@@ -309,8 +309,9 @@ mkc_pvar_iter_next (mkc_pvar_t *pvar, mkc_varidx_t *iteridx)
 
 /* get-by-profile searches the profile hierarchy for the variable name */
 /* the search hierarchy: */
-/*    local-variables */
+/*    local variable stack */
 /*    template         compiler */
+/*    temporary */
 /*    current-profile  compiler */
 /*    current-profile  general */
 /*    internal */
