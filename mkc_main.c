@@ -13,6 +13,7 @@
 #include <string.h>
 #include <errno.h>
 #include <getopt.h>
+#include <unistd.h>
 
 #if __has_include (<windows.h>)
 # define NOCRYPT 1
@@ -82,6 +83,13 @@ main (int argc, char *argv [])
 
   mkcerr = mkc_error_init ();
   copyargs (&argcopy, argc, argv, mkcerr);
+
+#if _function_geteuid
+  if (geteuid () == 0) {
+    mkc_error_set (mkcerr, MKC_ERR_ROOT_EXEC, 0, NULL);
+  }
+#endif
+
   if (mkc_error_chk_err (mkcerr)) {
     rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
     return rc;

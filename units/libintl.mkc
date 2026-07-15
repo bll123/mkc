@@ -27,6 +27,7 @@ function check_libintl {
   }
 
   set libintl_FOUND false;
+  set libintl_LIBS [];
 
   set temporary mkc_libintl_rc false;
   set temporary mkc_libintl_intl '';
@@ -86,7 +87,6 @@ function check_libintl {
 
   if (${mkc_libintl_rc}) {
     set libintl_FOUND true;
-    set libintl_LIBS [];
     if (${mkc_libintl_intl} ne '') {
       set libintl_LIBS [ '-lintl' ];
     }
@@ -101,15 +101,25 @@ function check_libintl {
     set _function_gettext true;
     set _function_textdomain true;
     set _header_libintl true;
-    mark _function_bindtextdomain enable-output;
-    mark _function_gettext enable-output;
-    mark _function_textdomain enable-output;
     mark _header_libintl enable-output;
+  } else {
+    set _function_bindtextdomain false;
+    set _function_gettext false;
+    set _function_textdomain false;
   }
+
+  mark _function_bindtextdomain enable-output;
+  mark _function_gettext enable-output;
+  mark _function_textdomain enable-output;
+  mark _function_libintl_bindtextdomain disable-output;
 }
 
 profile mkc_test_libintl {
   check_libintl;
   mkcdebug printvar mkc_test_libintl;
   mkcdebug printvar temp;
+  exit 0;
 }
+
+check_libintl;
+

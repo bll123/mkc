@@ -2,9 +2,10 @@
  * Copyright 2026 Brad Lanam Pleasant Hill CA
  */
 
-/* references:
-  https://github.com/drifter1/compiler/blob/master/src
-*/
+/*
+ * references:
+ * https://github.com/drifter1/compiler/blob/master/src
+ */
 
 %define api.pure full
 %define api.prefix {mkcyy}
@@ -92,6 +93,7 @@
 %token T_RIGHT_BRACKET        "]"
 %token T_RIGHT_PAREN          ")"
 %token T_SEMICOLON            ";"
+
 %token T_VAL_FALSE            "false"
 %token <sval> T_VAL_INTEGER   "[0-9]+"
 %token T_VAL_TRUE             "true"
@@ -118,6 +120,7 @@
 
 %token T_IN                   "in"
 %token T_RANGE                "range"
+%token T_RETURN               "return"
 %token T_TEMPORARY            "temporary"
 
 // directives
@@ -202,15 +205,16 @@
 %type <astnode> expr
 
 %type <astnode> stmtblock_or_semi stmtblock stmtlist stmt
-%type <astnode> directive
 // program control
 %type <astnode> ifexpr stmt_if elseif elseclause loopcontrol
-%type <astnode> stmt_foreach stmt_function stmt_while
+%type <astnode> stmt_foreach stmt_function funcreturn stmt_while
 %type <astnode> stmt_function_call
-// commands
-%type <astnode> stmt_chk_inc_compile stmt_chk_inc_deps stmt_chk_inc_guards
-%type <astnode> stmt_config stmt_loadcache
+// statements
+%type <astnode> stmt_chk_inc_compile stmt_chk_inc_deps
+%type <astnode> stmt_chk_inc_guards stmt_config
 %type <astnode> stmt_mark stmt_print stmt_profile stmt_project stmt_set
+// other statements
+%type <astnode> directive stmt_loadcache
 // checks
 %type <astnode> checkcommand chk_argcount chk_compflag chk_const
 %type <astnode> chk_define chk_function chk_header chk_linkflag
@@ -276,6 +280,10 @@ stmt[v]:
     {
       $v = $a;
     }
+  | directive[a]
+    {
+      $v = $a;
+    }
 // statements
   | stmt_chk_inc_compile[a]
     {
@@ -294,10 +302,6 @@ stmt[v]:
       $v = $a;
     }
   | stmt_function_call[a]
-    {
-      $v = $a;
-    }
-  | directive[a]
     {
       $v = $a;
     }
@@ -330,8 +334,12 @@ stmt[v]:
     {
       $v = $a;
     }
-// attributes and other statement internal to statement blocks
+// attributes and other statements internal to statement blocks
   | attr[a]
+    {
+      $v = $a;
+    }
+  | funcreturn[a]
     {
       $v = $a;
     }
@@ -421,6 +429,14 @@ attr[v]:
   | attr_version[a]
     {
       $v = $a;
+    }
+  ;
+
+funcreturn[v]:
+    T_RETURN T_SEMICOLON
+    {
+      $v = mkc_ast_mk_func_return (ast,
+          yylloc.first_line, yylloc.first_column);
     }
   ;
 
@@ -640,24 +656,6 @@ stmt_config[v]:
     }
   ;
 
-directive[v]:
-    T_STMT_DEBUG varname[a] T_SEMICOLON
-    {
-      $v = mkc_ast_mk_debug (ast, $a, NULL,
-          yylloc.first_line, yylloc.first_column);
-    }
-  | T_STMT_DEBUG varname[a] varname[b] T_SEMICOLON
-    {
-      $v = mkc_ast_mk_debug (ast, $a, $b,
-          yylloc.first_line, yylloc.first_column);
-    }
-  | T_STMT_OPTION varname[a] varany[b] T_SEMICOLON
-    {
-      /* not implemented */
-      $v = NULL;
-    }
-  ;
-
 stmt_function_call[v]:
     varname[a] T_SEMICOLON
     {
@@ -679,14 +677,6 @@ stmt_include:
   | T_STMT_INCLUDE pathname[a] T_SEMICOLON
     {
       mkc_parse_process_include (&yyloc, parse, ast, NULL, $a);
-    }
-  ;
-
-stmt_loadcache[v]:
-    T_STMT_LOADCACHE integer[a] stmtblock[b]
-    {
-      $v = mkc_ast_mk_loadcache (ast, $a, $b,
-          yylloc.first_line, yylloc.first_column);
     }
   ;
 
@@ -732,6 +722,34 @@ stmt_set[v]:
     {
       $v = mkc_ast_mk_set (ast, $a, $b, $c, true,
           yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+// other statements
+
+stmt_loadcache[v]:
+    T_STMT_LOADCACHE integer[a] stmtblock[b]
+    {
+      $v = mkc_ast_mk_loadcache (ast, $a, $b,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+directive[v]:
+    T_STMT_DEBUG varname[a] T_SEMICOLON
+    {
+      $v = mkc_ast_mk_debug (ast, $a, NULL,
+          yylloc.first_line, yylloc.first_column);
+    }
+  | T_STMT_DEBUG varname[a] varname[b] T_SEMICOLON
+    {
+      $v = mkc_ast_mk_debug (ast, $a, $b,
+          yylloc.first_line, yylloc.first_column);
+    }
+  | T_STMT_OPTION varname[a] varany[b] T_SEMICOLON
+    {
+      /* not implemented */
+      $v = NULL;
     }
   ;
 

@@ -126,22 +126,23 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 "false"|"FALSE"   { return T_VAL_FALSE; }
 "bootstrap"       { return T_VAL_BOOTSTRAP; }
 
-"else"      { return T_STMT_ELSE; }
-"exit"      { return T_STMT_EXIT; }
-"foreach"   { return T_STMT_FOREACH; }
-"function"  { return T_STMT_FUNCTION; }
-"if"        { return T_STMT_IF; }
-"print"     { return T_STMT_PRINT; }
-"profile"   { return T_STMT_PROFILE; }
-"set"       { return T_STMT_SET; }
-"while"     { return T_STMT_WHILE; }
+"else"        { return T_STMT_ELSE; }
+"exit"        { return T_STMT_EXIT; }
+"foreach"     { return T_STMT_FOREACH; }
+"function"    { return T_STMT_FUNCTION; }
+"if"          { return T_STMT_IF; }
+"print"       { return T_STMT_PRINT; }
+"profile"     { return T_STMT_PROFILE; }
+"set"         { return T_STMT_SET; }
+"while"       { return T_STMT_WHILE; }
 
-"break"     { return T_LOOP_BREAK; }
-"continue"  { return T_LOOP_CONTINUE; }
+"break"       { return T_LOOP_BREAK; }
+"continue"    { return T_LOOP_CONTINUE; }
 
-"in"        { return T_IN; }
-"range"     { return T_RANGE; }
-"temporary" { return T_TEMPORARY; }
+"in"          { return T_IN; }
+"range"       { return T_RANGE; }
+"return"      { return T_RETURN; }
+"temporary"   { return T_TEMPORARY; }
 
 "check_include_compile"       { return T_STMT_CHK_INC_COMPILE; }
 "check_include_dependencies"  { return T_STMT_CHK_INC_DEPS; }

@@ -5,10 +5,20 @@
 
 Includes a _mkc_ configuration file and processes it.
 
-    include <path>;
+    include <filepath>;
+    include <directory> <filepath>;
+
+For the first form, the __include__ statement first checks if
+_filepath_ is a direct match, then for _filepath_ in the _mkc_ _units_
+directory, then for _filepath_ in the user's _mkc_ _units_ directory.
+
+The second form changes the working directory to _directory_, then
+includes _filepath_.
 
 ##### Examples
 
+    include commonpaths.mkc;
+    include auto commonpaths.mkc;
     include baseconfig.mkc;
     include 'cflags.mkc';
 

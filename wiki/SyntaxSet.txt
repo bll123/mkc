@@ -8,10 +8,15 @@ validity checks to exclude unusual UTF-8 characters.
 
 Variable names may not contain spaces.
 
-    set variable_name <value>;
+    set [temporary] variable_name <value>;
 
 _value_ may be an integer, quoted string, single quoted string,
 a variable, an expression, or a list.
+
+The _temporary_ option puts the variable into a temporary namespace.
+These variables can be accessed as usual, and once a variable is in
+the temporary namespace, it can be set as usual.
+
 <br>See [Syntax: Variables](SyntaxVariable)
 
     set variable_name <value> { context <context>; }
@@ -28,6 +33,9 @@ _disable_, _enable_.
     set d "${b} ${c}";
     set h $ENV{HOME};
     print ${d};
+
+    set temporary tt 14;
+    set tt 15;            # will change the temporary variable
 
 ##### Attributes
 

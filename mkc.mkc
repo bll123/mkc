@@ -26,6 +26,9 @@ check_package 'libpcre2-posix' {
   name pcre;
 }
 
+check_function geteuid {
+  header unistd.h;
+}
 check_function fork {
   header unistd.h;
 }
@@ -189,6 +192,8 @@ check_include_compile {
   path  '.';
   match '\.h$';
 }
+
+# generate
 
 # build
 

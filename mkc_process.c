@@ -630,6 +630,7 @@ mkc_process_include (mkc_process_t *process,
 {
   char      *p = buff;
   char      *tbuff;
+  char      *fname;
 
   *p = '\0';
 
@@ -641,6 +642,19 @@ mkc_process_include (mkc_process_t *process,
     return;
   }
 
+  fname = malloc (MKC_PATH_MAX);
+  if (fname == NULL) {
+    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return;
+  }
+
+  mkc_pvar_value_get_str (process->pvar, valfn, fname, MKC_PATH_MAX);
+  if (mkc_file_exists (fname)) {
+    p = stpecpy (p, buff + sz, fname);
+    free (fname);
+    return;
+  }
+
   tbuff = malloc (MKC_PATH_MAX);
   if (tbuff == NULL) {
     mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
@@ -649,14 +663,27 @@ mkc_process_include (mkc_process_t *process,
 
   if (valpath != NULL) {
     mkc_pvar_value_get_str (process->pvar, valpath, tbuff, MKC_PATH_MAX);
-    if (strcmp (tbuff, "mkc") == 0) {
-    } else {
+    p = stpecpy (p, buff + sz, tbuff);
+    p = stpecpy (p, buff + sz, "/");
+    p = stpecpy (p, buff + sz, fname);
+    if (! mkc_file_exists (buff)) {
+      mkc_error_set (process->mkcerr, MKC_ERR_FILE_NOT_FOUND, 0, NULL);
     }
   }
 
-  mkc_pvar_value_get_str (process->pvar, valfn, tbuff, MKC_PATH_MAX);
-  p = stpecpy (p, buff + sz, tbuff);
+  if (valpath == NULL) {
+    mkc_path_build (MKC_PATH_MKC_UNITS, tbuff, MKC_PATH_MAX, fname, process->mkcerr);
+    if (mkc_file_exists (tbuff)) {
+      p = stpecpy (buff, buff + sz, tbuff);
+    }
+    mkc_path_build (MKC_PATH_MKC_USER_UNITS, tbuff, MKC_PATH_MAX, fname, process->mkcerr);
+    if (mkc_file_exists (tbuff)) {
+      p = stpecpy (buff, buff + sz, tbuff);
+    }
+  }
+
   free (tbuff);
+  free (fname);
 }
 
 /* control statements */

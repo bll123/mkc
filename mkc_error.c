@@ -49,6 +49,7 @@ static char const * const mkcerrormsg [] = {
   [MKC_ERR_PROC_INVALID_METHOD] = "invalid method",
   [MKC_ERR_REGEX_MATCH_FAIL] = "regex match failed",
   [MKC_ERR_REGEX_PATTERN_FAIL] = "regex pattern failed to compile",
+  [MKC_ERR_ROOT_EXEC] = "do not run with elevated privileges",
   [MKC_ERR_SEARCH_UNSORTED_LIST] = "searching an unsorted list",
   [MKC_ERR_STMT_NOT_ALLOWED] = "statement not allowed",
   [MKC_ERR_UNBALANCED_BRACES] = "unbalanced braces",

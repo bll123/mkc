@@ -102,4 +102,7 @@ function check_common_paths {
 profile mkc_test_commonpaths {
   check_common_paths;
   mkcdebug printvar mkc_test_commonpaths;
+  exit 0;
 }
+
+check_common_paths;
