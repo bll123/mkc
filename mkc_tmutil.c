@@ -50,6 +50,21 @@ mssleep (uint32_t ms)
 #endif
 }
 
+time_t
+mstime (void)
+{
+  struct timeval    curr;
+  time_t            s, u, m, tot;
+
+  gettimeofday (&curr, NULL);
+
+  s = curr.tv_sec;
+  u = curr.tv_usec;
+  m = u / 1000;
+  tot = s * 1000 + m;
+  return tot;
+}
+
 void
 mstimestart (mstime_t *mstm)
 {

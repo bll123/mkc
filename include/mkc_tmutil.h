@@ -18,6 +18,7 @@ typedef struct mstime_t {
 } mstime_t;
 
 void mssleep (uint32_t ms);
+time_t mstime (void);
 void mstimestart (mstime_t *mstm);
 time_t mstimeend (mstime_t *mstm);
 
