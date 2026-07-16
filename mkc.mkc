@@ -35,6 +35,7 @@ check_function fork {
 check_function nanosleep {
   header time.h;
 }
+check_function realpath;
 check_function setenv;
 check_function stpecpy;
 check_function symlink {
@@ -54,6 +55,10 @@ check_function GetCommandLineW {
   compiler_flags '-DNOCRYPT=1' '-DNOGDI=1';
   header windows.h;
 }
+check_function GetFullPathNameW {
+  compiler_flags '-DWIN32_LEAN_AND_MEAN=1';
+  header windows.h;
+}
 check_function MultiByteToWideChar {
   compiler_flags '-DWIN32_LEAN_AND_MEAN=1';
   header windows.h;
@@ -65,6 +70,9 @@ check_function Sleep {
 check_function WideCharToMultiByte {
   compiler_flags '-DWIN32_LEAN_AND_MEAN=1';
   header windows.h;
+}
+check_function _wgetcwd {
+  header wchar.h;
 }
 check_function _wgetenv_s {
   compiler_flags '-DWIN32_LEAN_AND_MEAN=1';

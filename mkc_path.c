@@ -22,6 +22,7 @@ static char mkc_dirs [MKC_DIR_MAX][MKC_PATH_MAX] = {
   [MKC_DIR_EXEC] = "",
   [MKC_DIR_HOME] = "",
   [MKC_DIR_MKC_FILES] = "",
+  [MKC_DIR_ORIG_CWD] = "",
   [MKC_DIR_PREFIX] = "",
   [MKC_DIR_SHARE] = "",
 };
@@ -36,6 +37,7 @@ const char * const pathdesc [MKC_PATH_BUILD_MAX] = {
   [MKC_PATH_MKC_INCLUDE] = "mkc_include",
   [MKC_PATH_MKC_UNITS] = "mkc_units",
   [MKC_PATH_MKC_USER_UNITS] = "mkc_user_units",
+  [MKC_PATH_ORIG_CWD] = "mkc_orig_cwd",
   [MKC_PATH_SHARE] = "share",
   [MKC_PATH_PREFIX] = "prefix",
 };
@@ -103,6 +105,10 @@ mkc_path_build (mkc_path_t pathtype, char *buff, size_t sz,
       p = stpecpy (p, buff + sz, "/tmp");
       break;
     }
+    case MKC_PATH_ORIG_CWD: {
+      p = stpecpy (buff, buff + sz, mkc_dirs [MKC_DIR_ORIG_CWD]);
+      break;
+    }
     case MKC_PATH_PREFIX: {
       p = stpecpy (buff, buff + sz, mkc_dirs [MKC_DIR_PREFIX]);
       break;
@@ -129,12 +135,70 @@ mkc_path_set_dir (mkc_dir_t dir, const char *path)
 {
   stpecpy (mkc_dirs [dir], mkc_dirs [dir] + MKC_PATH_MAX, path);
   mkc_normalize_path (mkc_dirs [dir], MKC_PATH_MAX);
+  mkc_realpath (mkc_dirs [dir], MKC_PATH_MAX);
 }
+
+void
+mkc_getcwd (char *buff, size_t sz)
+{
+#if _function__wgetcwd
+  wchar_t *wcwd;
+  char    *tmp;
+
+  wcwd = _wgetcwd (NULL, 0);
+  tmp = mkc_fromwide (wcwd);
+  stpecpy (buff, buff + sz, tmp);
+  free (wcwd);
+  free (tmp);
+#else
+  (void) ! getcwd (buff, sz);
+#endif
+}
+
+void
+mkc_realpath (char *path, size_t sz)
+{
+#if _function_realpath
+  char      *tbuff;
+
+  tbuff = malloc (MKC_PATH_MAX);
+  if (tbuff == NULL) {
+    return;
+  }
+
+  (void) ! realpath (path, tbuff);
+  stpecpy (path, path + sz, tbuff);
+  free (tbuff);
+#endif
+#if ! _function_realpath && _function_GetFullPathNameW
+  wchar_t   *wfrom;
+  wchar_t   *wto;
+  char      *tto;
+
+  wto = malloc (MKC_PATH_MAX * sizeof (wchar_t));
+  if (wto == NULL) {
+    return;
+  }
+
+  mkc_display_path (path, sz);
+  wfrom = mkc_towide (path);
+  (void) ! GetFullPathNameW (wfrom, MKC_PATH_MAX, wto, NULL);
+  free (wfrom);
+  tto = mkc_fromwide (wto);
+  free (wto);
+  stpecpy (path, path + sz, tto);
+  free (tto);
+#endif
+
+  return;
+}
+
+/* internal routines */
 
 static void
 mkc_path_init (mkc_error_t *mkcerr)
 {
-  char        tbuff [MKC_PATH_MAX];
+  char        *tbuff;
   char        *p = NULL;
   mkc_dir_t   dir;
   bool        islocal = false;
@@ -143,14 +207,24 @@ mkc_path_init (mkc_error_t *mkcerr)
     return;
   }
 
+  tbuff = malloc (MKC_PATH_MAX);
+  if (tbuff == NULL) {
+    return;
+  }
+
+  dir = MKC_DIR_ORIG_CWD;
+  mkc_getcwd (tbuff, MKC_PATH_MAX);
+  stpecpy (mkc_dirs [dir], mkc_dirs [dir] + MKC_PATH_MAX, tbuff);
+  mkc_normalize_path (mkc_dirs [dir], MKC_PATH_MAX);
+
   /* set up the path to the mkc_files/ directory */
   /* if in bootstrap, use local relative paths */
   /* if the templates/ directory is there, use local relative paths */
   dir = MKC_DIR_MKC_FILES;
 
   /* this is a special case for development purposes */
-  p = stpecpy (tbuff, tbuff + sizeof (tbuff), mkc_dirs [MKC_DIR_EXEC]);
-  p = stpecpy (p, tbuff + sizeof (tbuff), "/templates");
+  p = stpecpy (tbuff, tbuff + MKC_PATH_MAX, mkc_dirs [MKC_DIR_EXEC]);
+  p = stpecpy (p, tbuff + MKC_PATH_MAX, "/templates");
   if (mkc_is_directory (tbuff)) {
     islocal = true;
   }
@@ -172,12 +246,14 @@ mkc_path_init (mkc_error_t *mkcerr)
 #endif
   if (islocal) {
     /* the local flag overrides any share-directory that is set */
-    stpecpy (mkc_dirs [dir], mkc_dirs [dir] + MKC_PATH_MAX, mkc_dirs [MKC_DIR_EXEC]);
+    p = stpecpy (mkc_dirs [dir], mkc_dirs [dir] + MKC_PATH_MAX, mkc_dirs [MKC_DIR_EXEC]);
   }
   if (*mkc_dirs [dir] == '\0' && ! islocal) {
     p = stpecpy (mkc_dirs [dir], mkc_dirs [dir] + MKC_PATH_MAX, mkc_dirs [MKC_DIR_PREFIX]);
     p = stpecpy (p, mkc_dirs [dir] + MKC_PATH_MAX, "/share/mkc");
   }
+
+  free (tbuff);
 
   gmkcpathinit = true;
 }

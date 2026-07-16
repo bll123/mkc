@@ -161,7 +161,8 @@ static char const * const MKC_C_PROJECT_NAME = "MKC_PROJECT_NAME";
 static char const * const MKC_C_PROJECT_VERS = "MKC_PROJECT_VERSION";
 static char const * const MKC_C_PROJECT_LIB_VERS = "MKC_PROJECT_LIBRARY_VERSION";
 static char const * const MKC_C_PATH = "MKC_PATH";
-static char ** mkc_process_get_cflags (mkc_process_t *process);
+static char ** mkc_process_get_flags (mkc_process_t *process, const char *flagname);
+static bool mkc_process_is_libloc (const char *str);
 
 /* these are duplicated */
 /* so that the static aggregator can be initialized */
@@ -206,7 +207,8 @@ static void mkc_process_topo_add_items (mkc_process_t *process, mkc_toposort_t *
 static void mkc_process_topo_add_deps (mkc_process_t *process, mkc_toposort_t *topo, char *rbuff, const char *hdr);
 static mkc_list_t * mkc_process_get_include_list (mkc_process_t *process, mkc_regex_t *rx);
 static char * mkc_process_iter_includes (mkc_process_t *process, mkc_list_t *hlist, mkc_listidx_t *hiteridx, char *hdr, size_t hsz, int readflag);
-void mkc_process_free_flags (char **flags);
+static void mkc_process_free_flags (char **flags);
+static bool mkc_process_chk_last_libloc (char *lastlibloc, size_t sz, const char *str);
 
 
 MKC_NODISCARD
@@ -811,7 +813,7 @@ mkc_process_stmt_chk_inc_compile (mkc_process_t *process)
 
   process->attr.localheader = true;
   process->attr.printerrors = true;
-  cflags = mkc_process_get_cflags (process);
+  cflags = mkc_process_get_flags (process, MKC_C_CFLAGS);
 
   hlist = mkc_process_get_include_list (process, rx);
   mkc_list_iter_start (hlist, &hiteridx);
@@ -1896,7 +1898,7 @@ mkc_process_check_flag (mkc_process_t *process,
       case MKC_T_CHK_LINK_FLAG: {
         const char    *nm = MKC_C_LDFLAGS;
 
-        if (strncmp (flag, "-L", 2) == 0 ||
+        if (mkc_process_is_libloc (flag) ||
             strncmp (flag, "-l", 2) == 0) {
           nm = MKC_C_LIBS;
         }
@@ -3304,22 +3306,38 @@ mkc_process_iter_includes (mkc_process_t *process, mkc_list_t *hlist,
 }
 
 static char **
-mkc_process_get_cflags (mkc_process_t *process)
+mkc_process_get_flags (mkc_process_t *process, const char *flagname)
 {
   mkc_profidx_t   opidx;
   mkc_profiter_t  profiter;
   mkc_profidx_t   pidx;
   mkc_list_t      *tlist;
   mkc_listidx_t   psz;
-  char            **cflags = NULL;
-  int             cfsz = 0;
-  int             cfallocsz = 0;
+  char            **flags = NULL;
+  int             fsz = 0;
+  int             fallocsz = 0;
+  char            *lastlibloc;
+  char            *str;
 
   opidx = mkc_profile_get_active (process->profiles);
 
+  lastlibloc = malloc (MKC_PATH_MAX);
+  if (lastlibloc == NULL) {
+    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return NULL;
+  }
+  *lastlibloc = '\0';
+
+  str = malloc (MKC_PATH_MAX);
+  if (str == NULL) {
+    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return NULL;
+  }
+  *str = '\0';
+
   tlist = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, process->mkcerr);
 
-  /* to get the cflags, the profile hierarchy needs to be */
+  /* to get the flags, the profile hierarchy needs to be */
   /* traversed in reverse order */
   /* iterate the profile as usual, then traverse the list in reverse order */
   mkc_profile_iter_hierarchy_start (process->profiles, &profiter);
@@ -3333,48 +3351,58 @@ mkc_process_get_cflags (mkc_process_t *process)
   psz = mkc_list_size (tlist);
   for (int32_t i = psz - 1; i >= 0; --i) {
     mkc_profidx_t   *tpidx;
-    mkc_listidx_t   cfiter;
-    mkc_listidx_t   cfidx;
+    mkc_listidx_t   fiter;
+    mkc_listidx_t   fidx;
     mkc_value_t     *value;
 
     tpidx = mkc_list_get_by_idx (tlist, i);
 
     if (*tpidx == process->pidx_internal) {
-      /* the internal profile will not have any cflags */
+      /* the internal profile will not have any flags */
       continue;
     }
 
     mkc_pvar_profile_select_idx (process->pvar, *tpidx);
-    value = mkc_pvar_get_by_profidx (process->pvar, MKC_C_CFLAGS, *tpidx);
+    value = mkc_pvar_get_by_profidx (process->pvar, flagname, *tpidx);
     if (value == NULL || value->vtype != MKC_VT_LIST) {
       continue;
     }
 
-    mkc_list_iter_start (value->list, &cfiter);
-    while ((cfidx = mkc_list_iter_next (value->list, &cfiter)) != MKC_ITER_FINISH) {
-      mkc_value_t   *cfval;
+    mkc_list_iter_start (value->list, &fiter);
+    while ((fidx = mkc_list_iter_next (value->list, &fiter)) != MKC_ITER_FINISH) {
+      mkc_value_t   *fval;
 
-      cfval = mkc_list_get_by_idx (value->list, cfidx);
-
-      if (cfsz >= cfallocsz) {
-        cfallocsz += 10;
-        /* always make room for a trailing NULL */
-        cflags = realloc (cflags, sizeof (char *) * (cfallocsz + 1));
+      fval = mkc_list_get_by_idx (value->list, fidx);
+      mkc_pvar_value_get_str (process->pvar, fval, str, MKC_PATH_MAX);
+      if (! *str) {
+        continue;
       }
-      cflags [cfsz + 1] = NULL;
-      cflags [cfsz] = strdup (cfval->sval);
-      cfsz += 1;
+      if (mkc_process_chk_last_libloc (lastlibloc, MKC_PATH_MAX, str)) {
+        /* de-duplication check */
+        continue;
+      }
+
+      if (fsz >= fallocsz) {
+        fallocsz += 10;
+        /* always make room for a trailing NULL */
+        flags = realloc (flags, sizeof (char *) * (fallocsz + 1));
+      }
+      flags [fsz + 1] = NULL;
+      flags [fsz] = strdup (str);
+      fsz += 1;
     }
   }
 
   mkc_pvar_profile_select_idx (process->pvar, opidx);
   mkc_list_free (tlist);
+  free (lastlibloc);
+  free (str);
 
-  return cflags;
+  return flags;
 }
 
 // ### make this generic, put into util...
-void
+static void
 mkc_process_free_flags (char **flags)
 {
   char      *p;
@@ -3392,4 +3420,30 @@ mkc_process_free_flags (char **flags)
     p = flags [c];
   }
   free (flags);
+}
+
+static bool
+mkc_process_chk_last_libloc (char *lastlibloc, size_t sz, const char *str)
+{
+  if (! mkc_process_is_libloc (str)) {
+    return false;
+  }
+
+  if (strcmp (lastlibloc, str) == 0) {
+    return true;
+  }
+
+  stpecpy (lastlibloc, lastlibloc + sz, str);
+  return false;
+}
+
+static bool
+mkc_process_is_libloc (const char *str)
+{
+  if (strncmp (str, "-L", 2) == 0 ||
+      strncmp (str, "-Wl,-L", 6) == 0) {
+    return true;
+  }
+
+  return false;
 }

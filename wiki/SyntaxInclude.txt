@@ -6,7 +6,7 @@
 Includes a _mkc_ configuration file and processes it.
 
     include <filepath>;
-    include <directory> <filepath>;
+    include <directory> <filepath>;     # not yet implemented
 
 For the first form, the __include__ statement first checks if
 _filepath_ is a direct match, then for _filepath_ in the _mkc_ _units_
