@@ -781,7 +781,7 @@ mkc_check_file_sub_copy (mkc_check_t *check,
   free (data);
 
   snprintf (tfn, sizeof (tfn), "%s%s", fname, sfx);
-  mkc_path_build (MKC_PATH_MKC_TMP, tbuff, sz, tfn, check->mkcerr);
+  mkc_path_build (MKC_PATH_MKCF_TMP, tbuff, sz, tfn, check->mkcerr);
 
   fh = mkc_fopen (tbuff, "wb");
   if (fh == NULL) {
@@ -1278,7 +1278,7 @@ mkc_compile_only (mkc_check_t *check, mkc_compiler_t compiler,
   if (! cpreprocess) {
     mkc_check_append_arg (check, "-c");
     mkc_check_append_arg (check, "-o");
-    mkc_path_build (MKC_PATH_MKC_TMP, outfile, MKC_PATH_MAX, "mkctest.o", check->mkcerr);
+    mkc_path_build (MKC_PATH_MKCF_TMP, outfile, MKC_PATH_MAX, "mkctest.o", check->mkcerr);
     mkc_check_append_arg (check, outfile);
   }
   mkc_check_append_arg (check, tbuff);
@@ -1388,9 +1388,9 @@ mkc_compile_link (mkc_check_t *check, mkc_compiler_t compiler,
   check->targc = 0;
   mkc_check_append_arg (check, compstr);
   mkc_check_append_arg (check, "-o");
-  mkc_path_build (MKC_PATH_MKC_TMP, outfile, MKC_PATH_MAX, "mkctest.exe", check->mkcerr);
+  mkc_path_build (MKC_PATH_MKCF_TMP, outfile, MKC_PATH_MAX, "mkctest.exe", check->mkcerr);
   mkc_check_append_arg (check, outfile);
-  mkc_path_build (MKC_PATH_MKC_TMP, objfile, MKC_PATH_MAX, "mkctest.o", check->mkcerr);
+  mkc_path_build (MKC_PATH_MKCF_TMP, objfile, MKC_PATH_MAX, "mkctest.o", check->mkcerr);
   mkc_check_append_arg (check, objfile);
 
   alt = check->attr->curralt;
@@ -1454,7 +1454,7 @@ mkc_compile_run (mkc_check_t *check, mkc_compiler_t compiler,
   }
 
   check->targc = 0;
-  mkc_path_build (MKC_PATH_MKC_TMP, exefile, MKC_PATH_MAX, "mkctest.exe", check->mkcerr);
+  mkc_path_build (MKC_PATH_MKCF_TMP, exefile, MKC_PATH_MAX, "mkctest.exe", check->mkcerr);
   mkc_check_append_arg (check, exefile);
   mkc_check_append_arg (check, NULL);
   if (mkc_error_chk_err (check->mkcerr)) {

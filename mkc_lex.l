@@ -148,6 +148,7 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 "check_include_dependencies"  { return T_STMT_CHK_INC_DEPS; }
 "check_include_guards"        { return T_STMT_CHK_INC_GUARDS; }
 "configure"   { return T_STMT_CONFIGURE; }
+"executable"  { return T_STMT_EXECUTABLE; }
 "load_cache"  { return T_STMT_LOADCACHE; }
 "mark"        { return T_STMT_MARK; }
 "include"     { return T_STMT_INCLUDE; }

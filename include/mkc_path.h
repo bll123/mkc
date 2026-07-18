@@ -20,8 +20,9 @@ typedef enum {
                                 /* $USERPROFILE/AppData/Roaming/mkc */
   MKC_PATH_EXEC_PATH,
   MKC_PATH_HOME,
-  MKC_PATH_MKC_FILES,           /* mkc_files */
-  MKC_PATH_MKC_TMP,             /* mkc_files/tmp */
+  MKC_PATH_MKCFILES,            /* mkc_files */
+  MKC_PATH_MKCF_OBJECTS,        /* mkc_files/objects */
+  MKC_PATH_MKCF_TMP,            /* mkc_files/tmp */
   MKC_PATH_MKC_INCLUDE,         /* .../share/mkc/include */
   MKC_PATH_MKC_TEMPLATES,       /* .../share/mkc/templates */
   MKC_PATH_MKC_UNITS,           /* .../share/mkc/units */

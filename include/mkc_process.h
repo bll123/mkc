@@ -43,6 +43,7 @@ int mkc_process_stmt_chk_inc_deps (mkc_process_t *process);
 int mkc_process_stmt_chk_inc_guards (mkc_process_t *process);
 void mkc_process_stmt_configure (mkc_process_t *process);
 int mkc_process_stmt_debug (mkc_process_t *process, mkc_value_t *value, mkc_value_t *subvalue);
+void mkc_process_stmt_executable (mkc_process_t *process, mkc_value_t *valnm);
 void mkc_process_stmt_function_call (mkc_process_t *process, mkc_value_t *valparams, mkc_value_t *valfuncargs);
 void mkc_process_stmt_function_call_finish (mkc_process_t *process);
 void mkc_process_stmt_loadcache (mkc_process_t *process, mkc_value_t *valvers, bool fromcache);
@@ -61,6 +62,7 @@ void mkc_process_attr_header (mkc_process_t *process, mkc_value_t *value);
 void mkc_process_attr_link_flags (mkc_process_t *process, mkc_value_t *value);
 void mkc_process_attr_path (mkc_process_t *process, mkc_value_t *path);
 void mkc_process_attr_replace (mkc_process_t *process, mkc_value_t *str, mkc_value_t *name);
+void mkc_process_attr_source (mkc_process_t *process, mkc_value_t *value);
 
 int32_t mkc_process_check (mkc_process_t *process, mkc_value_t *valtype, mkc_astnode_token_t asttype);
 int32_t mkc_process_check_flag (mkc_process_t *process, mkc_value_t *valflag, int addchk, mkc_astnode_token_t asttype);

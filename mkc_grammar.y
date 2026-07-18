@@ -129,6 +129,7 @@
 %token T_STMT_CHK_INC_DEPS    "check_include_dependencies"
 %token T_STMT_CHK_INC_GUARDS  "check_include_guards"
 %token T_STMT_CONFIGURE       "configure"
+%token T_STMT_EXECUTABLE      "executable"
 %token T_STMT_DEBUG           "mkcdebug"
 %token T_STMT_INCLUDE         "include"
 %token T_STMT_LOADCACHE       "load_cache"
@@ -212,7 +213,7 @@
 %type <astnode> stmt_function_call
 // statements
 %type <astnode> stmt_chk_inc_compile stmt_chk_inc_deps
-%type <astnode> stmt_chk_inc_guards stmt_config
+%type <astnode> stmt_chk_inc_guards stmt_config stmt_executable
 %type <astnode> stmt_mark stmt_print stmt_profile stmt_project stmt_set
 // other statements
 %type <astnode> directive stmt_loadcache
@@ -299,6 +300,10 @@ stmt[v]:
       $v = $a;
     }
   | stmt_config[a]
+    {
+      $v = $a;
+    }
+  | stmt_executable[a]
     {
       $v = $a;
     }
@@ -628,7 +633,7 @@ stmt_function[v]:
 stmt_chk_inc_compile[v]:
     T_STMT_CHK_INC_COMPILE stmtblock[a]
     {
-      $v = mkc_ast_mk_stmt_chk_include (ast, $a, MKC_T_STMT_CHK_INC_COMPILE,
+      $v = mkc_ast_mk_stmt_stmtblock (ast, $a, MKC_T_STMT_CHK_INC_COMPILE,
           yylloc.first_line, yylloc.first_column);
     }
   ;
@@ -636,7 +641,7 @@ stmt_chk_inc_compile[v]:
 stmt_chk_inc_deps[v]:
     T_STMT_CHK_INC_DEPS stmtblock[a]
     {
-      $v = mkc_ast_mk_stmt_chk_include (ast, $a, MKC_T_STMT_CHK_INC_DEPS,
+      $v = mkc_ast_mk_stmt_stmtblock (ast, $a, MKC_T_STMT_CHK_INC_DEPS,
           yylloc.first_line, yylloc.first_column);
     }
   ;
@@ -644,7 +649,7 @@ stmt_chk_inc_deps[v]:
 stmt_chk_inc_guards[v]:
     T_STMT_CHK_INC_GUARDS stmtblock[a]
     {
-      $v = mkc_ast_mk_stmt_chk_include (ast, $a, MKC_T_STMT_CHK_INC_GUARDS,
+      $v = mkc_ast_mk_stmt_stmtblock (ast, $a, MKC_T_STMT_CHK_INC_GUARDS,
           yylloc.first_line, yylloc.first_column);
     }
   ;
@@ -652,7 +657,15 @@ stmt_chk_inc_guards[v]:
 stmt_config[v]:
     T_STMT_CONFIGURE stmtblock[a]
     {
-      $v = mkc_ast_mk_configure (ast, $a,
+      $v = mkc_ast_mk_stmt_stmtblock (ast, $a, MKC_T_STMT_CONFIGURE,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+stmt_executable[v]:
+    T_STMT_EXECUTABLE pathname[a] stmtblock[b]
+    {
+      $v = mkc_ast_mk_stmt_executable (ast, $a, $b,
           yylloc.first_line, yylloc.first_column);
     }
   ;
@@ -708,7 +721,7 @@ stmt_profile[v]:
 stmt_project[v]:
     T_STMT_PROJECT stmtblock[a]
     {
-      $v = mkc_ast_mk_project (ast, $a,
+      $v = mkc_ast_mk_stmt_stmtblock (ast, $a, MKC_T_STMT_PROJECT,
           yylloc.first_line, yylloc.first_column);
     }
   ;
@@ -1012,7 +1025,8 @@ attr_replace[v]:
 attr_source[v]:
     T_ATTR_SOURCE pathlist[l] T_SEMICOLON
     {
-      $v = NULL;
+      $v = mkc_ast_mk_attr_source (ast, $l,
+          yylloc.first_line, yylloc.first_column);
     }
   ;
 

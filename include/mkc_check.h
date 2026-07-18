@@ -47,6 +47,7 @@ typedef struct mkc_attribute_t {
   char            * str [MKC_ATTR_MAX];
   mkc_list_t      * pathlist;
   mkc_list_t      * replacelist;
+  mkc_list_t      * sourcelist;
   mkc_compiler_t  currcompiler;
   int             define_zero;
   int             headertype;

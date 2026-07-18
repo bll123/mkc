@@ -18,13 +18,14 @@ typedef enum {
   MKC_CONTEXT_CHK_INC       = (1 << 3),
   MKC_CONTEXT_COMP_FLAG     = (1 << 4),
   MKC_CONTEXT_CONFIGURE     = (1 << 5),
-  MKC_CONTEXT_FUNCTION_CALL = (1 << 6),
-  MKC_CONTEXT_GENERAL       = (1 << 7),
-  MKC_CONTEXT_LOOP          = (1 << 8),
-  MKC_CONTEXT_PROFILE       = (1 << 9),
-  MKC_CONTEXT_PROJECT       = (1 << 10),
-  MKC_CONTEXT_SET           = (1 << 11),
-  MKC_CONTEXT_SUCCESS_FAIL  = (1 << 12),
+  MKC_CONTEXT_EXECUTABLE    = (1 << 6),
+  MKC_CONTEXT_FUNCTION_CALL = (1 << 7),
+  MKC_CONTEXT_GENERAL       = (1 << 8),
+  MKC_CONTEXT_LOOP          = (1 << 9),
+  MKC_CONTEXT_PROFILE       = (1 << 10),
+  MKC_CONTEXT_PROJECT       = (1 << 11),
+  MKC_CONTEXT_SET           = (1 << 12),
+  MKC_CONTEXT_SUCCESS_FAIL  = (1 << 13),
 } mkc_ctxt_val_t;
 
 typedef struct mkc_context_t mkc_context_t;

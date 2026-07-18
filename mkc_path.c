@@ -32,8 +32,8 @@ const char * const pathdesc [MKC_PATH_BUILD_MAX] = {
   [MKC_PATH_EXEC_PATH] = "exec",
   [MKC_PATH_HOME] = "home",
   [MKC_PATH_MKC_TEMPLATES] = "mkc_templates",
-  [MKC_PATH_MKC_FILES] = "mkc_files",
-  [MKC_PATH_MKC_TMP] = "mkc_tmp",
+  [MKC_PATH_MKCFILES] = "mkc_files",
+  [MKC_PATH_MKCF_TMP] = "mkc_tmp",
   [MKC_PATH_MKC_INCLUDE] = "mkc_include",
   [MKC_PATH_MKC_UNITS] = "mkc_units",
   [MKC_PATH_MKC_USER_UNITS] = "mkc_user_units",
@@ -69,9 +69,21 @@ mkc_path_build (mkc_path_t pathtype, char *buff, size_t sz,
       p = stpecpy (buff, buff + sz, mkc_dirs [MKC_DIR_HOME]);
       break;
     }
-    case MKC_PATH_MKC_FILES: {
+    case MKC_PATH_MKCFILES: {
       /* the mkc_files/ directory; this can be changed at run-time */
       p = stpecpy (buff, buff + sz, mkc_dirs [MKC_DIR_MKC_FILES]);
+      break;
+    }
+    case MKC_PATH_MKCF_OBJECTS: {
+      /* the obj/ directory in mkc_files/ */
+      p = stpecpy (buff, buff + sz, mkc_dirs [MKC_DIR_MKC_FILES]);
+      p = stpecpy (p, buff + sz, "/obj");
+      break;
+    }
+    case MKC_PATH_MKCF_TMP: {
+      /* the tmp/ directory in mkc_files/ */
+      p = stpecpy (buff, buff + sz, mkc_dirs [MKC_DIR_MKC_FILES]);
+      p = stpecpy (p, buff + sz, "/tmp");
       break;
     }
     case MKC_PATH_MKC_INCLUDE: {
@@ -97,12 +109,6 @@ mkc_path_build (mkc_path_t pathtype, char *buff, size_t sz,
       /* this directory contains the user's .mkc unit files */
       p = mkc_path_config (buff, sz);
       p = stpecpy (p, buff + sz, "/units");
-      break;
-    }
-    case MKC_PATH_MKC_TMP: {
-      /* the tmp/ directory in mkc_files/ */
-      p = stpecpy (buff, buff + sz, mkc_dirs [MKC_DIR_MKC_FILES]);
-      p = stpecpy (p, buff + sz, "/tmp");
       break;
     }
     case MKC_PATH_ORIG_CWD: {

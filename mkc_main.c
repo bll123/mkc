@@ -153,7 +153,14 @@ main (int argc, char *argv [])
   }
 
   /* create the mkc_files temporary directory tree */
-  mkc_path_build (MKC_PATH_MKC_TMP, tbuff, sizeof (tbuff), NULL, mkcerr);
+  mkc_path_build (MKC_PATH_MKCF_TMP, tbuff, sizeof (tbuff), NULL, mkcerr);
+  rc = mkc_dirop_make (tbuff, mkcerr);
+  if (rc != 0) {
+    rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
+    datafree (mkcoptions.dfltprofile);
+    return rc;
+  }
+  mkc_path_build (MKC_PATH_MKCF_OBJECTS, tbuff, sizeof (tbuff), NULL, mkcerr);
   rc = mkc_dirop_make (tbuff, mkcerr);
   if (rc != 0) {
     rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
@@ -162,7 +169,7 @@ main (int argc, char *argv [])
   }
 
   log = mkc_log_init (mkcerr);
-  mkc_path_build (MKC_PATH_MKC_FILES, tbuff, sizeof (tbuff),
+  mkc_path_build (MKC_PATH_MKCFILES, tbuff, sizeof (tbuff),
       "log-mkc.txt", mkcerr);
 //  mkc_log_open (log, tbuff, MKC_LOG_NORMAL);
   mkc_log_open (log, tbuff, MKC_LOG_ALL);
@@ -200,7 +207,7 @@ main (int argc, char *argv [])
     mkc_message ("-- cache disabled by user\n");
   }
 
-  mkc_path_build (MKC_PATH_MKC_FILES, cachename, sizeof (cachename), "cache.mkc", mkcerr);
+  mkc_path_build (MKC_PATH_MKCFILES, cachename, sizeof (cachename), "cache.mkc", mkcerr);
 
   if (loadcache) {
     time_t    cachetm;

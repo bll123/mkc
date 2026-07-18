@@ -247,6 +247,7 @@ mkc_process_init (mkc_profile_t *profiles, mkc_log_t *log,
   mkc_process_attr_alternate (process);
   process->attr.pathlist = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, mkcerr);
   process->attr.replacelist = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, mkcerr);
+  process->attr.sourcelist = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, mkcerr);
   for (int i = 0; i < MKC_ATTR_MAX; ++i) {
     process->attr.str [i] = NULL;
   }
@@ -1183,6 +1184,12 @@ mkc_process_stmt_debug (mkc_process_t *process,
 }
 
 void
+mkc_process_stmt_executable (mkc_process_t *process, mkc_value_t *valnm)
+{
+  return;
+}
+
+void
 mkc_process_stmt_function_call (mkc_process_t *process,
     mkc_value_t *valparams, mkc_value_t *valfuncargs)
 {
@@ -1531,7 +1538,7 @@ mkc_process_attribute (mkc_process_t *process, mkc_value_t *valname,
     }
     case MKC_T_ATTR_NAME: {
       ctxt = MKC_CONTEXT_CHECK | MKC_CONTEXT_COMP_FLAG |
-          MKC_CONTEXT_PROJECT | MKC_CONTEXT_ALTERNATE;
+          MKC_CONTEXT_PROJECT | MKC_CONTEXT_ALTERNATE | MKC_CONTEXT_EXECUTABLE;
       break;
     }
     case MKC_T_ATTR_NEGATE: {
@@ -1625,7 +1632,7 @@ mkc_process_attr_compiler (mkc_process_t *process, mkc_value_t *name)
   }
 
   /* the compiler attribute is only allowed in */
-  /* project and profile statements */
+  /* project, profile and check-include statements */
   if (! mkc_context_check (process->context,
       MKC_CONTEXT_PROJECT | MKC_CONTEXT_PROFILE | MKC_CONTEXT_CHK_INC)) {
     mkc_error_set (process->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
@@ -1670,7 +1677,8 @@ mkc_process_attr_comp_flags (mkc_process_t *process, mkc_value_t *value)
   }
 
   if (! mkc_context_check (process->context,
-      MKC_CONTEXT_CHECK | MKC_CONTEXT_ALTERNATE | MKC_CONTEXT_CHK_INC)) {
+      MKC_CONTEXT_CHECK | MKC_CONTEXT_ALTERNATE | MKC_CONTEXT_CHK_INC |
+      MKC_CONTEXT_EXECUTABLE)) {
     mkc_error_set (process->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
     return;
   }
@@ -1724,7 +1732,7 @@ mkc_process_attr_link_flags (mkc_process_t *process, mkc_value_t *value)
   }
 
   if (! mkc_context_check (process->context,
-      MKC_CONTEXT_CHECK | MKC_CONTEXT_ALTERNATE)) {
+      MKC_CONTEXT_CHECK | MKC_CONTEXT_ALTERNATE | MKC_CONTEXT_EXECUTABLE)) {
     mkc_error_set (process->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
     return;
   }
@@ -1769,6 +1777,40 @@ mkc_process_attr_replace (mkc_process_t *process,
 
   mkc_list_set (process->attr.replacelist, str, sizeof (mkc_value_t), &loc);
   mkc_list_set (process->attr.replacelist, name, sizeof (mkc_value_t), &loc);
+  return;
+}
+
+void
+mkc_process_attr_source (mkc_process_t *process, mkc_value_t *value)
+{
+  mkc_listidx_t   iteridx;
+  mkc_listidx_t   lidx;
+  mkc_list_t      * srclist;
+
+  if (process == NULL) {
+    return;
+  }
+
+  if (! mkc_context_check (process->context, MKC_CONTEXT_EXECUTABLE)) {
+    mkc_error_set (process->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
+    return;
+  }
+
+  srclist = process->attr.sourcelist;
+
+  mkc_list_iter_start (value->list, &iteridx);
+  while ((lidx = mkc_list_iter_next (value->list, &iteridx)) != MKC_ITER_FINISH) {
+    mkc_value_t     *lvalue;
+    mkc_listidx_t   loc = MKC_LIST_NOTFOUND;
+
+    if (mkc_error_chk_err (process->mkcerr)) {
+      break;
+    }
+
+    lvalue = mkc_list_get_by_idx (value->list, lidx);
+    mkc_list_set (srclist, lvalue, sizeof (mkc_value_t), &loc);
+  }
+
   return;
 }
 
@@ -2191,7 +2233,7 @@ mkc_process_save_cache (mkc_process_t *process)
     return;
   }
 
-  mkc_path_build (MKC_PATH_MKC_FILES, cachename, MKC_PATH_MAX,
+  mkc_path_build (MKC_PATH_MKCFILES, cachename, MKC_PATH_MAX,
       "cache.mkc", process->mkcerr);
   fh = mkc_fopen (cachename, "w");
   if (fh == NULL) {

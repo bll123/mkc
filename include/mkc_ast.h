@@ -42,14 +42,13 @@ MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_while (mkc_astmain_t *astmain, mkc_astn
 MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_exit (mkc_astmain_t *astmain, mkc_astnode_t *vala, int32_t lineno, int colno);
 void mkc_ast_process_include (mkc_astmain_t *astmain, mkc_astnode_t *path, mkc_astnode_t *fn, char *tbuff, size_t sz, int32_t lineno, int colno);
 
-MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_stmt_chk_include (mkc_astmain_t *astmain, mkc_astnode_t *stmtblock, mkc_astnode_token_t asttype, int32_t lineno, int colno);
-MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_configure (mkc_astmain_t *astmain, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
+MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_stmt_stmtblock (mkc_astmain_t *astmain, mkc_astnode_t *stmtblock, mkc_astnode_token_t asttype, int32_t lineno, int colno);
 MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_debug (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *valb, int32_t lineno, int colno);
+MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_stmt_executable (mkc_astmain_t *astmain, mkc_astnode_t *name, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
 MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_loadcache (mkc_astmain_t *astmain, mkc_astnode_t *vers, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
 MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_mark (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *valb, int32_t lineno, int colno);
 MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_print (mkc_astmain_t *astmain, mkc_astnode_t *vala, int32_t lineno, int colno);
 MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_profile (mkc_astmain_t *astmain, mkc_astnode_t *nm, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
-MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_project (mkc_astmain_t *astmain, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
 MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_set (mkc_astmain_t *astmain, mkc_astnode_t *nm, mkc_astnode_t *expr, mkc_astnode_t *stmtblock, bool tempflag, int32_t lineno, int colno);
 MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_set_value (mkc_astmain_t *astmain, mkc_astnode_t *nm, mkc_astnode_t *vala, int32_t lineno, int colno);
 
@@ -67,6 +66,7 @@ MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_attr_match (mkc_astmain_t *astmain, mkc
 MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_attr_header (mkc_astmain_t *astmain, mkc_astnode_t *hdrlist, int32_t lineno, int colno);
 MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_attr_linkflags (mkc_astmain_t *astmain, mkc_astnode_t *linkflaglist, int32_t lineno, int colno);
 MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_attr_replace (mkc_astmain_t *astmain, mkc_astnode_t *valstr, mkc_astnode_t *value, int32_t lineno, int colno);
+MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_attr_source (mkc_astmain_t *astmain, mkc_astnode_t *srclist, int32_t lineno, int colno);
 MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_attr_success_fail (mkc_astmain_t *astmain, mkc_astnode_t *stmtblock, mkc_astnode_token_t asttype, int32_t lineno, int colno);
 
 MKC_NODISCARD mkc_astmain_t * mkc_ast_init (mkc_log_t *log, mkc_option_t *mkcoptions, mkc_error_t *mkcerr);
