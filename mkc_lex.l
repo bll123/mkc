@@ -197,6 +197,11 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
     return T_VAL_INTEGER;
   }
 
+({DIGIT})+"ll" {
+    yylval->sval = strdup (yytext);
+    return T_VAL_TIMESTAMP;
+  }
+
 ({VAR_UGA}({VAR_UG}|{TXT_PLUS_HYPHEN})*) {
     yylval->sval = strdup (yytext);
     return T_ID_VAR_NAME;

@@ -97,6 +97,7 @@ char const * const typenames [MKC_T_MAX] = {
   [MKC_T_VAL_LIST] = "val_list",
   [MKC_T_VAL_QUOTED_STRING] = "val_quoted_string",
   [MKC_T_VAL_STATIC_STRING] = "val_static_string",
+  [MKC_T_VAL_TIMESTAMP] = "val_timestamp",
   [MKC_T_VAL_TRUE] = "val_true",
   [MKC_T_VALUE] = "value",
   [MKC_T_VARIABLE] = "variable",

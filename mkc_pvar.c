@@ -166,6 +166,21 @@ mkc_pvar_set_integer (mkc_pvar_t *pvar,
 }
 
 int
+mkc_pvar_set_timestamp (mkc_pvar_t *pvar,
+    const char *vname, time_t tmval, mkc_var_ctxt_t vctxt)
+{
+  int         rc = MKC_ERR_FAILURE;
+  mkc_value_t value;
+
+  mkc_value_init (&value);
+  value.tmval = tmval;
+  value.vtype = MKC_VT_TIMESTAMP;
+
+  rc = mkc_pvar_set (pvar, vname, &value, vctxt);
+  return rc;
+}
+
+int
 mkc_pvar_set_str (mkc_pvar_t *pvar,
     const char *vname, const char *str, mkc_var_ctxt_t vctxt)
 {
@@ -520,7 +535,8 @@ mkc_pvar_value_get_integer (mkc_pvar_t *pvar, mkc_value_t *value)
       mkc_error_set (pvar->mkcerr, MKC_ERR_UNKNOWN_VARIABLE, 0, NULL);
       break;
     }
-    case MKC_VT_RANGE: {
+    case MKC_VT_RANGE:
+    case MKC_VT_TIMESTAMP: {
       mkc_error_set (pvar->mkcerr, MKC_ERR_UNEXPECTED_VALUE_TYPE, 0, NULL);
       break;
     }
@@ -556,6 +572,69 @@ mkc_pvar_value_get_integer (mkc_pvar_t *pvar, mkc_value_t *value)
   return ival;
 }
 
+time_t
+mkc_pvar_value_get_timestamp (mkc_pvar_t *pvar, mkc_value_t *value)
+{
+  time_t    tmval = 0;
+
+  if (value == NULL) {
+    mkc_error_set (pvar->mkcerr, MKC_ERR_NULL_ARGUMENT, 0, NULL);
+    return 0;
+  }
+
+  switch (value->vtype) {
+    case MKC_VT_INVALID: {
+      mkc_error_set (pvar->mkcerr, MKC_ERR_UNEXPECTED_VALUE_TYPE, 0, NULL);
+      break;
+    }
+    case MKC_VT_RANGE: {
+      mkc_error_set (pvar->mkcerr, MKC_ERR_UNEXPECTED_VALUE_TYPE, 0, NULL);
+      break;
+    }
+    case MKC_VT_TIMESTAMP: {
+      tmval = value->tmval;
+      break;
+    }
+    case MKC_VT_INTEGER:
+    case MKC_VT_LIST: {
+      mkc_error_set (pvar->mkcerr, MKC_ERR_UNEXPECTED_VALUE_TYPE, 0, NULL);
+      tmval = 0;
+      break;
+    }
+    case MKC_VT_ENV_VARIABLE: {
+      char    tbuff [MKC_PATH_MAX];
+
+      mkc_pvar_get_env_str (pvar, value->sval, tbuff, sizeof (tbuff));
+      tmval = atoll (tbuff);
+      break;
+    }
+    case MKC_VT_VARIABLE: {
+      mkc_value_t   *tvalue;
+
+      tvalue = mkc_pvar_get_variable_value (pvar, value->sval);
+      if (tvalue == NULL) {
+        mkc_error_set (pvar->mkcerr, MKC_ERR_UNKNOWN_VARIABLE, 0, NULL);
+        return 0;
+      }
+      if (tvalue->vtype == MKC_VT_TIMESTAMP) {
+        tmval = tvalue->tmval;
+      } else {
+        mkc_error_set (pvar->mkcerr, MKC_ERR_UNEXPECTED_VALUE_TYPE, 0, NULL);
+      }
+      break;
+    }
+    case MKC_VT_STRING:
+    case MKC_VT_STATIC_STRING:
+    case MKC_VT_QUOTED_STRING: {
+      mkc_error_set (pvar->mkcerr, MKC_ERR_UNEXPECTED_VALUE_TYPE, 0, NULL);
+      break;
+    }
+  }
+
+  mkc_log (pvar->log, MKC_LOG_PROCESS, "  pv-get-int: %" PRId64 "\n", tmval);
+  return tmval;
+}
+
 void
 mkc_pvar_value_get_str (mkc_pvar_t *pvar,
     mkc_value_t *value, char *buff, size_t sz)
@@ -580,6 +659,10 @@ mkc_pvar_value_get_str (mkc_pvar_t *pvar,
       /* integers must be converted to strings, */
       /* so that substitutions can be done in a quoted string */
       snprintf (buff, sz, "%" PRId32, value->ival);
+      break;
+    }
+    case MKC_VT_TIMESTAMP: {
+      snprintf (buff, sz, "%" PRId64, (int64_t) value->tmval);
       break;
     }
     case MKC_VT_STRING: {
@@ -634,7 +717,8 @@ mkc_pvar_value_get_list_value (mkc_pvar_t *pvar, mkc_value_t *value)
     case MKC_VT_INTEGER:
     case MKC_VT_QUOTED_STRING:
     case MKC_VT_STATIC_STRING:
-    case MKC_VT_STRING: {
+    case MKC_VT_STRING:
+    case MKC_VT_TIMESTAMP: {
       mkc_error_set (pvar->mkcerr, MKC_ERR_UNEXPECTED_VALUE_TYPE, 0, NULL);
       break;
     }
@@ -680,7 +764,8 @@ mkc_pvar_value_get_value (mkc_pvar_t *pvar, mkc_value_t *value)
     case MKC_VT_INTEGER:
     case MKC_VT_RANGE:
     case MKC_VT_STATIC_STRING:
-    case MKC_VT_STRING: {
+    case MKC_VT_STRING:
+    case MKC_VT_TIMESTAMP: {
       break;
     }
     case MKC_VT_ENV_VARIABLE:

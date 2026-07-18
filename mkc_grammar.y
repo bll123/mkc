@@ -96,6 +96,7 @@
 
 %token T_VAL_FALSE            "false"
 %token <sval> T_VAL_INTEGER   "[0-9]+"
+%token <sval> T_VAL_TIMESTAMP "[0-9]+ll"
 %token T_VAL_TRUE             "true"
 %token T_VAL_BOOTSTRAP        "bootstrap"
 
@@ -1364,6 +1365,11 @@ integer[v]:
     T_VAL_INTEGER[a]
     {
       $v = mkc_ast_mk_value (ast, MKC_T_VAL_INTEGER, $a,
+          yylloc.first_line, yylloc.first_column);
+    }
+  | T_VAL_TIMESTAMP[a]
+    {
+      $v = mkc_ast_mk_value (ast, MKC_T_VAL_TIMESTAMP, $a,
           yylloc.first_line, yylloc.first_column);
     }
   | T_VAL_TRUE

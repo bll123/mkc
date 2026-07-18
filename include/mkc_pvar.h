@@ -34,6 +34,7 @@ void mkc_pvar_set_fromcache (mkc_pvar_t *pvar, bool flag);
 
 int mkc_pvar_set (mkc_pvar_t *pvar, const char *vname, mkc_value_t *value, mkc_var_ctxt_t vctxt);
 int mkc_pvar_set_integer (mkc_pvar_t *pvar, const char *vname, int32_t ival, mkc_var_ctxt_t vctxt);
+int mkc_pvar_set_timestamp (mkc_pvar_t *pvar, const char *vname, time_t tmval, mkc_var_ctxt_t vctxt);
 int mkc_pvar_set_str (mkc_pvar_t *pvar, const char *vname, const char *str, mkc_var_ctxt_t vctxt);
 int mkc_pvar_set_list (mkc_pvar_t *pvar, const char *vname, mkc_list_t *list, mkc_var_ctxt_t vctxt);
 int mkc_pvar_append_str_list (mkc_pvar_t *pvar, const char *vname, const char *data, mkc_var_ctxt_t vctxt);
@@ -58,6 +59,7 @@ mkc_value_t * mkc_pvar_value_get_value (mkc_pvar_t *pvar, mkc_value_t *value);
 void mkc_pvar_temp_value_free (void *tvalue);
 
 int32_t mkc_pvar_value_get_integer (mkc_pvar_t *pvar, mkc_value_t *value);
+time_t mkc_pvar_value_get_timestamp (mkc_pvar_t *pvar, mkc_value_t *value);
 void mkc_pvar_value_get_str (mkc_pvar_t *pvar, mkc_value_t *value, char *buff, size_t sz);
 mkc_value_t * mkc_pvar_value_get_list_value (mkc_pvar_t *pvar, mkc_value_t *value);
 bool mkc_pvar_is_defined (mkc_pvar_t *pvar, const char *vname);

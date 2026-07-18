@@ -37,6 +37,7 @@ static char const * const vtypenames [] = {
   [MKC_VT_LIST] = "list",
   [MKC_VT_RANGE] = "range",
   [MKC_VT_STATIC_STRING] = "static_string",
+  [MKC_VT_TIMESTAMP] = "timestamp",
   [MKC_VT_QUOTED_STRING] = "quoted_string",
   [MKC_VT_VARIABLE] = "variable",
   [MKC_VT_ENV_VARIABLE] = "env_variable",
@@ -61,11 +62,13 @@ static mkc_list_t * mkc_var_list_copy (mkc_varlist_t *varlist, mkc_list_t *list)
 static inline bool
 mkc_var_is_string_type (mkc_value_t *value)
 {
-  /* everything other than invalid, integers and lists is a string */
-  if (value->vtype != MKC_VT_INVALID &&
-      value->vtype != MKC_VT_RANGE &&
-      value->vtype != MKC_VT_INTEGER &&
-      value->vtype != MKC_VT_LIST) {
+  /* everything other than invalid, integers, */
+  /* timestamps and lists is a string */
+  if (value->vtype == MKC_VT_STRING ||
+      value->vtype == MKC_VT_STATIC_STRING ||
+      value->vtype == MKC_VT_QUOTED_STRING ||
+      value->vtype == MKC_VT_VARIABLE ||
+      value->vtype == MKC_VT_ENV_VARIABLE) {
     return true;
   }
 
@@ -175,8 +178,17 @@ mkc_var_set (mkc_varlist_t *varlist,
       }
       if (tvalue->vtype == MKC_VT_INTEGER && nvtype == MKC_VT_INTEGER) {
         if (tvalue->ival != value->ival) {
-          mkc_log (varlist->log, MKC_LOG_VAR, "invalidate cache: %s : %s %s\n",
+          mkc_log (varlist->log, MKC_LOG_VAR,
+              "invalidate cache: %s : %" PRId32 "%" PRId32 "\n",
               vname, tvalue->ival, value->ival);
+          rc = MKC_OK_CHANGE;
+        }
+      }
+      if (tvalue->vtype == MKC_VT_TIMESTAMP && nvtype == MKC_VT_TIMESTAMP) {
+        if (tvalue->tmval != value->tmval) {
+          mkc_log (varlist->log, MKC_LOG_VAR,
+              "invalidate cache: %s : %" PRId64 "%" PRId64 "\n",
+              vname, tvalue->tmval, value->tmval);
           rc = MKC_OK_CHANGE;
         }
       }
@@ -195,6 +207,9 @@ mkc_var_set (mkc_varlist_t *varlist,
   }
   if (nvtype == MKC_VT_INTEGER) {
     tvalue->ival = value->ival;
+  }
+  if (nvtype == MKC_VT_TIMESTAMP) {
+    tvalue->tmval = value->tmval;
   }
   if (nvtype == MKC_VT_LIST) {
     tvalue->list = mkc_var_list_copy (varlist, value->list);
@@ -424,6 +439,10 @@ mkc_value_to_str (mkc_value_t *value, char *buff, size_t sz)
     }
     case MKC_VT_INTEGER: {
       snprintf (buff, sz, "%" PRId32, value->ival);
+      break;
+    }
+    case MKC_VT_TIMESTAMP: {
+      snprintf (buff, sz, "%" PRId64 "ll", value->tmval);
       break;
     }
     case MKC_VT_LIST: {

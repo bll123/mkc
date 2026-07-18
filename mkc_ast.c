@@ -416,6 +416,12 @@ mkc_ast_mk_value (mkc_astmain_t *astmain,
       free (str);
       break;
     }
+    case MKC_T_VAL_TIMESTAMP: {
+      value->tmval = atoll (str);
+      value->vtype = MKC_VT_TIMESTAMP;
+      free (str);
+      break;
+    }
     case MKC_T_VAL_TRUE: {
       value->ival = true;
       value->vtype = MKC_VT_INTEGER;

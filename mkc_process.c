@@ -163,9 +163,9 @@ static char const * const MKC_C_PROJECT_NAME = "MKC_PROJECT_NAME";
 static char const * const MKC_C_PROJECT_VERS = "MKC_PROJECT_VERSION";
 static char const * const MKC_C_PROJECT_LIB_VERS = "MKC_PROJECT_LIBRARY_VERSION";
 static char const * const MKC_C_PATH = "MKC_PATH";
-static char const * const MKC_C_CHK_INC_COMPILE = "mkc_chk_inc_compile";
-static char const * const MKC_C_CHK_INC_DEPS = "mkc_chk_inc_deps";
-static char const * const MKC_C_CHK_INC_GUARDS = "mkc_chk_inc_guards";
+static char const * const MKC_C_CHK_INC_COMPILE_TS = "MKC_CHK_INC_COMPILE_TS";
+static char const * const MKC_C_CHK_INC_DEPS_TS = "MKC_CHK_INC_DEPS_TS";
+static char const * const MKC_C_CHK_INC_GUARDS_TS = "MKC_CHK_INC_GUARDS_TS";
 static char ** mkc_process_get_flags (mkc_process_t *process, const char *flagname);
 static bool mkc_process_is_libloc (const char *str);
 
@@ -822,13 +822,11 @@ mkc_process_stmt_chk_inc_compile (mkc_process_t *process)
   cflags = mkc_process_get_flags (process, MKC_C_CFLAGS);
 
   ts = 0;
-  if (mkc_pvar_is_defined (process->pvar, MKC_C_CHK_INC_COMPILE)) {
+  if (mkc_pvar_is_defined (process->pvar, MKC_C_CHK_INC_COMPILE_TS)) {
     mkc_value_t   *value;
-    char          str [40];
 
-    value = mkc_pvar_get_by_profile (process->pvar, MKC_C_CHK_INC_COMPILE);
-    mkc_pvar_value_get_str (process->pvar, value, str, sizeof (str));
-    ts = atoll (str);
+    value = mkc_pvar_get_by_profile (process->pvar, MKC_C_CHK_INC_COMPILE_TS);
+    ts = mkc_pvar_value_get_timestamp (process->pvar, value);
   }
   hlist = mkc_process_get_include_list (process, rx, &ts);
 
@@ -853,8 +851,7 @@ mkc_process_stmt_chk_inc_compile (mkc_process_t *process)
     mkc_log (process->log, MKC_LOG_CHECK, "-- cached: check_include_compile\n");
   } else {
     ts = mstime ();
-    snprintf (tbuff, MKC_PATH_MAX, "%" PRId64, ts);
-    mkc_pvar_set_str (process->pvar, MKC_C_CHK_INC_COMPILE, tbuff, MKC_VCTXT_MKC);
+    mkc_pvar_set_timestamp (process->pvar, MKC_C_CHK_INC_COMPILE_TS, ts, MKC_VCTXT_MKC);
 
     mkc_message ("-- check_include_compile - %s (%d)\n",
         mkc_success_msg (rc), count);
@@ -911,14 +908,12 @@ mkc_process_stmt_chk_inc_deps (mkc_process_t *process)
   hlist = mkc_process_get_include_list (process, rx, &ts);
   /* ts now holds the timestamp of the latest modification time in ms */
 
-  if (mkc_pvar_is_defined (process->pvar, MKC_C_CHK_INC_DEPS)) {
+  if (mkc_pvar_is_defined (process->pvar, MKC_C_CHK_INC_DEPS_TS)) {
     mkc_value_t   *value;
-    char          str [40];
     time_t        cachedts;
 
-    value = mkc_pvar_get_by_profile (process->pvar, MKC_C_CHK_INC_DEPS);
-    mkc_pvar_value_get_str (process->pvar, value, str, sizeof (str));
-    cachedts = atoll (str);
+    value = mkc_pvar_get_by_profile (process->pvar, MKC_C_CHK_INC_DEPS_TS);
+    cachedts = mkc_pvar_value_get_timestamp (process->pvar, value);
 
     if (cachedts > ts) {
       mkc_message ("-- cached: check_include_dependencies\n");
@@ -970,8 +965,7 @@ mkc_process_stmt_chk_inc_deps (mkc_process_t *process)
   }
 
   ts = mstime ();
-  snprintf (tbuff, MKC_PATH_MAX, "%" PRId64, ts);
-  mkc_pvar_set_str (process->pvar, MKC_C_CHK_INC_DEPS, tbuff, MKC_VCTXT_MKC);
+  mkc_pvar_set_timestamp (process->pvar, MKC_C_CHK_INC_DEPS_TS, ts, MKC_VCTXT_MKC);
 
   mkc_message ("-- check_include_dependencies - %s\n",
       mkc_success_msg (rc));
@@ -1045,14 +1039,12 @@ mkc_process_stmt_chk_inc_guards (mkc_process_t *process)
 
   hlist = mkc_process_get_include_list (process, rx, &ts);
 
-  if (mkc_pvar_is_defined (process->pvar, MKC_C_CHK_INC_GUARDS)) {
+  if (mkc_pvar_is_defined (process->pvar, MKC_C_CHK_INC_GUARDS_TS)) {
     mkc_value_t   *value;
-    char          str [40];
     time_t        cachedts;
 
-    value = mkc_pvar_get_by_profile (process->pvar, MKC_C_CHK_INC_GUARDS);
-    mkc_pvar_value_get_str (process->pvar, value, str, sizeof (str));
-    cachedts = atoll (str);
+    value = mkc_pvar_get_by_profile (process->pvar, MKC_C_CHK_INC_GUARDS_TS);
+    cachedts = mkc_pvar_value_get_timestamp (process->pvar, value);
 
     if (cachedts > ts) {
       mkc_message ("-- cached: check_include_guards\n");
@@ -1111,8 +1103,7 @@ mkc_process_stmt_chk_inc_guards (mkc_process_t *process)
   }
 
   ts = mstime ();
-  snprintf (tbuff, MKC_PATH_MAX, "%" PRId64, ts);
-  mkc_pvar_set_str (process->pvar, MKC_C_CHK_INC_GUARDS, tbuff, MKC_VCTXT_MKC);
+  mkc_pvar_set_timestamp (process->pvar, MKC_C_CHK_INC_GUARDS_TS, ts, MKC_VCTXT_MKC);
 
   mkc_message ("-- check_include_guards - %s (%d)\n",
       mkc_success_msg (rc), count);
@@ -2268,6 +2259,7 @@ mkc_process_save_cache (mkc_process_t *process)
       value = mkc_pvar_get_by_idx (pvar, vidx);
       mkc_value_to_str (value, tbuff, MKC_SMALL_BUFF_SZ);
       if (value->vtype == MKC_VT_INTEGER ||
+          value->vtype == MKC_VT_TIMESTAMP ||
           value->vtype == MKC_VT_LIST) {
         fprintf (fh, "  %sset %s %s ", indent, nm, tbuff);
       } else {
@@ -2743,6 +2735,13 @@ mkc_process_configure_auto (mkc_process_t *process, int defzero)
         ival = value->ival;
         if (defzero == MKC_AUTO_DEFINE_ZERO || ival != 0) {
           fprintf (fh, "#define %s %" PRId32 "\n", nm, ival);
+        }
+      } else if (value->vtype == MKC_VT_TIMESTAMP) {
+        time_t    tmval;
+
+        tmval = value->tmval;
+        if (defzero == MKC_AUTO_DEFINE_ZERO || tmval != 0) {
+          fprintf (fh, "#define %s %" PRId64 "\n", nm, tmval);
         }
       } else {
         mkc_value_to_str (value, tbuff, MKC_PATH_MAX);

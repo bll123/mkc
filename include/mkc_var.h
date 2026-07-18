@@ -23,9 +23,10 @@ typedef enum {
   /* basic types */
   /* these are present in the variable list */
   MKC_VT_INTEGER,
-  MKC_VT_STRING,
   MKC_VT_LIST,
   MKC_VT_RANGE,
+  MKC_VT_STRING,
+  MKC_VT_TIMESTAMP,
   /* used by the parser and processor */
   MKC_VT_STATIC_STRING,
   MKC_VT_QUOTED_STRING,
@@ -68,6 +69,7 @@ typedef struct mkc_value_t {
     char        *sval;
     mkc_range_t range;
     int32_t     ival;
+    time_t      tmval;
   };
   mkc_var_type_t  vtype;
   mkc_var_ctxt_t  vctxt;
