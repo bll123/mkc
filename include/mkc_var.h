@@ -69,9 +69,9 @@ typedef struct mkc_value_t {
     mkc_range_t range;
     int32_t     ival;
   };
-  int32_t         id;
   mkc_var_type_t  vtype;
   mkc_var_ctxt_t  vctxt;
+  bool            tempallocated;
 } mkc_value_t;
 
 MKC_NODISCARD mkc_varlist_t *mkc_varlist_init (mkc_log_t *log, mkc_error_t *mkcerr);
@@ -91,6 +91,7 @@ const char * mkc_var_get_name (mkc_varlist_t *varlist, mkc_varidx_t idx);
 bool mkc_var_is_defined (mkc_varlist_t *varlist, const char *vname);
 bool mkc_var_is_list (mkc_varlist_t *varlist, const char *vname);
 
+void mkc_value_init (mkc_value_t *value);
 void mkc_value_free (void *value);
 const char *mkc_value_to_str (mkc_value_t *value, char *buff, size_t sz);
 void mkc_value_range_init (mkc_value_t *value, int32_t beg, int32_t end, int32_t incr);

@@ -13,33 +13,53 @@ set jjj '';
 
 if (${aaa} eq '444') {
   print '  ok aaa';
+} else {
+  print '  fail aaa';
 }
 if (${bbb} == 7) {
   print '  ok bbb';
+} else {
+  print '  fail bbb';
 }
 if (${ccc} eq 'ghi') {
   print '  ok ccc';
+} else {
+  print '  fail ccc';
 }
 if (${ddd} eq '222') {
   print '  ok ddd';
+} else {
+  print '  fail ddd';
 }
 if (${fff} eq "111") {
   print '  ok fff';
+} else {
+  print '  fail fff';
 }
 if (${ggg} == 555) {
   print '  ok ggg-n';
+} else {
+  print '  fail ggg-n';
 }
 if (${hhh} eq 'abc') {
   print '  ok hhh';
+} else {
+  print '  fail hhh';
 }
 if (${iii} eq '333') {
   print '  ok iii';
+} else {
+  print '  fail iii';
 }
 if (${jjj} eq '') {
   print '  ok jjj';
+} else {
+  print '  fail jjj';
 }
 
 set a ${aaa};
 if (${a} eq ${aaa}) {
   print '  ok variable';
+} else {
+  print '  fail variable';
 }

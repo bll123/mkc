@@ -30,6 +30,8 @@ typedef struct mkc_pvar_t {
 
 static mkc_value_t * mkc_pvar_get_value_by_profidx (mkc_pvar_t *pvar, const char *vname, mkc_profidx_t pidx);
 void mkc_pvar_sub_escapes (char *buff, size_t blen);
+static mkc_value_t * mkc_pvar_get_value (mkc_pvar_t *pvar, const char *vname);
+
 
 MKC_NODISCARD
 mkc_pvar_t *
@@ -155,6 +157,7 @@ mkc_pvar_set_integer (mkc_pvar_t *pvar,
   int         rc = MKC_ERR_FAILURE;
   mkc_value_t value;
 
+  mkc_value_init (&value);
   value.ival = ival;
   value.vtype = MKC_VT_INTEGER;
 
@@ -169,6 +172,7 @@ mkc_pvar_set_str (mkc_pvar_t *pvar,
   int         rc = MKC_ERR_FAILURE;
   mkc_value_t value;
 
+  mkc_value_init (&value);
   value.sval = (char *) str;
   value.vtype = MKC_VT_STRING;
 
@@ -183,6 +187,7 @@ mkc_pvar_set_list (mkc_pvar_t *pvar,
   int         rc = MKC_ERR_FAILURE;
   mkc_value_t value;
 
+  mkc_value_init (&value);
   value.list = list;
   value.vtype = MKC_VT_LIST;
 
@@ -191,6 +196,9 @@ mkc_pvar_set_list (mkc_pvar_t *pvar,
 }
 
 /* will create the value/list if it does not exist */
+/* directly append the string to a value containing a list */
+/* this is called using a known list value, so there are no */
+/* verification checks */
 int
 mkc_pvar_append_str_list (mkc_pvar_t *pvar, const char *vname,
     const char *data, mkc_var_ctxt_t vctxt)
@@ -211,6 +219,7 @@ mkc_pvar_append_str_list (mkc_pvar_t *pvar, const char *vname,
   list = listval->list;
 
   if (data != NULL) {
+    mkc_value_init (&tvalue);
     tvalue.vtype = MKC_VT_STRING;
     tvalue.sval = strdup (data);
     mkc_list_set (list, &tvalue, sizeof (mkc_value_t), &loc);
@@ -356,6 +365,7 @@ mkc_pvar_get_by_profile (mkc_pvar_t *pvar, const char *nm)
   return value;
 }
 
+/* get the value from a selected profile */
 mkc_value_t *
 mkc_pvar_get_by_profidx (mkc_pvar_t *pvar, const char *nm, mkc_profidx_t pidx)
 {
@@ -370,23 +380,6 @@ mkc_pvar_get_by_profidx (mkc_pvar_t *pvar, const char *nm, mkc_profidx_t pidx)
   }
 
   value = mkc_pvar_get_value_by_profidx (pvar, nm, pidx);
-  return value;
-}
-
-mkc_value_t *
-mkc_pvar_get_value (mkc_pvar_t *pvar, const char *vname)
-{
-  mkc_varlist_t   *varlist;
-  mkc_value_t     *value;
-  mkc_profidx_t   pidx;
-
-  if (pvar == NULL) {
-    return NULL;
-  }
-
-  pidx = mkc_profile_get_active (pvar->profiles);
-  varlist = mkc_profile_get_varlist (pvar->profiles, pidx);
-  value = mkc_var_get_value (varlist, vname);
   return value;
 }
 
@@ -667,6 +660,119 @@ mkc_pvar_value_get_list_value (mkc_pvar_t *pvar, mkc_value_t *value)
   return rvalue;
 }
 
+/* get the actual value of a value */
+/* this is only an issue for env-variables, quoted strings and lists */
+/* the caller is responsible for calling mkc_pvar_temp_value_free() */
+mkc_value_t *
+mkc_pvar_value_get_value (mkc_pvar_t *pvar, mkc_value_t *value)
+{
+  mkc_value_t   *tvalue;
+  mkc_value_t   *nvalue;
+
+  /* in many cases the value returned is simply the value passed in */
+  nvalue = value;
+
+  switch (value->vtype) {
+    case MKC_VT_INVALID: {
+      mkc_error_set (pvar->mkcerr, MKC_ERR_UNEXPECTED_VALUE_TYPE, 0, NULL);
+      break;
+    }
+    case MKC_VT_INTEGER:
+    case MKC_VT_RANGE:
+    case MKC_VT_STATIC_STRING:
+    case MKC_VT_STRING: {
+      break;
+    }
+    case MKC_VT_ENV_VARIABLE:
+    case MKC_VT_QUOTED_STRING: {
+      char    *buff;
+
+      buff = malloc (MKC_PATH_MAX);
+      if (buff == NULL) {
+        mkc_error_set (pvar->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+        return nvalue;
+      }
+
+      /* need to get the actual value */
+      mkc_pvar_value_get_str (pvar, value, buff, MKC_PATH_MAX);
+
+      tvalue = malloc (sizeof (mkc_value_t));
+      if (tvalue == NULL) {
+        mkc_error_set (pvar->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+        return nvalue;
+      }
+      mkc_value_init (tvalue);
+      tvalue->tempallocated = true;
+      tvalue->vtype = MKC_VT_STRING;
+      tvalue->vctxt = value->vctxt;
+      tvalue->sval = buff;
+      nvalue = tvalue;
+
+      break;
+    }
+    case MKC_VT_VARIABLE: {
+      nvalue = mkc_pvar_get_variable_value (pvar, value->sval);
+      break;
+    }
+    case MKC_VT_LIST: {
+      mkc_listidx_t     iteridx;
+      mkc_listidx_t     lidx;
+      mkc_list_t        *nlist;
+
+      /* each value in a list must be processed, as the value in the list */
+      /* may be an env-variable or a quoted string or a list */
+      /* the list may not need substitution, but just create a new list */
+      /* in all cases */
+
+      nlist = mkc_list_init (MKC_LIST_UNSORTED, mkc_pvar_temp_value_free, NULL, pvar->mkcerr);
+      mkc_list_iter_start (value->list, &iteridx);
+      while ((lidx = mkc_list_iter_next (value->list, &iteridx)) != MKC_ITER_FINISH) {
+        mkc_value_t   *lvalue;
+        mkc_value_t   *tmpvalue;
+        mkc_listidx_t loc = MKC_LIST_NOTFOUND;
+
+        if (mkc_error_chk_err (pvar->mkcerr)) {
+          break;
+        }
+
+        lvalue = mkc_list_get_by_idx (value->list, lidx);
+        tmpvalue = mkc_pvar_value_get_value (pvar, lvalue);
+        mkc_list_set (nlist, tmpvalue, sizeof (mkc_value_t), &loc);
+      }
+
+      tvalue = malloc (sizeof (mkc_value_t));
+      if (tvalue == NULL) {
+        mkc_error_set (pvar->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+        return nvalue;
+      }
+      mkc_value_init (tvalue);
+      tvalue->tempallocated = true;
+      tvalue->vtype = MKC_VT_LIST;
+      tvalue->vctxt = value->vctxt;
+      tvalue->list = nlist;
+      nvalue = tvalue;
+      break;
+    }
+  }
+
+  return nvalue;
+}
+
+void
+mkc_pvar_temp_value_free (void *tvalue)
+{
+  mkc_value_t   *value = tvalue;
+
+  if (value == NULL) {
+    return;
+  }
+
+  if (value->tempallocated) {
+    mkc_value_free (value);
+    free (value);
+  }
+}
+
 bool
 mkc_pvar_is_defined (mkc_pvar_t *pvar, const char *vname)
 {
@@ -928,3 +1034,22 @@ mkc_pvar_sub_escapes (char *buff, size_t blen)
   }
   *dp = '\0';
 }
+
+/* get the value from the active profile */
+static mkc_value_t *
+mkc_pvar_get_value (mkc_pvar_t *pvar, const char *vname)
+{
+  mkc_varlist_t   *varlist;
+  mkc_value_t     *value;
+  mkc_profidx_t   pidx;
+
+  if (pvar == NULL) {
+    return NULL;
+  }
+
+  pidx = mkc_profile_get_active (pvar->profiles);
+  varlist = mkc_profile_get_varlist (pvar->profiles, pidx);
+  value = mkc_var_get_value (varlist, vname);
+  return value;
+}
+

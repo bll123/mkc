@@ -54,8 +54,8 @@ void mkc_pvar_get_env_str (mkc_pvar_t *pvar, const char *envstr, char *buff, siz
 int32_t mkc_pvar_get_variable_integer (mkc_pvar_t *pvar, mkc_value_t *value);
 void mkc_pvar_get_variable_str (mkc_pvar_t *pvar, mkc_value_t *value, char *buff, size_t sz);
 mkc_value_t * mkc_pvar_get_variable_value (mkc_pvar_t *pvar, const char *str);
-
-mkc_value_t *mkc_pvar_get_value (mkc_pvar_t *pvar, const char *vname);
+mkc_value_t * mkc_pvar_value_get_value (mkc_pvar_t *pvar, mkc_value_t *value);
+void mkc_pvar_temp_value_free (void *tvalue);
 
 int32_t mkc_pvar_value_get_integer (mkc_pvar_t *pvar, mkc_value_t *value);
 void mkc_pvar_value_get_str (mkc_pvar_t *pvar, mkc_value_t *value, char *buff, size_t sz);

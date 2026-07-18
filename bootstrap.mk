@@ -402,12 +402,11 @@ mkc_path.o:  include/mkc_path.h include/mkc_string.h
 mkc_process.o: include/mkc_asttoken.h include/mkc_check.h
 mkc_process.o: include/mkc_compiler.h include/mkc_error.h
 mkc_process.o: include/mkc_nodiscard.h include/mkc_list.h include/mkc_log.h
-mkc_process.o:  include/mkc_profile.h include/mkc_option.h
-mkc_process.o: include/mkc_var.h include/mkc_pvar.h include/mkc_const.h
-mkc_process.o: include/mkc_context.h include/mkc_dirmatch.h
-mkc_process.o: include/mkc_regex.h include/mkc_def.h 
-mkc_process.o: include/mkc_env.h include/mkc_fileop.h include/mkc_path.h
-mkc_process.o: include/mkc_process.h include/mkc_string.h
+mkc_process.o: include/mkc_profile.h include/mkc_option.h include/mkc_var.h
+mkc_process.o: include/mkc_pvar.h include/mkc_const.h include/mkc_context.h
+mkc_process.o: include/mkc_dirmatch.h include/mkc_regex.h include/mkc_def.h
+mkc_process.o:  include/mkc_env.h include/mkc_fileop.h
+mkc_process.o: include/mkc_path.h include/mkc_process.h include/mkc_string.h
 mkc_process.o: include/mkc_tmutil.h include/mkc_toposort.h
 mkc_profile.o:  include/mkc_compiler.h
 mkc_profile.o: include/mkc_const.h include/mkc_error.h

@@ -374,6 +374,15 @@ mkc_var_is_list (mkc_varlist_t *varlist, const char *vname)
 }
 
 void
+mkc_value_init (mkc_value_t *value)
+{
+  value->vtype = MKC_VT_INVALID;
+  value->sval = NULL;
+  value->vctxt = MKC_VCTXT_TEMP;
+  value->tempallocated = false;
+}
+
+void
 mkc_value_free (void *tvalue)
 {
   mkc_value_t *value = tvalue;
@@ -555,8 +564,7 @@ mkc_var_create (mkc_varlist_t *varlist,
   }
 
   tvar.name = strdup (name);
-  tvar.value.sval = NULL;
-  tvar.value.vtype = MKC_VT_INVALID;
+  mkc_value_init (&tvar.value);
   tvar.fromcache = varlist->fromcache;
 
   var = mkc_list_set (varlist->list, &tvar, sizeof (mkc_var_t), loc);

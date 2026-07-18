@@ -202,6 +202,7 @@ mkc_chk_append_comp_flag (mkc_check_t *check, const char *flag)
     return;
   }
 
+  mkc_value_init (&tvalue);
   tvalue.sval = (char *) flag;
   tvalue.vtype = MKC_VT_STRING;
   alt = check->attr->curralt;
@@ -219,6 +220,7 @@ mkc_chk_append_link_flag (mkc_check_t *check, const char *flag)
     return;
   }
 
+  mkc_value_init (&tvalue);
   tvalue.sval = (char *) flag;
   tvalue.vtype = MKC_VT_STRING;
   alt = check->attr->curralt;

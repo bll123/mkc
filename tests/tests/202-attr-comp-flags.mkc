@@ -2,9 +2,12 @@
 
 # checks the compiler_flags attribute, uses check_size to test it.
 
+set v [ '-DAAA=1' '-DBBB=2' ];
+
 check_size 'chk_a' {
   header 202-attr-comp-flags.h;
   compiler_flags '-Itests/data';
+  compiler_flags ${v};
 }
 
 # this will fail, as the flags are not a single argument.
@@ -12,12 +15,14 @@ check_size 'chk_a' {
   name chk_b;
   header 202-attr-comp-flags.h;
   compiler_flags '-I tests/data';
+  compiler_flags ${v};
 }
 
 check_size 'chk_a' {
   name chk_c;
   header 202-attr-comp-flags.h;
   compiler_flags '-I' 'tests/data';
+  compiler_flags ${v};
 }
 
 if (${_size_chk_a} == 4) {

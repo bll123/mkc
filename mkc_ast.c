@@ -404,8 +404,7 @@ mkc_ast_mk_value (mkc_astmain_t *astmain,
 
   astvalue = &astnode->value;
   value = &astvalue->value;
-  /* the context is unknown at this time */
-  value->vctxt = MKC_VCTXT_TEMP;
+  mkc_value_init (value);
 
   mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
       "ast-mk-value: %s %s\n", typenames [asttype], str);
@@ -476,8 +475,9 @@ mkc_ast_mk_value_list (mkc_astmain_t *astmain,
     tlist = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, astmain->mkcerr);
     astvalue = &astnode->value;
     value = &astvalue->value;
-    value->list = tlist;
+    mkc_value_init (value);
     value->vtype = MKC_VT_LIST;
+    value->list = tlist;
     listnode = astnode;
   }
   astvalue = &listnode->value;
