@@ -25,7 +25,7 @@
 #include "mkc_const.h"
 #include "mkc_context.h"
 #include "mkc_def.h"
-#include "mkc_dirmatch.h"
+#include "dirmatch.h"
 #include "mkc_error.h"
 #include "mkc_log.h"
 #include "mkc_option.h"
@@ -61,44 +61,44 @@ typedef struct mkc_user_regex_t {
 
 /* foreach processing */
 typedef struct mkc_foreach_t {
-  mkc_list_t          *namelist;
+  mkc_list_t      *namelist;
   value_t         *listval;      // list or range
   value_t         tvalue;
-  mkc_profidx_t       plocalidx;
-  mkc_listidx_t       iteridx;
+  mkc_profidx_t   plocalidx;
+  mkc_listidx_t   iteridx;
 } mkc_foreach_t;
 
 typedef struct mkc_process_t {
-  mkc_profile_t         * profiles;
-  scope_t               * scope;
-  mkc_pvar_t            * pvar;
-  mkc_check_t           * check;
-  mkc_context_t         * context;
-  mkc_error_t           * mkcerr;
-  mkc_log_t             * log;
-  mkc_option_t          * mkcoptions;
-  char                  * projectname;
-  const char            * objext;
-  const char            * exeext;
-  mkc_regex_t           * rxshellvar;
-  mkc_regex_t           * rxincguard;
-  mkc_list_t            * user_rx_list;
-  mkc_attribute_t       attr;
+  mkc_profile_t     * profiles;
+  scope_t           * scope;
+  mkc_pvar_t        * pvar;
+  mkc_check_t       * check;
+  mkc_context_t     * context;
+  mkc_error_t       * mkcerr;
+  mkc_log_t         * log;
+  mkc_option_t      * mkcoptions;
+  char              * projectname;
+  const char        * objext;
+  const char        * exeext;
+  mkc_regex_t       * rxshellvar;
+  mkc_regex_t       * rxincguard;
+  mkc_list_t        * user_rx_list;
+  mkc_attribute_t   attr;
   /* internal */
-  mkc_compiler_t        dfltcompiler;
-  mkc_system_type_t     systype;
-  mkc_system_id_t       sysid;
-  mkc_compiler_id_t     compid;
-  mkc_lib_loc_t         libloc;
-  mkc_header_t          headertype;
-  mkc_profidx_t         pidx_curr_comp;
-  mkc_profidx_t         pidx_internal;
-  mkc_profidx_t         pidx_temp;
-  mkc_profidx_t         pidx_ts;
-  mkc_profidx_t         pidx_deps;
-  bool                  variadicmacro;
-  bool                  cacheloaded;
-  bool                  cacheinvalidated;
+  mkc_compiler_t    dfltcompiler;
+  mkc_system_type_t systype;
+  mkc_system_id_t   sysid;
+  mkc_compiler_id_t compid;
+  mkc_lib_loc_t     libloc;
+  mkc_header_t      headertype;
+  mkc_profidx_t     pidx_curr_comp;
+  mkc_profidx_t     pidx_internal;
+  mkc_profidx_t     pidx_temp;
+  mkc_profidx_t     pidx_ts;
+  mkc_profidx_t     pidx_deps;
+  bool              variadicmacro;
+  bool              cacheloaded;
+  bool              cacheinvalidated;
 } mkc_process_t;
 
 static const char *sysnames [MKC_SYS_MAX] = {
@@ -3331,7 +3331,7 @@ mkc_process_get_include_list (mkc_process_t *process, mkc_regex_t *rx,
     valpath = mkc_list_get_by_idx (process->attr.pathlist, pathidx);
     mkc_pvar_value_get_str (process->pvar, valpath, path, MKC_PATH_MAX);
 
-    tlist = mkc_dir_match (path, rx, process->mkcerr);
+    tlist = dir_match (path, rx, process->mkcerr);
 
     mkc_list_iter_start (tlist, &iteridx);
     while ((idx = mkc_list_iter_next (tlist, &iteridx)) != MKC_ITER_FINISH) {

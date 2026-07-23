@@ -19,7 +19,7 @@
 #include <unistd.h>
 
 #include "dirop.h"
-#include "mkc_dirmatch.h"
+#include "dirmatch.h"
 #include "mkc_error.h"
 #include "mkc_list.h"
 #include "mkc_nodiscard.h"
@@ -29,7 +29,7 @@
 
 MKC_NODISCARD
 mkc_list_t *
-mkc_dir_match (const char *dirname, mkc_regex_t *rx, mkc_error_t *mkcerr)
+dir_match (const char *dirname, mkc_regex_t *rx, mkc_error_t *mkcerr)
 {
   mkc_list_t    *flist;
   mkc_list_t    *nflist;

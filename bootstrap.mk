@@ -214,7 +214,7 @@ MKCOBJECTS = \
 	mkc_process.o \
 	toposort.o \
 	mkc_util.o \
-	mkc_dirmatch.o \
+	dirmatch.o \
 	mkc_context.o \
 	mkc_check.o \
 	asttoken.o \
@@ -252,7 +252,7 @@ INITIALOBJ = \
 	envutil.o \
 	fileop.o \
 	mkc_check.o \
-	mkc_dirmatch.o \
+	dirmatch.o \
 	mkc_main.o \
 	mkc_process.o \
 	mkc_regex_pcre.o \
@@ -297,7 +297,7 @@ mkc_check.o: mkc_check.c
 mkc_compiler.o: mkc_compiler.c
 mkc_const.o: mkc_const.c
 mkc_context.o: mkc_context.c
-mkc_dirmatch.o: mkc_dirmatch.c
+dirmatch.o: dirmatch.c
 mkc_grammar.o: mkc_grammar.c
 mkc_lex.o: mkc_lex.c mkc_grammar.h
 mkc_list.o: mkc_list.c
@@ -352,9 +352,9 @@ mkc_check.o: include/mkc_regex.h include/strutil.h
 mkc_compiler.o:  include/mkc_compiler.h
 mkc_context.o:  include/mkc_context.h
 mkc_context.o: include/mkc_error.h include/mkc_nodiscard.h
-mkc_dirmatch.o:  include/dirop.h include/mkc_error.h
-mkc_dirmatch.o:  include/mkc_nodiscard.h
-mkc_dirmatch.o: include/mkc_list.h include/mkc_dirmatch.h include/mkc_regex.h
+dirmatch.o:  include/dirop.h include/mkc_error.h
+dirmatch.o:  include/mkc_nodiscard.h
+dirmatch.o: include/mkc_list.h include/dirmatch.h include/mkc_regex.h
 mkc_error.o:   include/mkc_error.h
 mkc_error.o: include/mkc_nodiscard.h include/strutil.h
 mkc_grammar.o: mkc_grammar.h  
@@ -401,7 +401,7 @@ mkc_process.o: include/mkc_compiler.h include/mkc_list.h include/mkc_log.h
 mkc_process.o: include/mkc_profile.h include/mkc_option.h include/mkc_var.h
 mkc_process.o: include/value.h include/mkc_pvar.h include/scope.h
 mkc_process.o: include/mkc_const.h include/mkc_context.h include/mkc_def.h
-mkc_process.o:  include/mkc_dirmatch.h
+mkc_process.o:  include/dirmatch.h
 mkc_process.o: include/mkc_regex.h include/mkc_process.h include/strutil.h
 mkc_process.o: include/mkc_util.h include/pathutil.h include/tmutil.h
 mkc_process.o: include/toposort.h
