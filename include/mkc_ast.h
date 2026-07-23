@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "mkc_asttoken.h"
+#include "asttoken.h"
 #include "mkc_error.h"
 #include "mkc_log.h"
 #include "mkc_nodiscard.h"

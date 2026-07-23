@@ -23,7 +23,7 @@
 #  include "mkc_ast.h"
 #  include "mkc_def.h"
 #  include "mkc_error.h"
-#  include "mkc_fileop.h"
+#  include "fileop.h"
 #  include "mkc_list.h"
 #  include "mkc_parse.h"
 
@@ -663,7 +663,7 @@ stmt_config[v]:
   ;
 
 stmt_executable[v]:
-    T_STMT_EXECUTABLE pathname[a] stmtblock[b]
+    T_STMT_EXECUTABLE varname[a] stmtblock[b]
     {
       $v = mkc_ast_mk_stmt_executable (ast, $a, $b,
           yylloc.first_line, yylloc.first_column);
@@ -1462,7 +1462,7 @@ mkc_parse_process_include (MKCYYLTYPE* mkcyyllocp, mkc_parse_t *parse,
     FILE    *fh;
 
     mkc_parse_set_filename (parse, fn);
-    fh = mkc_fopen (fn, "r");
+    fh = fileop_open (fn, "r");
     if (fh != NULL) {
       mkc_parse_start (parse, fh);
     }

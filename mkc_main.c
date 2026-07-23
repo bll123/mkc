@@ -24,16 +24,16 @@
 #include "mkc_ast.h"
 #include "mkc_const.h"
 #include "mkc_def.h"
-#include "mkc_dirop.h"
+#include "dirop.h"
 #include "mkc_env.h"
 #include "mkc_error.h"
-#include "mkc_fileop.h"
+#include "fileop.h"
 #include "mkc_log.h"
 #include "mkc_parse.h"
-#include "mkc_path.h"
+#include "pathutil.h"
 #include "mkc_profile.h"
 #include "mkc_string.h"
-#include "mkc_tmutil.h"
+#include "tmutil.h"
 
 typedef struct {
   int       nargc;
@@ -139,7 +139,7 @@ main (int argc, char *argv [])
       }
       case 5: {
         if (optarg != NULL) {
-          mkc_path_set_dir (MKC_DIR_MKC_FILES, argcopy.utf8argv [optind - 1]);
+          path_set_dir (MKC_DIR_MKC_FILES, argcopy.utf8argv [optind - 1]);
         }
         break;
       }
@@ -153,15 +153,15 @@ main (int argc, char *argv [])
   }
 
   /* create the mkc_files temporary directory tree */
-  mkc_path_build (MKC_PATH_MKCF_TMP, tbuff, sizeof (tbuff), NULL, mkcerr);
-  rc = mkc_dirop_make (tbuff, mkcerr);
+  path_build (MKC_PATH_MKCF_TMP, tbuff, sizeof (tbuff), NULL, mkcerr);
+  rc = dirop_make (tbuff, mkcerr);
   if (rc != 0) {
     rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
     datafree (mkcoptions.dfltprofile);
     return rc;
   }
-  mkc_path_build (MKC_PATH_MKCF_OBJECTS, tbuff, sizeof (tbuff), NULL, mkcerr);
-  rc = mkc_dirop_make (tbuff, mkcerr);
+  path_build (MKC_PATH_MKCF_OBJECTS, tbuff, sizeof (tbuff), NULL, mkcerr);
+  rc = dirop_make (tbuff, mkcerr);
   if (rc != 0) {
     rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
     datafree (mkcoptions.dfltprofile);
@@ -169,7 +169,7 @@ main (int argc, char *argv [])
   }
 
   log = mkc_log_init (mkcerr);
-  mkc_path_build (MKC_PATH_MKCFILES, tbuff, sizeof (tbuff),
+  path_build (MKC_PATH_MKCFILES, tbuff, sizeof (tbuff),
       "log-mkc.txt", mkcerr);
 //  mkc_log_open (log, tbuff, MKC_LOG_NORMAL);
   mkc_log_open (log, tbuff, MKC_LOG_ALL);
@@ -183,7 +183,7 @@ main (int argc, char *argv [])
   }
 
   if (fnidx < argcopy.nargc) {
-    fh = mkc_fopen (argcopy.utf8argv [fnidx], "r");
+    fh = fileop_open (argcopy.utf8argv [fnidx], "r");
     if (fh == NULL) {
       mkc_error_set (mkcerr, MKC_ERR_FILE_NOT_FOUND, errno, argcopy.utf8argv [fnidx]);
       rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
@@ -207,14 +207,14 @@ main (int argc, char *argv [])
     mkc_message ("-- cache disabled by user\n");
   }
 
-  mkc_path_build (MKC_PATH_MKCFILES, cachename, sizeof (cachename), "cache.mkc", mkcerr);
+  path_build (MKC_PATH_MKCFILES, cachename, sizeof (cachename), "cache.mkc", mkcerr);
 
   if (loadcache) {
     time_t    cachetm;
     time_t    mkctm;
 
-    cachetm = mkc_file_modtime (cachename);
-    mkctm = mkc_file_modtime (argcopy.utf8argv [fnidx]);
+    cachetm = fileop_modtime (cachename);
+    mkctm = fileop_modtime (argcopy.utf8argv [fnidx]);
     if (mkctm >= cachetm) {
       loadcache = false;
       mkc_message ("-- cache out of date\n");
@@ -232,7 +232,7 @@ main (int argc, char *argv [])
   if (loadcache) {
     FILE    *cfh;
 
-    cfh = mkc_fopen (cachename, "r");
+    cfh = fileop_open (cachename, "r");
     if (cfh == NULL) {
       mkc_error_set (mkcerr, MKC_ERR_FILE_NOT_FOUND, errno, cachename);
       rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
@@ -357,11 +357,11 @@ mkc_main_set_home (void)
 
 #if MKC_SYS_WIN
   mkc_env_get ("USERPROFILE", tbuff, sizeof (tbuff));
-  mkc_normalize_path (tbuff, sizeof (tbuff));
+  fileop_normalize_path (tbuff, sizeof (tbuff));
 #else
   mkc_env_get ("HOME", tbuff, sizeof (tbuff));
 #endif
-  mkc_path_set_dir (MKC_DIR_HOME, tbuff);
+  path_set_dir (MKC_DIR_HOME, tbuff);
 }
 
 void
@@ -371,18 +371,18 @@ mkc_main_set_exec_path (argcopy_t *argcopy)
   char    *p;
 
   stpecpy (tbuff, tbuff + sizeof (tbuff), argcopy->utf8argv [0]);
-  mkc_normalize_path (tbuff, sizeof (tbuff));
+  fileop_normalize_path (tbuff, sizeof (tbuff));
   p = strrchr (tbuff, '/');
   if (p != NULL) {
     *p = '\0';
   }
-  mkc_path_set_dir (MKC_DIR_EXEC, tbuff);
+  path_set_dir (MKC_DIR_EXEC, tbuff);
 
   p = strrchr (tbuff, '/');
   if (p != NULL) {
     *p = '\0';
   }
-  mkc_path_set_dir (MKC_DIR_PREFIX, tbuff);
+  path_set_dir (MKC_DIR_PREFIX, tbuff);
 }
 
 static void

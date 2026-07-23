@@ -68,7 +68,7 @@ mkc_profile_init (mkc_log_t *log, mkc_error_t *mkcerr, mkc_option_t *mkcoptions)
   profiles->mkcoptions = mkcoptions;
 
   if (mkcoptions->compilertxt != NULL) {
-    profiles->dfltcompiler = mkc_compiler_get (mkcoptions->compilertxt);
+    profiles->dfltcompiler = compiler_get_id (mkcoptions->compilertxt);
     if (profiles->dfltcompiler == MKC_COMPILER_UNKNOWN) {
       mkc_error_set (mkcerr, MKC_ERR_INVALID_ARGUMENT, 0, NULL);
       mkc_profile_free (profiles);
@@ -87,8 +87,14 @@ mkc_profile_init (mkc_log_t *log, mkc_error_t *mkcerr, mkc_option_t *mkcoptions)
   mkc_profile_create (profiles, MKC_C_PROF_INTERNAL_NAME,
       MKC_COMPILER_GENERAL, MKC_PROF_TYPE_INTERNAL);
 
-  /* create local temporary variables */
+  /* temporary variables */
   pidx = mkc_profile_create (profiles, MKC_C_PROF_TEMP_NAME,
+        MKC_COMPILER_GENERAL, MKC_PROF_TYPE_TEMP);
+  /* timestamps */
+  pidx = mkc_profile_create (profiles, MKC_C_PROF_TIMESTAMP_NAME,
+        MKC_COMPILER_GENERAL, MKC_PROF_TYPE_TEMP);
+  /* dependencies */
+  pidx = mkc_profile_create (profiles, MKC_C_PROF_DEPENDENCIES_NAME,
         MKC_COMPILER_GENERAL, MKC_PROF_TYPE_TEMP);
 
   /* create current/compiler */
@@ -109,9 +115,9 @@ mkc_profile_init (mkc_log_t *log, mkc_error_t *mkcerr, mkc_option_t *mkcoptions)
   }
 
   mkc_message ("-- default profile: %s %s\n", mkcoptions->dfltprofile,
-      mkc_compiler_get_name (profiles->dfltcompiler));
+      compiler_get_name (profiles->dfltcompiler));
   mkc_log (log, MKC_LOG_PROFILE, "== default profile: %s %s\n",
-      mkcoptions->dfltprofile, mkc_compiler_get_name (profiles->dfltcompiler));
+      mkcoptions->dfltprofile, compiler_get_name (profiles->dfltcompiler));
 
   profiles->active_idx = pidx;
   profiles->current_idx = pidx;
@@ -226,7 +232,7 @@ mkc_profile_create (mkc_profile_t *profiles, const char *pname,
 
   mkc_log (profiles->log, MKC_LOG_PROFILE,
       "profile: create: %s %s (%" PRId32 ")\n", pname,
-      mkc_compiler_get_name (compiler), loc);
+      compiler_get_name (compiler), loc);
 
   return loc;
 }
@@ -408,7 +414,7 @@ mkc_profile_get_comp_name (mkc_profile_t *profiles, mkc_profidx_t pidx)
   mkc_compiler_t   compiler;
 
   compiler = mkc_profile_get_compiler (profiles, pidx);
-  return mkc_compiler_get_name (compiler);
+  return compiler_get_name (compiler);
 }
 
 mkc_prof_type_t
@@ -475,7 +481,7 @@ mkc_profile_pop (mkc_profile_t *profiles)
   if (pentry->type == MKC_PROF_TYPE_CURRENT) {
     mkc_log (profiles->log, MKC_LOG_PROFILE,
         "profile: current: %s %s (%" PRId32 ")\n", pentry->name,
-        mkc_compiler_get_name (pentry->compiler), profiles->active_idx);
+        compiler_get_name (pentry->compiler), profiles->active_idx);
     profiles->current_idx = profiles->active_idx;
   }
 
@@ -509,13 +515,13 @@ mkc_profile_set_active (mkc_profile_t *profiles, mkc_profidx_t pidx)
   if (pentry->type == MKC_PROF_TYPE_CURRENT) {
     mkc_log (profiles->log, MKC_LOG_PROFILE,
         "profile: current: %s %s (%" PRId32 ")\n", pentry->name,
-        mkc_compiler_get_name (pentry->compiler), pidx);
+        compiler_get_name (pentry->compiler), pidx);
     profiles->current_idx = pidx;
   }
 
   mkc_log (profiles->log, MKC_LOG_PROFILE,
       "profile: active: %s %s (%" PRId32 ")\n",
-      pentry->name, mkc_compiler_get_name (pentry->compiler), pidx);
+      pentry->name, compiler_get_name (pentry->compiler), pidx);
 }
 
 mkc_profidx_t
@@ -668,7 +674,7 @@ mkc_profile_curr_disp (mkc_profile_t *profiles, char *buff, size_t sz)
   p = stpecpy (buff, buff + sz, nm);
   if (compiler != MKC_COMPILER_GENERAL) {
     p = stpecpy (p, buff + sz, "/");
-    p = stpecpy (p, buff + sz, mkc_compiler_get_name (compiler));
+    p = stpecpy (p, buff + sz, compiler_get_name (compiler));
   }
   return buff;
 }

@@ -2,12 +2,13 @@
 
 ### Status
 
-##### 2026-7-11 pre-alpha 0.3
-
-check_include_dependencies, check_include_guards,
-check_include_compile are working.
+##### 2026-7-22 pre-alpha 0.5
 
 Currently, the pre-alpha code will only create a configuration file.
+
+Will be working on some rather difficult areas, so progress will be
+slow.  I also need to do some work on a different software package of
+mine, which will delay things a bit.
 
 ##### Testing
 

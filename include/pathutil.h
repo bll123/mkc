@@ -45,10 +45,10 @@ typedef enum {
 
 extern const char * const pathdesc [MKC_PATH_BUILD_MAX];
 
-void mkc_path_build (mkc_path_t pathtype, char *buff, size_t sz, char *filename, mkc_error_t *mkcerr);
-void mkc_path_set_dir (mkc_dir_t dir, const char *path);
-void mkc_getcwd (char *buff, size_t sz);
-void mkc_realpath (char *path, size_t sz);
+void path_build (mkc_path_t pathtype, char *buff, size_t sz, char *filename, mkc_error_t *mkcerr);
+void path_set_dir (mkc_dir_t dir, const char *path);
+void path_getcwd (char *buff, size_t sz);
+void path_realpath (char *path, size_t sz);
 
 #if defined (__cplusplus) || defined (c_plusplus)
 }

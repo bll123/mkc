@@ -18,7 +18,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#include "mkc_dirlist.h"
+#include "dirop.h"
 #include "mkc_dirmatch.h"
 #include "mkc_error.h"
 #include "mkc_list.h"
@@ -38,7 +38,7 @@ mkc_dir_match (const char *dirname, mkc_regex_t *rx, mkc_error_t *mkcerr)
 
   nflist = mkc_list_init (MKC_LIST_UNSORTED, mkc_list_ind_free, NULL, mkcerr);
 
-  flist = mkc_dir_basic_list (dirname, mkcerr);
+  flist = dirop_basic_list (dirname, mkcerr);
   mkc_list_iter_start (flist, &fiteridx);
   while ((fidx = mkc_list_iter_next (flist, &fiteridx)) != MKC_ITER_FINISH) {
     char          **temp;

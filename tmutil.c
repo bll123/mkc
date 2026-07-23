@@ -19,7 +19,7 @@
 # include <windows.h>
 #endif
 
-#include "mkc_tmutil.h"
+#include "tmutil.h"
 
 void
 mssleep (uint32_t ms)

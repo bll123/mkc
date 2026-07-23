@@ -12,7 +12,7 @@
 #include "mkc_error.h"
 #include "mkc_list.h"
 #include "mkc_string.h"
-#include "mkc_toposort.h"
+#include "toposort.h"
 
 enum {
   MKC_TOPO_DONE = -1,
@@ -32,26 +32,26 @@ typedef struct mkc_topocount_t {
   int           count;
 } mkc_topocount_t;
 
-typedef struct mkc_toposort_t {
+typedef struct toposort_t {
   mkc_list_t    *items;
   mkc_list_t    *pairs;
   mkc_list_t    *counts;
   mkc_list_t    *results;
   mkc_error_t   *mkcerr;
   mkc_listidx_t riteridx;
-} mkc_toposort_t;
+} toposort_t;
 
 static int mkc_topo_item_compare (void *ta, void *tb);
 static int mkc_topo_count_compare (void *ta, void *tb);
-static void mkc_topo_update_counts (mkc_toposort_t *topo, mkc_listidx_t idx);
+static void mkc_topo_update_counts (toposort_t *topo, mkc_listidx_t idx);
 static void mkc_topo_item_free (void *titem);
 
-mkc_toposort_t *
-mkc_toposort_init (mkc_error_t *mkcerr)
+toposort_t *
+toposort_init (mkc_error_t *mkcerr)
 {
-  mkc_toposort_t  *topo;
+  toposort_t  *topo;
 
-  topo = malloc (sizeof (mkc_toposort_t));
+  topo = malloc (sizeof (toposort_t));
   if (topo == NULL) {
     mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
   }
@@ -66,7 +66,7 @@ mkc_toposort_init (mkc_error_t *mkcerr)
 }
 
 void
-mkc_toposort_free (mkc_toposort_t *topo)
+toposort_free (toposort_t *topo)
 {
   if (topo == NULL) {
     return;
@@ -80,7 +80,7 @@ mkc_toposort_free (mkc_toposort_t *topo)
 }
 
 void
-mkc_toposort_add_item (mkc_toposort_t *topo, const char *item)
+toposort_add_item (toposort_t *topo, const char *item)
 {
   mkc_listidx_t   loc = MKC_LIST_NOTFOUND;
   mkc_topocount_t count;
@@ -102,7 +102,7 @@ mkc_toposort_add_item (mkc_toposort_t *topo, const char *item)
 }
 
 int
-mkc_toposort_add_pair (mkc_toposort_t *topo,
+toposort_add_pair (toposort_t *topo,
     const char *item_a, const char *item_b)
 {
   mkc_topopair_t    tpair;
@@ -133,7 +133,7 @@ mkc_toposort_add_pair (mkc_toposort_t *topo,
 
 /* uses Kahn's method */
 int
-mkc_toposort (mkc_toposort_t *topo)
+toposort (toposort_t *topo)
 {
   mkc_listidx_t   pairiteridx;
   mkc_listidx_t   pairidx;
@@ -197,13 +197,13 @@ mkc_toposort (mkc_toposort_t *topo)
 }
 
 void
-mkc_toposort_iter_start (mkc_toposort_t *topo)
+toposort_iter_start (toposort_t *topo)
 {
   mkc_list_iter_start (topo->results, &topo->riteridx);
 }
 
 const char *
-mkc_toposort_iter_next (mkc_toposort_t *topo)
+toposort_iter_next (toposort_t *topo)
 {
   mkc_listidx_t   ridx;
   mkc_listidx_t   *iptr;
@@ -224,7 +224,7 @@ mkc_toposort_iter_next (mkc_toposort_t *topo)
 
 // ### this needs to be improved
 void
-mkc_toposort_disp_cycle (mkc_toposort_t *topo, char *buff, size_t sz)
+toposort_disp_cycle (toposort_t *topo, char *buff, size_t sz)
 {
   mkc_listidx_t   citeridx;
   mkc_listidx_t   cidx;
@@ -275,7 +275,7 @@ mkc_topo_count_compare (void *ta, void *tb)
 }
 
 static void
-mkc_topo_update_counts (mkc_toposort_t *topo, mkc_listidx_t idx)
+mkc_topo_update_counts (toposort_t *topo, mkc_listidx_t idx)
 {
   mkc_listidx_t   pairiteridx;
   mkc_listidx_t   pairidx;

@@ -12,7 +12,7 @@
 #include <errno.h>
 
 #include "mkc_error.h"
-#include "mkc_fileop.h"
+#include "fileop.h"
 #include "mkc_log.h"
 #include "mkc_string.h"
 
@@ -61,7 +61,7 @@ mkc_log_open (mkc_log_t *log, const char *fname, int32_t logflag)
     return;
   }
 
-  log->fh = mkc_fopen (fname, "w");
+  log->fh = fileop_open (fname, "w");
   if (log->fh == NULL) {
     mkc_error_set (log->mkcerr, MKC_ERR_FILE_NOT_FOUND, errno, fname);
   }

@@ -25,8 +25,8 @@
 # include <sys/wait.h>
 #endif
 
-#include "mkc_os_process.h"
-#include "mkc_tmutil.h"
+#include "os_process.h"
+#include "tmutil.h"
 
 #define OSPROCESS_DEBUG 0
 
@@ -47,7 +47,7 @@ static int mkc_os_process_wait (int wstatus);
 
 /* handles redirection to a file */
 pid_t
-mkc_os_process_start (const char *targv[], int flags, char *outfname)
+os_process_start (const char *targv[], int flags, char *outfname)
 {
   pid_t       pid;
   pid_t       tpid;
@@ -123,7 +123,7 @@ mkc_os_process_start (const char *targv[], int flags, char *outfname)
 
 /* creates a pipe for re-direction and grabs the output */
 int
-mkc_os_process_pipe (const char *targv[], int flags, char *rbuff, size_t sz, size_t *retsz)
+os_process_pipe (const char *targv[], int flags, char *rbuff, size_t sz, size_t *retsz)
 {
   pid_t   pid;
   int     rc = 0;
@@ -237,7 +237,7 @@ mkc_os_process_pipe (const char *targv[], int flags, char *rbuff, size_t sz, siz
 /* valgrind complains about using an uninitialized variable, */
 /* but I cannot find any issue */
 char *
-mkc_os_process_run (const char *prog, ...)
+os_process_run (const char *prog, ...)
 {
   char        data [OSPROCESS_RUN_DATA_SZ] = { "" };
   char        *ret;
@@ -259,7 +259,7 @@ mkc_os_process_run (const char *prog, ...)
   targv [targc++] = NULL;
   va_end (valist);
 
-  mkc_os_process_pipe (targv, OS_PROC_WAIT | OS_PROC_DETACH,
+  os_process_pipe (targv, OS_PROC_WAIT | OS_PROC_DETACH,
       data, OSPROCESS_RUN_DATA_SZ, NULL);
   ret = strdup (data);
   return ret;

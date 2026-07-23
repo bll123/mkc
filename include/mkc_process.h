@@ -6,7 +6,7 @@
 
 #include <stdint.h>
 
-#include "mkc_asttoken.h"
+#include "asttoken.h"
 #include "mkc_context.h"
 #include "mkc_error.h"
 #include "mkc_list.h"

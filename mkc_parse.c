@@ -9,7 +9,7 @@
 
 #include "mkc_ast.h"
 #include "mkc_error.h"
-#include "mkc_fileop.h"
+#include "fileop.h"
 #include "mkc_lex.h"
 #include "mkc_log.h"
 #include "mkc_parse.h"

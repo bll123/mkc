@@ -23,15 +23,15 @@
 #include <windows.h>
 
 #include "mkc_def.h"
-#include "mkc_fileop.h"
-#include "mkc_os_process.h"
+#include "fileop.h"
+#include "os_process.h"
 #include "mkc_string.h"
-#include "mkc_tmutil.h"
+#include "tmutil.h"
 
 static void mkc_os_win_create_cmd (char *buff, size_t sz, const char *targv []);
 
 pid_t
-mkc_os_process_start (const char *targv[], int flags, char *outfname)
+os_process_start (const char *targv[], int flags, char *outfname)
 {
   pid_t               pid;
   STARTUPINFOW        si;
@@ -145,7 +145,7 @@ mkc_os_process_start (const char *targv[], int flags, char *outfname)
 
 /* creates a pipe for re-direction and grabs the output */
 int
-mkc_os_process_pipe (const char *targv[], int flags, char *rbuff, size_t sz, size_t *retsz)
+os_process_pipe (const char *targv[], int flags, char *rbuff, size_t sz, size_t *retsz)
 {
   STARTUPINFOW        si;
   PROCESS_INFORMATION pi;

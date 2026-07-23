@@ -2,7 +2,7 @@
  * Copyright 2026 Brad Lanam Pleasant Hill CA
  */
 
-#include "mkc_asttoken.h"
+#include "asttoken.h"
 
 char const * const typenames [MKC_T_MAX] = {
   [MKC_T_ATTR_ALTERNATE] = "alternate",

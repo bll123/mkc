@@ -19,11 +19,11 @@
 #include "mkc_def.h"
 #include "mkc_env.h"
 #include "mkc_error.h"
-#include "mkc_fileop.h"
+#include "fileop.h"
 #include "mkc_log.h"
 #include "mkc_pvar.h"
-#include "mkc_os_process.h"
-#include "mkc_path.h"
+#include "os_process.h"
+#include "pathutil.h"
 #include "mkc_regex.h"
 #include "mkc_string.h"
 
@@ -254,7 +254,7 @@ mkc_chk_system_type (mkc_check_t *check, mkc_compiler_t compiler)
     mkc_chk_reset (check);
     return MKC_SYS_UNKNOWN;
   }
-  mkc_path_build (MKC_PATH_MKC_INCLUDE, inc, MKC_PATH_MAX, NULL, check->mkcerr);
+  path_build (MKC_PATH_MKC_INCLUDE, inc, MKC_PATH_MAX, NULL, check->mkcerr);
   flags [fcount++] = "-I";
   flags [fcount++] = inc;
   flags [fcount++] = NULL;
@@ -279,7 +279,7 @@ mkc_chk_system_id (mkc_check_t *check, mkc_compiler_t compiler)
     return MKC_SYS_ID_NOTSET;
   }
   mkc_log (check->log, MKC_LOG_CHECK, "  == chk: system-id\n");
-  mkc_path_build (MKC_PATH_MKC_INCLUDE, inc, MKC_PATH_MAX, NULL, check->mkcerr);
+  path_build (MKC_PATH_MKC_INCLUDE, inc, MKC_PATH_MAX, NULL, check->mkcerr);
   flags [fcount++] = "-I";
   flags [fcount++] = inc;
   flags [fcount++] = NULL;
@@ -319,7 +319,7 @@ mkc_chk_library_location (mkc_check_t *check, mkc_compiler_t compiler)
     return 0;
   }
   mkc_log (check->log, MKC_LOG_CHECK, "  == chk: lib-location\n");
-  mkc_path_build (MKC_PATH_MKC_INCLUDE, inc, MKC_PATH_MAX, NULL, check->mkcerr);
+  path_build (MKC_PATH_MKC_INCLUDE, inc, MKC_PATH_MAX, NULL, check->mkcerr);
   flags [fcount++] = "-I";
   flags [fcount++] = inc;
   flags [fcount++] = NULL;
@@ -344,7 +344,7 @@ mkc_chk_compiler_id (mkc_check_t *check, mkc_compiler_t compiler)
     return 0;
   }
   mkc_log (check->log, MKC_LOG_CHECK, "  == chk: compiler-id\n");
-  mkc_path_build (MKC_PATH_MKC_INCLUDE, inc, MKC_PATH_MAX, NULL, check->mkcerr);
+  path_build (MKC_PATH_MKC_INCLUDE, inc, MKC_PATH_MAX, NULL, check->mkcerr);
   flags [fcount++] = "-I";
   flags [fcount++] = inc;
   flags [fcount++] = NULL;
@@ -734,6 +734,7 @@ mkc_check_get_include_deps (mkc_check_t *check,
     }
 
     tp = strdup (match [2]);
+//    mkc_pvar_append_str_list (check->pvar, dep, MKC_VCTXT_MKC);
     mkc_list_set (deplist, &tp, sizeof (char *), &loc);
 
     mkc_regex_get_free (match);
@@ -767,9 +768,9 @@ mkc_check_file_sub_copy (mkc_check_t *check,
   }
 
   snprintf (tfn, sizeof (tfn), "%s%s", fname, origsfx);
-  mkc_path_build (MKC_PATH_MKC_TEMPLATES, fbuff, MKC_PATH_MAX, tfn, check->mkcerr);
+  path_build (MKC_PATH_MKC_TEMPLATES, fbuff, MKC_PATH_MAX, tfn, check->mkcerr);
   mkc_log (check->log, MKC_LOG_CHECK, "filename: %s\n", fbuff);
-  data = mkc_read_file (fbuff, &fsz, check->mkcerr);
+  data = fileop_read_file (fbuff, &fsz, check->mkcerr);
   if (mkc_error_chk_err (check->mkcerr)) {
     free (fbuff);
     return;
@@ -781,9 +782,9 @@ mkc_check_file_sub_copy (mkc_check_t *check,
   free (data);
 
   snprintf (tfn, sizeof (tfn), "%s%s", fname, sfx);
-  mkc_path_build (MKC_PATH_MKCF_TMP, tbuff, sz, tfn, check->mkcerr);
+  path_build (MKC_PATH_MKCF_TMP, tbuff, sz, tfn, check->mkcerr);
 
-  fh = mkc_fopen (tbuff, "wb");
+  fh = fileop_open (tbuff, "wb");
   if (fh == NULL) {
     mkc_error_set (check->mkcerr, MKC_ERR_FILE_NOT_FOUND, errno, tbuff);
   } else {
@@ -866,7 +867,7 @@ mkc_check_get_compstr (mkc_check_t *check, mkc_compiler_t compiler,
   const char    *envstr;
   mkc_value_t   *value;
 
-  envstr = mkc_compiler_get_env_name (compiler);
+  envstr = compiler_get_env_name (compiler);
   value = mkc_pvar_get_by_profidx (check->pvar, envstr, check->pidx_internal);
   mkc_pvar_value_get_str (check->pvar, value, buff, sz);
   return buff;
@@ -949,7 +950,7 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
   }
   mkc_check_log_command (check, "pkg-exists");
 
-  rc = mkc_os_process_pipe (check->targv,
+  rc = os_process_pipe (check->targv,
       OS_PROC_WAIT | OS_PROC_NOWINDOW, rbuff, rsz, &retsz);
   mkc_log (check->log, MKC_LOG_CHECK, "pkg exists: %s\n", pkg);
   mkc_log (check->log, MKC_LOG_CHECK, "  rc: %d\n", rc);
@@ -992,7 +993,7 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
     tmp = alt->name;
   }
 
-  rc = mkc_os_process_pipe (check->targv,
+  rc = os_process_pipe (check->targv,
       OS_PROC_WAIT | OS_PROC_NOWINDOW, rbuff, rsz, &retsz);
   mkc_log (check->log, MKC_LOG_CHECK, "pkg cflags: %s", rbuff);
   mkc_log (check->log, MKC_LOG_CHECK, "  rc: %d\n", rc);
@@ -1041,7 +1042,7 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
 
   mkc_check_log_command (check, "pkg-libs");
 
-  rc = mkc_os_process_pipe (check->targv,
+  rc = os_process_pipe (check->targv,
       OS_PROC_WAIT | OS_PROC_NOWINDOW, rbuff, rsz, &retsz);
   mkc_log (check->log, MKC_LOG_CHECK, "pkg libs: %s\n", rbuff);
   mkc_log (check->log, MKC_LOG_CHECK, "  rc: %d\n", rc);
@@ -1254,7 +1255,7 @@ mkc_compile_only (mkc_check_t *check, mkc_compiler_t compiler,
   }
 
   mkc_check_get_compstr (check, compiler, compstr, MKC_PATH_MAX);
-  sfx = mkc_compiler_get_suffix (compiler);
+  sfx = compiler_get_suffix (compiler);
 // ### will need to be fixed, the original suffix may change
   mkc_check_file_sub_copy (check, tbuff, MKC_PATH_MAX, fname, ".c", sfx);
 
@@ -1278,7 +1279,7 @@ mkc_compile_only (mkc_check_t *check, mkc_compiler_t compiler,
   if (! cpreprocess) {
     mkc_check_append_arg (check, "-c");
     mkc_check_append_arg (check, "-o");
-    mkc_path_build (MKC_PATH_MKCF_TMP, outfile, MKC_PATH_MAX, "mkctest.o", check->mkcerr);
+    path_build (MKC_PATH_MKCF_TMP, outfile, MKC_PATH_MAX, "mkctest.o", check->mkcerr);
     mkc_check_append_arg (check, outfile);
   }
   mkc_check_append_arg (check, tbuff);
@@ -1296,7 +1297,7 @@ mkc_compile_only (mkc_check_t *check, mkc_compiler_t compiler,
 
   mkc_check_log_command (check, "comp-only");
 
-  rc = mkc_os_process_pipe (check->targv,
+  rc = os_process_pipe (check->targv,
       OS_PROC_WAIT | OS_PROC_NOWINDOW, rbuff, rsz, &retsz);
 
   if (retsz > 0) {
@@ -1388,9 +1389,9 @@ mkc_compile_link (mkc_check_t *check, mkc_compiler_t compiler,
   check->targc = 0;
   mkc_check_append_arg (check, compstr);
   mkc_check_append_arg (check, "-o");
-  mkc_path_build (MKC_PATH_MKCF_TMP, outfile, MKC_PATH_MAX, "mkctest.exe", check->mkcerr);
+  path_build (MKC_PATH_MKCF_TMP, outfile, MKC_PATH_MAX, "mkctest.exe", check->mkcerr);
   mkc_check_append_arg (check, outfile);
-  mkc_path_build (MKC_PATH_MKCF_TMP, objfile, MKC_PATH_MAX, "mkctest.o", check->mkcerr);
+  path_build (MKC_PATH_MKCF_TMP, objfile, MKC_PATH_MAX, "mkctest.o", check->mkcerr);
   mkc_check_append_arg (check, objfile);
 
   alt = check->attr->curralt;
@@ -1406,7 +1407,7 @@ mkc_compile_link (mkc_check_t *check, mkc_compiler_t compiler,
 
   mkc_check_log_command (check, "link");
 
-  rc = mkc_os_process_pipe (check->targv,
+  rc = os_process_pipe (check->targv,
       OS_PROC_WAIT | OS_PROC_NOWINDOW, rbuff, rsz, &retsz);
 
   mkc_log (check->log, MKC_LOG_CHECK, "  rc: %d\n", rc);
@@ -1454,7 +1455,7 @@ mkc_compile_run (mkc_check_t *check, mkc_compiler_t compiler,
   }
 
   check->targc = 0;
-  mkc_path_build (MKC_PATH_MKCF_TMP, exefile, MKC_PATH_MAX, "mkctest.exe", check->mkcerr);
+  path_build (MKC_PATH_MKCF_TMP, exefile, MKC_PATH_MAX, "mkctest.exe", check->mkcerr);
   mkc_check_append_arg (check, exefile);
   mkc_check_append_arg (check, NULL);
   if (mkc_error_chk_err (check->mkcerr)) {
@@ -1474,7 +1475,7 @@ mkc_compile_run (mkc_check_t *check, mkc_compiler_t compiler,
     rallocated = true;
   }
 
-  rc = mkc_os_process_pipe (check->targv,
+  rc = os_process_pipe (check->targv,
       OS_PROC_WAIT | OS_PROC_NOWINDOW, rbuff, rsz, &retsz);
 
   mkc_log (check->log, MKC_LOG_CHECK, "  run: rc: %d\n", rc);

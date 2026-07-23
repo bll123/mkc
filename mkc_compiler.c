@@ -42,7 +42,7 @@ static char const * const compenv [MKC_COMPILER_MAX] = {
 };
 
 const char *
-mkc_compiler_get_name (mkc_compiler_t comp)
+compiler_get_name (mkc_compiler_t comp)
 {
   if (comp < 0 || comp >= MKC_COMPILER_MAX) {
     return NULL;
@@ -52,7 +52,7 @@ mkc_compiler_get_name (mkc_compiler_t comp)
 }
 
 const char *
-mkc_compiler_get_suffix (mkc_compiler_t comp)
+compiler_get_suffix (mkc_compiler_t comp)
 {
   if (comp < 0 || comp >= MKC_COMPILER_MAX) {
     return NULL;
@@ -62,7 +62,7 @@ mkc_compiler_get_suffix (mkc_compiler_t comp)
 }
 
 const char *
-mkc_compiler_get_env_name (mkc_compiler_t comp)
+compiler_get_env_name (mkc_compiler_t comp)
 {
   if (comp < 0 || comp >= MKC_COMPILER_MAX) {
     return NULL;
@@ -72,7 +72,7 @@ mkc_compiler_get_env_name (mkc_compiler_t comp)
 }
 
 mkc_compiler_t
-mkc_compiler_get (const char *compiler)
+compiler_get_id (const char *compiler)
 {
   mkc_compiler_t    cid = MKC_COMPILER_GENERAL;
 
@@ -81,7 +81,7 @@ mkc_compiler_get (const char *compiler)
   }
 
   for (mkc_compiler_t i = 0; i < MKC_COMPILER_MAX; ++i) {
-    if (strcmp (compiler, mkc_compiler_get_name (i)) == 0) {
+    if (strcmp (compiler, compiler_get_name (i)) == 0) {
       cid = i;
       return cid;
     }

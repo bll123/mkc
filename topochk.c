@@ -10,13 +10,13 @@
 
 #include "mkc_def.h"
 #include "mkc_error.h"
-#include "mkc_toposort.h"
+#include "toposort.h"
 #include "mkc_string.h"
 
 int
 main (int argc, char *argv [])
 {
-  mkc_toposort_t  *topo;
+  toposort_t  *topo;
   mkc_error_t     *mkcerr;
   FILE            *fh;
   char            buff [MKC_VNAME_MAX];
@@ -31,12 +31,12 @@ main (int argc, char *argv [])
     exit (1);
   }
 
-  topo = mkc_toposort_init (mkcerr);
+  topo = toposort_init (mkcerr);
 
   while (fgets (buff, sizeof (buff), fh) != NULL) {
     mkc_strtrim (buff, 0);
 
-    mkc_toposort_add_item (topo, buff);
+    toposort_add_item (topo, buff);
   }
 
   fclose (fh);
@@ -58,7 +58,7 @@ main (int argc, char *argv [])
     *p = '\0';
     p += 1;
 
-    rc = mkc_toposort_add_pair (topo, buff, p);
+    rc = toposort_add_pair (topo, buff, p);
     if (rc != MKC_OK) {
       mkc_error_print (mkcerr);
       exit (1);
@@ -67,20 +67,20 @@ main (int argc, char *argv [])
 
   fclose (fh);
 
-  rc = mkc_toposort (topo);
+  rc = toposort (topo);
 
   fprintf (stderr, "-- sorted\n");
-  mkc_toposort_iter_start (topo);
-  while ((nm = mkc_toposort_iter_next (topo)) != NULL) {
+  toposort_iter_start (topo);
+  while ((nm = toposort_iter_next (topo)) != NULL) {
     fprintf (stderr, "  %s\n", nm);
   }
   if (rc == MKC_ERR_FAILURE) {
     fprintf (stderr, "-- cycle\n");
-    mkc_toposort_disp_cycle (topo, buff, sizeof (buff));
+    toposort_disp_cycle (topo, buff, sizeof (buff));
     fprintf (stderr, "  %s\n", buff);
   }
 
   mkc_error_free (mkcerr);
-  mkc_toposort_free (topo);
+  toposort_free (topo);
   return 0;
 }

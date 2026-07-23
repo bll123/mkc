@@ -14,8 +14,8 @@
 
 #include "mkc_def.h"
 #include "mkc_error.h"
-#include "mkc_fileop.h"
-#include "mkc_path.h"
+#include "fileop.h"
+#include "pathutil.h"
 #include "mkc_string.h"
 
 static char mkc_dirs [MKC_DIR_MAX][MKC_PATH_MAX] = {
@@ -48,7 +48,7 @@ static void mkc_path_init (mkc_error_t *mkcerr);
 static char * mkc_path_config (char *buff, size_t sz);
 
 void
-mkc_path_build (mkc_path_t pathtype, char *buff, size_t sz,
+path_build (mkc_path_t pathtype, char *buff, size_t sz,
     char *filename, mkc_error_t *mkcerr)
 {
   char        *p = NULL;
@@ -137,15 +137,15 @@ mkc_path_build (mkc_path_t pathtype, char *buff, size_t sz,
 }
 
 void
-mkc_path_set_dir (mkc_dir_t dir, const char *path)
+path_set_dir (mkc_dir_t dir, const char *path)
 {
   stpecpy (mkc_dirs [dir], mkc_dirs [dir] + MKC_PATH_MAX, path);
-  mkc_normalize_path (mkc_dirs [dir], MKC_PATH_MAX);
-  mkc_realpath (mkc_dirs [dir], MKC_PATH_MAX);
+  fileop_normalize_path (mkc_dirs [dir], MKC_PATH_MAX);
+  path_realpath (mkc_dirs [dir], MKC_PATH_MAX);
 }
 
 void
-mkc_getcwd (char *buff, size_t sz)
+path_getcwd (char *buff, size_t sz)
 {
 #if _function__wgetcwd
   wchar_t *wcwd;
@@ -162,7 +162,7 @@ mkc_getcwd (char *buff, size_t sz)
 }
 
 void
-mkc_realpath (char *path, size_t sz)
+path_realpath (char *path, size_t sz)
 {
 #if _function_realpath
   char      *tbuff;
@@ -186,7 +186,7 @@ mkc_realpath (char *path, size_t sz)
     return;
   }
 
-  mkc_display_path (path, sz);
+  fileop_display_path (path, sz);
   wfrom = mkc_towide (path);
   (void) ! GetFullPathNameW (wfrom, MKC_PATH_MAX, wto, NULL);
   free (wfrom);
@@ -219,9 +219,9 @@ mkc_path_init (mkc_error_t *mkcerr)
   }
 
   dir = MKC_DIR_ORIG_CWD;
-  mkc_getcwd (tbuff, MKC_PATH_MAX);
+  path_getcwd (tbuff, MKC_PATH_MAX);
   stpecpy (mkc_dirs [dir], mkc_dirs [dir] + MKC_PATH_MAX, tbuff);
-  mkc_normalize_path (mkc_dirs [dir], MKC_PATH_MAX);
+  fileop_normalize_path (mkc_dirs [dir], MKC_PATH_MAX);
 
   /* set up the path to the mkc_files/ directory */
   /* if in bootstrap, use local relative paths */
@@ -231,7 +231,7 @@ mkc_path_init (mkc_error_t *mkcerr)
   /* this is a special case for development purposes */
   p = stpecpy (tbuff, tbuff + MKC_PATH_MAX, mkc_dirs [MKC_DIR_EXEC]);
   p = stpecpy (p, tbuff + MKC_PATH_MAX, "/templates");
-  if (mkc_is_directory (tbuff)) {
+  if (fileop_is_directory (tbuff)) {
     islocal = true;
   }
 

@@ -19,7 +19,6 @@
 #include <limits.h>
 #include <wchar.h>
 #include <errno.h>
-#include <dirent.h>
 
 #if __has_include (<windows.h>)
 # define WIN32_LEAN_AND_MEAN 1
@@ -31,21 +30,13 @@
 
 #include "mkc_def.h"
 #include "mkc_error.h"
-#include "mkc_fileop.h"
+#include "fileop.h"
 #include "mkc_nodiscard.h"
 #include "mkc_string.h"
 
-typedef struct mkc_dirhandle_t {
-  DIR       *dh;
-  char      *dirname;
-#if _type_HANDLE
-  HANDLE    dhandle;
-#endif
-} mkc_dirhandle_t;
-
 MKC_NODISCARD
 FILE *
-mkc_fopen (const char *fname, const char *mode)
+fileop_open (const char *fname, const char *mode)
 {
   FILE          *fh = NULL;
 
@@ -71,7 +62,7 @@ mkc_fopen (const char *fname, const char *mode)
 }
 
 bool
-mkc_file_exists (const char *fname)
+fileop_exists (const char *fname)
 {
   int     rc = -1;
   bool    brc = false;
@@ -102,7 +93,7 @@ mkc_file_exists (const char *fname)
 }
 
 time_t
-mkc_file_modtime (const char *fname)
+fileop_modtime (const char *fname)
 {
   time_t      tm = 0;
 
@@ -136,7 +127,7 @@ mkc_file_modtime (const char *fname)
 }
 
 ssize_t
-mkc_file_size (const char *fname)
+fileop_size (const char *fname)
 {
   ssize_t       sz = -1;
 
@@ -170,7 +161,7 @@ mkc_file_size (const char *fname)
 }
 
 bool
-mkc_is_link (const char *fname)
+fileop_is_link (const char *fname)
 {
   int   rc = -1;
   bool  brc = false;
@@ -196,7 +187,7 @@ mkc_is_link (const char *fname)
 
 MKC_NODISCARD
 char *
-mkc_read_file (const char *fn, size_t *sz, mkc_error_t *mkcerr)
+fileop_read_file (const char *fn, size_t *sz, mkc_error_t *mkcerr)
 {
   char    *fdata = NULL;
   int     rc = -1;
@@ -204,7 +195,7 @@ mkc_read_file (const char *fn, size_t *sz, mkc_error_t *mkcerr)
   ssize_t fsz;
 
   *sz = 0;
-  fsz = mkc_file_size (fn);
+  fsz = fileop_size (fn);
   if (fsz < 0) {
     mkc_error_set (mkcerr, MKC_ERR_FILE_NOT_FOUND, errno, fn);
     return NULL;
@@ -216,7 +207,7 @@ mkc_read_file (const char *fn, size_t *sz, mkc_error_t *mkcerr)
     return NULL;
   }
 
-  fh = mkc_fopen (fn, "rb");
+  fh = fileop_open (fn, "rb");
   if (fh == NULL) {
     mkc_error_set (mkcerr, MKC_ERR_FILE_NOT_FOUND, errno, fn);
   } else {
@@ -239,7 +230,7 @@ mkc_read_file (const char *fn, size_t *sz, mkc_error_t *mkcerr)
 }
 
 int
-mkc_file_delete (const char *fname)
+fileop_file_delete (const char *fname)
 {
   int     rc = -1;
 #if _function__wunlink || (MKC_BOOTSTRAP && MKC_SYS_WIN)
@@ -263,7 +254,7 @@ mkc_file_delete (const char *fname)
 }
 
 int
-mkc_file_move (const char *fname, const char *nfn)
+fileop_file_move (const char *fname, const char *nfn)
 {
   int       rc = MKC_ERR_NULL_ARGUMENT;
 
@@ -276,7 +267,7 @@ mkc_file_move (const char *fname, const char *nfn)
    * Windows won't rename to an existing file, but does
    * not return an error.
    */
-  mkc_file_delete (nfn);
+  fileop_file_delete (nfn);
   {
     wchar_t   *wfname;
     wchar_t   *wnfn;
@@ -296,7 +287,7 @@ mkc_file_move (const char *fname, const char *nfn)
 }
 
 int64_t
-mkc_ftell (FILE *fh)
+fileop_tell (FILE *fh)
 {
 #if _function_ftello
   return ftello (fh);
@@ -306,7 +297,7 @@ mkc_ftell (FILE *fh)
 }
 
 int
-mkc_fseek (FILE *fh, int64_t offset, int whence)
+fileop_seek (FILE *fh, int64_t offset, int whence)
 {
 #if _function_fseeko
   return fseeko (fh, offset, whence);
@@ -316,7 +307,7 @@ mkc_fseek (FILE *fh, int64_t offset, int whence)
 }
 
 int
-mkc_file_copy (const char *fname, const char *nfn, mkc_error_t *mkcerr)
+fileop_file_copy (const char *fname, const char *nfn, mkc_error_t *mkcerr)
 {
   int     rc = -1;
 
@@ -325,9 +316,9 @@ mkc_file_copy (const char *fname, const char *nfn, mkc_error_t *mkcerr)
   char      tnfn [MKC_PATH_MAX];
 
   stpecpy (tfname, tfname + sizeof (tfname), fname);
-  mkc_display_path (tfname, sizeof (tfname));
+  fileop_display_path (tfname, sizeof (tfname));
   stpecpy (tnfn, tnfn + sizeof (tnfn), nfn);
-  mkc_display_path (tnfn, sizeof (tnfn));
+  fileop_display_path (tnfn, sizeof (tnfn));
   {
     wchar_t   *wtfname;
     wchar_t   *wtnfn;
@@ -346,9 +337,9 @@ mkc_file_copy (const char *fname, const char *nfn, mkc_error_t *mkcerr)
   size_t  len;
   size_t  trc = 0;
 
-  data = mkc_read_file (fname, &len, mkcerr);
+  data = fileop_read_file (fname, &len, mkcerr);
   if (data != NULL && mkc_error_chk_ok (mkcerr)) {
-    fh = mkc_fopen (nfn, "w");
+    fh = fileop_open (nfn, "w");
     if (fh != NULL) {
       trc = fwrite (data, len, 1, fh);
       fclose (fh);
@@ -367,20 +358,20 @@ mkc_file_copy (const char *fname, const char *nfn, mkc_error_t *mkcerr)
 /* admin permission, or have the machine in developer mode */
 /* shell links would be fine probably, but creating them is a hassle */
 int
-mkc_link_copy (const char *fname, const char *nfn, mkc_error_t *mkcerr)
+fileop_link_copy (const char *fname, const char *nfn, mkc_error_t *mkcerr)
 {
   int       rc = -1;
 
 #if _function_symlink
-  rc = mkc_link_create (fname, nfn);
+  rc = fileop_link_create (fname, nfn);
 #else
-  rc = mkc_file_copy (fname, nfn, mkcerr);
+  rc = fileop_file_copy (fname, nfn, mkcerr);
 #endif
   return rc;
 }
 
 void
-mkc_display_path (char *path, size_t sz)
+fileop_display_path (char *path, size_t sz)
 {
   /* a no-op on unix systems */
 #if MKC_SYS_WIN
@@ -397,7 +388,7 @@ mkc_display_path (char *path, size_t sz)
 }
 
 void
-mkc_normalize_path (char *path, size_t sz)
+fileop_normalize_path (char *path, size_t sz)
 {
   for (size_t i = 0; i < sz; ++i) {
     if (path [i] == '\0') {
@@ -413,7 +404,7 @@ mkc_normalize_path (char *path, size_t sz)
 #if _function_symlink
 
 int
-mkc_link_create (const char *target, const char *linkpath)
+fileop_link_create (const char *target, const char *linkpath)
 {
   int rc;
 
@@ -426,7 +417,7 @@ mkc_link_create (const char *target, const char *linkpath)
 /* directory operations */
 
 bool
-mkc_is_directory (const char *fname)
+fileop_is_directory (const char *fname)
 {
   int   rc = -1;
   bool  brc = false;
@@ -462,137 +453,3 @@ mkc_is_directory (const char *fname)
   return brc;
 }
 
-MKC_NODISCARD
-mkc_dirhandle_t *
-mkc_dir_open (const char *dirname, mkc_error_t *mkcerr)
-{
-  mkc_dirhandle_t   *dirh;
-
-  dirh = malloc (sizeof (mkc_dirhandle_t));
-  if (dirh == NULL) {
-    mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return NULL;
-  }
-
-  dirh->dirname = NULL;
-  dirh->dh = NULL;
-
-#if _function_FindFirstFileW
-  {
-    size_t        len = 0;
-    char          *p;
-    char          *end;
-
-    dirh->dhandle = INVALID_HANDLE_VALUE;
-    len = strlen (dirname) + 3;
-    dirh->dirname = malloc (len);
-    if (dirh->dirname == NULL) {
-      mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-      return NULL;
-    }
-    p = dirh->dirname;
-    end = dirh->dirname + len;
-    p = stpecpy (p, end, dirname);
-    mkc_trim_char (dirh->dirname, '/');
-    p = stpecpy (p, end, "/*");
-  }
-#else
-  dirh->dirname = strdup (dirname);
-  if (dirh->dirname == NULL) {
-    mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return NULL;
-  }
-  dirh->dh = opendir (dirname);
-#endif
-
-  return dirh;
-}
-
-MKC_NODISCARD
-char *
-mkc_dir_iterate (mkc_dirhandle_t *dirh, mkc_error_t *mkcerr)
-{
-  char      *fname = NULL;
-
-  if (dirh == NULL) {
-    mkc_error_set (mkcerr, MKC_ERR_NULL_ARGUMENT, 0, NULL);
-    return NULL;
-  }
-
-#if _function_FindFirstFileW
-  {
-    WIN32_FIND_DATAW filedata;
-    BOOL             rc;
-
-    if (dirh->dhandle == INVALID_HANDLE_VALUE) {
-      wchar_t         *wdirname;
-
-      wdirname = mkc_towide (dirh->dirname);
-      if (wdirname == NULL) {
-        mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-        return NULL;
-      }
-      dirh->dhandle = FindFirstFileW (wdirname, &filedata);
-      rc = 0;
-      if (dirh->dhandle != INVALID_HANDLE_VALUE) {
-        rc = 1;
-      }
-      free (wdirname);
-    } else {
-      rc = FindNextFileW (dirh->dhandle, &filedata);
-    }
-
-    fname = NULL;
-    if (rc != 0) {
-      fname = mkc_fromwide (filedata.cFileName);
-      if (fname == NULL) {
-        mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-        return NULL;
-      }
-    }
-  }
-#else
-  {
-    struct dirent   *dirent = NULL;
-
-    if (dirh->dh == NULL) {
-      return NULL;
-    }
-
-    dirent = readdir (dirh->dh);
-    fname = NULL;
-    if (dirent != NULL) {
-      fname = strdup (dirent->d_name);
-      if (fname == NULL) {
-        mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-        return NULL;
-      }
-    }
-  }
-#endif
-
-  return fname;
-}
-
-void
-mkc_dir_close (mkc_dirhandle_t *dirh)
-{
-  if (dirh == NULL) {
-    return;
-  }
-
-#if _function_FindFirstFileW
-  if (dirh->dhandle != INVALID_HANDLE_VALUE) {
-    FindClose (dirh->dhandle);
-  }
-  dirh->dhandle = INVALID_HANDLE_VALUE;
-#else
-  if (dirh->dh != NULL) {
-    closedir (dirh->dh);
-  }
-  dirh->dh = NULL;
-#endif
-  datafree (dirh->dirname);
-  dirh->dirname = NULL;
-  free (dirh);
-}
