@@ -13,7 +13,7 @@
 
 #include "mkc_const.h"
 #include "mkc_def.h"
-#include "mkc_env.h"
+#include "envutil.h"
 #include "mkc_error.h"
 #include "mkc_profile.h"
 #include "mkc_pvar.h"
@@ -442,7 +442,7 @@ mkc_pvar_get_env_str (mkc_pvar_t *pvar, const char *envstr,
     return;
   }
 
-  mkc_env_get (envstr, buff, sz);
+  env_get (envstr, buff, sz);
 }
 
 int32_t

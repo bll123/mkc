@@ -25,7 +25,7 @@
 #include "mkc_const.h"
 #include "mkc_def.h"
 #include "dirop.h"
-#include "mkc_env.h"
+#include "envutil.h"
 #include "mkc_error.h"
 #include "fileop.h"
 #include "mkc_log.h"
@@ -356,10 +356,10 @@ mkc_main_set_home (void)
   char    tbuff [MKC_PATH_MAX];
 
 #if MKC_SYS_WIN
-  mkc_env_get ("USERPROFILE", tbuff, sizeof (tbuff));
+  env_get ("USERPROFILE", tbuff, sizeof (tbuff));
   fileop_normalize_path (tbuff, sizeof (tbuff));
 #else
-  mkc_env_get ("HOME", tbuff, sizeof (tbuff));
+  env_get ("HOME", tbuff, sizeof (tbuff));
 #endif
   path_set_dir (MKC_DIR_HOME, tbuff);
 }

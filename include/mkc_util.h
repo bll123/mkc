@@ -4,6 +4,8 @@
 #ifndef INC_MKC_UTIL_H
 #define INC_MKC_UTIL_H
 
+#include <stdbool.h>
+
 #if defined (__cplusplus) || defined (c_plusplus)
 extern "C" {
 #endif

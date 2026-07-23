@@ -17,7 +17,7 @@
 #include "mkc_compiler.h"
 #include "mkc_const.h"
 #include "mkc_def.h"
-#include "mkc_env.h"
+#include "envutil.h"
 #include "mkc_error.h"
 #include "fileop.h"
 #include "mkc_log.h"
@@ -829,7 +829,7 @@ mkc_chk_env_var_set (mkc_check_t *check, const char *nm)
   }
 
   *tbuff = '\0';
-  mkc_env_get (nm, tbuff, MKC_PATH_MAX);
+  env_get (nm, tbuff, MKC_PATH_MAX);
   if (*tbuff) {
     rc = mkc_pvar_set_str (check->pvar, nm, tbuff, MKC_VCTXT_ENV);
   }

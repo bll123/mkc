@@ -24,7 +24,7 @@
 #include "mkc_context.h"
 #include "mkc_dirmatch.h"
 #include "mkc_def.h"
-#include "mkc_env.h"
+#include "envutil.h"
 #include "mkc_error.h"
 #include "fileop.h"
 #include "mkc_log.h"
@@ -2903,7 +2903,7 @@ mkc_process_get_path (mkc_process_t *process)
     return;
   }
 
-  mkc_env_get ("PATH", tbuff, MKC_SMALL_BUFF_SZ);
+  env_get ("PATH", tbuff, MKC_SMALL_BUFF_SZ);
 
   tpath = mkc_strtok (tbuff, pathdelim, &tokstr);
   while (tpath != NULL) {

@@ -15,11 +15,11 @@
 # include <tchar.h>
 #endif
 
-#include "mkc_env.h"
+#include "envutil.h"
 #include "mkc_string.h"
 
 void
-mkc_env_get (const char *name, char *buff, size_t sz)
+env_get (const char *name, char *buff, size_t sz)
 {
 #if _function__wgetenv_s || (MKC_BOOTSTRAP && MKC_SYS_WIN)
   wchar_t     *wname;
@@ -51,7 +51,7 @@ mkc_env_get (const char *name, char *buff, size_t sz)
 }
 
 int
-mkc_env_set (const char *name, const char *value)
+env_set (const char *name, const char *value)
 {
   int     rc;
 
