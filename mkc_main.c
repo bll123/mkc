@@ -32,7 +32,7 @@
 #include "mkc_parse.h"
 #include "pathutil.h"
 #include "mkc_profile.h"
-#include "mkc_string.h"
+#include "strutil.h"
 #include "tmutil.h"
 
 typedef struct {
@@ -307,7 +307,7 @@ copyargs (argcopy_t *argcopy, int argc, char *argv [], mkc_error_t *mkcerr)
 #if _function_GetCommandLineW || (MKC_BOOTSTRAP && MKC_SYS_WIN)
   wargv = CommandLineToArgvW (GetCommandLineW(), &targc);
   for (int i = 0; i < argcopy->nargc; ++i) {
-    argcopy->utf8argv [i] = mkc_fromwide (wargv [i]);
+    argcopy->utf8argv [i] = str_fromwide (wargv [i]);
   }
   LocalFree (wargv);
 #else

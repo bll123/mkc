@@ -29,8 +29,9 @@ should not be duplicated. e.g.
       add_compiler_flag '-O0';
     }
 
-would end up adding both `-O2` and `-O0` to the command line.  Instead
-the default profile must be explicitly named in this case.
+would end up adding both `-O2` and `-O0` to the command line when the
+_debug_ profile is selected.  Instead the default profile must be
+explicitly named in this case.
 
     profile default {
       add_compiler_flag '-O2';

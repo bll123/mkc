@@ -15,6 +15,7 @@
 #include "mkc_option.h"
 #include "mkc_profile.h"
 #include "mkc_var.h"
+#include "scope.h"
 
 #if defined (__cplusplus) || defined (c_plusplus)
 extern "C" {
@@ -23,7 +24,7 @@ extern "C" {
 typedef struct mkc_foreach_t mkc_foreach_t;
 typedef struct mkc_process_t mkc_process_t;
 
-MKC_NODISCARD mkc_process_t *mkc_process_init (mkc_profile_t *profiles, mkc_log_t *log, mkc_context_t *context, mkc_option_t *mkcoptions, mkc_error_t *mkcerr);
+MKC_NODISCARD mkc_process_t *mkc_process_init (mkc_profile_t *profiles, scope_t *scope, mkc_log_t *log, mkc_context_t *context, mkc_option_t *mkcoptions, mkc_error_t *mkcerr);
 void mkc_process_free (mkc_process_t *process);
 
 void mkc_process_range_init (mkc_process_t *process, mkc_value_t *value, mkc_value_t *beg, mkc_value_t *end, mkc_value_t *incr);

@@ -21,8 +21,9 @@
 #include "mkc_option.h"
 #include "os_process.h"
 #include "mkc_process.h"
-#include "mkc_string.h"
+#include "strutil.h"
 #include "mkc_var.h"
+#include "scope.h"
 
 enum {
   MKC_LOOP_RUN,
@@ -260,6 +261,7 @@ enum {
 typedef struct mkc_astmain_t {
   mkc_astnode_t         * mainnode;
   mkc_profile_t         * profiles;
+  scope_t               * scope;
   mkc_process_t         * process;
   mkc_context_t         * context;
   mkc_astnode_t         ** nodelist;
@@ -315,13 +317,19 @@ mkc_ast_init (mkc_log_t *log, mkc_option_t *mkcoptions, mkc_error_t *mkcerr)
     return NULL;
   }
 
+  astmain->scope = scope_init (log, mkcerr);
+  if (astmain->scope == NULL) {
+    mkc_ast_free (astmain);
+    return NULL;
+  }
+
   astmain->context = mkc_context_init (mkcerr);
   if (astmain->context == NULL) {
     mkc_ast_free (astmain);
     return NULL;
   }
 
-  astmain->process = mkc_process_init (astmain->profiles, log,
+  astmain->process = mkc_process_init (astmain->profiles, astmain->scope, log,
       astmain->context, mkcoptions, mkcerr);
   if (astmain->process == NULL) {
     mkc_ast_free (astmain);
@@ -382,6 +390,9 @@ mkc_ast_free (mkc_astmain_t *astmain)
   }
   if (astmain->profiles != NULL) {
     mkc_profile_free (astmain->profiles);
+  }
+  if (astmain->scope != NULL) {
+    scope_free (astmain->scope);
   }
   if (astmain->context != NULL) {
     mkc_context_free (astmain->context);

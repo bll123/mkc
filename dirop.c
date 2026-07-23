@@ -11,7 +11,6 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
-#include <string.h>
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -32,7 +31,7 @@
 #include "mkc_list.h"
 #include "fileop.h"
 #include "mkc_nodiscard.h"
-#include "mkc_string.h"
+#include "strutil.h"
 
 typedef struct mkc_dirhandle_t {
   DIR       *dh;
@@ -76,7 +75,7 @@ dirop_open (const char *dirname, mkc_error_t *mkcerr)
     p = dirh->dirname;
     end = dirh->dirname + len;
     p = stpecpy (p, end, dirname);
-    mkc_trim_char (dirh->dirname, '/');
+    str_trim_char (dirh->dirname, '/');
     p = stpecpy (p, end, "/*");
   }
 #else
@@ -110,7 +109,7 @@ dirop_iterate (mkc_dirhandle_t *dirh, mkc_error_t *mkcerr)
     if (dirh->dhandle == INVALID_HANDLE_VALUE) {
       wchar_t         *wdirname;
 
-      wdirname = mkc_towide (dirh->dirname);
+      wdirname = str_towide (dirh->dirname);
       if (wdirname == NULL) {
         mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
         return NULL;
@@ -127,7 +126,7 @@ dirop_iterate (mkc_dirhandle_t *dirh, mkc_error_t *mkcerr)
 
     fname = NULL;
     if (rc != 0) {
-      fname = mkc_fromwide (filedata.cFileName);
+      fname = str_fromwide (filedata.cFileName);
       if (fname == NULL) {
         mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
         return NULL;
@@ -250,7 +249,7 @@ dirop_delete (const char *dirname, int flags, mkc_error_t *mkcerr)
   {
     wchar_t       * tdirname;
 
-    tdirname = mkc_towide (dirname);
+    tdirname = str_towide (dirname);
     if (tdirname == NULL) {
       mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
       return MKC_ERR_FAILURE;
@@ -382,7 +381,7 @@ dirop_make_recursive (const char *dirname, mkc_error_t *mkcerr)
   int     rc = MKC_OK;
 
   stpecpy (tbuff, tbuff + MKC_PATH_MAX, dirname);
-  mkc_trim_char (tbuff, '/');
+  str_trim_char (tbuff, '/');
 
   for (p = tbuff + 1; *p; p++) {
     if (*p == '/') {
@@ -413,7 +412,7 @@ dirop_makedir (const char *dirname, mkc_error_t *mkcerr)
 #if _arg_count_mkdir == 1
   wchar_t   *tdirname = NULL;
 
-  tdirname = mkc_towide (dirname);
+  tdirname = str_towide (dirname);
   if (tdirname == NULL) {
     mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
     return MKC_ERR_FAILURE;

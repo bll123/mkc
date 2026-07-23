@@ -13,6 +13,7 @@
 #include "mkc_nodiscard.h"
 #include "mkc_option.h"
 #include "mkc_var.h"
+#include "scope.h"
 
 #if defined (__cplusplus) || defined (c_plusplus)
 extern "C" {

@@ -210,6 +210,7 @@ MKCOBJECTS = \
 	mkc_parse.o \
 	mkc_ast.o \
 	mkc_lex.o \
+	scope.o \
 	mkc_process.o \
 	toposort.o \
 	mkc_util.o \
@@ -232,13 +233,13 @@ MKCOBJECTS = \
 	mkc_const.o \
 	fileop.o \
 	mkc_error.o \
-	mkc_string.o
+	strutil.o
 
 TOPOCHKOBJ = \
 	topochk.o \
 	toposort.o \
 	mkc_list.o \
-	mkc_string.o \
+	strutil.o \
 	mkc_error.o
 
 # the INITIALOBJ variable will be replaced
@@ -247,14 +248,14 @@ TOPOCHKOBJ = \
 INITIALOBJ = \
 	mkc_grammar.o \
 	dirop.o \
+	envutil.o \
 	fileop.o \
 	mkc_check.o \
 	mkc_dirmatch.o \
-	envutil.o \
 	mkc_main.o \
 	mkc_process.o \
 	mkc_regex_pcre.o \
-	mkc_string.o \
+	strutil.o \
 	os_process.o \
 	os_win_process.o \
 	pathutil.o \
@@ -286,34 +287,35 @@ mkc_lex.h mkc_lex.c: mkc_lex.l
 .c.o:
 	$(CC) -c $(CFLAGS) $<
 
-mkc_ast.o: mkc_ast.c
 asttoken.o: asttoken.c
+dirop.o: dirop.c
+envutil.o: envutil.c
+fileop.o: fileop.c
+mkc_ast.o: mkc_ast.c
 mkc_check.o: mkc_check.c
 mkc_compiler.o: mkc_compiler.c
 mkc_const.o: mkc_const.c
 mkc_context.o: mkc_context.c
-dirop.o: dirop.c
 mkc_dirmatch.o: mkc_dirmatch.c
-envutil.o: envutil.c
-fileop.o: fileop.c
 mkc_grammar.o: mkc_grammar.c
 mkc_lex.o: mkc_lex.c mkc_grammar.h
 mkc_list.o: mkc_list.c
 mkc_log.o: mkc_log.c
 mkc_main.o: mkc_main.c
-os_process.o: os_process.c
-os_win_process.o: os_win_process.c
 mkc_parse.o: mkc_parse.c mkc_grammar.h mkc_lex.h
-pathutil.o: pathutil.c
 mkc_process.o: mkc_process.c
 mkc_profile.o: mkc_profile.c
 mkc_pvar.o: mkc_pvar.c
 $(MKC_REGEX_OBJ): $(MKC_REGEX_SRC)
-mkc_string.o: mkc_string.c
-tmutil.o: tmutil.c
-toposort.o: toposort.c
 mkc_util.o: mkc_util.c
 mkc_var.o: mkc_var.c
+os_process.o: os_process.c
+os_win_process.o: os_win_process.c
+pathutil.o: pathutil.c
+scope.o: scope.c
+strutil.o: strutil.c
+tmutil.o: tmutil.c
+toposort.o: toposort.c
 
 topochk.o: topochk.c
 
@@ -323,111 +325,115 @@ asttoken.o: include/asttoken.h
 dirop.o:  include/mkc_def.h 
 dirop.o:  include/dirop.h include/mkc_error.h
 dirop.o: include/mkc_nodiscard.h include/mkc_list.h include/fileop.h
-dirop.o:  include/mkc_string.h
+dirop.o:  include/strutil.h
+envutil.o:   include/envutil.h
+envutil.o: include/strutil.h include/mkc_nodiscard.h
 fileop.o: include/mkc_def.h include/mkc_error.h include/mkc_nodiscard.h
-fileop.o: include/fileop.h include/mkc_string.h
+fileop.o: include/fileop.h include/strutil.h
 mkc_ast.o:  include/mkc_ast.h include/asttoken.h
 mkc_ast.o: include/mkc_error.h include/mkc_nodiscard.h include/mkc_log.h
 mkc_ast.o:  include/mkc_option.h include/mkc_var.h
-mkc_ast.o: include/mkc_list.h include/mkc_check.h include/mkc_compiler.h
-mkc_ast.o: include/mkc_profile.h include/mkc_pvar.h include/mkc_context.h
-mkc_ast.o: include/mkc_def.h  
-mkc_ast.o: include/os_process.h include/mkc_process.h include/mkc_string.h
+mkc_ast.o: include/mkc_list.h include/scope.h include/mkc_check.h
+mkc_ast.o: include/mkc_compiler.h include/mkc_profile.h include/mkc_pvar.h
+mkc_ast.o: include/mkc_context.h include/mkc_def.h 
+mkc_ast.o:  include/os_process.h include/mkc_process.h
+mkc_ast.o: include/strutil.h
 mkc_check.o:  include/mkc_check.h
 mkc_check.o: include/mkc_compiler.h include/mkc_error.h 
 mkc_check.o: include/mkc_nodiscard.h include/mkc_list.h include/mkc_log.h
 mkc_check.o:  include/mkc_profile.h include/mkc_option.h
-mkc_check.o: include/mkc_var.h include/mkc_pvar.h include/mkc_const.h
-mkc_check.o: include/mkc_def.h  
-mkc_check.o: include/envutil.h include/fileop.h include/os_process.h
-mkc_check.o: include/pathutil.h include/mkc_regex.h include/mkc_string.h
+mkc_check.o: include/mkc_var.h include/mkc_pvar.h include/scope.h
+mkc_check.o: include/mkc_const.h include/mkc_def.h 
+mkc_check.o:  include/envutil.h include/fileop.h
+mkc_check.o: include/os_process.h include/pathutil.h include/mkc_regex.h
+mkc_check.o: include/strutil.h
 mkc_compiler.o:  include/mkc_compiler.h
 mkc_context.o:  include/mkc_context.h
 mkc_context.o: include/mkc_error.h include/mkc_nodiscard.h
 mkc_dirmatch.o:  include/dirop.h include/mkc_error.h
 mkc_dirmatch.o:  include/mkc_nodiscard.h
 mkc_dirmatch.o: include/mkc_list.h include/mkc_dirmatch.h include/mkc_regex.h
-envutil.o:   include/envutil.h
-envutil.o: include/mkc_string.h include/mkc_nodiscard.h
 mkc_error.o:   include/mkc_error.h
-mkc_error.o: include/mkc_nodiscard.h include/mkc_string.h
+mkc_error.o: include/mkc_nodiscard.h include/strutil.h
 mkc_grammar.o: mkc_grammar.h  
 mkc_grammar.o:   include/mkc_ast.h
 mkc_grammar.o: include/asttoken.h include/mkc_error.h include/mkc_nodiscard.h
 mkc_grammar.o: include/mkc_log.h  
 mkc_grammar.o: include/mkc_option.h include/mkc_var.h include/mkc_list.h
-mkc_grammar.o: include/mkc_def.h  
-mkc_grammar.o: include/fileop.h include/mkc_parse.h
+mkc_grammar.o: include/scope.h include/mkc_def.h 
+mkc_grammar.o:  include/fileop.h include/mkc_parse.h
 mkc_lex.o:   mkc_grammar.h
 mkc_lex.o:   include/mkc_ast.h
 mkc_lex.o: include/asttoken.h include/mkc_error.h include/mkc_nodiscard.h
 mkc_lex.o: include/mkc_log.h  
 mkc_lex.o: include/mkc_option.h include/mkc_var.h include/mkc_list.h
-mkc_lex.o: include/mkc_def.h  
-mkc_lex.o: include/fileop.h include/mkc_parse.h 
+mkc_lex.o: include/scope.h include/mkc_def.h 
+mkc_lex.o:  include/fileop.h include/mkc_parse.h
 mkc_list.o:  include/mkc_error.h include/mkc_nodiscard.h
-mkc_list.o: include/mkc_list.h include/mkc_string.h
+mkc_list.o: include/mkc_list.h include/strutil.h
 mkc_log.o:   include/mkc_error.h
 mkc_log.o: include/mkc_nodiscard.h include/fileop.h 
-mkc_log.o: include/mkc_log.h include/mkc_string.h
+mkc_log.o: include/mkc_log.h include/strutil.h
 mkc_main.o:  include/mkc_ast.h include/asttoken.h
 mkc_main.o: include/mkc_error.h include/mkc_nodiscard.h include/mkc_log.h
 mkc_main.o:  include/mkc_option.h include/mkc_var.h
-mkc_main.o: include/mkc_list.h include/mkc_const.h include/mkc_def.h
-mkc_main.o:  include/dirop.h include/envutil.h
-mkc_main.o: include/fileop.h include/mkc_parse.h include/pathutil.h
-mkc_main.o: include/mkc_profile.h include/mkc_compiler.h include/mkc_string.h
-mkc_main.o: include/tmutil.h
+mkc_main.o: include/mkc_list.h include/scope.h include/mkc_const.h
+mkc_main.o: include/mkc_def.h  include/dirop.h
+mkc_main.o: include/envutil.h include/fileop.h include/mkc_parse.h
+mkc_main.o: include/pathutil.h include/mkc_profile.h include/mkc_compiler.h
+mkc_main.o: include/strutil.h include/tmutil.h
 mkc_parse.o: include/mkc_ast.h include/asttoken.h include/mkc_error.h
 mkc_parse.o: include/mkc_nodiscard.h include/mkc_log.h 
 mkc_parse.o:  include/mkc_option.h
-mkc_parse.o: include/mkc_var.h include/mkc_list.h include/fileop.h mkc_lex.h
-mkc_parse.o: mkc_grammar.h  include/mkc_def.h
-mkc_parse.o:   include/mkc_parse.h
-mkc_parse.o:  include/mkc_string.h
+mkc_parse.o: include/mkc_var.h include/mkc_list.h include/scope.h
+mkc_parse.o: include/fileop.h mkc_lex.h mkc_grammar.h 
+mkc_parse.o: include/mkc_def.h  
+mkc_parse.o: include/mkc_parse.h  include/strutil.h
 mkc_process.o:   include/asttoken.h
-mkc_process.o: include/mkc_check.h include/mkc_compiler.h include/mkc_error.h
-mkc_process.o: include/mkc_nodiscard.h include/mkc_list.h include/mkc_log.h
+mkc_process.o: include/envutil.h include/fileop.h include/mkc_error.h
+mkc_process.o: include/mkc_nodiscard.h include/mkc_check.h
+mkc_process.o: include/mkc_compiler.h include/mkc_list.h include/mkc_log.h
 mkc_process.o: include/mkc_profile.h include/mkc_option.h include/mkc_var.h
-mkc_process.o: include/mkc_pvar.h include/mkc_const.h include/mkc_context.h
-mkc_process.o: include/mkc_dirmatch.h include/mkc_regex.h include/mkc_def.h
-mkc_process.o:  include/envutil.h include/fileop.h
-mkc_process.o: include/pathutil.h include/mkc_process.h include/mkc_string.h
-mkc_process.o: include/tmutil.h include/toposort.h include/mkc_util.h
+mkc_process.o: include/mkc_pvar.h include/scope.h include/mkc_const.h
+mkc_process.o: include/mkc_context.h include/mkc_def.h 
+mkc_process.o: include/mkc_dirmatch.h include/mkc_regex.h
+mkc_process.o: include/mkc_process.h include/strutil.h include/mkc_util.h
+mkc_process.o: include/pathutil.h include/tmutil.h include/toposort.h
 mkc_profile.o: include/mkc_compiler.h include/mkc_const.h include/mkc_error.h
 mkc_profile.o: include/mkc_nodiscard.h include/mkc_list.h
 mkc_profile.o: include/mkc_option.h include/mkc_profile.h include/mkc_log.h
-mkc_profile.o:  include/mkc_var.h include/mkc_string.h
+mkc_profile.o:  include/mkc_var.h include/strutil.h
 mkc_pvar.o:  include/mkc_const.h include/mkc_def.h
 mkc_pvar.o:   include/envutil.h
 mkc_pvar.o: include/mkc_error.h include/mkc_nodiscard.h include/mkc_profile.h
 mkc_pvar.o: include/mkc_compiler.h include/mkc_list.h include/mkc_log.h
 mkc_pvar.o:  include/mkc_option.h include/mkc_var.h
-mkc_pvar.o: include/mkc_pvar.h include/mkc_string.h
+mkc_pvar.o: include/mkc_pvar.h include/scope.h include/strutil.h
 mkc_regex_pcre.o:  include/mkc_def.h
 mkc_regex_pcre.o:  include/mkc_error.h
 mkc_regex_pcre.o: include/mkc_nodiscard.h include/mkc_regex.h
-mkc_string.o:  include/mkc_string.h
-mkc_string.o: include/mkc_nodiscard.h
+strutil.o:  include/strutil.h
+strutil.o: include/mkc_nodiscard.h
 mkc_var.o:  include/mkc_const.h include/mkc_def.h
 mkc_var.o:   include/mkc_error.h
 mkc_var.o: include/mkc_nodiscard.h include/mkc_list.h include/mkc_var.h
-mkc_var.o: include/mkc_log.h  include/mkc_string.h
+mkc_var.o: include/mkc_log.h  include/strutil.h
 os_process.o: include/os_process.h include/mkc_nodiscard.h include/tmutil.h
 os_win_process.o:  include/mkc_def.h
 os_win_process.o:  include/fileop.h include/mkc_error.h
 os_win_process.o: include/mkc_nodiscard.h include/os_process.h
-os_win_process.o: include/mkc_string.h include/tmutil.h
+os_win_process.o: include/strutil.h include/tmutil.h
 pathutil.o:   include/mkc_def.h
 pathutil.o:  include/mkc_error.h include/mkc_nodiscard.h
 pathutil.o: include/fileop.h  include/pathutil.h
-pathutil.o: include/mkc_string.h
+pathutil.o: include/strutil.h
+scope.o:  include/mkc_error.h include/mkc_nodiscard.h
+scope.o: include/mkc_list.h include/mkc_log.h 
+scope.o: include/mkc_var.h include/scope.h
 tmutil.o: include/tmutil.h
 topochk.o:  include/mkc_def.h 
 topochk.o: include/mkc_error.h include/mkc_nodiscard.h include/toposort.h
-topochk.o: include/mkc_list.h include/mkc_string.h
+topochk.o: include/mkc_list.h include/strutil.h
 toposort.o:  include/mkc_def.h 
 toposort.o: include/mkc_error.h include/mkc_nodiscard.h include/mkc_list.h
-toposort.o: include/mkc_string.h include/toposort.h
-tt.o:  tt.h
-ttb.o:  tt.h
+toposort.o: include/strutil.h include/toposort.h

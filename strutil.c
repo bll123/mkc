@@ -16,7 +16,7 @@
 # include <windows.h>
 #endif
 
-#include "mkc_string.h"
+#include "strutil.h"
 
 #if ! _function_stpecpy
 
@@ -67,7 +67,7 @@ stpecpy (char *dst, char *end, const char *restrict src)
 #endif /* ! _function_stpecpy */
 
 void
-mkc_strupper (char *buff)
+str_toupper (char *buff)
 {
   size_t    len;
 
@@ -78,7 +78,7 @@ mkc_strupper (char *buff)
 }
 
 char *
-mkc_strtok (char *buff, const char *delim, char **tokstr)
+str_token (char *buff, const char *delim, char **tokstr)
 {
   char    *tmp;
 
@@ -92,7 +92,7 @@ mkc_strtok (char *buff, const char *delim, char **tokstr)
 }
 
 void
-mkc_strtrim (char *buff, size_t sz)
+str_trim (char *buff, size_t sz)
 {
   char    *p;
 
@@ -107,7 +107,7 @@ mkc_strtrim (char *buff, size_t sz)
 }
 
 void
-mkc_trim_char (char *s, unsigned char c)
+str_trim_char (char *s, unsigned char c)
 {
   ssize_t     len;
 
@@ -126,7 +126,7 @@ mkc_trim_char (char *s, unsigned char c)
 }
 
 void
-mkc_strclean (char *buff, size_t sz)
+str_clean (char *buff, size_t sz)
 {
   if (sz == 0) {
     sz = strlen (buff);
@@ -151,7 +151,7 @@ datafree (void *data)
 
 MKC_NODISCARD
 wchar_t *
-mkc_towide (const char *buff)
+str_towide (const char *buff)
 {
   wchar_t     *tbuff = NULL;
   size_t      len;
@@ -172,7 +172,7 @@ mkc_towide (const char *buff)
 
 MKC_NODISCARD
 char *
-mkc_fromwide (const wchar_t *buff)
+str_fromwide (const wchar_t *buff)
 {
   char        *tbuff = NULL;
   size_t      len;

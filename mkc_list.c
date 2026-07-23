@@ -11,7 +11,7 @@
 
 #include "mkc_error.h"
 #include "mkc_list.h"
-#include "mkc_string.h"
+#include "strutil.h"
 
 typedef struct mkc_list_t {
   /* create as a char * so that we can do arithmetic on it */

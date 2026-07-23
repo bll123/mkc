@@ -25,7 +25,8 @@
 #include "os_process.h"
 #include "pathutil.h"
 #include "mkc_regex.h"
-#include "mkc_string.h"
+#include "strutil.h"
+#include "scope.h"
 
 #define MKC_PKG_TRACE 0
 
@@ -37,6 +38,7 @@ typedef enum {
 
 typedef struct mkc_check_t {
   mkc_profile_t     * profiles;
+  scope_t           * scope;
   mkc_pvar_t        * pvar;
   mkc_error_t       * mkcerr;
   mkc_log_t         * log;
@@ -73,7 +75,7 @@ static int mkc_compile_run (mkc_check_t *check, mkc_compiler_t compiler, const c
 
 MKC_NODISCARD
 mkc_check_t *
-mkc_check_init (mkc_profile_t *profiles, mkc_pvar_t *pvar,
+mkc_check_init (mkc_profile_t *profiles, scope_t *scope, mkc_pvar_t *pvar,
     mkc_attribute_t *attr, mkc_log_t *log,
     mkc_profidx_t pidx, mkc_error_t *mkcerr)
 {
@@ -82,6 +84,7 @@ mkc_check_init (mkc_profile_t *profiles, mkc_pvar_t *pvar,
 
   check = malloc (sizeof (mkc_check_t));
   check->profiles = profiles;
+  check->scope = scope;
   check->pvar = pvar;
   check->attr = attr;
   check->mkcerr = mkcerr;
@@ -1007,11 +1010,11 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
 
   /* make sure a list exists */
   snprintf (tmpname, sizeof (tmpname), "%s_CFLAGS", tmp);
-  mkc_strclean (tmpname, 0);
+  str_clean (tmpname, 0);
   mkc_pvar_append_str_list (check->pvar, tmpname, NULL, MKC_VCTXT_MKC);
 
   if (retsz > 0) {
-    mkc_strtrim (rbuff, retsz);
+    str_trim (rbuff, retsz);
     mkc_pvar_set_list_from_str (check->pvar, tmpname, rbuff, MKC_VCTXT_MKC);
   }
 
@@ -1049,11 +1052,11 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
 
   /* make sure a list exists */
   snprintf (tmpname, sizeof (tmpname), "%s_LIBS", tmp);
-  mkc_strclean (tmpname, 0);
+  str_clean (tmpname, 0);
   mkc_pvar_append_str_list (check->pvar, tmpname, NULL, MKC_VCTXT_MKC);
 
   if (retsz > 0) {
-    mkc_strtrim (rbuff, retsz);
+    str_trim (rbuff, retsz);
     mkc_pvar_set_list_from_str (check->pvar, tmpname, rbuff, MKC_VCTXT_MKC);
   }
 

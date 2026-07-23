@@ -1,8 +1,8 @@
 /*
  * Copyright 2026 Brad Lanam Pleasant Hill CA
  */
-#ifndef INC_MKC_TOPO_H
-#define INC_MKC_TOPO_H
+#ifndef INC_TOPOSORT_H
+#define INC_TOPOSORT_H
 
 #include "mkc_list.h"
 #include "mkc_nodiscard.h"
@@ -26,4 +26,4 @@ void toposort_disp_cycle (toposort_t *topo, char *buff, size_t sz);
 }
 #endif
 
-#endif /* INC_MKC_TOPO_H */
+#endif /* INC_TOPOSORT_H */

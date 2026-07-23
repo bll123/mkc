@@ -14,7 +14,7 @@
 #include "mkc_error.h"
 #include "fileop.h"
 #include "mkc_log.h"
-#include "mkc_string.h"
+#include "strutil.h"
 
 typedef struct mkc_log_t {
   FILE        * fh;

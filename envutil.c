@@ -16,7 +16,7 @@
 #endif
 
 #include "envutil.h"
-#include "mkc_string.h"
+#include "strutil.h"
 
 void
 env_get (const char *name, char *buff, size_t sz)
@@ -30,11 +30,11 @@ env_get (const char *name, char *buff, size_t sz)
   wenv = malloc (sz);
 
   *buff = '\0';
-  wname = mkc_towide (name);
+  wname = str_towide (name);
   _wgetenv_s (&rv, wenv, sz, wname);
   free (wname);
   if (rv > 0) {
-    tenv = mkc_fromwide (wenv);
+    tenv = str_fromwide (wenv);
     stpecpy (buff, buff + sz, tenv);
     free (tenv);
   }
@@ -60,8 +60,8 @@ env_set (const char *name, const char *value)
     wchar_t *wname;
     wchar_t *wvalue;
 
-    wname = mkc_towide (name);
-    wvalue = mkc_towide (value);
+    wname = str_towide (name);
+    wvalue = str_towide (value);
     rc = _wputenv_s (wname, wvalue);
     free (wname);
     free (wvalue);

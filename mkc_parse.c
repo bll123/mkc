@@ -13,7 +13,7 @@
 #include "mkc_lex.h"
 #include "mkc_log.h"
 #include "mkc_parse.h"
-#include "mkc_string.h"
+#include "strutil.h"
 
 typedef struct mkc_parse_t {
   /* temporary buffer variable */

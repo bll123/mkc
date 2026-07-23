@@ -140,6 +140,7 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 "continue"    { return T_LOOP_CONTINUE; }
 
 "in"          { return T_IN; }
+"local"       { return T_LOCAL; }
 "range"       { return T_RANGE; }
 "return"      { return T_RETURN; }
 "temporary"   { return T_TEMPORARY; }

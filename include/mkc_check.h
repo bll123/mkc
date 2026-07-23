@@ -14,6 +14,7 @@
 #include "mkc_nodiscard.h"
 #include "mkc_profile.h"
 #include "mkc_pvar.h"
+#include "scope.h"
 
 #if defined (__cplusplus) || defined (c_plusplus)
 extern "C" {
@@ -58,7 +59,7 @@ typedef struct mkc_attribute_t {
 
 typedef struct mkc_check_t mkc_check_t;
 
-MKC_NODISCARD mkc_check_t *mkc_check_init (mkc_profile_t *profiles, mkc_pvar_t *pvar, mkc_attribute_t *attr, mkc_log_t *log, mkc_profidx_t pixd_global_general, mkc_error_t *mkcerr);
+MKC_NODISCARD mkc_check_t *mkc_check_init (mkc_profile_t *profiles, scope_t *scope, mkc_pvar_t *pvar, mkc_attribute_t *attr, mkc_log_t *log, mkc_profidx_t pixd_global_general, mkc_error_t *mkcerr);
 void mkc_check_free (mkc_check_t *check);
 
 int mkc_create_dirs (void);

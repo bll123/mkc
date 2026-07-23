@@ -1,8 +1,8 @@
 /*
  * Copyright 2026 Brad Lanam Pleasant Hill CA
  */
-#ifndef INC_MKC_PATH_H
-#define INC_MKC_PATH_H
+#ifndef INC_PATHUTIL_H
+#define INC_PATHUTIL_H
 
 #include <stdint.h>
 #include <stddef.h>
@@ -54,4 +54,4 @@ void path_realpath (char *path, size_t sz);
 }
 #endif
 
-#endif /* INC_MKC_PATH_H */
+#endif /* INC_PATHUTIL_H */

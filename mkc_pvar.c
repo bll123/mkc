@@ -17,11 +17,12 @@
 #include "mkc_error.h"
 #include "mkc_profile.h"
 #include "mkc_pvar.h"
-#include "mkc_string.h"
+#include "strutil.h"
 #include "mkc_var.h"
 
 typedef struct mkc_pvar_t {
   mkc_profile_t   * profiles;
+  scope_t         * scope;
   mkc_error_t     * mkcerr;
   mkc_log_t       * log;
   mkc_profidx_t   pidx_temp;
@@ -35,7 +36,7 @@ static mkc_value_t * mkc_pvar_get_value (mkc_pvar_t *pvar, const char *vname);
 
 MKC_NODISCARD
 mkc_pvar_t *
-mkc_pvar_init (mkc_profile_t *profiles, mkc_log_t *log, mkc_error_t *mkcerr)
+mkc_pvar_init (mkc_profile_t *profiles, scope_t *scope, mkc_log_t *log, mkc_error_t *mkcerr)
 {
   mkc_pvar_t  *pvar;
 
@@ -50,6 +51,7 @@ mkc_pvar_init (mkc_profile_t *profiles, mkc_log_t *log, mkc_error_t *mkcerr)
   }
 
   pvar->mkcerr = mkcerr;
+  pvar->scope = scope;
   pvar->log = log;
   pvar->profiles = profiles;
   pvar->fromcache = false;
@@ -251,15 +253,15 @@ mkc_pvar_set_list_from_str (mkc_pvar_t *pvar,
   char          *p;
   char          *tokstr;
 
-  p = mkc_strtok (str, " ", &tokstr);
+  p = str_token (str, " ", &tokstr);
   while (p != NULL) {
     if (mkc_error_chk_err (pvar->mkcerr)) {
       return MKC_ERR_FAILURE;
     }
 
-    mkc_strtrim (p, 0);
+    str_trim (p, 0);
     mkc_pvar_append_str_list (pvar, vname, p, vctxt);
-    p = mkc_strtok (NULL, " ", &tokstr);
+    p = str_token (NULL, " ", &tokstr);
   }
 
   return rc;

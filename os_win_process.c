@@ -25,7 +25,7 @@
 #include "mkc_def.h"
 #include "fileop.h"
 #include "os_process.h"
-#include "mkc_string.h"
+#include "strutil.h"
 #include "tmutil.h"
 
 static void mkc_os_win_create_cmd (char *buff, size_t sz, const char *targv []);
@@ -54,7 +54,7 @@ os_process_start (const char *targv[], int flags, char *outfname)
     sao.lpSecurityDescriptor = NULL;
     sao.bInheritHandle = 1;
 
-    woutfname = mkc_towide (outfname);
+    woutfname = str_towide (outfname);
     outhandle = CreateFileW (woutfname,
       GENERIC_WRITE,
       FILE_SHARE_READ | FILE_SHARE_WRITE,
@@ -75,7 +75,7 @@ os_process_start (const char *targv[], int flags, char *outfname)
   }
 
   mkc_os_win_create_cmd (buff, MKC_SMALL_BUFF_SZ, targv);
-  wbuff = mkc_towide (buff);
+  wbuff = str_towide (buff);
 
   val = 0;
   /* how windows decides to create a command window is unknown. */
@@ -199,7 +199,7 @@ os_process_pipe (const char *targv[], int flags, char *rbuff, size_t sz, size_t 
   }
 
   mkc_os_win_create_cmd (buff, MKC_SMALL_BUFF_SZ, targv);
-  wbuff = mkc_towide (buff);
+  wbuff = str_towide (buff);
 
   val = 0;
   if ((flags & OS_PROC_DETACH) == OS_PROC_DETACH) {

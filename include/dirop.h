@@ -2,8 +2,8 @@
  * Copyright 2021-2026 Brad Lanam Pleasant Hill CA
  *    (from ballroomdj4)
  */
-#ifndef INC_MKC_DIROP_H
-#define INC_MKC_DIROP_H
+#ifndef INC_DIROP_H
+#define INC_DIROP_H
 
 #include "mkc_error.h"
 #include "mkc_list.h"
@@ -40,4 +40,4 @@ MKC_NODISCARD mkc_list_t * dirop_list_recursive (const char *dirname, int flags,
 } /* extern C */
 #endif
 
-#endif /* INC_MKC_DIROP_H */
+#endif /* INC_DIROP_H */

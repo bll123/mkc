@@ -15,7 +15,7 @@
 #include "mkc_list.h"
 #include "mkc_option.h"
 #include "mkc_profile.h"
-#include "mkc_string.h"
+#include "strutil.h"
 #include "mkc_var.h"
 
 enum {

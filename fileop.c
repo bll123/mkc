@@ -32,7 +32,7 @@
 #include "mkc_error.h"
 #include "fileop.h"
 #include "mkc_nodiscard.h"
-#include "mkc_string.h"
+#include "strutil.h"
 
 MKC_NODISCARD
 FILE *
@@ -45,8 +45,8 @@ fileop_open (const char *fname, const char *mode)
     wchar_t       *tfname = NULL;
     wchar_t       *tmode = NULL;
 
-    tfname = mkc_towide (fname);
-    tmode = mkc_towide (mode);
+    tfname = str_towide (fname);
+    tmode = str_towide (mode);
     if (tfname != NULL && tmode != NULL) {
       fh = _wfopen (tfname, tmode);
       free (tfname);
@@ -72,7 +72,7 @@ fileop_exists (const char *fname)
     struct __stat64  statbuf;
     wchar_t       *tfname = NULL;
 
-    tfname = mkc_towide (fname);
+    tfname = str_towide (fname);
     if (tfname != NULL) {
       rc = _wstat64 (tfname, &statbuf);
       free (tfname);
@@ -103,7 +103,7 @@ fileop_modtime (const char *fname)
     wchar_t       *tfname = NULL;
     int           rc;
 
-    tfname = mkc_towide (fname);
+    tfname = str_towide (fname);
     if (tfname != NULL) {
       rc = _wstat64 (tfname, &statbuf);
       if (rc == 0) {
@@ -137,7 +137,7 @@ fileop_size (const char *fname)
     wchar_t       *tfname = NULL;
     int           rc;
 
-    tfname = mkc_towide (fname);
+    tfname = str_towide (fname);
     if (tfname != NULL) {
       rc = _wstat64 (tfname, &statbuf);
       if (rc == 0) {
@@ -242,7 +242,7 @@ fileop_file_delete (const char *fname)
   }
 
 #if _function__wunlink || (MKC_BOOTSTRAP && MKC_SYS_WIN)
-  tname = mkc_towide (fname);
+  tname = str_towide (fname);
   if (tname != NULL) {
     rc = _wunlink (tname);
     free (tname);
@@ -272,8 +272,8 @@ fileop_file_move (const char *fname, const char *nfn)
     wchar_t   *wfname;
     wchar_t   *wnfn;
 
-    wfname = mkc_towide (fname);
-    wnfn = mkc_towide (nfn);
+    wfname = str_towide (fname);
+    wnfn = str_towide (nfn);
     if (wfname != NULL && wnfn != NULL) {
       rc = _wrename (wfname, wnfn);
       free (wfname);
@@ -323,8 +323,8 @@ fileop_file_copy (const char *fname, const char *nfn, mkc_error_t *mkcerr)
     wchar_t   *wtfname;
     wchar_t   *wtnfn;
 
-    wtfname = mkc_towide (tfname);
-    wtnfn = mkc_towide (tnfn);
+    wtfname = str_towide (tfname);
+    wtnfn = str_towide (tnfn);
 
     rc = CopyFileW (wtfname, wtnfn, 0);
     rc = rc != 0 ? 0 : -1;
@@ -427,7 +427,7 @@ fileop_is_directory (const char *fname)
     struct __stat64  statbuf;
     wchar_t       *tfname = NULL;
 
-    tfname = mkc_towide (fname);
+    tfname = str_towide (fname);
     rc = _wstat64 (tfname, &statbuf);
     if (rc == 0 && (statbuf.st_mode & S_IFMT) != S_IFDIR) {
       rc = -1;

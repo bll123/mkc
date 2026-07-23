@@ -11,7 +11,7 @@
 #include "mkc_def.h"
 #include "mkc_error.h"
 #include "mkc_list.h"
-#include "mkc_string.h"
+#include "strutil.h"
 #include "toposort.h"
 
 enum {

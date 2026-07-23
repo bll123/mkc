@@ -14,6 +14,7 @@
 #include "mkc_nodiscard.h"
 #include "mkc_profile.h"
 #include "mkc_var.h"
+#include "scope.h"
 
 #if defined (__cplusplus) || defined (c_plusplus)
 extern "C" {
@@ -26,7 +27,7 @@ typedef enum {
 
 typedef struct mkc_pvar_t mkc_pvar_t;
 
-MKC_NODISCARD mkc_pvar_t *mkc_pvar_init (mkc_profile_t *profiles, mkc_log_t *log, mkc_error_t *mkcerr);
+MKC_NODISCARD mkc_pvar_t *mkc_pvar_init (mkc_profile_t *profiles, scope_t *scope, mkc_log_t *log, mkc_error_t *mkcerr);
 void mkc_pvar_free (mkc_pvar_t *pvar);
 int mkc_pvar_profile_select (mkc_pvar_t *pvar, const char *pname, mkc_compiler_t compiler);
 int mkc_pvar_profile_select_idx (mkc_pvar_t *pvar, mkc_profidx_t pidx);

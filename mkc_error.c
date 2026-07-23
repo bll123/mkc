@@ -12,7 +12,7 @@
 #include <errno.h>
 
 #include "mkc_error.h"
-#include "mkc_string.h"
+#include "strutil.h"
 
 static char const * const mkcerrormsg [] = {
   [MKC_OK] = "success",

@@ -19,26 +19,27 @@
 #include <time.h>
 
 #include "asttoken.h"
+#include "envutil.h"
+#include "fileop.h"
 #include "mkc_check.h"
 #include "mkc_const.h"
 #include "mkc_context.h"
-#include "mkc_dirmatch.h"
 #include "mkc_def.h"
-#include "envutil.h"
+#include "mkc_dirmatch.h"
 #include "mkc_error.h"
-#include "fileop.h"
 #include "mkc_log.h"
 #include "mkc_option.h"
-#include "pathutil.h"
 #include "mkc_process.h"
 #include "mkc_profile.h"
 #include "mkc_pvar.h"
 #include "mkc_regex.h"
-#include "mkc_string.h"
-#include "tmutil.h"
-#include "toposort.h"
+#include "strutil.h"
 #include "mkc_util.h"
 #include "mkc_var.h"      // for debugging
+#include "pathutil.h"
+#include "scope.h"
+#include "tmutil.h"
+#include "toposort.h"
 
 enum {
   MKC_AUTO_DEFINE_ZERO,
@@ -68,6 +69,7 @@ typedef struct mkc_foreach_t {
 
 typedef struct mkc_process_t {
   mkc_profile_t         * profiles;
+  scope_t               * scope;
   mkc_pvar_t            * pvar;
   mkc_check_t           * check;
   mkc_context_t         * context;
@@ -219,7 +221,7 @@ static void mkc_process_source_file (mkc_process_t *process, const char *target,
 
 MKC_NODISCARD
 mkc_process_t *
-mkc_process_init (mkc_profile_t *profiles, mkc_log_t *log,
+mkc_process_init (mkc_profile_t *profiles, scope_t *scope, mkc_log_t *log,
     mkc_context_t *context, mkc_option_t *mkcoptions, mkc_error_t *mkcerr)
 {
   mkc_process_t     *process;
@@ -229,6 +231,7 @@ mkc_process_init (mkc_profile_t *profiles, mkc_log_t *log,
   process = malloc (sizeof (mkc_process_t));
 
   process->profiles = profiles;
+  process->scope = scope;
   process->dfltcompiler = mkc_profile_get_dflt_compiler (profiles);
   process->log = log;
   process->context = context;
@@ -270,7 +273,7 @@ mkc_process_init (mkc_profile_t *profiles, mkc_log_t *log,
   process->attr.headertype = process->headertype;
   process->variadicmacro = MKC_VARIADIC_MACRO_SUPPORTED;
 
-  process->pvar = mkc_pvar_init (process->profiles, log, mkcerr);
+  process->pvar = mkc_pvar_init (process->profiles, process->scope, log, mkcerr);
   if (process->pvar == NULL) {
     mkc_process_free (process);
     return NULL;
@@ -289,8 +292,8 @@ mkc_process_init (mkc_profile_t *profiles, mkc_log_t *log,
   process->pidx_deps = mkc_profile_find (process->profiles,
       MKC_C_PROF_DEPENDENCIES_NAME, MKC_COMPILER_GENERAL);
 
-  process->check = mkc_check_init (process->profiles, process->pvar,
-     &process->attr, log, process->pidx_curr_comp, mkcerr);
+  process->check = mkc_check_init (process->profiles, process->scope,
+      process->pvar, &process->attr, log, process->pidx_curr_comp, mkcerr);
   if (process->check == NULL) {
     mkc_process_free (process);
     return NULL;
@@ -2462,7 +2465,7 @@ mkc_process_create_name (mkc_process_t *process, mkc_astnode_token_t asttype,
     }
   }
 
-  mkc_strclean (buff, nlen);
+  str_clean (buff, nlen);
 
   return buff;
 }
@@ -2905,12 +2908,12 @@ mkc_process_get_path (mkc_process_t *process)
 
   env_get ("PATH", tbuff, MKC_SMALL_BUFF_SZ);
 
-  tpath = mkc_strtok (tbuff, pathdelim, &tokstr);
+  tpath = str_token (tbuff, pathdelim, &tokstr);
   while (tpath != NULL) {
     fileop_normalize_path (tpath, strlen (tpath));
     mkc_pvar_append_str_list (process->pvar, MKC_C_PATH,
         tpath, MKC_VCTXT_MKC);
-    tpath = mkc_strtok (NULL, pathdelim, &tokstr);
+    tpath = str_token (NULL, pathdelim, &tokstr);
   }
 
   free (tbuff);

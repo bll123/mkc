@@ -14,7 +14,7 @@
 #include "mkc_error.h"
 #include "mkc_list.h"
 #include "mkc_var.h"
-#include "mkc_string.h"
+#include "strutil.h"
 
 typedef struct mkc_var_t {
   char          * name;

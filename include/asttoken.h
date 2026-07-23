@@ -1,8 +1,8 @@
 /*
  * Copyright 2026 Brad Lanam Pleasant Hill CA
  */
-#ifndef INC_MKC_ASTTOKEN_H
-#define INC_MKC_ASTTOKEN_H
+#ifndef INC_ASTTOKEN_H
+#define INC_ASTTOKEN_H
 
 #if defined (__cplusplus) || defined (c_plusplus)
 extern "C" {
@@ -117,4 +117,4 @@ extern char const * const typenames [MKC_T_MAX];
 }
 #endif
 
-#endif /* INC_MKC_ASTTOKEN_H */
+#endif /* INC_ASTTOKEN_H */

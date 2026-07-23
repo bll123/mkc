@@ -1,8 +1,8 @@
 /*
  * Copyright 2026 Brad Lanam Pleasant Hill CA
  */
-#ifndef INC_MKC_ENV_H
-#define INC_MKC_ENV_H
+#ifndef INC_ENVUTIL_H
+#define INC_ENVUTIL_H
 
 #include <stddef.h>
 
@@ -17,4 +17,4 @@ int env_set (const char *name, const char *value);
 }
 #endif
 
-#endif /* INC_MKC_ENV_H */
+#endif /* INC_ENVUTIL_H */

@@ -6,9 +6,9 @@
 
 Currently, the pre-alpha code will only create a configuration file.
 
-Will be working on some rather difficult areas, so progress will be
-slow.  I also need to do some work on a different software package of
-mine, which will delay things a bit.
+Working on (a) re-writing and simplifying variable handling.  This is
+a major piece of work and will break everything. (b) The difficult
+process of handling targets and building the software.
 
 ##### Testing
 

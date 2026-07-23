@@ -11,7 +11,7 @@
 #include "mkc_def.h"
 #include "mkc_error.h"
 #include "toposort.h"
-#include "mkc_string.h"
+#include "strutil.h"
 
 int
 main (int argc, char *argv [])
@@ -34,7 +34,7 @@ main (int argc, char *argv [])
   topo = toposort_init (mkcerr);
 
   while (fgets (buff, sizeof (buff), fh) != NULL) {
-    mkc_strtrim (buff, 0);
+    str_trim (buff, 0);
 
     toposort_add_item (topo, buff);
   }
@@ -50,7 +50,7 @@ main (int argc, char *argv [])
   while (fgets (buff, sizeof (buff), fh) != NULL) {
     char      *p;
 
-    mkc_strtrim (buff, 0);
+    str_trim (buff, 0);
     p = strstr (buff, " ");
     if (p == NULL) {
       continue;

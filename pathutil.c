@@ -16,7 +16,7 @@
 #include "mkc_error.h"
 #include "fileop.h"
 #include "pathutil.h"
-#include "mkc_string.h"
+#include "strutil.h"
 
 static char mkc_dirs [MKC_DIR_MAX][MKC_PATH_MAX] = {
   [MKC_DIR_EXEC] = "",
@@ -152,7 +152,7 @@ path_getcwd (char *buff, size_t sz)
   char    *tmp;
 
   wcwd = _wgetcwd (NULL, 0);
-  tmp = mkc_fromwide (wcwd);
+  tmp = str_fromwide (wcwd);
   stpecpy (buff, buff + sz, tmp);
   free (wcwd);
   free (tmp);
@@ -187,10 +187,10 @@ path_realpath (char *path, size_t sz)
   }
 
   fileop_display_path (path, sz);
-  wfrom = mkc_towide (path);
+  wfrom = str_towide (path);
   (void) ! GetFullPathNameW (wfrom, MKC_PATH_MAX, wto, NULL);
   free (wfrom);
-  tto = mkc_fromwide (wto);
+  tto = str_fromwide (wto);
   free (wto);
   stpecpy (path, path + sz, tto);
   free (tto);
