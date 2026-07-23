@@ -19,6 +19,7 @@
 #include "mkc_pvar.h"
 #include "strutil.h"
 #include "mkc_var.h"
+#include "value.h"
 
 typedef struct mkc_pvar_t {
   mkc_profile_t   * profiles;
@@ -29,9 +30,9 @@ typedef struct mkc_pvar_t {
   bool            fromcache;
 } mkc_pvar_t;
 
-static mkc_value_t * mkc_pvar_get_value_by_profidx (mkc_pvar_t *pvar, const char *vname, mkc_profidx_t pidx);
+static value_t * mkc_pvar_get_value_by_profidx (mkc_pvar_t *pvar, const char *vname, mkc_profidx_t pidx);
 void mkc_pvar_sub_escapes (char *buff, size_t blen);
-static mkc_value_t * mkc_pvar_get_value (mkc_pvar_t *pvar, const char *vname);
+static value_t * mkc_pvar_get_value (mkc_pvar_t *pvar, const char *vname);
 
 
 MKC_NODISCARD
@@ -127,7 +128,7 @@ mkc_pvar_set_fromcache (mkc_pvar_t *pvar, bool flag)
 
 int
 mkc_pvar_set (mkc_pvar_t *pvar, const char *vname,
-    mkc_value_t *value, mkc_var_ctxt_t vctxt)
+    value_t *value, value_ctxt_t vctxt)
 {
   mkc_varlist_t   *varlist;
   int             rc = MKC_ERR_FAILURE;
@@ -154,12 +155,12 @@ mkc_pvar_set (mkc_pvar_t *pvar, const char *vname,
 
 int
 mkc_pvar_set_integer (mkc_pvar_t *pvar,
-    const char *vname, int32_t ival, mkc_var_ctxt_t vctxt)
+    const char *vname, int32_t ival, value_ctxt_t vctxt)
 {
   int         rc = MKC_ERR_FAILURE;
-  mkc_value_t value;
+  value_t value;
 
-  mkc_value_init (&value);
+  value_init (&value);
   value.ival = ival;
   value.vtype = MKC_VT_INTEGER;
 
@@ -169,12 +170,12 @@ mkc_pvar_set_integer (mkc_pvar_t *pvar,
 
 int
 mkc_pvar_set_timestamp (mkc_pvar_t *pvar,
-    const char *vname, time_t tmval, mkc_var_ctxt_t vctxt)
+    const char *vname, time_t tmval, value_ctxt_t vctxt)
 {
   int         rc = MKC_ERR_FAILURE;
-  mkc_value_t value;
+  value_t value;
 
-  mkc_value_init (&value);
+  value_init (&value);
   value.tmval = tmval;
   value.vtype = MKC_VT_TIMESTAMP;
 
@@ -184,12 +185,12 @@ mkc_pvar_set_timestamp (mkc_pvar_t *pvar,
 
 int
 mkc_pvar_set_str (mkc_pvar_t *pvar,
-    const char *vname, const char *str, mkc_var_ctxt_t vctxt)
+    const char *vname, const char *str, value_ctxt_t vctxt)
 {
   int         rc = MKC_ERR_FAILURE;
-  mkc_value_t value;
+  value_t value;
 
-  mkc_value_init (&value);
+  value_init (&value);
   value.sval = (char *) str;
   value.vtype = MKC_VT_STRING;
 
@@ -199,12 +200,12 @@ mkc_pvar_set_str (mkc_pvar_t *pvar,
 
 int
 mkc_pvar_set_list (mkc_pvar_t *pvar,
-    const char *vname, mkc_list_t *list, mkc_var_ctxt_t vctxt)
+    const char *vname, mkc_list_t *list, value_ctxt_t vctxt)
 {
   int         rc = MKC_ERR_FAILURE;
-  mkc_value_t value;
+  value_t value;
 
-  mkc_value_init (&value);
+  value_init (&value);
   value.list = list;
   value.vtype = MKC_VT_LIST;
 
@@ -218,12 +219,12 @@ mkc_pvar_set_list (mkc_pvar_t *pvar,
 /* verification checks */
 int
 mkc_pvar_append_str_list (mkc_pvar_t *pvar, const char *vname,
-    const char *data, mkc_var_ctxt_t vctxt)
+    const char *data, value_ctxt_t vctxt)
 {
-  mkc_value_t   *listval;
+  value_t   *listval;
   mkc_list_t    *list;
   mkc_listidx_t loc;
-  mkc_value_t   tvalue;
+  value_t   tvalue;
 
 
   listval = mkc_pvar_get_value (pvar, vname);
@@ -236,10 +237,10 @@ mkc_pvar_append_str_list (mkc_pvar_t *pvar, const char *vname,
   list = listval->list;
 
   if (data != NULL) {
-    mkc_value_init (&tvalue);
+    value_init (&tvalue);
     tvalue.vtype = MKC_VT_STRING;
     tvalue.sval = strdup (data);
-    mkc_list_set (list, &tvalue, sizeof (mkc_value_t), &loc);
+    mkc_list_set (list, &tvalue, sizeof (value_t), &loc);
   }
 
   return MKC_OK;
@@ -247,7 +248,7 @@ mkc_pvar_append_str_list (mkc_pvar_t *pvar, const char *vname,
 
 int
 mkc_pvar_set_list_from_str (mkc_pvar_t *pvar,
-    const char *vname, char *str, mkc_var_ctxt_t vctxt)
+    const char *vname, char *str, value_ctxt_t vctxt)
 {
   int           rc = MKC_ERR_FAILURE;
   char          *p;
@@ -269,9 +270,9 @@ mkc_pvar_set_list_from_str (mkc_pvar_t *pvar,
 
 void
 mkc_pvar_set_context (mkc_pvar_t *pvar, const char *vname,
-    mkc_var_ctxt_t vctxt)
+    value_ctxt_t vctxt)
 {
-  mkc_value_t   *value;
+  value_t   *value;
 
   if (pvar == NULL || vname == NULL) {
     return;
@@ -341,12 +342,12 @@ mkc_pvar_iter_next (mkc_pvar_t *pvar, mkc_varidx_t *iteridx)
 /*    current-profile  compiler */
 /*    current-profile  general */
 /*    internal */
-mkc_value_t *
+value_t *
 mkc_pvar_get_by_profile (mkc_pvar_t *pvar, const char *nm)
 {
   mkc_profidx_t   opidx;
   mkc_profidx_t   pidx;
-  mkc_value_t     *value = NULL;
+  value_t     *value = NULL;
   mkc_profiter_t  profiter;
 
   if (pvar == NULL) {
@@ -363,7 +364,7 @@ mkc_pvar_get_by_profile (mkc_pvar_t *pvar, const char *nm)
 
   while ((pidx = mkc_profile_iter_hierarchy_next (
       pvar->profiles, &profiter)) != MKC_PROF_NOT_FOUND) {
-    mkc_var_type_t    vtype = MKC_VT_INVALID;
+    value_type_t    vtype = MKC_VT_INVALID;
 
     value = mkc_pvar_get_value_by_profidx (pvar, nm, pidx);
     if (value == NULL) {
@@ -383,10 +384,10 @@ mkc_pvar_get_by_profile (mkc_pvar_t *pvar, const char *nm)
 }
 
 /* get the value from a selected profile */
-mkc_value_t *
+value_t *
 mkc_pvar_get_by_profidx (mkc_pvar_t *pvar, const char *nm, mkc_profidx_t pidx)
 {
-  mkc_value_t       *value = NULL;
+  value_t       *value = NULL;
 
   if (pvar == NULL) {
     return NULL;
@@ -400,11 +401,11 @@ mkc_pvar_get_by_profidx (mkc_pvar_t *pvar, const char *nm, mkc_profidx_t pidx)
   return value;
 }
 
-mkc_value_t *
+value_t *
 mkc_pvar_get_by_idx (mkc_pvar_t *pvar, mkc_varidx_t vidx)
 {
   mkc_varlist_t   *varlist;
-  mkc_value_t     *value;
+  value_t     *value;
   mkc_profidx_t   pidx;
 
   if (pvar == NULL) {
@@ -448,10 +449,10 @@ mkc_pvar_get_env_str (mkc_pvar_t *pvar, const char *envstr,
 }
 
 int32_t
-mkc_pvar_get_variable_integer (mkc_pvar_t *pvar, mkc_value_t *value)
+mkc_pvar_get_variable_integer (mkc_pvar_t *pvar, value_t *value)
 {
   int32_t       ival = 0;
-  mkc_value_t   *tvalue;
+  value_t   *tvalue;
 
 
   tvalue = mkc_pvar_get_variable_value (pvar, value->sval);
@@ -470,10 +471,10 @@ mkc_pvar_get_variable_integer (mkc_pvar_t *pvar, mkc_value_t *value)
 }
 
 void
-mkc_pvar_get_variable_str (mkc_pvar_t *pvar, mkc_value_t *value,
+mkc_pvar_get_variable_str (mkc_pvar_t *pvar, value_t *value,
     char *buff, size_t sz)
 {
-  mkc_value_t     *tvalue;
+  value_t     *tvalue;
 
   if (pvar == NULL) {
     return;
@@ -503,18 +504,18 @@ mkc_pvar_get_variable_str (mkc_pvar_t *pvar, mkc_value_t *value,
     char    dbuff [MKC_PATH_MAX];
 
     mkc_log (pvar->log, MKC_LOG_PROCESS, "  pvar-v-get-str-var: %s\n",
-        mkc_value_to_str (tvalue, dbuff, sizeof (dbuff)));
+        value_to_str (tvalue, dbuff, sizeof (dbuff)));
   }
 }
 
 /* get-variable-value does substitutions on the variable name */
 /* first. this routine should always be called before fetching the */
 /* variable */
-mkc_value_t *
+value_t *
 mkc_pvar_get_variable_value (mkc_pvar_t *pvar, const char *str)
 {
   char        *tstr;
-  mkc_value_t *value;
+  value_t *value;
 
   tstr = mkc_pvar_substitute (pvar, str, MKC_PV_NO_ESCAPE, 0);
   value = mkc_pvar_get_by_profile (pvar, tstr);
@@ -523,7 +524,7 @@ mkc_pvar_get_variable_value (mkc_pvar_t *pvar, const char *str)
 }
 
 int32_t
-mkc_pvar_value_get_integer (mkc_pvar_t *pvar, mkc_value_t *value)
+mkc_pvar_value_get_integer (mkc_pvar_t *pvar, value_t *value)
 {
   int32_t     ival = 0;
 
@@ -575,7 +576,7 @@ mkc_pvar_value_get_integer (mkc_pvar_t *pvar, mkc_value_t *value)
 }
 
 time_t
-mkc_pvar_value_get_timestamp (mkc_pvar_t *pvar, mkc_value_t *value)
+mkc_pvar_value_get_timestamp (mkc_pvar_t *pvar, value_t *value)
 {
   time_t    tmval = 0;
 
@@ -611,7 +612,7 @@ mkc_pvar_value_get_timestamp (mkc_pvar_t *pvar, mkc_value_t *value)
       break;
     }
     case MKC_VT_VARIABLE: {
-      mkc_value_t   *tvalue;
+      value_t   *tvalue;
 
       tvalue = mkc_pvar_get_variable_value (pvar, value->sval);
       if (tvalue == NULL) {
@@ -639,7 +640,7 @@ mkc_pvar_value_get_timestamp (mkc_pvar_t *pvar, mkc_value_t *value)
 
 void
 mkc_pvar_value_get_str (mkc_pvar_t *pvar,
-    mkc_value_t *value, char *buff, size_t sz)
+    value_t *value, char *buff, size_t sz)
 {
   *buff = '\0';
 
@@ -700,10 +701,10 @@ mkc_pvar_value_get_str (mkc_pvar_t *pvar,
   mkc_log (pvar->log, MKC_LOG_PROCESS, "  pv-get-str: %s\n", buff);
 }
 
-mkc_value_t *
-mkc_pvar_value_get_list_value (mkc_pvar_t *pvar, mkc_value_t *value)
+value_t *
+mkc_pvar_value_get_list_value (mkc_pvar_t *pvar, value_t *value)
 {
-  mkc_value_t    *rvalue = NULL;
+  value_t    *rvalue = NULL;
 
   if (value == NULL) {
     mkc_error_set (pvar->mkcerr, MKC_ERR_NULL_ARGUMENT, 0, NULL);
@@ -749,11 +750,11 @@ mkc_pvar_value_get_list_value (mkc_pvar_t *pvar, mkc_value_t *value)
 /* get the actual value of a value */
 /* this is only an issue for env-variables, quoted strings and lists */
 /* the caller is responsible for calling mkc_pvar_temp_value_free() */
-mkc_value_t *
-mkc_pvar_value_get_value (mkc_pvar_t *pvar, mkc_value_t *value)
+value_t *
+mkc_pvar_value_get_value (mkc_pvar_t *pvar, value_t *value)
 {
-  mkc_value_t   *tvalue;
-  mkc_value_t   *nvalue;
+  value_t   *tvalue;
+  value_t   *nvalue;
 
   /* in many cases the value returned is simply the value passed in */
   nvalue = value;
@@ -783,12 +784,12 @@ mkc_pvar_value_get_value (mkc_pvar_t *pvar, mkc_value_t *value)
       /* need to get the actual value */
       mkc_pvar_value_get_str (pvar, value, buff, MKC_PATH_MAX);
 
-      tvalue = malloc (sizeof (mkc_value_t));
+      tvalue = malloc (sizeof (value_t));
       if (tvalue == NULL) {
         mkc_error_set (pvar->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
         return nvalue;
       }
-      mkc_value_init (tvalue);
+      value_init (tvalue);
       tvalue->tempallocated = true;
       tvalue->vtype = MKC_VT_STRING;
       tvalue->vctxt = value->vctxt;
@@ -814,8 +815,8 @@ mkc_pvar_value_get_value (mkc_pvar_t *pvar, mkc_value_t *value)
       nlist = mkc_list_init (MKC_LIST_UNSORTED, mkc_pvar_temp_value_free, NULL, pvar->mkcerr);
       mkc_list_iter_start (value->list, &iteridx);
       while ((lidx = mkc_list_iter_next (value->list, &iteridx)) != MKC_ITER_FINISH) {
-        mkc_value_t   *lvalue;
-        mkc_value_t   *tmpvalue;
+        value_t   *lvalue;
+        value_t   *tmpvalue;
         mkc_listidx_t loc = MKC_LIST_NOTFOUND;
 
         if (mkc_error_chk_err (pvar->mkcerr)) {
@@ -824,15 +825,15 @@ mkc_pvar_value_get_value (mkc_pvar_t *pvar, mkc_value_t *value)
 
         lvalue = mkc_list_get_by_idx (value->list, lidx);
         tmpvalue = mkc_pvar_value_get_value (pvar, lvalue);
-        mkc_list_set (nlist, tmpvalue, sizeof (mkc_value_t), &loc);
+        mkc_list_set (nlist, tmpvalue, sizeof (value_t), &loc);
       }
 
-      tvalue = malloc (sizeof (mkc_value_t));
+      tvalue = malloc (sizeof (value_t));
       if (tvalue == NULL) {
         mkc_error_set (pvar->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
         return nvalue;
       }
-      mkc_value_init (tvalue);
+      value_init (tvalue);
       tvalue->tempallocated = true;
       tvalue->vtype = MKC_VT_LIST;
       tvalue->vctxt = value->vctxt;
@@ -848,14 +849,14 @@ mkc_pvar_value_get_value (mkc_pvar_t *pvar, mkc_value_t *value)
 void
 mkc_pvar_temp_value_free (void *tvalue)
 {
-  mkc_value_t   *value = tvalue;
+  value_t   *value = tvalue;
 
   if (value == NULL) {
     return;
   }
 
   if (value->tempallocated) {
-    mkc_value_free (value);
+    value_free (value);
     free (value);
   }
 }
@@ -863,7 +864,7 @@ mkc_pvar_temp_value_free (void *tvalue)
 bool
 mkc_pvar_is_defined (mkc_pvar_t *pvar, const char *vname)
 {
-  mkc_value_t     *value;
+  value_t     *value;
 
   if (pvar == NULL) {
     return false;
@@ -879,7 +880,7 @@ mkc_pvar_is_defined (mkc_pvar_t *pvar, const char *vname)
 bool
 mkc_pvar_is_list (mkc_pvar_t *pvar, const char *vname)
 {
-  mkc_value_t     *value;
+  value_t     *value;
   bool            rc = false;
 
   if (pvar == NULL) {
@@ -1025,7 +1026,7 @@ mkc_pvar_substitute (mkc_pvar_t *pvar, const char *data,
         mkc_pvar_get_env_str (pvar, tstr, ebuff, sizeof (ebuff));
         tval = ebuff;
       } else {
-        mkc_value_t   *value;
+        value_t   *value;
 
         value = mkc_pvar_get_by_profile (pvar, tstr);
 //fprintf (stderr, "%*svalue-null %d\n", depth * 2, "", value == NULL ? 1 : 0);
@@ -1072,12 +1073,12 @@ mkc_pvar_substitute (mkc_pvar_t *pvar, const char *data,
   return buff;
 }
 
-static mkc_value_t *
+static value_t *
 mkc_pvar_get_value_by_profidx (mkc_pvar_t *pvar,
     const char *vname, mkc_profidx_t pidx)
 {
   mkc_varlist_t   *varlist;
-  mkc_value_t     *value;
+  value_t     *value;
 
   if (pvar == NULL) {
     return NULL;
@@ -1123,11 +1124,11 @@ mkc_pvar_sub_escapes (char *buff, size_t blen)
 }
 
 /* get the value from the active profile */
-static mkc_value_t *
+static value_t *
 mkc_pvar_get_value (mkc_pvar_t *pvar, const char *vname)
 {
   mkc_varlist_t   *varlist;
-  mkc_value_t     *value;
+  value_t     *value;
   mkc_profidx_t   pidx;
 
   if (pvar == NULL) {

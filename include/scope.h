@@ -17,6 +17,7 @@ extern "C" {
 
 typedef enum {
   SCOPE_T_CURR_PROF,
+  /* the current-profile-compiler type encompasses all compilers */
   SCOPE_T_CURR_PROF_COMPILER,
   SCOPE_T_INTERNAL,
   SCOPE_T_LOCAL,
@@ -30,9 +31,7 @@ scope_t * scope_init (mkc_log_t *log, mkc_error_t *mkcerr);
 void scope_free (scope_t *scope);
 void scope_push (scope_t *scope, scope_type_t sctype);
 void scope_pop (scope_t *scope);
-void scope_iter_start (scope_t *scope, int *iteridx);
-mkc_varlist_t *scope_iter_next (scope_t *scope, int *iteridx);
-mkc_varlist_t *scope_get (scope_t *scope, scope_type_t sctype);
+value_t * scope_get_var (scope_t *scope, const char *vname);
 
 #if defined (__cplusplus) || defined (c_plusplus)
 }

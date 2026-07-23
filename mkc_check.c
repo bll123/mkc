@@ -27,6 +27,7 @@
 #include "mkc_regex.h"
 #include "strutil.h"
 #include "scope.h"
+#include "value.h"
 
 #define MKC_PKG_TRACE 0
 
@@ -197,7 +198,7 @@ mkc_chk_reset (mkc_check_t *check)
 void
 mkc_chk_append_comp_flag (mkc_check_t *check, const char *flag)
 {
-  mkc_value_t     tvalue;
+  value_t     tvalue;
   mkc_listidx_t   loc = MKC_LIST_NOTFOUND;
   mkc_alternate_t  * alt;
 
@@ -205,17 +206,17 @@ mkc_chk_append_comp_flag (mkc_check_t *check, const char *flag)
     return;
   }
 
-  mkc_value_init (&tvalue);
+  value_init (&tvalue);
   tvalue.sval = (char *) flag;
   tvalue.vtype = MKC_VT_STRING;
   alt = check->attr->curralt;
-  mkc_list_set (alt->compflags, &tvalue, sizeof (mkc_value_t), &loc);
+  mkc_list_set (alt->compflags, &tvalue, sizeof (value_t), &loc);
 }
 
 void
 mkc_chk_append_link_flag (mkc_check_t *check, const char *flag)
 {
-  mkc_value_t     tvalue;
+  value_t     tvalue;
   mkc_listidx_t   loc = MKC_LIST_NOTFOUND;
   mkc_alternate_t  * alt;
 
@@ -223,11 +224,11 @@ mkc_chk_append_link_flag (mkc_check_t *check, const char *flag)
     return;
   }
 
-  mkc_value_init (&tvalue);
+  value_init (&tvalue);
   tvalue.sval = (char *) flag;
   tvalue.vtype = MKC_VT_STRING;
   alt = check->attr->curralt;
-  mkc_list_set (alt->linkflags, &tvalue, sizeof (mkc_value_t), &loc);
+  mkc_list_set (alt->linkflags, &tvalue, sizeof (value_t), &loc);
 }
 
 int
@@ -868,7 +869,7 @@ mkc_check_get_compstr (mkc_check_t *check, mkc_compiler_t compiler,
     char *buff, size_t sz)
 {
   const char    *envstr;
-  mkc_value_t   *value;
+  value_t   *value;
 
   envstr = compiler_get_env_name (compiler);
   value = mkc_pvar_get_by_profidx (check->pvar, envstr, check->pidx_internal);
@@ -879,7 +880,7 @@ mkc_check_get_compstr (mkc_check_t *check, mkc_compiler_t compiler,
 static int
 mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
 {
-  mkc_value_t       *value;
+  value_t       *value;
   char              *pkgconfpath;
   char              *tpath;
   const char        *tmp;
@@ -926,7 +927,7 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
 
   mkc_list_iter_start (check->attr->pathlist, &iteridx);
   while ((pathidx = mkc_list_iter_next (check->attr->pathlist, &iteridx)) != MKC_ITER_FINISH) {
-    mkc_value_t   *path;
+    value_t   *path;
 
     path = mkc_list_get_by_idx (check->attr->pathlist, pathidx);
     mkc_pvar_value_get_str (check->pvar, path, tpath, MKC_PATH_MAX);
@@ -969,7 +970,7 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
 
   mkc_list_iter_start (check->attr->pathlist, &iteridx);
   while ((pathidx = mkc_list_iter_next (check->attr->pathlist, &iteridx)) != MKC_ITER_FINISH) {
-    mkc_value_t   *path;
+    value_t   *path;
 
     path = mkc_list_get_by_idx (check->attr->pathlist, pathidx);
     mkc_pvar_value_get_str (check->pvar, path, tpath, MKC_PATH_MAX);
@@ -1024,7 +1025,7 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
 
   mkc_list_iter_start (check->attr->pathlist, &iteridx);
   while ((pathidx = mkc_list_iter_next (check->attr->pathlist, &iteridx)) != MKC_ITER_FINISH) {
-    mkc_value_t   *path;
+    value_t   *path;
 
     path = mkc_list_get_by_idx (check->attr->pathlist, pathidx);
     mkc_pvar_value_get_str (check->pvar, path, tpath, MKC_PATH_MAX);
@@ -1083,7 +1084,7 @@ mkc_chk_create_header_var (mkc_check_t *check)
   mkc_list_iter_start (alt->hdrlist, &iteridx);
   while ((lidx = mkc_list_iter_next (alt->hdrlist, &iteridx)) != MKC_ITER_FINISH) {
     char        tbuff [MKC_PATH_MAX];
-    mkc_value_t *lvalue;
+    value_t *lvalue;
     size_t      tlen;
 
     if (mkc_error_chk_err (check->mkcerr)) {
@@ -1129,7 +1130,7 @@ mkc_check_append_list_arg (mkc_check_t *check, mkc_list_t *list)
 
   mkc_list_iter_start (list, &iteridx);
   while ((lidx = mkc_list_iter_next (list, &iteridx)) != MKC_ITER_FINISH) {
-    mkc_value_t   *lvalue;
+    value_t   *lvalue;
 
     if (mkc_error_chk_err (check->mkcerr)) {
       break;

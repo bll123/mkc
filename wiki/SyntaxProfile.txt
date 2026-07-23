@@ -18,9 +18,8 @@ __internal__ and __default__.
 When a variable is used, _mkc_ will check the profiles in the
 following order:
 
-* local variables (foreach, functions)
+* local variables (foreach, functions, set local)
 * target / compiler
-* target
 * current-profile / compiler
 * current-profile
 * internal
