@@ -13,9 +13,8 @@
 #include "mkc_log.h"
 #include "mkc_nodiscard.h"
 #include "mkc_option.h"
-#include "mkc_profile.h"
 #include "mkc_var.h"
-#include "scope.h"
+#include "scopedvar.h"
 
 #if defined (__cplusplus) || defined (c_plusplus)
 extern "C" {
@@ -24,7 +23,7 @@ extern "C" {
 typedef struct mkc_foreach_t mkc_foreach_t;
 typedef struct mkc_process_t mkc_process_t;
 
-MKC_NODISCARD mkc_process_t *mkc_process_init (mkc_profile_t *profiles, scope_t *scope, mkc_log_t *log, mkc_context_t *context, mkc_option_t *mkcoptions, mkc_error_t *mkcerr);
+MKC_NODISCARD mkc_process_t *mkc_process_init (scopedvar_t *scope, mkc_log_t *log, mkc_context_t *context, mkc_option_t *mkcoptions, mkc_error_t *mkcerr);
 void mkc_process_free (mkc_process_t *process);
 
 void mkc_process_range_init (mkc_process_t *process, value_t *value, value_t *beg, value_t *end, value_t *incr);
@@ -70,7 +69,7 @@ int32_t mkc_process_check_flag (mkc_process_t *process, value_t *valflag, int ad
 int32_t mkc_process_chk_struct_member (mkc_process_t *process, value_t *valstructnm, value_t *valmembernm);
 int32_t mkc_process_chk_shell_extract (mkc_process_t *process, value_t *valpath);
 
-void mkc_process_local_set (mkc_process_t *process, value_t *nmval, value_t *argval, mkc_profidx_t pidx);
+void mkc_process_local_set (mkc_process_t *process, value_t *nmval, value_t *argval);
 bool mkc_process_profile_is_current (mkc_process_t *process, value_t *valnm);
 int32_t mkc_process_get_loop_limit (mkc_process_t *process);
 void mkc_process_save_cache (mkc_process_t *process);

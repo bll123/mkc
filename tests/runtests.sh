@@ -24,31 +24,33 @@ case ${systype} in
     ;;
 esac
 
-if [ $tag = win64 ]; then
-  MKCDFLTPROF="$USERPROFILE/AppData/Roaming/mkc/defaultprofile.txt"
-else
-  MKCDFLTPROF="$HOME/.config/mkc/defaultprofile.txt"
-fi
-
-if [ -f ${MKCDFLTPROF} ]; then
-  mv ${MKCDFLTPROF} ${MKCDFLTPROF}.keep
-fi
-
 test -f ${LOG} && rm -f ${LOG}
 test -d ${MKCTMP} && rm -rf ${MKCTMP}
 test -d ${MKCTMP} || mkdir -p ${MKCTMP}
 test -d ${odir} || mkdir -p ${odir}
 
-pattern="*.[sm]*"
+target=""
+STOPONFAIL=F
 while test $# -gt 0; do
   case $1 in
-    [0-9][0-9]*)
-      val=$1
-      pattern="${val}*.[sm]*"
+    --stoponfail)
+      STOPONFAIL=T
+      shift
+      ;;
+    *)
+      target=$1
       shift
       ;;
   esac
 done
+
+pattern="*.[sm]*"
+case $target in
+  [0-9][0-9]*)
+    val=$target
+    pattern="${val}*.[sm]*"
+    ;;
+esac
 
 for tnm in ${tdir}/${pattern}; do
   case ${tnm} in
@@ -78,10 +80,17 @@ for tnm in ${tdir}/${pattern}; do
   ottype=${ttype}
   dotest ${tnm}
   rc=$?
+  if [ \( $STOPONFAIL = T \) -a \( $rc -ne 0 \) ]; then
+    exit $rc
+  fi
   if [ $rc -ne 0 ]; then continue; fi
   if [ $ottype = mkc ]; then
     # shell scripts run their own diff...
     dodiff
+    rc=$?
+    if [ \( $STOPONFAIL = T \) -a \( $rc -ne 0 \) ]; then
+      exit $rc
+    fi
   fi
   testfin
 
@@ -91,13 +100,18 @@ for tnm in ${tdir}/${pattern}; do
       echo "== $tnm (cache)"
       echo "== $tnm (cache)" >> ${LOG}
       dotest ${tnm}
+      rc=$?
+      if [ \( $STOPONFAIL = T \) -a \( $rc -ne 0 \) ]; then
+        exit $rc
+      fi
       if [ $rc -ne 0 ]; then continue; fi
       dodiff
+      rc=$?
+      if [ \( $STOPONFAIL = T \) -a \( $rc -ne 0 \) ]; then
+        exit $rc
+      fi
       testfin
     fi
   fi
 done
 
-if [ -f ${MKCDFLTPROF}.keep ]; then
-  mv ${MKCDFLTPROF}.keep ${MKCDFLTPROF}
-fi

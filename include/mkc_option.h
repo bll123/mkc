@@ -12,7 +12,6 @@ extern "C" {
 
 typedef struct mkc_option_t {
   char        * dfltprofile;
-  const char  * compilertxt;
   const char  * stage;
   const char  * prefix;
   bool        retest;

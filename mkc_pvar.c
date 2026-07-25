@@ -23,7 +23,7 @@
 
 typedef struct mkc_pvar_t {
   mkc_profile_t   * profiles;
-  scope_t         * scope;
+  scopedvar_t         * scope;
   mkc_error_t     * mkcerr;
   mkc_log_t       * log;
   mkc_profidx_t   pidx_temp;
@@ -37,7 +37,7 @@ static value_t * mkc_pvar_get_value (mkc_pvar_t *pvar, const char *vname);
 
 MKC_NODISCARD
 mkc_pvar_t *
-mkc_pvar_init (mkc_profile_t *profiles, scope_t *scope, mkc_log_t *log, mkc_error_t *mkcerr)
+mkc_pvar_init (mkc_profile_t *profiles, scopedvar_t *scope, mkc_log_t *log, mkc_error_t *mkcerr)
 {
   mkc_pvar_t  *pvar;
 

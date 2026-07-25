@@ -36,7 +36,7 @@
 #include "mkc_util.h"
 #include "mkc_var.h"      // for debugging
 #include "pathutil.h"
-#include "scope.h"
+#include "scopedvar.h"
 #include "tmutil.h"
 #include "toposort.h"
 #include "value.h"
@@ -63,13 +63,11 @@ typedef struct mkc_foreach_t {
   mkc_list_t      *namelist;
   value_t         *listval;      // list or range
   value_t         tvalue;
-  mkc_profidx_t   plocalidx;
   mkc_listidx_t   iteridx;
 } mkc_foreach_t;
 
 typedef struct mkc_process_t {
-  mkc_profile_t     * profiles;
-  scope_t           * scope;
+  scopedvar_t       * scopedvar;
   mkc_check_t       * check;
   mkc_context_t     * context;
   mkc_error_t       * mkcerr;
@@ -89,11 +87,6 @@ typedef struct mkc_process_t {
   mkc_compiler_id_t compid;
   mkc_lib_loc_t     libloc;
   mkc_header_t      headertype;
-  mkc_profidx_t     pidx_curr_comp;
-  mkc_profidx_t     pidx_internal;
-  mkc_profidx_t     pidx_temp;
-  mkc_profidx_t     pidx_ts;
-  mkc_profidx_t     pidx_deps;
   bool              variadicmacro;
   bool              cacheloaded;
   bool              cacheinvalidated;
@@ -220,18 +213,18 @@ static void mkc_process_source_file (mkc_process_t *process, const char *target,
 
 MKC_NODISCARD
 mkc_process_t *
-mkc_process_init (mkc_profile_t *profiles, scope_t *scope, mkc_log_t *log,
-    mkc_context_t *context, mkc_option_t *mkcoptions, mkc_error_t *mkcerr)
+mkc_process_init (scopedvar_t *scopedvar,
+    mkc_log_t *log, mkc_context_t *context,
+    mkc_option_t *mkcoptions, mkc_error_t *mkcerr)
 {
   mkc_process_t     *process;
-  mkc_profidx_t     pidx;
   int               rc;
 
   process = malloc (sizeof (mkc_process_t));
 
-  process->profiles = profiles;
-  process->scope = scope;
-  process->dfltcompiler = mkc_profile_get_dflt_compiler (profiles);
+  process->scopedvar = scopedvar;
+  /* at this point, the default compiler is not known */
+  process->dfltcompiler = MKC_COMPILER_C;
   process->log = log;
   process->context = context;
   process->mkcoptions = mkcoptions;
@@ -271,21 +264,8 @@ mkc_process_init (mkc_profile_t *profiles, scope_t *scope, mkc_log_t *log,
   process->attr.headertype = process->headertype;
   process->variadicmacro = MKC_VARIADIC_MACRO_SUPPORTED;
 
-  pidx = mkc_profile_get_active (process->profiles);
-  process->pidx_curr_comp = pidx;
-
-  process->pidx_internal = mkc_profile_find (process->profiles,
-      MKC_C_PROF_INTERNAL_NAME, MKC_COMPILER_GENERAL);
-
-  process->pidx_temp = mkc_profile_find (process->profiles,
-      MKC_C_PROF_TEMP_NAME, MKC_COMPILER_GENERAL);
-  process->pidx_ts = mkc_profile_find (process->profiles,
-      MKC_C_PROF_TIMESTAMP_NAME, MKC_COMPILER_GENERAL);
-  process->pidx_deps = mkc_profile_find (process->profiles,
-      MKC_C_PROF_DEPENDENCIES_NAME, MKC_COMPILER_GENERAL);
-
-  process->check = mkc_check_init (process->profiles, process->scope,
-      &process->attr, log, process->pidx_curr_comp, mkcerr);
+  process->check = mkc_check_init (process->scopedvar,
+      &process->attr, log, mkcerr);
   if (process->check == NULL) {
     mkc_process_free (process);
     return NULL;
@@ -345,7 +325,7 @@ mkc_process_condition (mkc_process_t *process, value_t *value)
     return 0;
   }
 
-  rval = scope_value_get_integer (process->scope, value);
+  rval = scopedvar_value_get_integer (process->scopedvar, value);
   return rval;
 }
 
@@ -355,9 +335,9 @@ mkc_process_range_init (mkc_process_t *process,
 {
   int32_t     ibeg, iend, iincr;
 
-  ibeg = scope_value_get_integer (process->scope, beg);
-  iend = scope_value_get_integer (process->scope, end);
-  iincr = scope_value_get_integer (process->scope, incr);
+  ibeg = scopedvar_value_get_integer (process->scopedvar, beg);
+  iend = scopedvar_value_get_integer (process->scopedvar, end);
+  iincr = scopedvar_value_get_integer (process->scopedvar, incr);
   if (mkc_error_chk_err (process->mkcerr)) {
     return;
   }
@@ -381,8 +361,8 @@ mkc_process_num_op (mkc_process_t *process, mkc_astnode_token_t asttype,
       value_to_str (vala, tbuff, sizeof (tbuff)));
   mkc_log (process->log, MKC_LOG_PROCESS, "  p-num-op-b: %s\n",
       value_to_str (valb, tbuff, sizeof (tbuff)));
-  ivala = scope_value_get_integer (process->scope, vala);
-  ivalb = scope_value_get_integer (process->scope, valb);
+  ivala = scopedvar_value_get_integer (process->scopedvar, vala);
+  ivalb = scopedvar_value_get_integer (process->scopedvar, valb);
   if (mkc_error_chk_err (process->mkcerr)) {
     return 0;
   }
@@ -469,8 +449,8 @@ mkc_process_str_op (mkc_process_t *process, mkc_astnode_token_t asttype,
       value_to_str (vala, stra, sizeof (stra)));
   mkc_log (process->log, MKC_LOG_PROCESS, "  p-str-op-b: %s\n",
       value_to_str (valb, strb, sizeof (strb)));
-  scope_value_get_str (process->scope, vala, stra, sizeof (stra));
-  scope_value_get_str (process->scope, valb, strb, sizeof (strb));
+  scopedvar_value_get_str (process->scopedvar, vala, stra, sizeof (stra));
+  scopedvar_value_get_str (process->scopedvar, valb, strb, sizeof (strb));
   if (mkc_error_chk_err (process->mkcerr)) {
     return 0;
   }
@@ -541,7 +521,7 @@ mkc_process_unary_op (mkc_process_t *process, mkc_astnode_token_t asttype,
     return 0;
   }
 
-  ivala = scope_value_get_integer (process->scope, vala);
+  ivala = scopedvar_value_get_integer (process->scopedvar, vala);
   if (mkc_error_chk_err (process->mkcerr)) {
     return 0;
   }
@@ -597,23 +577,23 @@ mkc_process_other_op (mkc_process_t *process, mkc_astnode_token_t asttype,
 
   switch (iasttype) {
     case MKC_T_OP_FILE_EXISTS: {
-      scope_value_get_str (process->scope, vala, tbuff, MKC_PATH_MAX);
+      scopedvar_value_get_str (process->scopedvar, vala, tbuff, MKC_PATH_MAX);
       result = fileop_exists (tbuff);
       break;
     }
     case MKC_T_OP_IS_DEFINED: {
-      scope_value_get_str (process->scope, vala, tbuff, MKC_PATH_MAX);
-      result = scope_is_defined (process->scope, tbuff);
+      scopedvar_value_get_str (process->scopedvar, vala, tbuff, MKC_PATH_MAX);
+      result = scopedvar_is_defined (process->scopedvar, tbuff);
       break;
     }
     case MKC_T_OP_IS_DIRECTORY: {
-      scope_value_get_str (process->scope, vala, tbuff, MKC_PATH_MAX);
+      scopedvar_value_get_str (process->scopedvar, vala, tbuff, MKC_PATH_MAX);
       result = fileop_is_directory (tbuff);
       break;
     }
     case MKC_T_OP_IS_LIST: {
-      scope_value_get_str (process->scope, vala, tbuff, MKC_PATH_MAX);
-      result = scope_var_is_list (process->scope, tbuff);
+      scopedvar_value_get_str (process->scopedvar, vala, tbuff, MKC_PATH_MAX);
+      result = scopedvar_var_is_list (process->scopedvar, tbuff);
       break;
     }
     default: {
@@ -652,7 +632,7 @@ mkc_process_include (mkc_process_t *process,
     return;
   }
 
-  scope_value_get_str (process->scope, valfn, fname, MKC_PATH_MAX);
+  scopedvar_value_get_str (process->scopedvar, valfn, fname, MKC_PATH_MAX);
   if (fileop_exists (fname)) {
     p = stpecpy (p, buff + sz, fname);
     free (fname);
@@ -666,7 +646,7 @@ mkc_process_include (mkc_process_t *process,
   }
 
   if (valpath != NULL) {
-    scope_value_get_str (process->scope, valpath, tbuff, MKC_PATH_MAX);
+    scopedvar_value_get_str (process->scopedvar, valpath, tbuff, MKC_PATH_MAX);
     p = stpecpy (p, buff + sz, tbuff);
     p = stpecpy (p, buff + sz, "/");
     p = stpecpy (p, buff + sz, fname);
@@ -712,7 +692,7 @@ mkc_process_stmt_foreach_setup (mkc_process_t *process,
     return NULL;
   }
 
-  pforeach->plocalidx = mkc_profile_local_create (process->profiles);
+  scopedvar_push (process->scopedvar, SV_T_LOCAL, "local-foreach");
   pforeach->namelist = NULL;
   pforeach->listval = NULL;
   pforeach->iteridx = MKC_ITER_FINISH;
@@ -726,14 +706,14 @@ mkc_process_stmt_foreach_setup (mkc_process_t *process,
       return NULL;
     }
 
-    value = scope_value_get_list_value (process->scope, valnm);
+    value = scopedvar_value_get_list_value (process->scopedvar, valnm);
     pforeach->namelist = value->list;
   }
   if (vallist != NULL) {
     value_t   *value;
 
     value = vallist;
-    pforeach->listval = scope_value_get_list_value (process->scope, vallist);
+    pforeach->listval = scopedvar_value_get_list_value (process->scopedvar, vallist);
     value_iter_start (value, &pforeach->iteridx);
   }
 
@@ -759,7 +739,7 @@ mkc_process_stmt_foreach (mkc_process_t *process, mkc_foreach_t *pforeach)
       cont = false;
       break;
     }
-    mkc_process_local_set (process, nval, &pforeach->tvalue, pforeach->plocalidx);
+    mkc_process_local_set (process, nval, &pforeach->tvalue);
   }
 
   return cont;
@@ -768,8 +748,8 @@ mkc_process_stmt_foreach (mkc_process_t *process, mkc_foreach_t *pforeach)
 void
 mkc_process_stmt_foreach_finish (mkc_process_t *process, mkc_foreach_t *pforeach)
 {
+  scopedvar_pop (process->scopedvar);
   free (pforeach);
-  mkc_profile_local_pop (process->profiles);
 }
 
 /* statements */
@@ -820,8 +800,8 @@ mkc_process_stmt_chk_inc_compile (mkc_process_t *process)
   cflags = mkc_process_get_flags (process, MKC_C_CFLAGS);
 
   ts = 0;
-  if (scope_is_defined (process->scope, MKC_C_CHK_INC_COMPILE_TS)) {
-    ts = scope_get_timestamp (process->scope, MKC_C_CHK_INC_COMPILE_TS);
+  if (scopedvar_is_defined (process->scopedvar, MKC_C_CHK_INC_COMPILE_TS)) {
+    ts = scopedvar_get_timestamp (process->scopedvar, MKC_C_CHK_INC_COMPILE_TS);
   }
   hlist = mkc_process_get_include_list (process, rx, &ts);
 
@@ -903,10 +883,10 @@ mkc_process_stmt_chk_inc_deps (mkc_process_t *process)
   hlist = mkc_process_get_include_list (process, rx, &ts);
   /* ts now holds the timestamp of the latest modification time in ms */
 
-  if (scope_is_defined (process->scope, MKC_C_CHK_INC_DEPS_TS)) {
+  if (scopedvar_is_defined (process->scopedvar, MKC_C_CHK_INC_DEPS_TS)) {
     time_t        cachedts;
 
-    cachedts = scope_get_timestamp (process->scope, MKC_C_CHK_INC_DEPS_TS);
+    cachedts = scopedvar_get_timestamp (process->scopedvar, MKC_C_CHK_INC_DEPS_TS);
 
     if (cachedts > ts) {
       mkc_message ("-- cached: check_include_dependencies\n");
@@ -1032,10 +1012,10 @@ mkc_process_stmt_chk_inc_guards (mkc_process_t *process)
 
   hlist = mkc_process_get_include_list (process, rx, &ts);
 
-  if (scope_is_defined (process->scope, MKC_C_CHK_INC_GUARDS_TS)) {
+  if (scopedvar_is_defined (process->scopedvar, MKC_C_CHK_INC_GUARDS_TS)) {
     time_t    cachedts;
 
-    cachedts = scope_get_timestamp (process->scope, MKC_C_CHK_INC_GUARDS_TS);
+    cachedts = scopedvar_get_timestamp (process->scopedvar, MKC_C_CHK_INC_GUARDS_TS);
 
     if (cachedts > ts) {
       mkc_message ("-- cached: check_include_guards\n");
@@ -1151,7 +1131,7 @@ mkc_process_stmt_debug (mkc_process_t *process,
 {
   char    tbuff [MKC_VNAME_MAX];
 
-  scope_value_get_str (process->scope, value, tbuff, sizeof (tbuff));
+  scopedvar_value_get_str (process->scopedvar, value, tbuff, sizeof (tbuff));
 
   if (strcmp (tbuff, "null") == 0) {
     /* do nothing */ ;
@@ -1160,7 +1140,7 @@ mkc_process_stmt_debug (mkc_process_t *process,
     mkc_process_dbg_print_prof (process);
   }
   if (strcmp (tbuff, "printvar") == 0) {
-    scope_value_get_str (process->scope, subvalue, tbuff, sizeof (tbuff));
+    scopedvar_value_get_str (process->scopedvar, subvalue, tbuff, sizeof (tbuff));
     mkc_process_dbg_print_var (process, tbuff);
   }
   if (strcmp (tbuff, "printpath") == 0) {
@@ -1178,18 +1158,15 @@ mkc_process_stmt_executable (mkc_process_t *process, value_t *valnm)
 {
   char            nm [MKC_VNAME_MAX];
   char            execnm [MKC_VNAME_MAX];
-  mkc_profidx_t   pidx_target;
   mkc_listidx_t   siteridx;
   mkc_listidx_t   sidx;
   char            *tbuff;
 
 
-  scope_value_get_str (process->scope, valnm, nm, sizeof (nm));
+  scopedvar_value_get_str (process->scopedvar, valnm, nm, sizeof (nm));
   snprintf (execnm, sizeof (execnm), "%s%s", nm, process->exeext);
-fprintf (stderr, "== execnm: %s\n", execnm);
 
-  pidx_target = mkc_profile_create (process->profiles, nm,
-      process->dfltcompiler, MKC_PROF_TYPE_TARGET);
+  scopedvar_push (process->scopedvar, SV_T_TARGET, execnm);
 
   tbuff = malloc (MKC_PATH_MAX);
   if (tbuff == NULL) {
@@ -1206,7 +1183,7 @@ fprintf (stderr, "== execnm: %s\n", execnm);
     }
 
     src = mkc_list_get_by_idx (process->attr.sourcelist, sidx);
-    scope_value_get_str (process->scope, src, tbuff, MKC_PATH_MAX);
+    scopedvar_value_get_str (process->scopedvar, src, tbuff, MKC_PATH_MAX);
     mkc_process_source_file (process, execnm, tbuff);
   }
 
@@ -1218,7 +1195,6 @@ void
 mkc_process_stmt_function_call (mkc_process_t *process,
     value_t *valparams, value_t *valfuncargs)
 {
-  mkc_profidx_t   plocalidx;
   mkc_list_t      *paramlist = NULL;
   mkc_list_t      *alist = NULL;
   mkc_listidx_t   aiteridx;
@@ -1226,12 +1202,12 @@ mkc_process_stmt_function_call (mkc_process_t *process,
   mkc_listidx_t   aidx;
   mkc_listidx_t   nmidx;
 
-  plocalidx = mkc_profile_local_create (process->profiles);
+  scopedvar_push (process->scopedvar, SV_T_LOCAL, "local-function");
 
   if (valparams != NULL) {
     value_t   *value;
 
-    value = scope_value_get_list_value (process->scope, valparams);
+    value = scopedvar_value_get_list_value (process->scopedvar, valparams);
     if (value->vtype == MKC_VT_RANGE) {
       mkc_error_set (process->mkcerr, MKC_ERR_MISMATCHED_ARGUMENT_TYPE, 0, NULL);
       return;
@@ -1240,7 +1216,7 @@ mkc_process_stmt_function_call (mkc_process_t *process,
   }
   if (valfuncargs != NULL) {
     value_t   *value = NULL;
-    value = scope_value_get_list_value (process->scope, valfuncargs);
+    value = scopedvar_value_get_list_value (process->scopedvar, valfuncargs);
     alist = value->list;
   }
   if ((alist == NULL && paramlist != NULL) ||
@@ -1266,14 +1242,14 @@ mkc_process_stmt_function_call (mkc_process_t *process,
 
     aval = mkc_list_get_by_idx (alist, aidx);
     nmval = mkc_list_get_by_idx (paramlist, nmidx);
-    mkc_process_local_set (process, nmval, aval, plocalidx);
+    mkc_process_local_set (process, nmval, aval);
   }
 }
 
 void
 mkc_process_stmt_function_call_finish (mkc_process_t *process)
 {
-  mkc_profile_local_pop (process->profiles);
+  scopedvar_pop (process->scopedvar);
 }
 
 /* this function is called twice.  once with fromcache == true, */
@@ -1284,7 +1260,7 @@ mkc_process_stmt_loadcache (mkc_process_t *process,
 {
   int     version;
 
-  version = scope_value_get_integer (process->scope, valvers);
+  version = scopedvar_value_get_integer (process->scopedvar, valvers);
   if (version != 1) {
     mkc_message ("-- cache version mismatch\n");
     mkc_process_attr_clear (process);
@@ -1295,7 +1271,7 @@ mkc_process_stmt_loadcache (mkc_process_t *process,
     process->cacheloaded = true;
   }
 
-  scope_set_fromcache (process->scope, fromcache);
+  scopedvar_set_fromcache (process->scopedvar, fromcache);
 
   if (! fromcache && process->cacheloaded && process->cacheinvalidated) {
 // ### fix
@@ -1331,8 +1307,8 @@ mkc_process_stmt_mark (mkc_process_t *process,
     return;
   }
 
-  scope_value_get_str (process->scope, vala, nm, sizeof (nm));
-  scope_value_get_str (process->scope, valb, val, sizeof (val));
+  scopedvar_value_get_str (process->scopedvar, vala, nm, sizeof (nm));
+  scopedvar_value_get_str (process->scopedvar, valb, val, sizeof (val));
   if (*nm == '\0') {
     mkc_error_set (process->mkcerr, MKC_ERR_INVALID_ARGUMENT, 0, NULL);
     mkc_process_attr_clear (process);
@@ -1340,10 +1316,10 @@ mkc_process_stmt_mark (mkc_process_t *process,
   }
   if (strcmp (val, "disable-output") == 0 ||
       strcmp (val, "disable") == 0) {
-    scope_set_context (process->scope, nm, MKC_VCTXT_USER_DISABLE);
+    scopedvar_set_context (process->scopedvar, nm, MKC_VCTXT_USER_DISABLE);
   } else if (strcmp (val, "enable-output") == 0 ||
       strcmp (val, "enable") == 0) {
-    scope_set_context (process->scope, nm, MKC_VCTXT_USER_ENABLE);
+    scopedvar_set_context (process->scopedvar, nm, MKC_VCTXT_USER_ENABLE);
   } else {
     mkc_error_set (process->mkcerr, MKC_ERR_PROC_INVALID_MARK, 0, NULL);
   }
@@ -1365,7 +1341,7 @@ mkc_process_stmt_print (mkc_process_t *process, value_t *value, int depth)
     return;
   }
 
-  scope_value_get_str (process->scope, value, tbuff, sizeof (tbuff));
+  scopedvar_value_get_str (process->scopedvar, value, tbuff, sizeof (tbuff));
   fprintf (stdout, "%s", tbuff);
 
   if (depth == 0) {
@@ -1378,29 +1354,20 @@ void
 mkc_process_stmt_profile (mkc_process_t *process, value_t *valnm)
 {
   char              nm [MKC_VNAME_MAX];
-  mkc_profidx_t     pidx;
 
-  scope_value_get_str (process->scope, valnm, nm, sizeof (nm));
-
-  mkc_profile_push (process->profiles);
-  /* the attribute for the profile is not yet set. */
-  pidx = mkc_profile_find (process->profiles, nm, MKC_COMPILER_GENERAL);
-
-  if (pidx == MKC_PROF_NOT_FOUND) {
-    /* has to be a type-current */
-    pidx = mkc_profile_create (process->profiles, nm,
-        MKC_COMPILER_GENERAL, MKC_PROF_TYPE_CURRENT);
-  }
+  scopedvar_value_get_str (process->scopedvar, valnm, nm, sizeof (nm));
+  scopedvar_set_active_profile (process->scopedvar, nm);
+  /* if a compiler is set, it has not yet been processed */
 }
 
 void
 mkc_process_stmt_profile_post (mkc_process_t *process)
 {
-  mkc_profidx_t   pidx;
+  const char  *profnm;
 
-  pidx = mkc_profile_pop (process->profiles);
-  mkc_profile_set_active (process->profiles, pidx);
-  process->attr.currcompiler = MKC_COMPILER_GENERAL;
+  profnm = scopedvar_get_current_profile (process->scopedvar);
+  /* this will also set the active profile */
+  scopedvar_set_current_profile (process->scopedvar, profnm, MKC_COMPILER_GENERAL);
 }
 
 void
@@ -1420,14 +1387,14 @@ mkc_process_stmt_project (mkc_process_t *process)
   process->dfltcompiler = process->attr.currcompiler;
 
 //  mkc_pvar_profile_select_idx (process->pvar, process->pidx_internal);
-  scope_set_str (process->scope, SCOPE_T_INTERNAL,
+  scopedvar_set_str (process->scopedvar, SV_T_INTERNAL,
       MKC_C_PROJECT_NAME, process->projectname, MKC_VCTXT_MKC);
   if (process->attr.str [MKC_ATTR_VERSION] != NULL) {
-    scope_set_str (process->scope, SCOPE_T_INTERNAL,
+    scopedvar_set_str (process->scopedvar, SV_T_INTERNAL,
         MKC_C_PROJECT_VERS, process->attr.str [MKC_ATTR_VERSION], MKC_VCTXT_MKC);
   }
   if (process->attr.str [MKC_ATTR_LIB_VERSION] != NULL) {
-    scope_set_str (process->scope, SCOPE_T_INTERNAL,
+    scopedvar_set_str (process->scopedvar, SV_T_INTERNAL,
         MKC_C_PROJECT_LIB_VERS, process->attr.str [MKC_ATTR_LIB_VERSION], MKC_VCTXT_MKC);
   }
 //  mkc_pvar_profile_select_idx (process->pvar, pidx);
@@ -1456,14 +1423,14 @@ mkc_process_stmt_set (mkc_process_t *process,
     return trc;
   }
 
-  scope_value_get_str (process->scope, valnm, nm, sizeof (nm));
+  scopedvar_value_get_str (process->scopedvar, valnm, nm, sizeof (nm));
   if (*nm == '\0') {
     mkc_error_set (process->mkcerr, MKC_ERR_INVALID_ARGUMENT, 0, NULL);
     mkc_process_attr_clear (process);
     return trc;
   }
 
-  tvalue = scope_value_get_value (process->scope, value);
+  tvalue = scopedvar_value_get_value (process->scopedvar, value);
   if (mkc_error_chk_err (process->mkcerr)) {
     mkc_process_attr_clear (process);
     return trc;
@@ -1493,7 +1460,7 @@ mkc_process_stmt_set (mkc_process_t *process,
     }
   }
 
-  trc = scope_set (process->scope, SCOPE_T_IN_SCOPE, nm, tvalue, vctxt);
+  trc = scopedvar_set (process->scopedvar, SV_T_SEARCH, nm, tvalue, vctxt);
   if (trc == MKC_OK_CHANGE) {
     process->cacheinvalidated = true;
   }
@@ -1501,7 +1468,7 @@ mkc_process_stmt_set (mkc_process_t *process,
   /* tvalue may have been re-allocated, only call temp-value-free */
   /* if the tvalue was allocated */
   if (istempval) {
-    scope_temp_value_free (tvalue);
+    scopedvar_temp_value_free (tvalue);
   }
 
   mkc_process_attr_clear (process);
@@ -1572,7 +1539,7 @@ mkc_process_attribute (mkc_process_t *process, value_t *valname,
 
   *nm = '\0';
   if (valname != NULL) {
-    scope_value_get_str (process->scope, valname, nm, sizeof (nm));
+    scopedvar_value_get_str (process->scopedvar, valname, nm, sizeof (nm));
   }
 
   switch (iasttype) {
@@ -1637,8 +1604,6 @@ void
 mkc_process_attr_compiler (mkc_process_t *process, value_t *name)
 {
   char            nm [MKC_VNAME_MAX];
-  const char      *profnm;
-  mkc_profidx_t   pidx;
 
   if (process == NULL) {
     return;
@@ -1652,31 +1617,21 @@ mkc_process_attr_compiler (mkc_process_t *process, value_t *name)
     return;
   }
 
-  scope_value_get_str (process->scope, name, nm, sizeof (nm));
+  scopedvar_value_get_str (process->scopedvar, name, nm, sizeof (nm));
   if (mkc_context_check (process->context, MKC_CONTEXT_PROJECT)) {
     /* if in a project statement, the default compiler is set */
     process->dfltcompiler = compiler_get_id (nm);
-    mkc_profile_set_dflt_compiler (process->profiles, process->dfltcompiler);
+    scopedvar_set_default_compiler (process->scopedvar, process->dfltcompiler);
   }
 
   process->attr.currcompiler = compiler_get_id (nm);
 
-  pidx = mkc_profile_get_active (process->profiles);
-  profnm = mkc_profile_get_name (process->profiles, pidx);
-
-  if (strcmp (profnm, MKC_C_PROF_INTERNAL_NAME) == 0) {
-    mkc_error_set (process->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
-    return;
-  }
-
-  pidx = mkc_profile_find (process->profiles, profnm, process->attr.currcompiler);
-  if (pidx == MKC_PROF_NOT_FOUND) {
-    pidx = mkc_profile_create (process->profiles, profnm,
-        process->attr.currcompiler, MKC_PROF_TYPE_CURRENT);
-  }
-
   if (mkc_context_check (process->context, MKC_CONTEXT_PROFILE)) {
-    mkc_profile_set_active (process->profiles, pidx);
+    const char  *profnm;
+
+    scopedvar_set_current_compiler (process->scopedvar, process->attr.currcompiler);
+    profnm = scopedvar_get_current_profile (process->scopedvar);
+    scopedvar_set_current_profile (process->scopedvar, profnm, process->attr.currcompiler);
   }
 }
 
@@ -1830,16 +1785,18 @@ mkc_process_attr_source (mkc_process_t *process, value_t *value)
 bool
 mkc_process_profile_is_current (mkc_process_t *process, value_t *valnm)
 {
-  char              nm [MKC_VNAME_MAX];
-  bool              rc = false;
+  char          nm [MKC_VNAME_MAX];
+  bool          rc = false;
+  const char    *profnm;
 
   if (process == NULL) {
     return false;
   }
 
-  scope_value_get_str (process->scope, valnm, nm, sizeof (nm));
+  scopedvar_value_get_str (process->scopedvar, valnm, nm, sizeof (nm));
+  profnm = scopedvar_get_current_profile (process->scopedvar);
+  rc = strcmp (profnm, nm);
 
-  rc = mkc_profile_is_current (process->profiles, nm);
   return rc;
 }
 
@@ -1851,7 +1808,7 @@ mkc_process_check (mkc_process_t *process, value_t *valconst,
   char        tnm [MKC_VNAME_MAX];
   char        txt [MKC_VNAME_MAX];
   char        pfx [MKC_VNAME_MAX];
-  scope_t     *scope;
+  scopedvar_t     *scope;
   int         iasttype = asttype;
   bool        successtype = false;
   bool        valtype = false;
@@ -1860,8 +1817,8 @@ mkc_process_check (mkc_process_t *process, value_t *valconst,
     return MKC_ERR_FAILURE;
   }
 
-  scope = process->scope;
-  scope_value_get_str (scope, valconst, txt, sizeof (txt));
+  scope = process->scopedvar;
+  scopedvar_value_get_str (scope, valconst, txt, sizeof (txt));
   snprintf (pfx, sizeof (pfx), "_%s_", typenames [asttype]);
   mkc_process_create_name (process, asttype, tnm, sizeof (tnm), pfx, txt, NULL);
 
@@ -1922,7 +1879,7 @@ mkc_process_check (mkc_process_t *process, value_t *valconst,
     /* the check returns 0 on success */
     /* convert this to a boolean */
 
-    scope_set_integer (scope, SCOPE_T_IN_SCOPE, tnm, rc == 0 ? true : false, MKC_VCTXT_CHECK);
+    scopedvar_set_integer (scope, SV_T_SEARCH, tnm, rc == 0 ? true : false, MKC_VCTXT_CHECK);
     mkc_message ("-- check %s: %s : %s - %s\n",
         typenames [asttype], txt, tnm, mkc_success_msg (rc));
     mkc_log (process->log, MKC_LOG_CHECK, "-- check %s: %s : %s - %s\n",
@@ -1930,7 +1887,7 @@ mkc_process_check (mkc_process_t *process, value_t *valconst,
   }
   if (valtype) {
     /* the check is run, and the return code is a value */
-    scope_set_integer (scope, SCOPE_T_IN_SCOPE, tnm, rc, MKC_VCTXT_CHECK);
+    scopedvar_set_integer (scope, SV_T_SEARCH, tnm, rc, MKC_VCTXT_CHECK);
     mkc_message ("-- check %s: %s : %s : %d\n", typenames [asttype], txt, tnm, rc);
     mkc_log (process->log, MKC_LOG_CHECK,
         "-- check %s: %s : %s : %d\n", typenames [asttype], txt, tnm, rc);
@@ -1948,15 +1905,15 @@ mkc_process_check_flag (mkc_process_t *process,
   char        tnm [MKC_VNAME_MAX];
   char        flag [MKC_VNAME_MAX];
   const char  *pfx = NULL;
-  scope_t     *scope;
+  scopedvar_t     *scope;
   int         iasttype = asttype;
 
   if (process == NULL) {
     return MKC_ERR_FAILURE;
   }
 
-  scope = process->scope;
-  scope_value_get_str (scope, valflag, flag, sizeof (flag));
+  scope = process->scopedvar;
+  scopedvar_value_get_str (scope, valflag, flag, sizeof (flag));
 
   if (! *flag) {
     /* empty flags are ignored */
@@ -1991,11 +1948,11 @@ mkc_process_check_flag (mkc_process_t *process,
   process->attr.negate = false;
 
   if (rc == 0) {
-    scope_set_str (scope, SCOPE_T_IN_SCOPE, tnm, flag, MKC_VCTXT_FLAG);
+    scopedvar_set_str (scope, SV_T_SEARCH, tnm, flag, MKC_VCTXT_FLAG);
 
     switch (iasttype) {
       case MKC_T_CHK_COMP_FLAG: {
-        scope_append_str_list (process->scope, SCOPE_T_IN_SCOPE,
+        scopedvar_append_str_list (process->scopedvar, SV_T_SEARCH,
             MKC_C_CFLAGS, flag, MKC_VCTXT_MKC);
         break;
       }
@@ -2006,7 +1963,7 @@ mkc_process_check_flag (mkc_process_t *process,
             strncmp (flag, "-l", 2) == 0) {
           nm = MKC_C_LIBS;
         }
-        scope_append_str_list (process->scope, SCOPE_T_IN_SCOPE,
+        scopedvar_append_str_list (process->scopedvar, SV_T_SEARCH,
             nm, flag, MKC_VCTXT_MKC);
         break;
       }
@@ -2037,16 +1994,16 @@ mkc_process_chk_struct_member (mkc_process_t *process,
   char        tnm [MKC_VNAME_MAX];
   char        structname [MKC_VNAME_MAX];
   char        membername [MKC_VNAME_MAX];
-  scope_t     *scope;
+  scopedvar_t     *scope;
   char        tmpdisp [MKC_VNAME_MAX * 2];
 
   if (process == NULL) {
     return MKC_ERR_FAILURE;
   }
 
-  scope = process->scope;
-  scope_value_get_str (scope, valstructnm, structname, sizeof (structname));
-  scope_value_get_str (scope, valmembernm, membername, sizeof (membername));
+  scope = process->scopedvar;
+  scopedvar_value_get_str (scope, valstructnm, structname, sizeof (structname));
+  scopedvar_value_get_str (scope, valmembernm, membername, sizeof (membername));
   mkc_process_create_name (process, MKC_T_CHK_STRUCT_MEMBER, tnm, sizeof (tnm),
       "_member_", structname, membername, NULL);
 
@@ -2058,7 +2015,7 @@ mkc_process_chk_struct_member (mkc_process_t *process,
 
   rc = mkc_chk_struct_member (process->check,
       process->attr.currcompiler, structname, membername);
-  scope_set_integer (scope, SCOPE_T_IN_SCOPE,
+  scopedvar_set_integer (scope, SV_T_SEARCH,
       tnm, rc == 0 ? true : false, MKC_VCTXT_CHECK);
 
   mkc_message ("-- check struct member: %s.%s - %s\n",
@@ -2093,7 +2050,7 @@ mkc_process_chk_shell_extract (mkc_process_t *process, value_t *valpath)
     return rc;
   }
 
-  scope_value_get_str (process->scope, valpath, path, MKC_PATH_MAX);
+  scopedvar_value_get_str (process->scopedvar, valpath, path, MKC_PATH_MAX);
 
   if (! fileop_exists (path)) {
     return rc;
@@ -2159,12 +2116,12 @@ mkc_process_chk_shell_extract (mkc_process_t *process, value_t *valpath)
 
     /* from a shell script, the user would expect escape sequences to */
     /* be substituted */
-    tvalue = scope_substitute (process->scope, varvalue, SCOPE_SUB_ESCAPE, 0);
+    tvalue = scopedvar_substitute (process->scopedvar, varvalue, SCOPEDVAR_SUB_ESCAPE, 0);
     if (tvalue == NULL) {
       continue;
     }
 
-    scope_set_str (process->scope, SCOPE_T_IN_SCOPE, varname, tvalue, MKC_VCTXT_CHECK);
+    scopedvar_set_str (process->scopedvar, SV_T_SEARCH, varname, tvalue, MKC_VCTXT_CHECK);
 
     mkc_message ("-- shell extract %s %s\n", varname, tvalue);
     mkc_log (process->log, MKC_LOG_CHECK, "-- shell extract %s %s\n",
@@ -2185,7 +2142,7 @@ mkc_process_chk_shell_extract (mkc_process_t *process, value_t *valpath)
 
 void
 mkc_process_local_set (mkc_process_t *process, value_t *nmval,
-    value_t *argval, mkc_profidx_t pidx)
+    value_t *argval)
 {
   char            nm [MKC_VNAME_MAX];
 
@@ -2197,9 +2154,9 @@ mkc_process_local_set (mkc_process_t *process, value_t *nmval,
     return;
   }
 
-  scope_value_get_str (process->scope, nmval, nm, sizeof (nm));
+  scopedvar_value_get_str (process->scopedvar, nmval, nm, sizeof (nm));
 
-  scope_set (process->scope, SCOPE_T_LOCAL, nm, argval, MKC_VCTXT_TEMP);
+  scopedvar_set (process->scopedvar, SV_T_LOCAL, nm, argval, MKC_VCTXT_TEMP);
 }
 
 int32_t
@@ -2212,9 +2169,9 @@ mkc_process_get_loop_limit (mkc_process_t *process)
     return limit;
   }
 
-  value = scope_get_value (process->scope, SCOPE_T_INTERNAL, MKC_C_LOOPLIMIT);
+  value = scopedvar_get_value (process->scopedvar, SV_T_INTERNAL, MKC_C_LOOPLIMIT);
   if (value != NULL) {
-    limit = scope_value_get_integer (process->scope, value);
+    limit = scopedvar_value_get_integer (process->scopedvar, value);
   }
 
   return limit;
@@ -2223,15 +2180,14 @@ mkc_process_get_loop_limit (mkc_process_t *process)
 void
 mkc_process_save_cache (mkc_process_t *process)
 {
-  mkc_profidx_t   piter;
-  mkc_profile_t   *profiles;
-  mkc_profidx_t   opidx;
-  mkc_profidx_t   pidx;
-  char            *cachename;
-  FILE            *fh;
+  scopedvar_t     * scopedvar;
+  char            * cachename;
+  const char      * profname;
+  FILE            * fh;
   int             tcount = 0;
   const char      * indent = "  ";
   char            * tbuff;
+  int             sviter;
 
   if (mkc_error_chk_err (process->mkcerr)) {
     /* at this time, the cache is not saved if there was an error */
@@ -2258,64 +2214,45 @@ mkc_process_save_cache (mkc_process_t *process)
     return;
   }
 
+  scopedvar = process->scopedvar;
+
   /* version 1 */
   fprintf (fh, "load_cache %d {\n", MKC_CACHE_VERS_1);
 
-  profiles = process->profiles;
-  mkc_profile_iter_start (profiles, &piter);
-  while ((pidx = mkc_profile_iter_next (profiles, &piter)) != MKC_ITER_FINISH) {
-    const char      *compname;
-    const char      *profnm = NULL;
-//    mkc_varidx_t    viter;
-//    mkc_varidx_t    vidx;
-    int             count = 0;
-
-opidx = pidx;
+  scopedvar_iter_start (scopedvar, &sviter);
+  while ((profname = scopedvar_iter_next (scopedvar, &sviter)) != NULL) {
+    mkc_varidx_t      viter;
+    mkc_varidx_t      vidx;
+    int               count = 0;
+    scopedvar_type_t  svtype;
 
     if (mkc_error_chk_err (process->mkcerr)) {
       break;
     }
 
-    if (pidx == process->pidx_temp) {
-      continue;
-    }
+    fprintf (fh, "  profile %s {\n", profname);
+    svtype = scopedvar_iter_get_type (scopedvar, sviter);
+    if (svtype == SV_T_CURR_PROF_COMPILER) {
+      mkc_compiler_t    compiler;
 
-//    if (mkc_pvar_profile_select_idx (process->pvar, pidx) == MKC_PROF_NOT_FOUND) {
-//      continue;
-//    }
-//
-//    if (mkc_pvar_size (process->pvar) == 0) {
-//      continue;
-//    }
-
-    if (pidx == opidx) {
-      indent = "";
-    } else {
-      profnm = mkc_profile_get_name (profiles, pidx);
-      compname = mkc_profile_get_comp_name (profiles, pidx);
-      fprintf (fh, "  profile %s {\n", profnm);
-      if (strcmp (profnm, MKC_C_PROF_INTERNAL_NAME) != 0) {
-        fprintf (fh, "    compiler %s;\n", compname);
+      compiler = scopedvar_iter_get_compiler (scopedvar, sviter);
+      if (compiler != MKC_COMPILER_GENERAL) {
+        fprintf (fh, "    compiler %s;\n", compiler_get_name (compiler));
       }
-      indent = "  ";
     }
+    indent = "  ";
 
-#if 0
-    scope_iter_start (pvar, &viter);
-    while ((vidx = mkc_pvar_iter_next (pvar, &viter)) != MKC_ITER_FINISH) {
+    scopedvar_var_iter_start (scopedvar, sviter, &viter);
+    while ((vidx = scopedvar_var_iter_next (scopedvar, sviter, &viter)) != MKC_ITER_FINISH) {
       const char    *nm;
-      value_t   *value;
+      value_t       *value;
       const char    *vctxtstr = "";
 
-      nm = mkc_pvar_get_name (pvar, vidx);
-
-      value = mkc_pvar_get_by_idx (pvar, vidx);
+      nm = scopedvar_var_iter_get_name (scopedvar, sviter, vidx);
+      value = scopedvar_var_iter_get_value (scopedvar, sviter, vidx);
       value_to_str (value, tbuff, MKC_SMALL_BUFF_SZ);
-      if (profnm != NULL &&
-          (strcmp (profnm, MKC_C_PROF_TIMESTAMP_NAME) == 0 ||
-          strcmp (profnm, MKC_C_PROF_DEPENDENCIES_NAME) == 0)) {
-        fprintf (fh, "  %sset '%s' %s ", indent, nm, tbuff);
-      } else if (value->vtype == MKC_VT_INTEGER ||
+
+      if (value->vtype == MKC_VT_INTEGER ||
           value->vtype == MKC_VT_TIMESTAMP ||
           value->vtype == MKC_VT_LIST) {
         fprintf (fh, "  %sset %s %s ", indent, nm, tbuff);
@@ -2327,14 +2264,11 @@ opidx = pidx;
       ++count;
       ++tcount;
     }
-#endif
 
-    if (pidx != opidx) {
-      if (count == 0) {
-        fprintf (fh, "    ;\n");
-      }
-      fprintf (fh, "  }\n\n");
+    if (count == 0) {
+      fprintf (fh, "    ;\n");
     }
+    fprintf (fh, "  }\n\n");
     fprintf (fh, "\n");
   }
 
@@ -2472,7 +2406,7 @@ mkc_process_int_checks (mkc_process_t *process)
 
   for (mkc_compiler_id_t i = 0; i < MKC_COMP_ID_MAX; ++i) {
     if (process->compid == i) {
-      scope_set_integer (process->scope, SCOPE_T_INTERNAL, compidnames [i], true, MKC_VCTXT_MKC);
+      scopedvar_set_integer (process->scopedvar, SV_T_INTERNAL, compidnames [i], true, MKC_VCTXT_MKC);
       break;
     }
   }
@@ -2500,7 +2434,7 @@ mkc_process_int_checks (mkc_process_t *process)
 
   for (mkc_system_type_t i = 0; i < MKC_SYS_MAX; ++i) {
     if (process->systype == i) {
-      scope_set_integer (process->scope, SCOPE_T_INTERNAL, sysnames [i], true, MKC_VCTXT_MKC);
+      scopedvar_set_integer (process->scopedvar, SV_T_INTERNAL, sysnames [i], true, MKC_VCTXT_MKC);
       break;
     }
   }
@@ -2513,30 +2447,30 @@ mkc_process_int_checks (mkc_process_t *process)
     process->objext = ".obj";
     process->exeext = ".exe";
   }
-  scope_set_str (process->scope, SCOPE_T_INTERNAL,
+  scopedvar_set_str (process->scopedvar, SV_T_INTERNAL,
       MKC_C_OBJEXT, process->objext, MKC_VCTXT_MKC);
-  scope_set_str (process->scope, SCOPE_T_INTERNAL,
+  scopedvar_set_str (process->scopedvar, SV_T_INTERNAL,
       MKC_C_EXEEXT, process->exeext, MKC_VCTXT_MKC);
 
   /* shared library extension : internal */
 
   /* default is .so */
-  scope_set_str (process->scope, SCOPE_T_INTERNAL,
+  scopedvar_set_str (process->scopedvar, SV_T_INTERNAL,
       MKC_C_SHLIBEXT, ".so", MKC_VCTXT_MKC);
   isystype = process->systype;
   switch (isystype) {
     case MKC_SYS_AIX: {
-      scope_set_str (process->scope, SCOPE_T_INTERNAL,
+      scopedvar_set_str (process->scopedvar, SV_T_INTERNAL,
           MKC_C_SHLIBEXT, ".a", MKC_VCTXT_MKC);
       break;
     }
     case MKC_SYS_MACOS: {
-      scope_set_str (process->scope, SCOPE_T_INTERNAL,
+      scopedvar_set_str (process->scopedvar, SV_T_INTERNAL,
           MKC_C_SHLIBEXT, ".dylib", MKC_VCTXT_MKC);
       break;
     }
     case MKC_SYS_WINDOWS: {
-      scope_set_str (process->scope, SCOPE_T_INTERNAL,
+      scopedvar_set_str (process->scopedvar, SV_T_INTERNAL,
           MKC_C_SHLIBEXT, ".dll", MKC_VCTXT_MKC);
       break;
     }
@@ -2552,7 +2486,7 @@ mkc_process_int_checks (mkc_process_t *process)
 
   for (mkc_system_id_t i = 0; i < MKC_SYS_ID_MAX; ++i) {
     if (process->sysid == i) {
-      scope_set_integer (process->scope, SCOPE_T_INTERNAL,
+      scopedvar_set_integer (process->scopedvar, SV_T_INTERNAL,
           sysidnames [i], true, MKC_VCTXT_MKC);
       break;
     }
@@ -2567,7 +2501,7 @@ mkc_process_int_checks (mkc_process_t *process)
     process->variadicmacro = MKC_NO_VARIADIC_MACRO;
   }
   mkc_log (process->log, MKC_LOG_GENERAL, "%s: %d\n", MKC_C_IVARMACRO, process->variadicmacro);
-  scope_set_integer (process->scope, SCOPE_T_IN_SCOPE,
+  scopedvar_set_integer (process->scopedvar, SV_T_SEARCH,
       MKC_C_IVARMACRO, process->variadicmacro, MKC_VCTXT_MKC);
 
   mkc_process_attr_clear (process);
@@ -2580,7 +2514,7 @@ mkc_process_int_checks (mkc_process_t *process)
       process->libloc = rc;
     }
     mkc_log (process->log, MKC_LOG_GENERAL, "%s: %d\n", MKC_C_LIBLOCNAME, process->libloc);
-    scope_set_integer (process->scope, SCOPE_T_INTERNAL,
+    scopedvar_set_integer (process->scopedvar, SV_T_INTERNAL,
         MKC_C_LIBLOCNAME, process->libloc, MKC_VCTXT_MKC);
   }
 
@@ -2610,42 +2544,43 @@ mkc_process_set_defaults (mkc_process_t *process)
   /* create internal constants */
 
   for (mkc_system_type_t i = 0; i < MKC_SYS_MAX; ++i) {
-    scope_set_integer (process->scope, SCOPE_T_INTERNAL,
+    scopedvar_set_integer (process->scopedvar, SV_T_INTERNAL,
         sysnames [i], false, MKC_VCTXT_MKC);
   }
   for (mkc_system_id_t i = 0; i < MKC_SYS_ID_MAX; ++i) {
-    scope_set_integer (process->scope, SCOPE_T_INTERNAL,
+    scopedvar_set_integer (process->scopedvar, SV_T_INTERNAL,
         sysidnames [i], false, MKC_VCTXT_MKC);
   }
 
-  scope_set_integer (process->scope, SCOPE_T_INTERNAL,
+  scopedvar_set_integer (process->scopedvar, SV_T_INTERNAL,
       MKC_C_LOOPLIMIT, 10000, MKC_VCTXT_MKC);
-  scope_set_integer (process->scope, SCOPE_T_INTERNAL,
+  scopedvar_set_integer (process->scopedvar, SV_T_INTERNAL,
       MKC_C_LIBLOCNAME, process->libloc, MKC_VCTXT_MKC);
 
-  scope_set_str (process->scope, SCOPE_T_INTERNAL,
+  scopedvar_set_str (process->scopedvar, SV_T_INTERNAL,
       "BISON", "bison", MKC_VCTXT_ENV);
-  scope_set_str (process->scope, SCOPE_T_INTERNAL,
+  scopedvar_set_str (process->scopedvar, SV_T_INTERNAL,
       "CC", "cc", MKC_VCTXT_ENV);
-  scope_set_str (process->scope, SCOPE_T_INTERNAL,
+  scopedvar_set_str (process->scopedvar, SV_T_INTERNAL,
       "CXX", "c++", MKC_VCTXT_ENV);
-  scope_set_str (process->scope, SCOPE_T_INTERNAL,
+  scopedvar_set_str (process->scopedvar, SV_T_INTERNAL,
       "FLEX", "flex", MKC_VCTXT_ENV);
-  scope_set_str (process->scope, SCOPE_T_INTERNAL,
+  scopedvar_set_str (process->scopedvar, SV_T_INTERNAL,
       "OBJC", "cc", MKC_VCTXT_ENV);
 
   for (mkc_compiler_id_t i = 0; i < MKC_COMP_ID_MAX; ++i) {
     if (mkc_error_chk_err (process->mkcerr)) {
       break;
     }
-    scope_set_integer (process->scope, SCOPE_T_INTERNAL,
+    scopedvar_set_integer (process->scopedvar, SV_T_INTERNAL,
         compidnames [i], false, MKC_VCTXT_MKC);
   }
 
-  scope_set_str (process->scope, SCOPE_T_INTERNAL,
+  scopedvar_set_str (process->scopedvar, SV_T_INTERNAL,
       MKC_C_PROFILE_NAME,
-      mkc_profile_get_name (process->profiles, process->pidx_curr_comp),
+      scopedvar_get_current_profile (process->scopedvar),
       MKC_VCTXT_MKC);
+// ###      scopedvar_get_current_profile (process->profiles, process->pidx_curr_comp),
 }
 
 static void
@@ -2680,15 +2615,15 @@ mkc_process_configure_manual (mkc_process_t *process)
 static void
 mkc_process_configure_auto (mkc_process_t *process, int defzero)
 {
-  mkc_profidx_t   piter;
-  mkc_profile_t   *profiles;
-  mkc_profidx_t   pidx;
-  FILE            *fh;
-  char            *fname;
-  char            *tbuff;
-  char            *tp;
+  FILE            * fh;
+  char            * fname;
+  char            * tbuff;
+  char            * tp;
   char            projnm [MKC_VNAME_MAX];
   size_t          len;
+  scopedvar_t     * scopedvar;
+  int             sviter;
+  const char      * profname;
 
   fname = malloc (MKC_PATH_MAX);
   if (fname == NULL) {
@@ -2745,32 +2680,24 @@ mkc_process_configure_auto (mkc_process_t *process, int defzero)
     return;
   }
 
-  profiles = process->profiles;
-  mkc_profile_iter_start (profiles, &piter);
-  while ((pidx = mkc_profile_iter_next (profiles, &piter)) != MKC_ITER_FINISH) {
-//    mkc_varidx_t    viter;
-//    mkc_varidx_t    vidx;
+  scopedvar = process->scopedvar;
+
+  scopedvar_iter_start (scopedvar, &sviter);
+  while ((profname = scopedvar_iter_next (scopedvar, &sviter)) != NULL) {
+    mkc_varidx_t    viter;
+    mkc_varidx_t    vidx;
 
     if (mkc_error_chk_err (process->mkcerr)) {
       break;
     }
 
-//    if (mkc_pvar_profile_select_idx (process->pvar, pidx) == MKC_PROF_NOT_FOUND) {
-//      continue;
-//    }
-//
-//    if (mkc_pvar_size (process->pvar) == 0) {
-//      continue;
-//    }
+    scopedvar_var_iter_start (scopedvar, sviter, &viter);
+    while ((vidx = scopedvar_var_iter_next (scopedvar, sviter, &viter)) != MKC_ITER_FINISH) {
+      const char  * nm;
+      value_t     * value;
 
-#if 0
-    mkc_pvar_iter_start (pvar, &viter);
-    while ((vidx = mkc_pvar_iter_next (pvar, &viter)) != MKC_ITER_FINISH) {
-      const char      *nm;
-      value_t     *value;
-
-      nm = mkc_pvar_get_name (pvar, vidx);
-      value = mkc_pvar_get_by_idx (pvar, vidx);
+      nm = scopedvar_var_iter_get_name (scopedvar, sviter, vidx);
+      value = scopedvar_var_iter_get_value (scopedvar, sviter, vidx);
       if (value->vctxt != MKC_VCTXT_CHECK &&
           value->vctxt != MKC_VCTXT_USER_ENABLE) {
         continue;
@@ -2795,7 +2722,6 @@ mkc_process_configure_auto (mkc_process_t *process, int defzero)
         fprintf (fh, "#define %s \"%s\"\n", nm, tbuff);
       }
     }
-#endif
   }
 
   fprintf (fh, "\n");
@@ -2813,15 +2739,15 @@ mkc_process_chk_cache (mkc_process_t *process,
   bool    rc = false;
 
   /* if the re-test mkc-option is set, then failed tests will be re-tested */
-  if (scope_is_defined (process->scope, nm)) {
+  if (scopedvar_is_defined (process->scopedvar, nm)) {
     if (process->mkcoptions->retest) {
       value_t   *value;
 
-      value = scope_get_value (process->scope, SCOPE_T_IN_SCOPE, nm);
+      value = scopedvar_get_value (process->scopedvar, SV_T_SEARCH, nm);
       if (value->vtype == MKC_VT_INTEGER) {
         int32_t   val;
 
-        val = scope_value_get_integer (process->scope, value);
+        val = scopedvar_value_get_integer (process->scopedvar, value);
         if (! val) {
           return rc;
         }
@@ -2860,7 +2786,7 @@ mkc_process_get_path (mkc_process_t *process)
   tpath = str_token (tbuff, pathdelim, &tokstr);
   while (tpath != NULL) {
     fileop_normalize_path (tpath, strlen (tpath));
-    scope_append_str_list (process->scope, SCOPE_T_INTERNAL,
+    scopedvar_append_str_list (process->scopedvar, SV_T_INTERNAL,
         MKC_C_PATH, tpath, MKC_VCTXT_MKC);
     tpath = str_token (NULL, pathdelim, &tokstr);
   }
@@ -2886,7 +2812,7 @@ mkc_process_find_executables (mkc_process_t *process)
     return;
   }
 
-  valpath = scope_get_value (process->scope, SCOPE_T_INTERNAL, MKC_C_PATH);
+  valpath = scopedvar_get_value (process->scopedvar, SV_T_INTERNAL, MKC_C_PATH);
   pathlist = valpath->list;
 
   chk = proglist;
@@ -2896,7 +2822,7 @@ mkc_process_find_executables (mkc_process_t *process)
       value_t   *lvalue;
 
       lvalue = mkc_list_get_by_idx (pathlist, lidx);
-      scope_value_get_str (process->scope, lvalue, testpath, MKC_PATH_MAX);
+      scopedvar_value_get_str (process->scopedvar, lvalue, testpath, MKC_PATH_MAX);
 
       p = testpath + strlen (testpath);
       p = stpecpy (p, testpath + MKC_PATH_MAX, "/");
@@ -2904,7 +2830,7 @@ mkc_process_find_executables (mkc_process_t *process)
       p = stpecpy (p, testpath + MKC_PATH_MAX, process->exeext);
 
       if (fileop_exists (testpath)) {
-        scope_set_str (process->scope, SCOPE_T_INTERNAL,
+        scopedvar_set_str (process->scopedvar, SV_T_INTERNAL,
             chk->mkcvarname, testpath, MKC_VCTXT_MKC);
         break;
       }
@@ -2994,61 +2920,68 @@ mkc_process_user_regex_comp (void *turxa, void *turxb)
 }
 
 static void
-mkc_process_dbg_print_var (mkc_process_t *process, const char *pname)
+mkc_process_dbg_print_var (mkc_process_t *process, const char *profname)
 {
-//  mkc_varidx_t    iteridx;
-//  mkc_varidx_t    vidx;
-//  bool            intest = false;
-  char            *tbuff;
+  int               sviter;
+  bool              intest = false;
+  char              * tbuff;
+  scopedvar_t       * scopedvar;
+  const char        * svprofname;
 
   tbuff = malloc (MKC_SMALL_BUFF_SZ);
   if (tbuff == NULL) {
     mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
     return;
   }
-#if 0
 
-  pvar = process->pvar;
-  opidx = mkc_profile_get_active (process->profiles);
+  scopedvar = process->scopedvar;
 
-  if (pname != NULL) {
-    if (strcmp (pname, "default") == 0) {
-      pname = mkc_profile_get_name (process->profiles, opidx);
-    } else if (strcmp (pname, "test") == 0) {
+  if (profname != NULL) {
+    if (strcmp (profname, "default") == 0) {
+      profname = MKC_C_PROF_DEFAULT_NAME;
+    } else if (strcmp (profname, "test") == 0) {
+      profname = MKC_C_PROF_DEFAULT_NAME;
       intest = true;
-      pname = mkc_profile_get_name (process->profiles, opidx);
-    } else if (strcmp (pname, "temp") == 0) {
-      pname = mkc_profile_get_name (process->profiles, process->pidx_temp);
-    } else if (strcmp (pname, "ts") == 0) {
-      pname = mkc_profile_get_name (process->profiles, process->pidx_ts);
-    } else if (strcmp (pname, "dep") == 0) {
-      pname = mkc_profile_get_name (process->profiles, process->pidx_deps);
+    } else if (strcmp (profname, "ts") == 0) {
+      profname = MKC_C_PROF_TIMESTAMP_NAME;
+    } else if (strcmp (profname, "dep") == 0) {
+      profname = MKC_C_PROF_DEPENDENCIES_NAME;
+    } else if (strcmp (profname, "paths") == 0) {
+      profname = MKC_C_PROF_PATHS_NAME;
     }
   }
 
-  for (mkc_compiler_t i = 0; i < MKC_COMPILER_MAX; ++i) {
-    bool      hdr = false;
+  scopedvar_iter_start (scopedvar, &sviter);
+  while ((svprofname = scopedvar_iter_next (scopedvar, &sviter)) != NULL) {
+    mkc_varidx_t    viter;
+    mkc_varidx_t    vidx;
+    bool            hdr = false;
+
+    if (profname != NULL && strcmp (svprofname, profname) != 0) {
+      continue;
+    }
 
     if (mkc_error_chk_err (process->mkcerr)) {
       break;
     }
 
-    if (mkc_pvar_profile_select (process->pvar, pname, i) == MKC_PROF_NOT_FOUND) {
-      continue;
-    }
-
-    mkc_pvar_iter_start (pvar, &iteridx);
-    while ((vidx = mkc_pvar_iter_next (pvar, &iteridx)) != MKC_ITER_FINISH) {
-      const char      *nm;
-      value_t     *value;
+    scopedvar_var_iter_start (scopedvar, sviter, &viter);
+    while ((vidx = scopedvar_var_iter_next (scopedvar, sviter, &viter)) != MKC_ITER_FINISH) {
+      const char  * nm;
+      value_t     * value;
 
       if (! hdr) {
-        fprintf (stdout, "== %s %s\n", pname, compiler_get_name (i));
+        mkc_compiler_t    compiler;
+        const char        *compstr = "";
+
+        compiler = scopedvar_iter_get_compiler (scopedvar, sviter);
+        compstr = compiler_get_name (compiler);
+        fprintf (stdout, "== %s %s\n", profname, compstr);
         hdr = true;
       }
 
-      nm = mkc_pvar_get_name (pvar, vidx);
-      value = mkc_pvar_get_by_idx (pvar, vidx);
+      nm = scopedvar_var_iter_get_name (scopedvar, sviter, vidx);
+      value = scopedvar_var_iter_get_value (scopedvar, sviter, vidx);
 
       if (intest) {
         if (strcmp (nm, "CC") == 0 ||
@@ -3071,7 +3004,6 @@ mkc_process_dbg_print_var (mkc_process_t *process, const char *pname)
       }
     }
   }
-#endif
 
   free (tbuff);
 }
@@ -3079,12 +3011,12 @@ mkc_process_dbg_print_var (mkc_process_t *process, const char *pname)
 static void
 mkc_process_dbg_print_prof (mkc_process_t *process)
 {
-  mkc_varidx_t   iteridx;
-  mkc_varidx_t   idx;
-  mkc_profile_t   *profiles;
+//  mkc_varidx_t   iteridx;
+//  mkc_varidx_t   idx;
 
   fprintf (stdout, "== profiles\n");
 
+#if 0
   profiles = process->profiles;
   mkc_profile_iter_start (profiles, &iteridx);
   while ((idx = mkc_profile_iter_next (profiles, &iteridx)) != MKC_ITER_FINISH) {
@@ -3099,6 +3031,7 @@ mkc_process_dbg_print_prof (mkc_process_t *process)
     compiler = mkc_profile_get_compiler (profiles, idx);
     fprintf (stdout, "  %s %s\n", nm, compiler_get_name (compiler));
   }
+#endif
 }
 
 static void
@@ -3135,7 +3068,7 @@ mkc_process_configure_substitute (mkc_process_t *process, char *data)
 
   rl = process->attr.replacelist;
   if (mkc_list_size (rl) == 0) {
-    ndata = scope_substitute (process->scope, data, SCOPE_NO_ESCAPE, 0);
+    ndata = scopedvar_substitute (process->scopedvar, data, SCOPEDVAR_NO_ESCAPE, 0);
   } else {
     mkc_listidx_t   iteridx;
     mkc_listidx_t   lidx;
@@ -3158,8 +3091,8 @@ mkc_process_configure_substitute (mkc_process_t *process, char *data)
         return NULL;
       }
       valval = mkc_list_get_by_idx (rl, lidx);
-      scope_value_get_str (process->scope, valstr, str, sizeof (str));
-      scope_value_get_str (process->scope, valval, val, sizeof (val));
+      scopedvar_value_get_str (process->scopedvar, valstr, str, sizeof (str));
+      scopedvar_value_get_str (process->scopedvar, valval, val, sizeof (val));
 #if _have_regex
       tdata = mkc_regex_replace_literal (ndata, str, val, process->mkcerr);
 #endif
@@ -3269,7 +3202,7 @@ mkc_process_get_include_list (mkc_process_t *process, mkc_regex_t *rx,
     }
 
     valpath = mkc_list_get_by_idx (process->attr.pathlist, pathidx);
-    scope_value_get_str (process->scope, valpath, path, MKC_PATH_MAX);
+    scopedvar_value_get_str (process->scopedvar, valpath, path, MKC_PATH_MAX);
 
     tlist = dir_match (path, rx, process->mkcerr);
 
@@ -3369,8 +3302,6 @@ mkc_process_iter_includes (mkc_process_t *process, mkc_list_t *hlist,
 static char **
 mkc_process_get_flags (mkc_process_t *process, const char *flagname)
 {
-  mkc_profiter_t  profiter;
-  mkc_profidx_t   pidx;
   mkc_list_t      *tlist;
   mkc_listidx_t   psz;
   char            **flags = NULL;
@@ -3395,6 +3326,7 @@ mkc_process_get_flags (mkc_process_t *process, const char *flagname)
 
   tlist = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, process->mkcerr);
 
+#if 0
   /* to get the flags, the profile hierarchy needs to be */
   /* traversed in reverse order */
   /* iterate the profile as usual, then traverse the list in reverse order */
@@ -3404,24 +3336,25 @@ mkc_process_get_flags (mkc_process_t *process, const char *flagname)
 
     mkc_list_set (tlist, &pidx, sizeof (mkc_profidx_t), &loc);
   }
+#endif
 
   /* this is an unsorted list, the indices are in sequence */
   psz = mkc_list_size (tlist);
   for (int32_t i = psz - 1; i >= 0; --i) {
-    mkc_profidx_t   *tpidx;
+//    mkc_profidx_t   *tpidx;
     mkc_listidx_t   fiter;
     mkc_listidx_t   fidx;
-    value_t         *value;
+    value_t         *value = NULL;
 
-    tpidx = mkc_list_get_by_idx (tlist, i);
+//    tpidx = mkc_list_get_by_idx (tlist, i);
 
-    if (*tpidx == process->pidx_internal) {
-      /* the internal profile will not have any flags */
-      continue;
-    }
+//    if (*tpidx == process->pidx_internal) {
+//      /* the internal profile will not have any flags */
+//      continue;
+//    }
 
 //    mkc_pvar_profile_select_idx (process->pvar, *tpidx);
-    value = scope_get_value (process->scope, *tpidx, flagname);
+//    value = scopedvar_get_value (process->scopedvar, *tpidx, flagname);
     if (value == NULL || value->vtype != MKC_VT_LIST) {
       continue;
     }
@@ -3431,7 +3364,7 @@ mkc_process_get_flags (mkc_process_t *process, const char *flagname)
       value_t   *fval;
 
       fval = mkc_list_get_by_idx (value->list, fidx);
-      scope_value_get_str (process->scope, fval, str, MKC_PATH_MAX);
+      scopedvar_value_get_str (process->scopedvar, fval, str, MKC_PATH_MAX);
       if (! *str) {
         continue;
       }
@@ -3491,11 +3424,11 @@ mkc_process_attr_flags (mkc_process_t *process, value_t *value,
     }
 
     lvalue = mkc_list_get_by_idx (value->list, lidx);
-    tvalue = scope_value_get_value (process->scope, lvalue);
+    tvalue = scopedvar_value_get_value (process->scopedvar, lvalue);
     if (tvalue->vtype == MKC_VT_LIST) {
       mkc_process_attr_flags (process, tvalue, flags, true);
       if (! inlist) {
-        scope_temp_value_free (tvalue);
+        scopedvar_temp_value_free (tvalue);
       }
       return;
     } else if (tvalue->vtype == MKC_VT_STRING ||
@@ -3509,7 +3442,7 @@ mkc_process_attr_flags (mkc_process_t *process, value_t *value,
     }
     mkc_list_set (flags, tvalue, sizeof (value_t), &loc);
     if (! inlist) {
-      scope_temp_value_free (tvalue);
+      scopedvar_temp_value_free (tvalue);
     }
   }
 }
@@ -3545,16 +3478,14 @@ mkc_process_source_file (mkc_process_t *process, const char *target,
     stpecpy (p, objname + sizeof (objname), process->objext);
   }
   ts = fileop_modtime (srcfn);
-fprintf (stderr, "src: %s %s %" PRId64 "\n", objname, srcfn, ts);
 
 //  mkc_pvar_profile_select_idx (process->pvar, process->pidx_ts);
-  scope_set_timestamp (process->scope, SCOPE_T_TIMESTAMP,
+  scopedvar_set_timestamp (process->scopedvar, SV_T_TIMESTAMP,
       srcfn, ts, MKC_VCTXT_MKC);
   rbuff = fileop_read_file (srcfn, &fsz, process->mkcerr);
   mkc_check_get_include_deps (process->check, tcompiler, rbuff, deplist);
 
-fprintf (stderr, "   dep: %s\n", srcfn);
-//  scope_append_str_list (process->scope, SCOPE_T_DEPENDENCIES,
+//  scopedvar_append_str_list (process->scopedvar, SV_T_DEPENDENCIES,
 //      target, srcfn, MKC_VCTXT_MKC);
 
   mkc_list_iter_start (deplist, &diteridx);
@@ -3564,13 +3495,12 @@ fprintf (stderr, "   dep: %s\n", srcfn);
 
     temp = mkc_list_get_by_idx (deplist, didx);
     dep = *temp;
-fprintf (stderr, "   dep: %s\n", dep);
 // ### need full path to include file...
 //    ts = fileop_modtime (dep);
 //    mkc_pvar_profile_select_idx (process->pvar, process->pidx_ts);
-//    scope_set_timestamp (process->pvar, srcfn, ts, MKC_VCTXT_MKC);
+//    scopedvar_set_timestamp (process->pvar, srcfn, ts, MKC_VCTXT_MKC);
 //    mkc_pvar_profile_select_idx (process->pvar, process->pidx_deps);
-//    tlist = scope_append_str_list (process->scope, SCOPE_T_DEPENDENCIES,
+//    tlist = scopedvar_append_str_list (process->scopedvar, SV_T_DEPENDENCIES,
 //        target, dep, MKC_VCTXT_MKC);
   }
 

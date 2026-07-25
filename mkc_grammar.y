@@ -123,7 +123,6 @@
 %token T_LOCAL                "local"
 %token T_RANGE                "range"
 %token T_RETURN               "return"
-%token T_TEMPORARY            "temporary"
 
 // directives
 %token T_STMT_CHK_INC_COMPILE "check_include_compile"
@@ -734,12 +733,6 @@ stmt_set[v]:
           yylloc.first_line, yylloc.first_column);
     }
   | T_STMT_SET T_LOCAL varname[a] varvalue[b] stmtblock_or_semi[c]
-    {
-// ### this is incorrect...
-      $v = mkc_ast_mk_set (ast, $a, $b, $c, true,
-          yylloc.first_line, yylloc.first_column);
-    }
-  | T_STMT_SET T_TEMPORARY varname[a] varvalue[b] stmtblock_or_semi[c]
     {
       $v = mkc_ast_mk_set (ast, $a, $b, $c, true,
           yylloc.first_line, yylloc.first_column);

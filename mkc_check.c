@@ -25,7 +25,7 @@
 #include "pathutil.h"
 #include "mkc_regex.h"
 #include "strutil.h"
-#include "scope.h"
+#include "scopedvar.h"
 #include "value.h"
 
 #define MKC_PKG_TRACE 0
@@ -37,8 +37,7 @@ typedef enum {
 } mkc_check_test_t;
 
 typedef struct mkc_check_t {
-  mkc_profile_t     * profiles;
-  scope_t           * scope;
+  scopedvar_t       * scope;
   mkc_error_t       * mkcerr;
   mkc_log_t         * log;
   mkc_attribute_t   * attr;
@@ -47,9 +46,6 @@ typedef struct mkc_check_t {
   mkc_regex_t       * rxargcount;
   mkc_regex_t       * rxcomma;
   mkc_regex_t       * rxincludedep;
-  mkc_profidx_t     pidx_internal;
-  mkc_profidx_t     pidx_temp;
-  mkc_profidx_t     pidx_dflt_comp;
   int               targc;
   int               targvallocsz;
 } mkc_check_t;
@@ -74,15 +70,12 @@ static int mkc_compile_run (mkc_check_t *check, mkc_compiler_t compiler, const c
 
 MKC_NODISCARD
 mkc_check_t *
-mkc_check_init (mkc_profile_t *profiles, scope_t *scope,
-    mkc_attribute_t *attr, mkc_log_t *log,
-    mkc_profidx_t pidx, mkc_error_t *mkcerr)
+mkc_check_init (scopedvar_t *scope,
+    mkc_attribute_t *attr, mkc_log_t *log, mkc_error_t *mkcerr)
 {
   mkc_check_t   *check;
-  mkc_profidx_t tpidx;
 
   check = malloc (sizeof (mkc_check_t));
-  check->profiles = profiles;
   check->scope = scope;
   check->attr = attr;
   check->mkcerr = mkcerr;
@@ -91,14 +84,6 @@ mkc_check_init (mkc_profile_t *profiles, scope_t *scope,
   check->rxargcount = NULL;
   check->rxcomma = NULL;
   check->rxincludedep = NULL;
-
-  tpidx = mkc_profile_find (check->profiles,
-      MKC_C_PROF_INTERNAL_NAME, MKC_COMPILER_GENERAL);
-  check->pidx_internal = tpidx;
-  tpidx = mkc_profile_find (check->profiles,
-      MKC_C_PROF_TEMP_NAME, MKC_COMPILER_GENERAL);
-  check->pidx_temp = tpidx;
-  check->pidx_dflt_comp = pidx;
 
   check->targv = NULL;
   check->targc = 0;
@@ -372,7 +357,7 @@ mkc_chk_arg_count (mkc_check_t *check, mkc_compiler_t compiler,
 
   mkc_log (check->log, MKC_LOG_CHECK, "== chk: arg_count: %s\n", funcname);
 
-  scope_set_str (check->scope, SCOPE_T_LOCAL, "MKC_TV_TEST_FUNCTION_NAME", funcname, MKC_VCTXT_TEMP);
+  scopedvar_set_str (check->scope, SV_T_LOCAL, "MKC_TV_TEST_FUNCTION_NAME", funcname, MKC_VCTXT_TEMP);
 
   rbuff = malloc (rsz);
   if (rbuff == NULL) {
@@ -488,7 +473,7 @@ mkc_chk_const (mkc_check_t *check,
 
   mkc_log (check->log, MKC_LOG_CHECK, "== chk: constant: %s\n", consttxt);
 
-  scope_set_str (check->scope, SCOPE_T_LOCAL, "MKC_TV_TEST_CONSTANT", consttxt, MKC_VCTXT_TEMP);
+  scopedvar_set_str (check->scope, SV_T_LOCAL, "MKC_TV_TEST_CONSTANT", consttxt, MKC_VCTXT_TEMP);
 
   rc = mkc_do_test (MKC_CHK_TEST_COMPILE_ONLY,
       check, compiler, "c-const", NULL, NULL, 0);
@@ -504,7 +489,7 @@ mkc_chk_define (mkc_check_t *check,
 
   mkc_log (check->log, MKC_LOG_CHECK, "== chk: define: %s\n", def);
 
-  scope_set_str (check->scope, SCOPE_T_LOCAL, "MKC_TV_TEST_DEFINE", def, MKC_VCTXT_TEMP);
+  scopedvar_set_str (check->scope, SV_T_LOCAL, "MKC_TV_TEST_DEFINE", def, MKC_VCTXT_TEMP);
 
   rc = mkc_do_test (MKC_CHK_TEST_COMPILE_ONLY,
       check, compiler, "c-define", NULL, NULL, 0);
@@ -565,7 +550,7 @@ mkc_chk_size (mkc_check_t *check,
 
   mkc_log (check->log, MKC_LOG_CHECK, "== chk: size: %s\n", type);
 
-  scope_set_str (check->scope, SCOPE_T_LOCAL, "MKC_TV_TEST_SIZE", type, MKC_VCTXT_TEMP);
+  scopedvar_set_str (check->scope, SV_T_LOCAL, "MKC_TV_TEST_SIZE", type, MKC_VCTXT_TEMP);
 
   rc = mkc_do_test (MKC_CHK_TEST_COMPILE_RUN,
       check, compiler, "c-size", NULL, NULL, 0);
@@ -584,7 +569,7 @@ mkc_chk_type (mkc_check_t *check,
 
   mkc_log (check->log, MKC_LOG_CHECK, "== chk: type: %s\n", type);
 
-  scope_set_str (check->scope, SCOPE_T_LOCAL, "MKC_TV_TEST_TYPE", type, MKC_VCTXT_TEMP);
+  scopedvar_set_str (check->scope, SV_T_LOCAL, "MKC_TV_TEST_TYPE", type, MKC_VCTXT_TEMP);
 
   rc = mkc_do_test (MKC_CHK_TEST_COMPILE_ONLY,
       check, compiler, "c-type", NULL, NULL, 0);
@@ -602,8 +587,8 @@ mkc_chk_struct_member (mkc_check_t *check,
   mkc_log (check->log, MKC_LOG_CHECK,
       "== chk: struct member: %s.%s\n", structname, membername);
 
-  scope_set_str (check->scope, SCOPE_T_LOCAL, "MKC_TV_TEST_STRUCT_NAME", structname, MKC_VCTXT_TEMP);
-  scope_set_str (check->scope, SCOPE_T_LOCAL, "MKC_TV_TEST_STRUCT_MEMBER", membername, MKC_VCTXT_TEMP);
+  scopedvar_set_str (check->scope, SV_T_LOCAL, "MKC_TV_TEST_STRUCT_NAME", structname, MKC_VCTXT_TEMP);
+  scopedvar_set_str (check->scope, SV_T_LOCAL, "MKC_TV_TEST_STRUCT_MEMBER", membername, MKC_VCTXT_TEMP);
 
   rc = mkc_do_test (MKC_CHK_TEST_COMPILE_ONLY,
       check, compiler, "c-struct-member", NULL, NULL, 0);
@@ -620,7 +605,7 @@ mkc_chk_function (mkc_check_t *check, mkc_compiler_t compiler,
   mkc_log (check->log, MKC_LOG_CHECK,
       "== chk: function: %s\n", funcname);
 
-  scope_set_str (check->scope, SCOPE_T_LOCAL, "MKC_TV_TEST_FUNCTION_NAME", funcname, MKC_VCTXT_TEMP);
+  scopedvar_set_str (check->scope, SV_T_LOCAL, "MKC_TV_TEST_FUNCTION_NAME", funcname, MKC_VCTXT_TEMP);
 
   rc = mkc_do_test (MKC_CHK_TEST_COMPILE_LINK,
       check, compiler, "c-function", NULL, NULL, 0);
@@ -646,7 +631,7 @@ mkc_chk_header (mkc_check_t *check, mkc_compiler_t compiler,
     ec = '"';
   }
   snprintf (tbuff, sizeof (tbuff), "%c%s%c", bc, header, ec);
-  scope_set_str (check->scope, SCOPE_T_LOCAL, "MKC_TV_TEST_HEADER", tbuff, MKC_VCTXT_TEMP);
+  scopedvar_set_str (check->scope, SV_T_LOCAL, "MKC_TV_TEST_HEADER", tbuff, MKC_VCTXT_TEMP);
 
   rc = mkc_do_test (MKC_CHK_TEST_COMPILE_LINK,
       check, compiler, "c-header", flags, NULL, 0);
@@ -690,7 +675,7 @@ mkc_check_get_include_deps (mkc_check_t *check,
     }
 
     tp = strdup (match [2]);
-//    scope_append_str_list (check->scope, SCOPE_T_IN_SCOPE, dep, MKC_VCTXT_MKC);
+//    scopedvar_append_str_list (check->scope, SV_T_SEARCH, dep, MKC_VCTXT_MKC);
     mkc_list_set (deplist, &tp, sizeof (char *), &loc);
 
     mkc_regex_get_free (match);
@@ -731,7 +716,7 @@ mkc_check_file_sub_copy (mkc_check_t *check,
     free (fbuff);
     return;
   }
-  ndata = scope_substitute (check->scope, data, SCOPE_NO_ESCAPE, 0);
+  ndata = scopedvar_substitute (check->scope, data, SCOPEDVAR_NO_ESCAPE, 0);
   mkc_log (check->log, MKC_LOG_CHECK, "--- code:\n");
   mkc_log (check->log, MKC_LOG_CHECK, "%s\n", ndata);
   mkc_log (check->log, MKC_LOG_CHECK, "---\n");
@@ -787,7 +772,7 @@ mkc_chk_env_var_set (mkc_check_t *check, const char *nm)
   *tbuff = '\0';
   env_get (nm, tbuff, MKC_PATH_MAX);
   if (*tbuff) {
-    rc = scope_set_str (check->scope, SCOPE_T_IN_SCOPE, nm, tbuff, MKC_VCTXT_ENV);
+    rc = scopedvar_set_str (check->scope, SV_T_SEARCH, nm, tbuff, MKC_VCTXT_ENV);
   }
 
   free (tbuff);
@@ -824,8 +809,8 @@ mkc_check_get_compstr (mkc_check_t *check, mkc_compiler_t compiler,
   value_t   *value;
 
   envstr = compiler_get_env_name (compiler);
-  value = scope_get_value (check->scope, SCOPE_T_INTERNAL, envstr);
-  scope_value_get_str (check->scope, value, buff, sz);
+  value = scopedvar_get_value (check->scope, SV_T_INTERNAL, envstr);
+  scopedvar_value_get_str (check->scope, value, buff, sz);
   return buff;
 }
 
@@ -854,12 +839,12 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
   *pkgconfpath = '\0';
   /* if pkgconf is installed, pkg-config is a symlink. */
   /* use pkg-config by preference (pkgconf does not seem to work in macos macports) */
-  value = scope_get_value (check->scope, SCOPE_T_INTERNAL, MKC_C_PATH_PKGCONFIG);
+  value = scopedvar_get_value (check->scope, SV_T_INTERNAL, MKC_C_PATH_PKGCONFIG);
   if (value == NULL) {
-    value = scope_get_value (check->scope, SCOPE_T_INTERNAL, MKC_C_PATH_PKGCONF);
+    value = scopedvar_get_value (check->scope, SV_T_INTERNAL, MKC_C_PATH_PKGCONF);
   }
   if (value != NULL) {
-    scope_value_get_str (check->scope, value, pkgconfpath, MKC_PATH_MAX);
+    scopedvar_value_get_str (check->scope, value, pkgconfpath, MKC_PATH_MAX);
   }
 
   if (! *pkgconfpath) {
@@ -882,7 +867,7 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
     value_t   *path;
 
     path = mkc_list_get_by_idx (check->attr->pathlist, pathidx);
-    scope_value_get_str (check->scope, path, tpath, MKC_PATH_MAX);
+    scopedvar_value_get_str (check->scope, path, tpath, MKC_PATH_MAX);
     mkc_check_append_arg (check, "--with-path");
     mkc_check_append_arg (check, tpath);
   }
@@ -925,7 +910,7 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
     value_t   *path;
 
     path = mkc_list_get_by_idx (check->attr->pathlist, pathidx);
-    scope_value_get_str (check->scope, path, tpath, MKC_PATH_MAX);
+    scopedvar_value_get_str (check->scope, path, tpath, MKC_PATH_MAX);
     mkc_check_append_arg (check, "--with-path");
     mkc_check_append_arg (check, tpath);
   }
@@ -964,11 +949,11 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
   /* make sure a list exists */
   snprintf (tmpname, sizeof (tmpname), "%s_CFLAGS", tmp);
   str_clean (tmpname, 0);
-  scope_append_str_list (check->scope, SCOPE_T_IN_SCOPE, tmpname, NULL, MKC_VCTXT_MKC);
+  scopedvar_append_str_list (check->scope, SV_T_SEARCH, tmpname, NULL, MKC_VCTXT_MKC);
 
   if (retsz > 0) {
     str_trim (rbuff, retsz);
-    scope_set_list_from_str (check->scope, tmpname, rbuff, MKC_VCTXT_MKC);
+    scopedvar_set_list_from_str (check->scope, tmpname, rbuff, MKC_VCTXT_MKC);
   }
 
   mkc_chk_reset (check);
@@ -980,7 +965,7 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
     value_t   *path;
 
     path = mkc_list_get_by_idx (check->attr->pathlist, pathidx);
-    scope_value_get_str (check->scope, path, tpath, MKC_PATH_MAX);
+    scopedvar_value_get_str (check->scope, path, tpath, MKC_PATH_MAX);
     mkc_check_append_arg (check, "--with-path");
     mkc_check_append_arg (check, tpath);
   }
@@ -1006,11 +991,11 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
   /* make sure a list exists */
   snprintf (tmpname, sizeof (tmpname), "%s_LIBS", tmp);
   str_clean (tmpname, 0);
-  scope_append_str_list (check->scope, SCOPE_T_IN_SCOPE, tmpname, NULL, MKC_VCTXT_MKC);
+  scopedvar_append_str_list (check->scope, SV_T_SEARCH, tmpname, NULL, MKC_VCTXT_MKC);
 
   if (retsz > 0) {
     str_trim (rbuff, retsz);
-    scope_set_list_from_str (check->scope, tmpname, rbuff, MKC_VCTXT_MKC);
+    scopedvar_set_list_from_str (check->scope, tmpname, rbuff, MKC_VCTXT_MKC);
   }
 
   mkc_chk_reset (check);
@@ -1061,7 +1046,7 @@ mkc_chk_create_header_var (mkc_check_t *check)
   if (hdrtxt == NULL) {
     tmp = "";
   }
-  scope_set_str (check->scope, SCOPE_T_LOCAL, MKC_C_TEST_HDR_LIST, tmp, MKC_VCTXT_TEMP);
+  scopedvar_set_str (check->scope, SV_T_LOCAL, MKC_C_TEST_HDR_LIST, tmp, MKC_VCTXT_TEMP);
 
   free (hdrtxt);
 }
@@ -1145,7 +1130,7 @@ mkc_do_test (mkc_check_test_t ctype,
     /* is a valid test */
     /* this may need to be changed in the future */
     if (rc >= 0 && alt->name != NULL) {
-      scope_set_integer (check->scope, SCOPE_T_IN_SCOPE, alt->name,
+      scopedvar_set_integer (check->scope, SV_T_SEARCH, alt->name,
           rc >= 0 ? true : false, MKC_VCTXT_CHECK);
     }
 

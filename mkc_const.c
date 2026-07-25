@@ -5,7 +5,7 @@
 char const * const MKC_C_PROF_DEFAULT_NAME = "default";
 char const * const MKC_C_PROF_DEPENDENCIES_NAME = "dependencies";
 char const * const MKC_C_PROF_INTERNAL_NAME = "internal";
-char const * const MKC_C_PROF_TEMP_NAME = "temporary";
+char const * const MKC_C_PROF_PATHS_NAME = "paths";
 char const * const MKC_C_PROF_TIMESTAMP_NAME = "timestamps";
 /* these are duplicated in mkc_process.c */
 char const * const MKC_C_PATH_PKGCONF = "MKC_PATH_PKGCONF";

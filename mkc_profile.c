@@ -67,14 +67,14 @@ mkc_profile_init (mkc_log_t *log, mkc_error_t *mkcerr, mkc_option_t *mkcoptions)
   profiles->dfltcompiler = MKC_COMPILER_GENERAL;
   profiles->mkcoptions = mkcoptions;
 
-  if (mkcoptions->compilertxt != NULL) {
-    profiles->dfltcompiler = compiler_get_id (mkcoptions->compilertxt);
-    if (profiles->dfltcompiler == MKC_COMPILER_UNKNOWN) {
-      mkc_error_set (mkcerr, MKC_ERR_INVALID_ARGUMENT, 0, NULL);
-      mkc_profile_free (profiles);
-      return NULL;
-    }
-  }
+//  if (mkcoptions->compilertxt != NULL) {
+//    profiles->dfltcompiler = compiler_get_id (mkcoptions->compilertxt);
+//    if (profiles->dfltcompiler == MKC_COMPILER_UNKNOWN) {
+//      mkc_error_set (mkcerr, MKC_ERR_INVALID_ARGUMENT, 0, NULL);
+//      mkc_profile_free (profiles);
+//      return NULL;
+//    }
+//  }
 
   profiles->list = mkc_list_init (MKC_LIST_SORTED,
       mkc_profile_entry_free, mkc_profile_compare, mkcerr);
@@ -88,8 +88,8 @@ mkc_profile_init (mkc_log_t *log, mkc_error_t *mkcerr, mkc_option_t *mkcoptions)
       MKC_COMPILER_GENERAL, MKC_PROF_TYPE_INTERNAL);
 
   /* temporary variables */
-  pidx = mkc_profile_create (profiles, MKC_C_PROF_TEMP_NAME,
-        MKC_COMPILER_GENERAL, MKC_PROF_TYPE_TEMP);
+//  pidx = mkc_profile_create (profiles, MKC_C_PROF_TEMP_NAME,
+//        MKC_COMPILER_GENERAL, MKC_PROF_TYPE_TEMP);
   /* timestamps */
   pidx = mkc_profile_create (profiles, MKC_C_PROF_TIMESTAMP_NAME,
         MKC_COMPILER_GENERAL, MKC_PROF_TYPE_TEMP);
@@ -595,9 +595,9 @@ mkc_profile_iter_hierarchy_next (mkc_profile_t *profiles,
       return pidx;
     }
 
-    pidx = mkc_profile_find (profiles, MKC_C_PROF_TEMP_NAME, MKC_COMPILER_GENERAL);
-    profiter->ptype = MKC_PROF_TYPE_TEMP;
-    profiter->pidx = pidx;
+//    pidx = mkc_profile_find (profiles, MKC_C_PROF_TEMP_NAME, MKC_COMPILER_GENERAL);
+//    profiter->ptype = MKC_PROF_TYPE_TEMP;
+//    profiter->pidx = pidx;
     return pidx;
   }
 
@@ -625,8 +625,8 @@ mkc_profile_iter_hierarchy_next (mkc_profile_t *profiles,
     }
     case MKC_PROF_TYPE_TARGET: {
       /* temporary profile is next */
-      pidx = mkc_profile_find (profiles, MKC_C_PROF_TEMP_NAME, MKC_COMPILER_GENERAL);
-      profiter->ptype = MKC_PROF_TYPE_TEMP;
+//      pidx = mkc_profile_find (profiles, MKC_C_PROF_TEMP_NAME, MKC_COMPILER_GENERAL);
+//      profiter->ptype = MKC_PROF_TYPE_TEMP;
       profiter->pidx = pidx;
       break;
     }

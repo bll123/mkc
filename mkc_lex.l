@@ -143,7 +143,6 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 "local"       { return T_LOCAL; }
 "range"       { return T_RANGE; }
 "return"      { return T_RETURN; }
-"temporary"   { return T_TEMPORARY; }
 
 "check_include_compile"       { return T_STMT_CHK_INC_COMPILE; }
 "check_include_dependencies"  { return T_STMT_CHK_INC_DEPS; }

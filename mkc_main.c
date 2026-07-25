@@ -70,7 +70,6 @@ main (int argc, char *argv [])
   char            cachename [MKC_PATH_MAX];
 
   static struct option mkc_cli_opts [] = {
-    { "compiler",             required_argument,  NULL, 3   },
     { "mkc-dir",              required_argument,  NULL, 5   },
     { "no-cache",             no_argument,        NULL, 1   },
     { "parsedebug",           no_argument,        NULL, 2   },
@@ -99,7 +98,6 @@ main (int argc, char *argv [])
   mkc_main_set_exec_path (&argcopy);
 
   mkcoptions.dfltprofile = strdup (MKC_C_PROF_DEFAULT_NAME);
-  mkcoptions.compilertxt = NULL;
   mkcoptions.stage = NULL;
   mkcoptions.prefix = NULL;
   mkcoptions.retest = false;
@@ -129,12 +127,6 @@ main (int argc, char *argv [])
       }
       case 2: {
         debug = 1;
-        break;
-      }
-      case 3: {
-        if (optarg != NULL) {
-          mkcoptions.compilertxt = argcopy.utf8argv [optind - 1];
-        }
         break;
       }
       case 5: {

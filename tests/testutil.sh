@@ -31,6 +31,9 @@ dotest () {
   if [ $expfail = T ]; then
     if [ $trc -eq 0 ]; then
       echo "   fail: test: $tfile"
+      trc=1
+    else
+      trc=0
     fi
   else
     if [ $trc -ne 0 ]; then

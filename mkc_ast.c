@@ -23,7 +23,7 @@
 #include "mkc_process.h"
 #include "strutil.h"
 #include "mkc_var.h"
-#include "scope.h"
+#include "scopedvar.h"
 #include "value.h"
 
 enum {
@@ -261,8 +261,7 @@ enum {
 
 typedef struct mkc_astmain_t {
   mkc_astnode_t         * mainnode;
-  mkc_profile_t         * profiles;
-  scope_t               * scope;
+  scopedvar_t           * scopedvar;
   mkc_process_t         * process;
   mkc_context_t         * context;
   mkc_astnode_t         ** nodelist;
@@ -271,7 +270,7 @@ typedef struct mkc_astmain_t {
   mkc_log_t             * log;
   mkc_option_t          * mkcoptions;
   mkc_list_t            * funclist;
-  value_t           value;
+  value_t               value;
   int32_t               allocsz;
   int32_t               sz;
   int32_t               ccidx;
@@ -312,14 +311,8 @@ mkc_ast_init (mkc_log_t *log, mkc_option_t *mkcoptions, mkc_error_t *mkcerr)
       NULL, mkc_ast_func_compare, mkcerr);
   astmain->mkcoptions = mkcoptions;
 
-  astmain->profiles = mkc_profile_init (log, mkcerr, mkcoptions);
-  if (astmain->profiles == NULL) {
-    mkc_ast_free (astmain);
-    return NULL;
-  }
-
-  astmain->scope = scope_init (log, mkcerr);
-  if (astmain->scope == NULL) {
+  astmain->scopedvar = scopedvar_init (log, mkcerr, mkcoptions);
+  if (astmain->scopedvar == NULL) {
     mkc_ast_free (astmain);
     return NULL;
   }
@@ -330,7 +323,7 @@ mkc_ast_init (mkc_log_t *log, mkc_option_t *mkcoptions, mkc_error_t *mkcerr)
     return NULL;
   }
 
-  astmain->process = mkc_process_init (astmain->profiles, astmain->scope, log,
+  astmain->process = mkc_process_init (astmain->scopedvar, log,
       astmain->context, mkcoptions, mkcerr);
   if (astmain->process == NULL) {
     mkc_ast_free (astmain);
@@ -389,11 +382,8 @@ mkc_ast_free (mkc_astmain_t *astmain)
   if (astmain->process != NULL) {
     mkc_process_free (astmain->process);
   }
-  if (astmain->profiles != NULL) {
-    mkc_profile_free (astmain->profiles);
-  }
-  if (astmain->scope != NULL) {
-    scope_free (astmain->scope);
+  if (astmain->scopedvar != NULL) {
+    scopedvar_free (astmain->scopedvar);
   }
   if (astmain->context != NULL) {
     mkc_context_free (astmain->context);
@@ -1439,6 +1429,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       mkc_listidx_t   iteridx;
       mkc_listidx_t   lidx;
 
+      scopedvar_incr_local_counter (astmain->scopedvar);
       mkc_list_iter_start (astnode->stmtlist.stmtlist, &iteridx);
       while ((lidx = mkc_list_iter_next (astnode->stmtlist.stmtlist, &iteridx)) != MKC_ITER_FINISH) {
         mkc_astnode_t   **plistnode;
@@ -1497,6 +1488,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
           mkc_ast_process (astmain, listnode, ifcond, stmtcontrol, funcret, depth);
         }
       }
+      scopedvar_decr_local_counter (astmain->scopedvar);
       break;
     }
 
