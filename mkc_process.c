@@ -30,7 +30,6 @@
 #include "mkc_log.h"
 #include "mkc_option.h"
 #include "mkc_process.h"
-#include "mkc_profile.h"
 #include "mkc_regex.h"
 #include "strutil.h"
 #include "mkc_util.h"
@@ -2116,7 +2115,7 @@ mkc_process_chk_shell_extract (mkc_process_t *process, value_t *valpath)
 
     /* from a shell script, the user would expect escape sequences to */
     /* be substituted */
-    tvalue = scopedvar_substitute (process->scopedvar, varvalue, SCOPEDVAR_SUB_ESCAPE, 0);
+    tvalue = scopedvar_substitute (process->scopedvar, varvalue, SV_SUB_ESCAPE, 0);
     if (tvalue == NULL) {
       continue;
     }
@@ -2187,7 +2186,7 @@ mkc_process_save_cache (mkc_process_t *process)
   int             tcount = 0;
   const char      * indent = "  ";
   char            * tbuff;
-  int             sviter;
+  sv_iter_t       * sviter;
 
   if (mkc_error_chk_err (process->mkcerr)) {
     /* at this time, the cache is not saved if there was an error */
@@ -2219,8 +2218,8 @@ mkc_process_save_cache (mkc_process_t *process)
   /* version 1 */
   fprintf (fh, "load_cache %d {\n", MKC_CACHE_VERS_1);
 
-  scopedvar_iter_start (scopedvar, &sviter);
-  while ((profname = scopedvar_iter_next (scopedvar, &sviter)) != NULL) {
+  sviter = scopedvar_iter_start (scopedvar, SV_ITER_HIERARCHY);
+  while ((profname = scopedvar_iter_next (scopedvar, sviter)) != NULL) {
     mkc_varidx_t      viter;
     mkc_varidx_t      vidx;
     int               count = 0;
@@ -2271,6 +2270,7 @@ mkc_process_save_cache (mkc_process_t *process)
     fprintf (fh, "  }\n\n");
     fprintf (fh, "\n");
   }
+  scopedvar_iter_finish (sviter);
 
   if (tcount == 0) {
     fprintf (fh, "  ;\n");
@@ -2622,7 +2622,7 @@ mkc_process_configure_auto (mkc_process_t *process, int defzero)
   char            projnm [MKC_VNAME_MAX];
   size_t          len;
   scopedvar_t     * scopedvar;
-  int             sviter;
+  sv_iter_t       * sviter;
   const char      * profname;
 
   fname = malloc (MKC_PATH_MAX);
@@ -2682,8 +2682,8 @@ mkc_process_configure_auto (mkc_process_t *process, int defzero)
 
   scopedvar = process->scopedvar;
 
-  scopedvar_iter_start (scopedvar, &sviter);
-  while ((profname = scopedvar_iter_next (scopedvar, &sviter)) != NULL) {
+  sviter = scopedvar_iter_start (scopedvar, SV_ITER_HIERARCHY);
+  while ((profname = scopedvar_iter_next (scopedvar, sviter)) != NULL) {
     mkc_varidx_t    viter;
     mkc_varidx_t    vidx;
 
@@ -2723,6 +2723,7 @@ mkc_process_configure_auto (mkc_process_t *process, int defzero)
       }
     }
   }
+  scopedvar_iter_finish (sviter);
 
   fprintf (fh, "\n");
   fprintf (fh, "#endif /* INC_%s_H */\n", projnm);
@@ -2922,7 +2923,7 @@ mkc_process_user_regex_comp (void *turxa, void *turxb)
 static void
 mkc_process_dbg_print_var (mkc_process_t *process, const char *profname)
 {
-  int               sviter;
+  sv_iter_t         * sviter;
   bool              intest = false;
   char              * tbuff;
   scopedvar_t       * scopedvar;
@@ -2951,8 +2952,8 @@ mkc_process_dbg_print_var (mkc_process_t *process, const char *profname)
     }
   }
 
-  scopedvar_iter_start (scopedvar, &sviter);
-  while ((svprofname = scopedvar_iter_next (scopedvar, &sviter)) != NULL) {
+  sviter = scopedvar_iter_start (scopedvar, SV_ITER_HIERARCHY);
+  while ((svprofname = scopedvar_iter_next (scopedvar, sviter)) != NULL) {
     mkc_varidx_t    viter;
     mkc_varidx_t    vidx;
     bool            hdr = false;
@@ -3004,6 +3005,7 @@ mkc_process_dbg_print_var (mkc_process_t *process, const char *profname)
       }
     }
   }
+  scopedvar_iter_finish (sviter);
 
   free (tbuff);
 }
@@ -3011,27 +3013,56 @@ mkc_process_dbg_print_var (mkc_process_t *process, const char *profname)
 static void
 mkc_process_dbg_print_prof (mkc_process_t *process)
 {
-//  mkc_varidx_t   iteridx;
-//  mkc_varidx_t   idx;
+  scopedvar_t * scopedvar;
+  sv_iter_t   * sviter = NULL;
+  const char  * profname;
+
+  scopedvar = process->scopedvar;
 
   fprintf (stdout, "== profiles\n");
 
-#if 0
-  profiles = process->profiles;
-  mkc_profile_iter_start (profiles, &iteridx);
-  while ((idx = mkc_profile_iter_next (profiles, &iteridx)) != MKC_ITER_FINISH) {
-    const char      *nm;
+  sviter = scopedvar_iter_start (scopedvar, SV_ITER_HIERARCHY | SV_ITER_SKIP_CURR);
+  while ((profname = scopedvar_iter_next (scopedvar, sviter)) != NULL) {
+    if (mkc_error_chk_err (process->mkcerr)) {
+      break;
+    }
+
+    fprintf (stdout, "  %s\n", profname);
+  }
+  scopedvar_iter_finish (sviter);
+
+  sviter = scopedvar_iter_start (scopedvar, SV_ITER_USER_PROF);
+  while ((profname = scopedvar_iter_next (scopedvar, sviter)) != NULL) {
+    if (mkc_error_chk_err (process->mkcerr)) {
+      break;
+    }
+
+    fprintf (stdout, "  %s\n", profname);
+  }
+  scopedvar_iter_finish (sviter);
+
+  sviter = scopedvar_iter_start (scopedvar, SV_ITER_COMPILERS);
+  while ((profname = scopedvar_iter_next (scopedvar, sviter)) != NULL) {
     mkc_compiler_t compiler;
 
     if (mkc_error_chk_err (process->mkcerr)) {
       break;
     }
 
-    nm = mkc_profile_get_name (profiles, idx);
-    compiler = mkc_profile_get_compiler (profiles, idx);
-    fprintf (stdout, "  %s %s\n", nm, compiler_get_name (compiler));
+    compiler = scopedvar_iter_get_compiler (scopedvar, sviter);
+    fprintf (stdout, "  %s %s\n", profname, compiler_get_name (compiler));
   }
-#endif
+  scopedvar_iter_finish (sviter);
+
+  sviter = scopedvar_iter_start (scopedvar, SV_ITER_NAMESPACE);
+  while ((profname = scopedvar_iter_next (scopedvar, sviter)) != NULL) {
+    if (mkc_error_chk_err (process->mkcerr)) {
+      break;
+    }
+
+    fprintf (stdout, "  %s\n", profname);
+  }
+  scopedvar_iter_finish (sviter);
 }
 
 static void
@@ -3068,7 +3099,7 @@ mkc_process_configure_substitute (mkc_process_t *process, char *data)
 
   rl = process->attr.replacelist;
   if (mkc_list_size (rl) == 0) {
-    ndata = scopedvar_substitute (process->scopedvar, data, SCOPEDVAR_NO_ESCAPE, 0);
+    ndata = scopedvar_substitute (process->scopedvar, data, SV_NO_ESCAPE, 0);
   } else {
     mkc_listidx_t   iteridx;
     mkc_listidx_t   lidx;

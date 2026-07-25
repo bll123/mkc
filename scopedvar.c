@@ -61,6 +61,12 @@ typedef struct scopedvar_t {
   bool                fromcache;
 } scopedvar_t;
 
+typedef struct sv_iter_t {
+  scopedvar_varlist_t   *variables;
+  int                   idx;
+  int                   flags;
+} sv_iter_t;
+
 static char const * const svtypenames [] = {
   [SV_T_INTERNAL] = "internal",
   [SV_T_CURR_PROF] = "curr_prof",
@@ -201,6 +207,7 @@ scopedvar_pop (scopedvar_t *scopedvar)
   scvarlist->sz -= 1;
   scvar = &scvarlist->variables [scvarlist->sz];
 
+  datafree (scvar->name);
   mkc_varlist_free (scvar->varlist);
   scvar->varlist = NULL;
   scvar->svtype = SV_T_NOT_IN_USE;
@@ -355,63 +362,96 @@ fprintf (stderr, "   found %s %d %d\n", name, i, scopedvar->currcompiler);
 
 /* iterators */
 
-void
-scopedvar_iter_start (scopedvar_t *scopedvar, int *iteridx)
+sv_iter_t *
+scopedvar_iter_start (scopedvar_t *scopedvar, sv_iter_flag_t flags)
 {
-  *iteridx = MKC_ITER_FINISH;
+  sv_iter_t   *sviter;
+
+  sviter = malloc (sizeof (sv_iter_t));
+  if (sviter == NULL) {
+    mkc_error_set (scopedvar->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return NULL;
+  }
+
+  sviter->idx = MKC_ITER_FINISH;
+  sviter->flags = flags;
+  if ((flags & SV_ITER_HIERARCHY) == SV_ITER_HIERARCHY) {
+    sviter->variables = &scopedvar->variables;
+  }
+  if ((flags & SV_ITER_USER_PROF) == SV_ITER_USER_PROF) {
+    sviter->variables = &scopedvar->profiles;
+  }
+  if ((flags & SV_ITER_COMPILERS) == SV_ITER_COMPILERS) {
+    sviter->variables = &scopedvar->compilervars;
+  }
+  if ((flags & SV_ITER_NAMESPACE) == SV_ITER_NAMESPACE) {
+    sviter->variables = &scopedvar->namespaces;
+  }
+
+  return sviter;
 }
 
 const char *
-scopedvar_iter_next (scopedvar_t *scopedvar, int *iteridx)
+scopedvar_iter_next (scopedvar_t *scopedvar, sv_iter_t *sviter)
 {
-  if (*iteridx == MKC_ITER_FINISH) {
-    *iteridx = 0;
+  if (sviter->idx == MKC_ITER_FINISH) {
+    sviter->idx = 0;
   } else {
-    *iteridx += 1;
-    if (*iteridx >= scopedvar->variables.sz) {
-      *iteridx = MKC_ITER_FINISH;
+    sviter->idx += 1;
+    if (sviter->idx >= sviter->variables->sz) {
+      sviter->idx = MKC_ITER_FINISH;
       return NULL;
     }
   }
 
-  return scopedvar->variables.variables [*iteridx].name;
+  return sviter->variables->variables [sviter->idx].name;
+}
+
+void
+scopedvar_iter_finish (sv_iter_t *sviter)
+{
+  if (sviter == NULL) {
+    return;
+  }
+
+  free (sviter);
 }
 
 scopedvar_type_t
-scopedvar_iter_get_type (scopedvar_t *scopedvar, int iteridx)
+scopedvar_iter_get_type (scopedvar_t *scopedvar, sv_iter_t *sviter)
 {
-  if (iteridx < 0 || iteridx >= scopedvar->variables.sz) {
+  if (sviter->idx < 0 || sviter->idx >= sviter->variables->sz) {
     mkc_error_set (scopedvar->mkcerr, MKC_ERR_OUT_OF_RANGE, 0, NULL);
     return SV_T_NOT_IN_USE;
   }
 
-  return scopedvar->variables.variables [iteridx].svtype;
+  return sviter->variables->variables [sviter->idx].svtype;
 }
 
 mkc_compiler_t
-scopedvar_iter_get_compiler (scopedvar_t *scopedvar, int iteridx)
+scopedvar_iter_get_compiler (scopedvar_t *scopedvar, sv_iter_t *sviter)
 {
-  if (iteridx < 0 || iteridx >= scopedvar->variables.sz) {
+  if (sviter->idx < 0 || sviter->idx >= sviter->variables->sz) {
     mkc_error_set (scopedvar->mkcerr, MKC_ERR_OUT_OF_RANGE, 0, NULL);
     return MKC_COMPILER_GENERAL;
   }
 
-  return scopedvar->variables.variables [iteridx].compiler;
+  return sviter->variables->variables [sviter->idx].compiler;
 }
 
 void
-scopedvar_var_iter_start (scopedvar_t *scopedvar, int iteridx,
+scopedvar_var_iter_start (scopedvar_t *scopedvar, sv_iter_t *sviter,
     mkc_varidx_t *variteridx)
 {
   scopedvar_var_t * scvar;
   mkc_varlist_t   * varlist = NULL;
 
-  if (iteridx < 0 || iteridx >= scopedvar->variables.sz) {
+  if (sviter->idx < 0 || sviter->idx >= sviter->variables->sz) {
     mkc_error_set (scopedvar->mkcerr, MKC_ERR_OUT_OF_RANGE, 0, NULL);
     return;
   }
 
-  scvar = &scopedvar->variables.variables [iteridx];
+  scvar = &sviter->variables->variables [sviter->idx];
   varlist = scvar->varlist;
   mkc_var_iter_start (varlist, variteridx);
 
@@ -419,19 +459,19 @@ scopedvar_var_iter_start (scopedvar_t *scopedvar, int iteridx,
 }
 
 int
-scopedvar_var_iter_next (scopedvar_t *scopedvar, int iteridx,
+scopedvar_var_iter_next (scopedvar_t *scopedvar, sv_iter_t *sviter,
     mkc_varidx_t *variteridx)
 {
   scopedvar_var_t * scvar;
   mkc_varlist_t   * varlist = NULL;
   mkc_varidx_t    vidx;
 
-  if (iteridx < 0 || iteridx >= scopedvar->variables.sz) {
+  if (sviter->idx < 0 || sviter->idx >= sviter->variables->sz) {
     mkc_error_set (scopedvar->mkcerr, MKC_ERR_OUT_OF_RANGE, 0, NULL);
     return MKC_COMPILER_GENERAL;
   }
 
-  scvar = &scopedvar->variables.variables [iteridx];
+  scvar = &sviter->variables->variables [sviter->idx];
   varlist = scvar->varlist;
   vidx = mkc_var_iter_next (varlist, variteridx);
 
@@ -439,19 +479,19 @@ scopedvar_var_iter_next (scopedvar_t *scopedvar, int iteridx,
 }
 
 const char *
-scopedvar_var_iter_get_name (scopedvar_t *scopedvar, int iteridx,
+scopedvar_var_iter_get_name (scopedvar_t *scopedvar, sv_iter_t *sviter,
     mkc_varidx_t vidx)
 {
   scopedvar_var_t * scvar;
   mkc_varlist_t   * varlist = NULL;
   const char      * vname;
 
-  if (iteridx < 0 || iteridx >= scopedvar->variables.sz) {
+  if (sviter->idx < 0 || sviter->idx >= sviter->variables->sz) {
     mkc_error_set (scopedvar->mkcerr, MKC_ERR_OUT_OF_RANGE, 0, NULL);
     return NULL;
   }
 
-  scvar = &scopedvar->variables.variables [iteridx];
+  scvar = &sviter->variables->variables [sviter->idx];
   varlist = scvar->varlist;
   vname = mkc_var_get_name (varlist, vidx);
 
@@ -459,19 +499,19 @@ scopedvar_var_iter_get_name (scopedvar_t *scopedvar, int iteridx,
 }
 
 value_t *
-scopedvar_var_iter_get_value (scopedvar_t *scopedvar, int iteridx,
+scopedvar_var_iter_get_value (scopedvar_t *scopedvar, sv_iter_t *sviter,
     mkc_varidx_t vidx)
 {
   scopedvar_var_t * scvar;
   mkc_varlist_t   * varlist = NULL;
   value_t         * value = NULL;
 
-  if (iteridx < 0 || iteridx >= scopedvar->variables.sz) {
+  if (sviter->idx < 0 || sviter->idx >= sviter->variables->sz) {
     mkc_error_set (scopedvar->mkcerr, MKC_ERR_OUT_OF_RANGE, 0, NULL);
     return NULL;
   }
 
-  scvar = &scopedvar->variables.variables [iteridx];
+  scvar = &sviter->variables->variables [sviter->idx];
   varlist = scvar->varlist;
   value = mkc_var_get_value_by_idx (varlist, vidx);
 
@@ -705,7 +745,7 @@ scopedvar_value_get_str (scopedvar_t *scopedvar, value_t *value,
     case MKC_VT_QUOTED_STRING: {
       char    *tbuff;
 
-      tbuff = scopedvar_substitute (scopedvar, value->sval, SCOPEDVAR_SUB_ESCAPE, 0);
+      tbuff = scopedvar_substitute (scopedvar, value->sval, SV_SUB_ESCAPE, 0);
       stpecpy (buff, buff + sz, tbuff);
       free (tbuff);
       break;
@@ -1175,7 +1215,7 @@ scopedvar_substitute (scopedvar_t *scopedvar, const char *data,
   if (srcp == endp) {
     buff = malloc (blen);
     *buff = '\0';
-    if (subescapeflag == SCOPEDVAR_SUB_ESCAPE) {
+    if (subescapeflag == SV_SUB_ESCAPE) {
       scopedvar_sub_escapes (buff, blen);
     }
     return buff;
@@ -1249,7 +1289,7 @@ scopedvar_substitute (scopedvar_t *scopedvar, const char *data,
 //fprintf (stderr, "%*ssubstr-len: %zd\n", depth * 2, "", tlen);
       substr [tlen] = '\0';
 //fprintf (stderr, "%*ssubstr: '%s'\n", depth * 2, "", substr);
-      tstr = scopedvar_substitute (scopedvar, substr, SCOPEDVAR_NO_ESCAPE, depth + 1);
+      tstr = scopedvar_substitute (scopedvar, substr, SV_NO_ESCAPE, depth + 1);
       free (substr);
 //fprintf (stderr, "%*ststr: '%s'\n", depth * 2, "", tstr);
 
@@ -1298,7 +1338,7 @@ scopedvar_substitute (scopedvar_t *scopedvar, const char *data,
   }
 
 //fprintf (stderr, "%*sbuff-fin: '%s'\n", depth * 2, "", buff);
-  if (subescapeflag == SCOPEDVAR_SUB_ESCAPE) {
+  if (subescapeflag == SV_SUB_ESCAPE) {
     scopedvar_sub_escapes (buff, blen);
   }
   return buff;
@@ -1516,7 +1556,7 @@ scopedvar_get_variable_value (scopedvar_t *scopedvar, const char *str)
   char        *tstr;
   value_t *value;
 
-  tstr = scopedvar_substitute (scopedvar, str, SCOPEDVAR_NO_ESCAPE, 0);
+  tstr = scopedvar_substitute (scopedvar, str, SV_NO_ESCAPE, 0);
   value = scopedvar_get_value (scopedvar, SV_T_SEARCH, tstr);
   free (tstr);
   return value;

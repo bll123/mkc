@@ -143,7 +143,7 @@ os_process_pipe (const char *targv[], int flags, char *rbuff, size_t sz, size_t 
     return -1;
   }
 
-#if 0
+#if OSPROCESS_DEBUG
     {
       int   k = 0;
       fprintf (stderr, "== pipe: ");

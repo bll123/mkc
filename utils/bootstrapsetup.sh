@@ -53,7 +53,9 @@ echo "${nm} = \\" > ${TMPFILE}
 echo '\tmkc_grammar.o \\' >> ${TMPFILE}
 # and re-compile anything that includes mkc_config.h
 grep -E -l 'include "mkc_config.h' *.c | \
-    sed -e 's,\.c$,\.o,' \
+    sed -e '/os_process/ a \\t$(MKC_WIN_OBJ)\ \\' \
+        -e '/os_win_process/ d' \
+        -e 's,\.c$,\.o,' \
         -e 's,^,\t,' \
         -e '$ ! s,$, \\,' \
     >> ${TMPFILE}
@@ -91,7 +93,8 @@ if [ -f mkc ]; then
   ${LORDER} *.o |
       grep -v 'topochk' |
       tsort |
-      sed -e '/mkc_os_process/ a \\t$(MKC_WIN_OBJ)\ \\' \
+      sed -e '/os_process/ a \\t$(MKC_WIN_OBJ)\ \\' \
+          -e '/os_win_process/ d' \
           -e '/mkc_regex_pcre/ s,mkc_regex_pcre\.o,$(MKC_REGEX_OBJ),' \
           -e 's,^,\t,' \
           -e '$ ! s,$, \\,' \

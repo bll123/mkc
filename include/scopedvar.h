@@ -40,11 +40,20 @@ typedef enum {
 } scopedvar_type_t;
 
 typedef enum {
-  SCOPEDVAR_NO_ESCAPE,
-  SCOPEDVAR_SUB_ESCAPE,
+  SV_NO_ESCAPE,
+  SV_SUB_ESCAPE,
 } scopedvar_escape_t;
 
+typedef enum {
+  SV_ITER_HIERARCHY   = 0x0001,
+  SV_ITER_USER_PROF   = 0x0002,
+  SV_ITER_COMPILERS   = 0x0004,
+  SV_ITER_NAMESPACE   = 0x0008,
+  SV_ITER_SKIP_CURR   = 0x1000,
+} sv_iter_flag_t;
+
 typedef struct scopedvar_t scopedvar_t;
+typedef struct sv_iter_t sv_iter_t;
 
 scopedvar_t * scopedvar_init (mkc_log_t *log, mkc_error_t *mkcerr, mkc_option_t *mkcoptions);
 void scopedvar_free (scopedvar_t *scopedvar);
@@ -61,14 +70,15 @@ void scopedvar_reset_active_profile (scopedvar_t *scopedvar);
 const char * scopedvar_get_current_profile (scopedvar_t *scopedvar);
 void scopedvar_set_current_profile (scopedvar_t *scopedvar, const char *name, mkc_compiler_t compiler);
 
-void scopedvar_iter_start (scopedvar_t *scopedvar, int *iteridx);
-const char * scopedvar_iter_next (scopedvar_t *scopedvar, int *iteridx);
-scopedvar_type_t scopedvar_iter_get_type (scopedvar_t *scopedvar, int iteridx);
-mkc_compiler_t scopedvar_iter_get_compiler (scopedvar_t *scopedvar, int iteridx);
-void scopedvar_var_iter_start (scopedvar_t *scopedvar, int iteridx, mkc_varidx_t *variteridx);
-mkc_varidx_t scopedvar_var_iter_next (scopedvar_t *scopedvar, int iteridx, mkc_varidx_t *variteridx);
-const char *scopedvar_var_iter_get_name (scopedvar_t *scopedvar, int iteridx, mkc_varidx_t vidx);
-value_t *scopedvar_var_iter_get_value (scopedvar_t *scopedvar, int iteridx, mkc_varidx_t vidx);
+sv_iter_t *scopedvar_iter_start (scopedvar_t *scopedvar, sv_iter_flag_t flags);
+const char * scopedvar_iter_next (scopedvar_t *scopedvar, sv_iter_t *sviter);
+void scopedvar_iter_finish (sv_iter_t *sviter);
+scopedvar_type_t scopedvar_iter_get_type (scopedvar_t *scopedvar, sv_iter_t *sviter);
+mkc_compiler_t scopedvar_iter_get_compiler (scopedvar_t *scopedvar, sv_iter_t *sviter);
+void scopedvar_var_iter_start (scopedvar_t *scopedvar, sv_iter_t *sviter, mkc_varidx_t *variteridx);
+mkc_varidx_t scopedvar_var_iter_next (scopedvar_t *scopedvar, sv_iter_t *sviter, mkc_varidx_t *variteridx);
+const char *scopedvar_var_iter_get_name (scopedvar_t *scopedvar, sv_iter_t *sviter, mkc_varidx_t vidx);
+value_t *scopedvar_var_iter_get_value (scopedvar_t *scopedvar, sv_iter_t *sviter, mkc_varidx_t vidx);
 
 time_t scopedvar_get_timestamp (scopedvar_t *scopedvar, const char *vname);
 value_t * scopedvar_get_value (scopedvar_t *scopedvar, scopedvar_type_t svtype, const char *vname);

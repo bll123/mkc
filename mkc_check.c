@@ -716,7 +716,7 @@ mkc_check_file_sub_copy (mkc_check_t *check,
     free (fbuff);
     return;
   }
-  ndata = scopedvar_substitute (check->scope, data, SCOPEDVAR_NO_ESCAPE, 0);
+  ndata = scopedvar_substitute (check->scope, data, SV_NO_ESCAPE, 0);
   mkc_log (check->log, MKC_LOG_CHECK, "--- code:\n");
   mkc_log (check->log, MKC_LOG_CHECK, "%s\n", ndata);
   mkc_log (check->log, MKC_LOG_CHECK, "---\n");
@@ -772,7 +772,7 @@ mkc_chk_env_var_set (mkc_check_t *check, const char *nm)
   *tbuff = '\0';
   env_get (nm, tbuff, MKC_PATH_MAX);
   if (*tbuff) {
-    rc = scopedvar_set_str (check->scope, SV_T_SEARCH, nm, tbuff, MKC_VCTXT_ENV);
+    rc = scopedvar_set_str (check->scope, SV_T_INTERNAL, nm, tbuff, MKC_VCTXT_ENV);
   }
 
   free (tbuff);

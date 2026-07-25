@@ -31,7 +31,6 @@
 #include "mkc_log.h"
 #include "mkc_parse.h"
 #include "pathutil.h"
-#include "mkc_profile.h"
 #include "strutil.h"
 #include "tmutil.h"
 
@@ -144,6 +143,7 @@ main (int argc, char *argv [])
     }
   }
 
+#if ! defined (MKC_BOOTSTRAP) && _arg_count_mkdir != 0
   /* create the mkc_files temporary directory tree */
   path_build (MKC_PATH_MKCF_TMP, tbuff, sizeof (tbuff), NULL, mkcerr);
   rc = dirop_make (tbuff, mkcerr);
@@ -159,6 +159,7 @@ main (int argc, char *argv [])
     datafree (mkcoptions.dfltprofile);
     return rc;
   }
+#endif
 
   log = mkc_log_init (mkcerr);
   path_build (MKC_PATH_MKCFILES, tbuff, sizeof (tbuff),
