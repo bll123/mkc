@@ -102,6 +102,8 @@ bool scopedvar_var_is_list (scopedvar_t *scopedvar, const char *vname);
 void scopedvar_temp_value_free (void *tvalue);
 char * scopedvar_substitute (scopedvar_t *scopedvar, const char *data, scopedvar_escape_t subescapeflag, int depth);
 
+const char * scopedvar_type_disp (scopedvar_type_t svtype);
+
 #if defined (__cplusplus) || defined (c_plusplus)
 }
 #endif

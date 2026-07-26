@@ -11,21 +11,26 @@ expfail=F
 
 ttype=mkc
 
-args="--no-cache -p debug"
+args="--no-cache"
 dotest ${ddir}/${bnm}.mkc
 rc=$?
 if [ $rc -ne 0 ]; then exit $rc; fi
-mv -f ${odir}/$bnm.out ${odir}/$bnm-debug.out
-dodiff ${rdir}/$bnm-debug.out ${odir}/$bnm-debug.out
+mv -f ${odir}/$bnm.out ${odir}/$bnm-a.out
+dodiff ${rdir}/$bnm.out ${odir}/$bnm-a.out
 rc=$?
 if [ $rc -ne 0 ]; then exit $rc; fi
 testfin
 
+args=""
 dotest ${ddir}/${bnm}.mkc
 rc=$?
 if [ $rc -ne 0 ]; then exit $rc; fi
-mv -f ${odir}/$bnm.out ${odir}/$bnm-release.out
-dodiff ${rdir}/$bnm-release.out ${odir}/$bnm-release.out
+mv -f ${odir}/$bnm.out ${odir}/$bnm-b.out
+dodiff ${rdir}/$bnm.out ${odir}/$bnm-b.out
 rc=$?
 if [ $rc -ne 0 ]; then exit $rc; fi
 testfin
+
+dodiff ${odir}/$bnm-a.out ${odir}/$bnm-b.out
+rc=$?
+if [ $rc -ne 0 ]; then exit $rc; fi

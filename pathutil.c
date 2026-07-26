@@ -33,6 +33,7 @@ const char * const pathdesc [MKC_PATH_BUILD_MAX] = {
   [MKC_PATH_HOME] = "home",
   [MKC_PATH_MKC_TEMPLATES] = "mkc_templates",
   [MKC_PATH_MKCFILES] = "mkc_files",
+  [MKC_PATH_MKCF_OBJECTS] = "mkc_obj",
   [MKC_PATH_MKCF_TMP] = "mkc_tmp",
   [MKC_PATH_MKC_INCLUDE] = "mkc_include",
   [MKC_PATH_MKC_UNITS] = "mkc_units",

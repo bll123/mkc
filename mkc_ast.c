@@ -1741,8 +1741,11 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
         break;
       }
 
-      if (! mkc_process_profile_is_current (astmain->process, valnm)) {
-        break;
+      /* while in load-cache, any profile is valid */
+      if (! mkc_context_check (astmain->context, MKC_CONTEXT_CACHE)) {
+        if (! mkc_process_profile_is_current (astmain->process, valnm)) {
+          break;
+        }
       }
 
       mkc_process_stmt_profile (astmain->process, valnm);

@@ -41,7 +41,7 @@ typedef struct {
 
 static void copyargs (argcopy_t *argcopy, int argc, char *argv [], mkc_error_t *mkcerr);
 static void cleanargs (argcopy_t *argcopy);
-static mkc_err_code_t mkc_cleanup (mkc_astmain_t *astmain, argcopy_t *argcopy, mkc_log_t *log, mkc_error_t *error);
+static mkc_err_code_t mkc_cleanup (mkc_astmain_t *astmain, argcopy_t *argcopy, mkc_log_t *log, mkc_option_t *mkcoptions, mkc_error_t *error);
 void mkc_main_set_home (void);
 void mkc_main_set_exec_path (argcopy_t *argcopy);
 static void mkc_main_print_version (void);
@@ -75,9 +75,16 @@ main (int argc, char *argv [])
     { "prefix",               required_argument,  NULL, 6   },
     { "profile",              required_argument,  NULL, 'p' },
     { "retest",               no_argument,        NULL, 'r' },
-    { "version",              no_argument,        NULL, 'v'   },
+    { "verbose",              no_argument,        NULL, 'v' },
+    { "version",              no_argument,        NULL, 3 },
     { NULL,                   no_argument,        NULL, 0   },
   };
+
+  mkcoptions.currprofile = strdup (MKC_C_PROF_DEFAULT_NAME);
+  mkcoptions.stage = NULL;
+  mkcoptions.prefix = NULL;
+  mkcoptions.verbose = 0;
+  mkcoptions.retest = false;
 
   mkcerr = mkc_error_init ();
   copyargs (&argcopy, argc, argv, mkcerr);
@@ -89,25 +96,20 @@ main (int argc, char *argv [])
 #endif
 
   if (mkc_error_chk_err (mkcerr)) {
-    rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
+    rc = mkc_cleanup (astmain, &argcopy, log, &mkcoptions, mkcerr);
     return rc;
   }
 
   mkc_main_set_home ();
   mkc_main_set_exec_path (&argcopy);
 
-  mkcoptions.dfltprofile = strdup (MKC_C_PROF_DEFAULT_NAME);
-  mkcoptions.stage = NULL;
-  mkcoptions.prefix = NULL;
-  mkcoptions.retest = false;
-
   while ((c = getopt_long_only (argcopy.nargc, argcopy.utf8argv,
       "p:rv", mkc_cli_opts, &option_index)) != -1) {
     switch (c) {
       case 'p': {
         if (optarg != NULL) {
-          datafree (mkcoptions.dfltprofile);
-          mkcoptions.dfltprofile = strdup (argcopy.utf8argv [optind - 1]);
+          datafree (mkcoptions.currprofile);
+          mkcoptions.currprofile = strdup (argcopy.utf8argv [optind - 1]);
         }
         break;
       }
@@ -116,8 +118,7 @@ main (int argc, char *argv [])
         break;
       }
       case 'v': {
-        mkc_main_print_version ();
-        exit (0);
+        mkcoptions.verbose += 1;
         break;
       }
       case 1: {
@@ -126,6 +127,11 @@ main (int argc, char *argv [])
       }
       case 2: {
         debug = 1;
+        break;
+      }
+      case 3: {
+        mkc_main_print_version ();
+        exit (0);
         break;
       }
       case 5: {
@@ -143,23 +149,19 @@ main (int argc, char *argv [])
     }
   }
 
-#if ! defined (MKC_BOOTSTRAP) && _arg_count_mkdir != 0
   /* create the mkc_files temporary directory tree */
   path_build (MKC_PATH_MKCF_TMP, tbuff, sizeof (tbuff), NULL, mkcerr);
   rc = dirop_make (tbuff, mkcerr);
   if (rc != 0) {
-    rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
-    datafree (mkcoptions.dfltprofile);
+    rc = mkc_cleanup (astmain, &argcopy, log, &mkcoptions, mkcerr);
     return rc;
   }
   path_build (MKC_PATH_MKCF_OBJECTS, tbuff, sizeof (tbuff), NULL, mkcerr);
   rc = dirop_make (tbuff, mkcerr);
   if (rc != 0) {
-    rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
-    datafree (mkcoptions.dfltprofile);
+    rc = mkc_cleanup (astmain, &argcopy, log, &mkcoptions, mkcerr);
     return rc;
   }
-#endif
 
   log = mkc_log_init (mkcerr);
   path_build (MKC_PATH_MKCFILES, tbuff, sizeof (tbuff),
@@ -170,8 +172,7 @@ main (int argc, char *argv [])
   fnidx = optind;
   if (fnidx >= argcopy.nargc) {
     fprintf (stderr, "no file specified.\n");
-    rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
-    datafree (mkcoptions.dfltprofile);
+    rc = mkc_cleanup (astmain, &argcopy, log, &mkcoptions, mkcerr);
     return rc;
   }
 
@@ -179,16 +180,14 @@ main (int argc, char *argv [])
     fh = fileop_open (argcopy.utf8argv [fnidx], "r");
     if (fh == NULL) {
       mkc_error_set (mkcerr, MKC_ERR_FILE_NOT_FOUND, errno, argcopy.utf8argv [fnidx]);
-      rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
-      datafree (mkcoptions.dfltprofile);
+      rc = mkc_cleanup (astmain, &argcopy, log, &mkcoptions, mkcerr);
       return rc;
     }
   }
 
   astmain = mkc_ast_init (log, &mkcoptions, mkcerr);
   if (mkc_error_chk_err (mkcerr)) {
-    rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
-    datafree (mkcoptions.dfltprofile);
+    rc = mkc_cleanup (astmain, &argcopy, log, &mkcoptions, mkcerr);
     return rc;
   }
 
@@ -217,8 +216,7 @@ main (int argc, char *argv [])
 
   mkc_parse_start (parse, fh);
   if (mkc_error_chk_err (mkcerr)) {
-    rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
-    datafree (mkcoptions.dfltprofile);
+    rc = mkc_cleanup (astmain, &argcopy, log, &mkcoptions, mkcerr);
     return rc;
   }
 
@@ -228,8 +226,7 @@ main (int argc, char *argv [])
     cfh = fileop_open (cachename, "r");
     if (cfh == NULL) {
       mkc_error_set (mkcerr, MKC_ERR_FILE_NOT_FOUND, errno, cachename);
-      rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
-      datafree (mkcoptions.dfltprofile);
+      rc = mkc_cleanup (astmain, &argcopy, log, &mkcoptions, mkcerr);
       return rc;
     }
 
@@ -244,8 +241,7 @@ main (int argc, char *argv [])
   mkc_parse_free (parse);
 
   if (mkc_error_chk_err (mkcerr)) {
-    rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
-    datafree (mkcoptions.dfltprofile);
+    rc = mkc_cleanup (astmain, &argcopy, log, &mkcoptions, mkcerr);
     return rc;
   }
 
@@ -274,8 +270,7 @@ main (int argc, char *argv [])
   mkc_message ("-- total time: %s\n", tbuff);
   mkc_log (log, MKC_LOG_STATISTICS, "-- total time: %s\n", tbuff);
 
-  rc = mkc_cleanup (astmain, &argcopy, log, mkcerr);
-  datafree (mkcoptions.dfltprofile);
+  rc = mkc_cleanup (astmain, &argcopy, log, &mkcoptions, mkcerr);
   return rc;
 }
 
@@ -329,13 +324,15 @@ cleanargs (argcopy_t *argcopy)
 
 static mkc_err_code_t
 mkc_cleanup (mkc_astmain_t *astmain, argcopy_t *argcopy,
-    mkc_log_t *log, mkc_error_t *mkcerr)
+    mkc_log_t *log, mkc_option_t *mkcoptions, mkc_error_t *mkcerr)
 {
   mkc_err_code_t  rc;
 
   mkc_ast_free (astmain);
   cleanargs (argcopy);
   mkc_log_free (log);
+  datafree (mkcoptions->currprofile);
+
   mkc_error_print (mkcerr);
   rc = mkc_error_value (mkcerr);
   mkc_error_free (mkcerr);

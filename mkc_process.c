@@ -1794,7 +1794,7 @@ mkc_process_profile_is_current (mkc_process_t *process, value_t *valnm)
 
   scopedvar_value_get_str (process->scopedvar, valnm, nm, sizeof (nm));
   profnm = scopedvar_get_current_profile (process->scopedvar);
-  rc = strcmp (profnm, nm);
+  rc = strcmp (profnm, nm) == 0;
 
   return rc;
 }
@@ -2928,6 +2928,7 @@ mkc_process_dbg_print_var (mkc_process_t *process, const char *profname)
   char              * tbuff;
   scopedvar_t       * scopedvar;
   const char        * svprofname;
+  sv_iter_flag_t    itertype;
 
   tbuff = malloc (MKC_SMALL_BUFF_SZ);
   if (tbuff == NULL) {
@@ -2937,22 +2938,37 @@ mkc_process_dbg_print_var (mkc_process_t *process, const char *profname)
 
   scopedvar = process->scopedvar;
 
+  itertype = SV_ITER_HIERARCHY;
   if (profname != NULL) {
     if (strcmp (profname, "default") == 0) {
       profname = MKC_C_PROF_DEFAULT_NAME;
     } else if (strcmp (profname, "test") == 0) {
       profname = MKC_C_PROF_DEFAULT_NAME;
       intest = true;
+      itertype = SV_ITER_HIERARCHY | SV_ITER_SKIP_CURR;
+    } else if (strcmp (profname, "testuserprof") == 0) {
+      profname = NULL;
+      itertype = SV_ITER_USER_PROF;
+      intest = true;
+    } else if (strcmp (profname, "userprof") == 0) {
+      profname = NULL;
+      itertype = SV_ITER_USER_PROF;
+    } else if (strcmp (profname, "compilers") == 0) {
+      profname = MKC_C_PROF_DEFAULT_NAME;
+      itertype = SV_ITER_COMPILERS;
     } else if (strcmp (profname, "ts") == 0) {
       profname = MKC_C_PROF_TIMESTAMP_NAME;
+      itertype = SV_ITER_NAMESPACE;
     } else if (strcmp (profname, "dep") == 0) {
       profname = MKC_C_PROF_DEPENDENCIES_NAME;
+      itertype = SV_ITER_NAMESPACE;
     } else if (strcmp (profname, "paths") == 0) {
       profname = MKC_C_PROF_PATHS_NAME;
+      itertype = SV_ITER_NAMESPACE;
     }
   }
 
-  sviter = scopedvar_iter_start (scopedvar, SV_ITER_HIERARCHY);
+  sviter = scopedvar_iter_start (scopedvar, itertype);
   while ((svprofname = scopedvar_iter_next (scopedvar, sviter)) != NULL) {
     mkc_varidx_t    viter;
     mkc_varidx_t    vidx;
@@ -2977,7 +2993,7 @@ mkc_process_dbg_print_var (mkc_process_t *process, const char *profname)
 
         compiler = scopedvar_iter_get_compiler (scopedvar, sviter);
         compstr = compiler_get_name (compiler);
-        fprintf (stdout, "== %s %s\n", profname, compstr);
+        fprintf (stdout, "== %s %s\n", svprofname, compstr);
         hdr = true;
       }
 
@@ -3023,44 +3039,56 @@ mkc_process_dbg_print_prof (mkc_process_t *process)
 
   sviter = scopedvar_iter_start (scopedvar, SV_ITER_HIERARCHY | SV_ITER_SKIP_CURR);
   while ((profname = scopedvar_iter_next (scopedvar, sviter)) != NULL) {
+    scopedvar_type_t  svtype;
+
     if (mkc_error_chk_err (process->mkcerr)) {
       break;
     }
 
-    fprintf (stdout, "  %s\n", profname);
+    svtype = scopedvar_iter_get_type (scopedvar, sviter);
+    fprintf (stdout, "  %s %s\n", scopedvar_type_disp (svtype), profname);
   }
   scopedvar_iter_finish (sviter);
 
   sviter = scopedvar_iter_start (scopedvar, SV_ITER_USER_PROF);
   while ((profname = scopedvar_iter_next (scopedvar, sviter)) != NULL) {
+    scopedvar_type_t  svtype;
+
     if (mkc_error_chk_err (process->mkcerr)) {
       break;
     }
 
-    fprintf (stdout, "  %s\n", profname);
+    svtype = scopedvar_iter_get_type (scopedvar, sviter);
+    fprintf (stdout, "  %s %s\n", scopedvar_type_disp (svtype), profname);
   }
   scopedvar_iter_finish (sviter);
 
   sviter = scopedvar_iter_start (scopedvar, SV_ITER_COMPILERS);
   while ((profname = scopedvar_iter_next (scopedvar, sviter)) != NULL) {
+    scopedvar_type_t  svtype;
     mkc_compiler_t compiler;
 
     if (mkc_error_chk_err (process->mkcerr)) {
       break;
     }
 
+    svtype = scopedvar_iter_get_type (scopedvar, sviter);
     compiler = scopedvar_iter_get_compiler (scopedvar, sviter);
-    fprintf (stdout, "  %s %s\n", profname, compiler_get_name (compiler));
+    fprintf (stdout, "  %s %s %s\n", scopedvar_type_disp (svtype),
+        profname, compiler_get_name (compiler));
   }
   scopedvar_iter_finish (sviter);
 
   sviter = scopedvar_iter_start (scopedvar, SV_ITER_NAMESPACE);
   while ((profname = scopedvar_iter_next (scopedvar, sviter)) != NULL) {
+    scopedvar_type_t  svtype;
+
     if (mkc_error_chk_err (process->mkcerr)) {
       break;
     }
 
-    fprintf (stdout, "  %s\n", profname);
+    svtype = scopedvar_iter_get_type (scopedvar, sviter);
+    fprintf (stdout, "  %s %s\n", scopedvar_type_disp (svtype), profname);
   }
   scopedvar_iter_finish (sviter);
 }

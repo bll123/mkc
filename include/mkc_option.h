@@ -11,9 +11,10 @@ extern "C" {
 #endif
 
 typedef struct mkc_option_t {
-  char        * dfltprofile;
+  char        * currprofile;
   const char  * stage;
   const char  * prefix;
+  int         verbose;
   bool        retest;
 } mkc_option_t;
 

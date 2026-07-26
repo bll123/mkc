@@ -88,7 +88,7 @@ static void scopedvar_get_variable_str (scopedvar_t *scope, value_t *value, char
 static void scopedvar_sub_escapes (char *buff, size_t blen);
 static int32_t scopedvar_get_variable_integer (scopedvar_t *scope, value_t *value);
 static value_t * scopedvar_get_variable_value (scopedvar_t *scope, const char *str);
-static void scopedvar_scvarlist_init (scopedvar_varlist_t *svlist);
+static void scopedvar_svarlist_init (scopedvar_varlist_t *svlist);
 static int scopedvar_locate_svtype (scopedvar_t *scopedvar, scopedvar_type_t svtype);
 
 scopedvar_t *
@@ -105,10 +105,10 @@ scopedvar_init (mkc_log_t *log, mkc_error_t *mkcerr, mkc_option_t *mkcoptions)
   scopedvar->mkcoptions = mkcoptions;
   scopedvar->mkcerr = mkcerr;
   scopedvar->log = log;
-  scopedvar_scvarlist_init (&scopedvar->variables);
-  scopedvar_scvarlist_init (&scopedvar->profiles);
-  scopedvar_scvarlist_init (&scopedvar->compilervars);
-  scopedvar_scvarlist_init (&scopedvar->namespaces);
+  scopedvar_svarlist_init (&scopedvar->variables);
+  scopedvar_svarlist_init (&scopedvar->profiles);
+  scopedvar_svarlist_init (&scopedvar->compilervars);
+  scopedvar_svarlist_init (&scopedvar->namespaces);
   scopedvar->local_counter = 0;
   scopedvar->dfltcompiler = MKC_COMPILER_GENERAL;
   scopedvar->currcompiler = MKC_COMPILER_GENERAL;
@@ -128,7 +128,7 @@ scopedvar_init (mkc_log_t *log, mkc_error_t *mkcerr, mkc_option_t *mkcoptions)
 
   /* 'currcompiler' is set to 'general', forcing these to be created */
   /* within the main hierarchy */
-  /* these two entries do not have their own varlist */
+  /* these two entries are template entries and do not own their own varlist */
   scopedvar->currcompiler = MKC_COMPILER_GENERAL;
   scopedvar_create (scopedvar, SV_T_CURR_PROF, MKC_C_PROF_DEFAULT_NAME);
   scopedvar->currprof_idx = scopedvar->variables.sz - 1;
@@ -138,9 +138,11 @@ scopedvar_init (mkc_log_t *log, mkc_error_t *mkcerr, mkc_option_t *mkcoptions)
   scopedvar->currcompiler = MKC_COMPILER_C;
   /* create the 'profiles' and 'compilervars' entries */
   /* the c compiler may not be needed, but the overhead is minor */
+  scopedvar_create (scopedvar, SV_T_CURR_PROF, MKC_C_PROF_DEFAULT_NAME);
   scopedvar_create (scopedvar, SV_T_CURR_PROF_COMPILER, MKC_C_PROF_DEFAULT_NAME);
-  if (strcmp (mkcoptions->dfltprofile, MKC_C_PROF_DEFAULT_NAME) != 0) {
-    scopedvar_create (scopedvar, SV_T_CURR_PROF_COMPILER, mkcoptions->dfltprofile);
+  if (strcmp (mkcoptions->currprofile, MKC_C_PROF_DEFAULT_NAME) != 0) {
+    scopedvar_create (scopedvar, SV_T_CURR_PROF, mkcoptions->currprofile);
+    scopedvar_create (scopedvar, SV_T_CURR_PROF_COMPILER, mkcoptions->currprofile);
   }
 
   scopedvar->standardsz = scopedvar->variables.sz;
@@ -185,27 +187,27 @@ scopedvar_push (scopedvar_t *scopedvar, scopedvar_type_t svtype, const char *nam
 void
 scopedvar_pop (scopedvar_t *scopedvar)
 {
-  scopedvar_varlist_t   *scvarlist;
+  scopedvar_varlist_t   *svarlist;
   scopedvar_var_t       *scvar;
 
   if (scopedvar == NULL) {
     return;
   }
 
-  scvarlist = &scopedvar->variables;
-  if (scvarlist->sz <= 0) {
+  svarlist = &scopedvar->variables;
+  if (svarlist->sz <= 0) {
     mkc_error_set (scopedvar->mkcerr, MKC_ERR_OUT_OF_RANGE, 0, "scope");
     return;
   }
 
   /* the standard scopes should never get popped off of the stack */
-  if (scvarlist->sz == scopedvar->standardsz) {
+  if (svarlist->sz == scopedvar->standardsz) {
     mkc_error_set (scopedvar->mkcerr, MKC_ERR_OUT_OF_RANGE, 0, "scope-b");
     return;
   }
 
-  scvarlist->sz -= 1;
-  scvar = &scvarlist->variables [scvarlist->sz];
+  svarlist->sz -= 1;
+  scvar = &svarlist->variables [svarlist->sz];
 
   datafree (scvar->name);
   mkc_varlist_free (scvar->varlist);
@@ -222,7 +224,6 @@ scopedvar_set_default_compiler (scopedvar_t *scopedvar, mkc_compiler_t compiler)
   }
 
   scopedvar->dfltcompiler = compiler;
-fprintf (stderr, "sv: dflt compiler %s\n", compiler_get_name (compiler));
   scopedvar_set_current_compiler (scopedvar, compiler);
 }
 
@@ -230,15 +231,14 @@ void
 scopedvar_set_current_compiler (scopedvar_t *scopedvar, mkc_compiler_t compiler)
 {
   bool              found = false;
-  const char        * dfltprofile;
+  const char        * currprofile;
 
   if (scopedvar == NULL) {
     return;
   }
 
-  dfltprofile = scopedvar->mkcoptions->dfltprofile;
+  currprofile = scopedvar->mkcoptions->currprofile;
   scopedvar->currcompiler = compiler;
-fprintf (stderr, "sv: curr compiler %s\n", compiler_get_name (compiler));
 
   /* check and see if this compiler has already been created */
   for (int i = 0; i < scopedvar->compilervars.sz; ++i) {
@@ -250,9 +250,10 @@ fprintf (stderr, "sv: curr compiler %s\n", compiler_get_name (compiler));
   }
 
   if (! found) {
-fprintf (stderr, "sv: compiler not found: create\n");
     scopedvar_create (scopedvar, SV_T_CURR_PROF_COMPILER, MKC_C_PROF_DEFAULT_NAME);
-    scopedvar_create (scopedvar, SV_T_CURR_PROF_COMPILER, dfltprofile);
+    if (strcmp (MKC_C_PROF_DEFAULT_NAME, currprofile) != 0) {
+      scopedvar_create (scopedvar, SV_T_CURR_PROF_COMPILER, currprofile);
+    }
   }
 
   scopedvar_set_current_profile (scopedvar, scopedvar->current_profile, compiler);
@@ -289,13 +290,19 @@ scopedvar_decr_local_counter (scopedvar_t *scopedvar)
 void
 scopedvar_set_active_profile (scopedvar_t *scopedvar, const char *name)
 {
-fprintf (stderr, "sv: set-active: %s\n", name);
+  bool    found = false;
+
   for (int i = 0; i < scopedvar->variables.sz; ++i) {
-    if (scopedvar->variables.variables [i].name == scopedvar->current_profile) {
-fprintf (stderr, "  found %s %d\n", name, i);
+    if (strcmp (scopedvar->variables.variables [i].name, name) == 0) {
       scopedvar->active_idx = i;
+      found = true;
       break;
     }
+  }
+
+  if (! found) {
+    scopedvar_create (scopedvar, SV_T_CURR_PROF, name);
+    scopedvar_create (scopedvar, SV_T_CURR_PROF_COMPILER, name);
   }
 }
 
@@ -303,7 +310,6 @@ void
 scopedvar_reset_active_profile (scopedvar_t *scopedvar)
 {
   scopedvar->active_idx = scopedvar->currprof_idx;
-fprintf (stderr, "sv: reset-active: %d\n", scopedvar->active_idx);
 }
 
 const char *
@@ -321,11 +327,9 @@ scopedvar_set_current_profile (scopedvar_t *scopedvar, const char *name,
 
   scopedvar->current_profile = name;
 
-fprintf (stderr, "sv: set-current: %s %s\n", name, compiler_get_name (compiler));
-  for (int i = 0; i < scopedvar->compilervars.sz; ++i) {
+  for (int i = 0; i < scopedvar->profiles.sz; ++i) {
     if (strcmp (scopedvar->profiles.variables [i].name, scopedvar->current_profile) == 0) {
       vars = scopedvar->profiles.variables [i].varlist;
-fprintf (stderr, "   found %s %d\n", name, i);
       break;
     }
   }
@@ -342,10 +346,9 @@ fprintf (stderr, "   found %s %d\n", name, i);
   vars = NULL;
 
   for (int i = 0; i < scopedvar->compilervars.sz; ++i) {
-    if (strcmp (scopedvar->profiles.variables [i].name, scopedvar->current_profile) == 0 &&
+    if (strcmp (scopedvar->compilervars.variables [i].name, scopedvar->current_profile) == 0 &&
         scopedvar->compilervars.variables [i].compiler == scopedvar->currcompiler) {
       vars = scopedvar->compilervars.variables [i].varlist;
-fprintf (stderr, "   found %s %d %d\n", name, i, scopedvar->currcompiler);
       break;
     }
   }
@@ -401,6 +404,16 @@ scopedvar_iter_next (scopedvar_t *scopedvar, sv_iter_t *sviter)
     if (sviter->idx >= sviter->variables->sz) {
       sviter->idx = MKC_ITER_FINISH;
       return NULL;
+    }
+  }
+
+  if ((sviter->flags & SV_ITER_SKIP_CURR) == SV_ITER_SKIP_CURR) {
+    scopedvar_type_t    svtype;
+
+    svtype = sviter->variables->variables [sviter->idx].svtype;
+    if (svtype == SV_T_CURR_PROF ||
+        svtype == SV_T_CURR_PROF_COMPILER) {
+      return scopedvar_iter_next (scopedvar, sviter);
     }
   }
 
@@ -536,7 +549,6 @@ scopedvar_get_value (scopedvar_t *scopedvar, scopedvar_type_t svtype, const char
   value_t         * value = NULL;
   mkc_varlist_t   * varlist = NULL;
 
-fprintf (stderr, "sv: get: %s %s\n", svtypenames [svtype], vname);
   /* handle the special namespaces */
   if (svtype > SV_T_NAMESPACE) {
     int     idx = -1;
@@ -556,7 +568,6 @@ fprintf (stderr, "sv: get: %s %s\n", svtypenames [svtype], vname);
     scvar = &scopedvar->namespaces.variables [idx];
     varlist = scvar->varlist;
     value = mkc_var_get_value (varlist, vname);
-fprintf (stderr, "sv: from-ns: %d\n", value == NULL ? 0 : 1);
 
     return value;
   }
@@ -572,10 +583,8 @@ fprintf (stderr, "sv: from-ns: %d\n", value == NULL ? 0 : 1);
     }
 
     varlist = scvar->varlist;
-fprintf (stderr, "sv: try: idx:%d %s %p\n", i, svtypenames [scvar->svtype], varlist);
     value = mkc_var_get_value (varlist, vname);
     if (value != NULL) {
-fprintf (stderr, "  found\n");
       break;
     }
 
@@ -942,7 +951,6 @@ scopedvar_set (scopedvar_t *scopedvar, scopedvar_type_t svtype,
     return rc;
   }
 
-fprintf (stderr, "sv: set: %s %s\n", svtypenames [svtype], vname);
   if (svtype > SV_T_NAMESPACE) {
     for (int i = 0; i < scopedvar->namespaces.sz; ++i) {
       if (scopedvar->namespaces.variables [i].svtype == svtype) {
@@ -952,11 +960,9 @@ fprintf (stderr, "sv: set: %s %s\n", svtypenames [svtype], vname);
     }
 
     if (idx == -1) {
-fprintf (stderr, "sv: set: bad idx a\n");
       return rc;
     }
 
-fprintf (stderr, "sv: set: idx:%d\n", idx);
     varlist = scopedvar->namespaces.variables [idx].varlist;
   } else {
     if (svtype == SV_T_SEARCH) {
@@ -964,7 +970,6 @@ fprintf (stderr, "sv: set: idx:%d\n", idx);
       /* if the active_idx is reached, stop there */
       for (int i = scopedvar->variables.sz - 1; i >= 0; --i) {
         if (i == scopedvar->active_idx) {
-fprintf (stderr, "sv: search: active: %s %d\n", vname, i);
           idx = i;
           break;
         }
@@ -974,7 +979,6 @@ fprintf (stderr, "sv: search: active: %s %d\n", vname, i);
 
           varlist = scopedvar->namespaces.variables [i].varlist;
           if (mkc_var_is_defined (varlist, vname)) {
-fprintf (stderr, "sv: search: found %s in local %d\n", vname, i);
             idx = i;
             break;
           }
@@ -986,17 +990,14 @@ fprintf (stderr, "sv: search: found %s in local %d\n", vname, i);
     }
 
     if (idx == -1) {
-fprintf (stderr, "sv: set: bad idx b\n");
       return rc;
     }
 
-fprintf (stderr, "sv: set: idx:%d\n", idx);
     varlist = scopedvar->variables.variables [idx].varlist;
   }
 
   value->vctxt = vctxt;
   mkc_var_set_fromcache (varlist, scopedvar->fromcache);
-fprintf (stderr, "sv: set: %d %p\n", varlist == NULL ? 0 : 1, varlist);
   rc = mkc_var_set (varlist, vname, value);
 
   return MKC_OK;
@@ -1344,6 +1345,12 @@ scopedvar_substitute (scopedvar_t *scopedvar, const char *data,
   return buff;
 }
 
+const char *
+scopedvar_type_disp (scopedvar_type_t svtype)
+{
+  return svtypenames [svtype];
+}
+
 /* internal routines */
 
 static void
@@ -1377,34 +1384,41 @@ scopedvar_create (scopedvar_t *scopedvar, scopedvar_type_t svtype, const char *n
   /* are being initialized, at all other times, currcompiler will be */
   /* set to a specific compiler */
 
-fprintf (stderr, "sv: create: %s %s\n", svtypenames [svtype], name);
-  if (svtype > SV_T_NAMESPACE) {
-    scopedvar_push_variables (scopedvar, &scopedvar->namespaces, svtype, name);
-  } else if (svtype == SV_T_LOCAL) {
+  if (svtype == SV_T_LOCAL || svtype == SV_T_TARGET) {
     char    tbuff [80];
-
 
     /* when attempting to create a local scope, first check to see */
     /* if it already exists */
     for (int i = scopedvar->variables.sz - 1; i >= 0; --i) {
-      if (scopedvar->namespaces.variables [i].svtype == SV_T_LOCAL) {
-        if (scopedvar->namespaces.variables [i].local_counter == scopedvar->local_counter) {
+      if (scopedvar->namespaces.variables [i].svtype == svtype) {
+        if (svtype == SV_T_LOCAL &&
+            scopedvar->namespaces.variables [i].local_counter == scopedvar->local_counter) {
           /* already exists */
+          return;
+        }
+        if (svtype == SV_T_TARGET) {
           return;
         }
       }
     }
 
-    snprintf (tbuff, sizeof (tbuff), "%s-%" PRId32, name, scopedvar->local_counter);
+    if (svtype == SV_T_LOCAL) {
+      snprintf (tbuff, sizeof (tbuff), "%s-%" PRId32, name, scopedvar->local_counter);
+    } else {
+      stpecpy (tbuff, tbuff + sizeof (tbuff), name);
+    }
     scopedvar_push_variables (scopedvar, &scopedvar->variables, svtype, tbuff);
   } else if (scopedvar->currcompiler == MKC_COMPILER_GENERAL) {
+    /* this test must come before curr-prof and curr-prof-compiler */
     scopedvar_push_variables (scopedvar, &scopedvar->variables, svtype, name);
   } else if (svtype == SV_T_CURR_PROF_COMPILER) {
-    /* also create the general entry */
-fprintf (stderr, "sv: create general entry\n");
-    scopedvar_push_variables (scopedvar, &scopedvar->profiles, SV_T_CURR_PROF, name);
-fprintf (stderr, "sv: create compiler entry\n");
     scopedvar_push_variables (scopedvar, &scopedvar->compilervars, svtype, name);
+  } else if (svtype == SV_T_CURR_PROF) {
+    /* this only every happens twice, called from initialization */
+    scopedvar_push_variables (scopedvar, &scopedvar->profiles, SV_T_CURR_PROF, name);
+  } else if (svtype > SV_T_NAMESPACE) {
+    /* this is only called from initialization */
+    scopedvar_push_variables (scopedvar, &scopedvar->namespaces, svtype, name);
   } else {
     scopedvar_push_variables (scopedvar, &scopedvar->variables, svtype, name);
   }
@@ -1563,7 +1577,7 @@ scopedvar_get_variable_value (scopedvar_t *scopedvar, const char *str)
 }
 
 static void
-scopedvar_scvarlist_init (scopedvar_varlist_t *svlist)
+scopedvar_svarlist_init (scopedvar_varlist_t *svlist)
 {
   svlist->variables = NULL;
   svlist->allocsz = 0;

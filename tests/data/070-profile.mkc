@@ -1,18 +1,22 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
+set e 'dflt-general';
+
 # basic tests putting variables into different profiles
 profile default {
   compiler c;
-  set a 'd-c';
+  set a 'dflt-c';
 }
 profile default {
   compiler c++;
-  set b 'd-c++';
+  set b 'dflt-c++';
 }
+# release is not in use, and should not get set
 profile release {
   compiler c;
-  set c 'r-c';
+  set c 'release-c';
 }
+# debug is not in use, and should not get set
 profile debug {
   compiler c++;
   set d 'dbg-c++';
@@ -20,5 +24,5 @@ profile debug {
 
 mkcdebug printprof;
 mkcdebug printvar test;
-mkcdebug printvar release;
-mkcdebug printvar debug;
+mkcdebug printvar testuserprof;
+mkcdebug printvar compilers;

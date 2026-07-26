@@ -241,24 +241,20 @@ mkc_var_get_value (mkc_varlist_t *varlist, const char *name)
   mkc_listidx_t loc = MKC_LIST_NOTFOUND;
 
   if (varlist == NULL) {
-fprintf (stderr, "var: gv: null\n");
     return NULL;
   }
 
   if (mkc_list_size (varlist->list) == 0) {
-fprintf (stderr, "var: gv: no items\n");
     return NULL;
   }
 
   vidx = mkc_var_find (varlist, name, &loc);
   if (vidx == MKC_VAR_NOTFOUND) {
-fprintf (stderr, "var: gv: not found\n");
     return NULL;
   }
 
   var = mkc_list_get_by_idx (varlist->list, vidx);
   if (var == NULL) {
-fprintf (stderr, "var: gv: get-by-idx null %d %d\n", vidx, loc);
     return NULL;
   }
 

@@ -1,11 +1,14 @@
 == profiles
-  default c
-  default c++
-  default general
-  internal general
-  temporary general
-== default c
-  a 'd-c'
-== default c++
-  b 'd-c++'
+  internal internal
+  curr_prof default
+  curr_prof_compiler default c
+  curr_prof_compiler default c++
+  timestamp timestamps
+  dependencies dependencies
+  paths paths
 == default general
+  e 'dflt-general'
+== default c
+  a 'dflt-c'
+== default c++
+  b 'dflt-c++'

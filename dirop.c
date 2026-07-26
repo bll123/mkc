@@ -387,7 +387,6 @@ dirop_make_recursive (const char *dirname, mkc_error_t *mkcerr)
     if (*p == '/') {
       *p = '\0';
       rc = dirop_makedir (tbuff, mkcerr);
-fprintf (stderr, "d-mk-a: %s %d %d\n", tbuff, rc, errno);
       if (rc != MKC_OK) {
         break;
       }
@@ -396,7 +395,6 @@ fprintf (stderr, "d-mk-a: %s %d %d\n", tbuff, rc, errno);
   }
   if (rc == MKC_OK) {
     rc = dirop_makedir (tbuff, mkcerr);
-fprintf (stderr, "d-mk-b: %s %d %d\n", tbuff, rc, errno);
   }
   return rc;
 }
@@ -409,6 +407,11 @@ dirop_makedir (const char *dirname, mkc_error_t *mkcerr)
   if (fileop_is_directory (dirname)) {
     return MKC_OK;
   }
+
+#if _arg_count_mkdir == 0
+  /* to prevent miserable failures during the bootstrap process */
+  return MKC_OK;
+#endif
 
 /* windows */
 #if _arg_count_mkdir == 1
@@ -426,7 +429,6 @@ dirop_makedir (const char *dirname, mkc_error_t *mkcerr)
   rc = mkdir (dirname, S_IRWXU);
 #endif
   if (rc != 0) {
-fprintf (stderr, "d-mk-c: %s %d %d\n", dirname, rc, errno);
     mkc_error_set (mkcerr, MKC_ERR_DIR_NOT_CREATED, errno, dirname);
   }
   return rc;
