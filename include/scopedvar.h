@@ -33,6 +33,9 @@ typedef enum {
   /* for a 'set', searches any local profiles, */
   /* then then uses the active profile */
   SV_T_SEARCH,
+  /* for a 'get', only checks the active profile */
+  /* for a 'set', only sets in the active profile */
+  SV_T_ACTIVE,
   /* the namespace type is used in comparisons and is never used directly */
   /* any special namespace should follow the 'namespace' enum */
   /* any scope defined before 'namespace' is part of the usual hierarchy */

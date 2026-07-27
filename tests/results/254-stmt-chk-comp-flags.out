@@ -1,8 +1,8 @@
   ok n
   ok c
 == default c
-  C_CF_ERROR '-Werror'
-  MKC_CFLAGS [ '-Werror' ]
+  C_CF_G '-g'
+  MKC_CFLAGS [ '-g' ]
 == default general
   HAVE_CF_ERROR '-Werror'
   MKC_CFLAGS [ '-Wunreachable-code' '-Wno-unreachable-code' '-Werror' ]

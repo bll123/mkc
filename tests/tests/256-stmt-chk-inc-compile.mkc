@@ -10,6 +10,9 @@ profile default {
   add_compile_flag '-DMKCTEST=1';
 }
 
+mkcdebug printvar compilers;
+mkcdebug printvar test;
+
 check_include_compile {
   compiler_flags  '-Itests/data/256-stmt-chk-inc-compile';
   path  'tests/data/256-stmt-chk-inc-compile';

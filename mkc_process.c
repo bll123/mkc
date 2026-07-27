@@ -1444,7 +1444,6 @@ mkc_process_stmt_set (mkc_process_t *process,
   }
 
   scopedvar_value_get_str (process->scopedvar, valnm, nm, sizeof (nm));
-fprintf (stderr, "p: set: nm: %s\n", nm);
   if (*nm == '\0') {
     mkc_error_set (process->mkcerr, MKC_ERR_INVALID_ARGUMENT, 0, NULL);
     mkc_process_attr_clear (process);
@@ -1955,7 +1954,7 @@ mkc_process_check_flag (mkc_process_t *process,
 
     switch (iasttype) {
       case MKC_T_CHK_COMP_FLAG: {
-        scopedvar_append_str_list (process->scopedvar, SV_T_SEARCH,
+        scopedvar_append_str_list (process->scopedvar, SV_T_ACTIVE,
             MKC_C_CFLAGS, flag, MKC_VCTXT_MKC);
         break;
       }
@@ -1966,7 +1965,7 @@ mkc_process_check_flag (mkc_process_t *process,
             strncmp (flag, "-l", 2) == 0) {
           nm = MKC_C_LIBS;
         }
-        scopedvar_append_str_list (process->scopedvar, SV_T_SEARCH,
+        scopedvar_append_str_list (process->scopedvar, SV_T_ACTIVE,
             nm, flag, MKC_VCTXT_MKC);
         break;
       }
