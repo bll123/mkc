@@ -1,8 +1,11 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
-# Usage:
-#   check_common_paths;
+#
 # Sets:
+#   If a known path is found, and both the matching
+#     .../include and .../lib exist,
+#   then the include path is added to the compiler flags, and
+#   the lib path is added to the link flags.
 #
 # MacOS:
 #   Checks the path for
@@ -16,11 +19,6 @@
 # NetBSD:
 #   Checks the path for
 #     /usr/pkg/bin
-#
-# If a known path is found, and both the matching
-#   .../include and ../lib exist,
-# then the include path is added to the compiler flags, and
-# the lib path is added to the link flags.
 #
 # Only the first known path found is processed.
 #

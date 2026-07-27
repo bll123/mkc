@@ -46,7 +46,8 @@ int mkc_process_stmt_debug (mkc_process_t *process, value_t *value, value_t *sub
 void mkc_process_stmt_executable (mkc_process_t *process, value_t *valnm);
 void mkc_process_stmt_function_call (mkc_process_t *process, value_t *valparams, value_t *valfuncargs);
 void mkc_process_stmt_function_call_finish (mkc_process_t *process);
-void mkc_process_stmt_loadcache (mkc_process_t *process, value_t *valvers, bool fromcache);
+void mkc_process_stmt_loadcache (mkc_process_t *process, value_t *valvers);
+void mkc_process_stmt_loadcache_post (mkc_process_t *process);
 void mkc_process_stmt_mark (mkc_process_t *process, value_t *vala, value_t *valb);
 void mkc_process_stmt_print (mkc_process_t *process, value_t *value, int depth);
 void mkc_process_stmt_profile (mkc_process_t *process, value_t *valnm);
@@ -70,9 +71,9 @@ int32_t mkc_process_chk_struct_member (mkc_process_t *process, value_t *valstruc
 int32_t mkc_process_chk_shell_extract (mkc_process_t *process, value_t *valpath);
 
 void mkc_process_local_set (mkc_process_t *process, value_t *nmval, value_t *argval);
-bool mkc_process_profile_is_current (mkc_process_t *process, value_t *valnm);
 int32_t mkc_process_get_loop_limit (mkc_process_t *process);
 void mkc_process_save_cache (mkc_process_t *process);
+bool mkc_process_profile_is_current (mkc_process_t *process, value_t *valnm);
 
 #if defined (__cplusplus) || defined (c_plusplus)
 }

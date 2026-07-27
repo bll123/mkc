@@ -31,6 +31,7 @@ profile default {
   set m 13;
   set l 12;
 }
+
 profile internal {
   set i 9;
 }
@@ -67,6 +68,7 @@ if (${h} == 8) {
   # default c
   print '  ok 8';
 }
+
 if (${i} == 9) {
   # internal general
   print '  ok 9';

@@ -1,13 +1,15 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
-# Usage:
-#   check_libintl
+#
 # Sets:
 #     _function_bindtextdomain
 #     _function_textdomain
 #     _function_gettext
 #     libintl_LIBS
-#     libintl_FOUND
+#     libintl_FOUND       (boolean)
+#
+# Checks for the 'libintl' library and determines the correct
+# compiler flags.
 #
 
 function check_libintl {
@@ -17,7 +19,7 @@ function check_libintl {
   # check with and without the prefix.
   #
   # if the 'libintl_' prefixes are active, a check for bindtextdomain
-  # will succeed without a library.
+  # will succeed without linking a library even though the library is needed.
   # check for libintl_bindtextdomain first.
 
   if (! is_defined (MKC_COMMON_INCLUDE)) {
@@ -29,9 +31,9 @@ function check_libintl {
   set libintl_FOUND false;
   set libintl_LIBS [];
 
-  set temporary mkc_libintl_rc false;
-  set temporary mkc_libintl_intl '';
-  set temporary mkc_libintl_intl_iconv '';
+  set local mkc_libintl_rc false;
+  set local mkc_libintl_intl '';
+  set local mkc_libintl_intl_iconv '';
 
   check_function libintl_bindtextdomain {
     alternate {

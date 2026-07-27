@@ -87,6 +87,7 @@ typedef struct mkc_process_t {
   mkc_lib_loc_t     libloc;
   mkc_header_t      headertype;
   bool              variadicmacro;
+  bool              inloadcache;
   bool              cacheloaded;
   bool              cacheinvalidated;
 } mkc_process_t;
@@ -251,6 +252,7 @@ mkc_process_init (scopedvar_t *scopedvar,
   process->attr.localheader = false;
   process->attr.printerrors = false;
 
+  process->inloadcache = false;
   process->cacheloaded = false;
   process->cacheinvalidated = false;
   process->mkcerr = mkcerr;
@@ -1251,11 +1253,8 @@ mkc_process_stmt_function_call_finish (mkc_process_t *process)
   scopedvar_pop (process->scopedvar);
 }
 
-/* this function is called twice.  once with fromcache == true, */
-/* and once with fromcache == false when done */
 void
-mkc_process_stmt_loadcache (mkc_process_t *process,
-    value_t *valvers, bool fromcache)
+mkc_process_stmt_loadcache (mkc_process_t *process, value_t *valvers)
 {
   int     version;
 
@@ -1266,13 +1265,22 @@ mkc_process_stmt_loadcache (mkc_process_t *process,
     return;
   }
 
-  if (fromcache) {
-    process->cacheloaded = true;
-  }
+fprintf (stderr, "-- loading cache\n");
+  process->inloadcache = true;
+  scopedvar_set_fromcache (process->scopedvar, true);
 
-  scopedvar_set_fromcache (process->scopedvar, fromcache);
+  mkc_process_attr_clear (process);
+  return;
+}
 
-  if (! fromcache && process->cacheloaded && process->cacheinvalidated) {
+void
+mkc_process_stmt_loadcache_post (mkc_process_t *process)
+{
+fprintf (stderr, "-- load cache POST\n");
+  process->cacheloaded = true;
+  scopedvar_set_fromcache (process->scopedvar, false);
+
+  if (process->cacheloaded && process->cacheinvalidated) {
 // ### fix
 //    /* something changed that requires cache invalidation */
 //    mkc_profile_iter_start (process->profiles, &piter);
@@ -1290,6 +1298,8 @@ mkc_process_stmt_loadcache (mkc_process_t *process,
     mkc_process_get_path (process);
     mkc_process_find_executables (process);
   }
+
+  process->inloadcache = false;
 
   mkc_process_attr_clear (process);
   return;
@@ -1352,9 +1362,11 @@ mkc_process_stmt_print (mkc_process_t *process, value_t *value, int depth)
 void
 mkc_process_stmt_profile (mkc_process_t *process, value_t *valnm)
 {
-  char              nm [MKC_VNAME_MAX];
+  char        nm [MKC_VNAME_MAX];
 
   scopedvar_value_get_str (process->scopedvar, valnm, nm, sizeof (nm));
+
+fprintf (stderr, "p: profile: %s\n", nm);
   scopedvar_set_active_profile (process->scopedvar, nm);
   /* if a compiler is set, it has not yet been processed */
 }
@@ -1366,6 +1378,7 @@ mkc_process_stmt_profile_post (mkc_process_t *process)
 
   profnm = scopedvar_get_current_profile (process->scopedvar);
   /* this will also set the active profile */
+fprintf (stderr, ".. p: profile-post: set-curr-prof\n");
   scopedvar_set_current_profile (process->scopedvar, profnm, MKC_COMPILER_GENERAL);
 }
 
@@ -1620,6 +1633,7 @@ mkc_process_attr_compiler (mkc_process_t *process, value_t *name)
   if (mkc_context_check (process->context, MKC_CONTEXT_PROJECT)) {
     /* if in a project statement, the default compiler is set */
     process->dfltcompiler = compiler_get_id (nm);
+fprintf (stderr, ".. p: attr-compiler: set-dflt-compiler %s\n", nm);
     scopedvar_set_default_compiler (process->scopedvar, process->dfltcompiler);
   }
 
@@ -1628,8 +1642,10 @@ mkc_process_attr_compiler (mkc_process_t *process, value_t *name)
   if (mkc_context_check (process->context, MKC_CONTEXT_PROFILE)) {
     const char  *profnm;
 
+fprintf (stderr, ".. p: attr-compiler: set-curr-compiler %s\n", nm);
     scopedvar_set_current_compiler (process->scopedvar, process->attr.currcompiler);
     profnm = scopedvar_get_current_profile (process->scopedvar);
+fprintf (stderr, ".. p: attr-compiler: set-current-prof %s\n", nm);
     scopedvar_set_current_profile (process->scopedvar, profnm, process->attr.currcompiler);
   }
 }
@@ -1779,24 +1795,6 @@ mkc_process_attr_source (mkc_process_t *process, value_t *value)
   }
 
   return;
-}
-
-bool
-mkc_process_profile_is_current (mkc_process_t *process, value_t *valnm)
-{
-  char          nm [MKC_VNAME_MAX];
-  bool          rc = false;
-  const char    *profnm;
-
-  if (process == NULL) {
-    return false;
-  }
-
-  scopedvar_value_get_str (process->scopedvar, valnm, nm, sizeof (nm));
-  profnm = scopedvar_get_current_profile (process->scopedvar);
-  rc = strcmp (profnm, nm) == 0;
-
-  return rc;
 }
 
 int32_t
@@ -2280,6 +2278,28 @@ mkc_process_save_cache (mkc_process_t *process)
   free (cachename);
   free (tbuff);
   fclose (fh);
+}
+
+bool
+mkc_process_profile_is_current (mkc_process_t *process, value_t *valnm)
+{
+  char        nm [MKC_VNAME_MAX];
+  const char  *profnm;
+
+  if (process->inloadcache) {
+    return true;
+  }
+
+  scopedvar_value_get_str (process->scopedvar, valnm, nm, sizeof (nm));
+  profnm = scopedvar_get_current_profile (process->scopedvar);
+
+  if (strcmp (nm, profnm) == 0 ||
+      strcmp (nm, MKC_C_PROF_INTERNAL_NAME) == 0 ||
+      strcmp (nm, MKC_C_PROF_DEFAULT_NAME) == 0) {
+    return true;
+  }
+
+  return false;
 }
 
 /* internal routines */

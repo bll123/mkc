@@ -66,7 +66,6 @@ void scopedvar_set_fromcache (scopedvar_t *scopedvar, bool flag);
 void scopedvar_incr_local_counter (scopedvar_t *scopedvar);
 void scopedvar_decr_local_counter (scopedvar_t *scopedvar);
 void scopedvar_set_active_profile (scopedvar_t *scopedvar, const char *name);
-void scopedvar_reset_active_profile (scopedvar_t *scopedvar);
 const char * scopedvar_get_current_profile (scopedvar_t *scopedvar);
 void scopedvar_set_current_profile (scopedvar_t *scopedvar, const char *name, mkc_compiler_t compiler);
 

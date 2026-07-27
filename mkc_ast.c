@@ -1702,13 +1702,13 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       value_t *value;
 
       value = mkc_ast_get_value (astmain, astnode->stmt_loadcache.version);
-      mkc_process_stmt_loadcache (astmain->process, value, true);
+      mkc_process_stmt_loadcache (astmain->process, value);
       if (astnode->stmt_loadcache.stmtblock != NULL) {
         mkc_context_push (astmain->context, MKC_CONTEXT_CACHE, astmain->mkcerr);
         mkc_ast_process (astmain, astnode->stmt_loadcache.stmtblock, ifcond, &stmtcontrol, funcret, depth + 1);
         mkc_context_pop (astmain->context);
       }
-      mkc_process_stmt_loadcache (astmain->process, value, false);
+      mkc_process_stmt_loadcache_post (astmain->process);
       break;
     }
 
@@ -1741,11 +1741,10 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
         break;
       }
 
-      /* while in load-cache, any profile is valid */
-      if (! mkc_context_check (astmain->context, MKC_CONTEXT_CACHE)) {
-        if (! mkc_process_profile_is_current (astmain->process, valnm)) {
-          break;
-        }
+      /* a profile is only current if the cache is being loaded, */
+      /* or the profile is 'internal', 'default' or the current profile */
+      if (! mkc_process_profile_is_current (astmain->process, valnm)) {
+        break;
       }
 
       mkc_process_stmt_profile (astmain->process, valnm);
