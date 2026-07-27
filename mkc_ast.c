@@ -1429,7 +1429,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       mkc_listidx_t   iteridx;
       mkc_listidx_t   lidx;
 
-      scopedvar_incr_local_counter (astmain->scopedvar);
+      scopedvar_incr_local_id (astmain->scopedvar);
       mkc_list_iter_start (astnode->stmtlist.stmtlist, &iteridx);
       while ((lidx = mkc_list_iter_next (astnode->stmtlist.stmtlist, &iteridx)) != MKC_ITER_FINISH) {
         mkc_astnode_t   **plistnode;
@@ -1488,7 +1488,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
           mkc_ast_process (astmain, listnode, ifcond, stmtcontrol, funcret, depth);
         }
       }
-      scopedvar_decr_local_counter (astmain->scopedvar);
+      scopedvar_decr_local_id (astmain->scopedvar);
       break;
     }
 

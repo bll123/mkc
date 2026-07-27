@@ -11,4 +11,5 @@ set h ${f};
 set i 6;
 set j 7;
 set k [ ${i} ${j} ];
-mkcdebug printvar testuserprof;
+
+mkcdebug printvar test;

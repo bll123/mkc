@@ -24,15 +24,16 @@ if (is_defined (cf_error)) {
 
 profile default {
   compiler c;
-  check_compile_flag  '-Werror' {
-    name C_CF_ERROR;
+  check_compile_flag  '-g' {
+    name C_CF_G;
   }
 }
 
-if (${C_CF_ERROR} ne '') {
+if (${C_CF_G} ne '') {
   print '  ok c';
 } else {
   print '  fail c';
 }
 
+mkcdebug printvar compilers;
 mkcdebug printvar test;

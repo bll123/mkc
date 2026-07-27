@@ -15,4 +15,5 @@ set v_2 'b';
 # set a variable to another variable.
 # check for memory issues.
 set AAA ${fff};
-mkcdebug printvar testuserprof;
+
+mkcdebug printvar test;

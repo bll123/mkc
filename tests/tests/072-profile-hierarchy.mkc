@@ -44,6 +44,17 @@ if (is_defined (b)) {
   print '  fail b';
   exit 1;
 }
+profile default {
+  compiler c;
+  if (is_defined (a)) {
+    print '  fail a2';
+    exit 1;
+  }
+  if (is_defined (b)) {
+    print '  fail b2';
+    exit 1;
+  }
+}
 if (${c} == 3) {
   # default c
   print '  ok 3';
@@ -86,6 +97,19 @@ if (is_defined (m)) {
   print '  ng 13';
   exit 1;
 }
+profile default {
+  compiler c++;
+  if (${l} == 12) {
+    print '  ok l';
+  } else {
+    print '  fail l';
+  }
+  if (${m} == 13) {
+    print '  ok m';
+  } else {
+    print '  fail m';
+  }
+}
 
-mkcdebug printvar testuserprof;
+mkcdebug printvar test;
 mkcdebug printvar compilers;

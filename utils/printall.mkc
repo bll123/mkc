@@ -5,8 +5,13 @@ project {
   compiler c;
 }
 
+mkcdebug printprof;
 mkcdebug printvar internal;
 mkcdebug printvar default;
-mkcdebug printvar temp;
+mkcdebug printvar userprof;
+mkcdebug printvar compilers;
+mkcdebug printvar ts;
+mkcdebug printvar paths;
+mkcdebug printvar dep;
 mkcdebug printpath;
 mkcdebug printinternal;

@@ -20,6 +20,9 @@ extern "C" {
 
 typedef enum {
   SV_T_INTERNAL,
+  /* the default-profile holds most of the variables for all profiles */
+  /* in this manner, the cache is more effective for all profiles */
+  SV_T_DFLT_PROF,
   SV_T_CURR_PROF,
   /* the current-profile-compiler type encompasses all compilers */
   SV_T_CURR_PROF_COMPILER,
@@ -61,10 +64,11 @@ void scopedvar_push (scopedvar_t *scopedvar, scopedvar_type_t svtype, const char
 void scopedvar_pop (scopedvar_t *scopedvar);
 void scopedvar_set_default_compiler (scopedvar_t *scopedvar, mkc_compiler_t compiler);
 void scopedvar_set_current_compiler (scopedvar_t *scopedvar, mkc_compiler_t compiler);
+void scopedvar_reset_profile (scopedvar_t *scopedvar);
 void scopedvar_set_fromcache (scopedvar_t *scopedvar, bool flag);
 
-void scopedvar_incr_local_counter (scopedvar_t *scopedvar);
-void scopedvar_decr_local_counter (scopedvar_t *scopedvar);
+void scopedvar_incr_local_id (scopedvar_t *scopedvar);
+void scopedvar_decr_local_id (scopedvar_t *scopedvar);
 void scopedvar_set_active_profile (scopedvar_t *scopedvar, const char *name);
 const char * scopedvar_get_current_profile (scopedvar_t *scopedvar);
 void scopedvar_set_current_profile (scopedvar_t *scopedvar, const char *name, mkc_compiler_t compiler);

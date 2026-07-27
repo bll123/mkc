@@ -96,6 +96,7 @@ static const char *sysnames [MKC_SYS_MAX] = {
   [MKC_SYS_AIX] = "MKC_SYS_AIX",
   [MKC_SYS_ANDROID] = "MKC_SYS_ANDROID",
   [MKC_SYS_BSD] = "MKC_SYS_BSD",
+  [MKC_SYS_IOS] = "MKC_SYS_IOS",
   [MKC_SYS_LINUX] = "MKC_SYS_LINUX",
   [MKC_SYS_MACOS] = "MKC_SYS_MACOS",
   [MKC_SYS_SOLARIS] = "MKC_SYS_SOLARIS",
@@ -219,7 +220,9 @@ mkc_process_init (scopedvar_t *scopedvar,
 {
   mkc_process_t     *process;
   int               rc;
+  mstime_t          starttm;
 
+  mstimestart (&starttm);
   process = malloc (sizeof (mkc_process_t));
 
   process->scopedvar = scopedvar;
@@ -281,6 +284,19 @@ mkc_process_init (scopedvar_t *scopedvar,
 
   mkc_process_get_path (process);
   mkc_process_find_executables (process);
+
+  {
+    char    tbuff [40];
+    time_t  etm;
+
+    etm = mstimeend (&starttm);
+    mkc_elapsed_disp (etm, tbuff, sizeof (tbuff));
+    mkc_message ("-- mkc internal setup: %s\n", tbuff);
+    mkc_log (process->log, MKC_LOG_STATISTICS,
+        "-- mkc internal setup: %s\n", tbuff);
+  }
+
+  mkc_log (process->log, MKC_LOG_CHECK, "== end internal checks\n");
 
   return process;
 }
@@ -1371,11 +1387,7 @@ mkc_process_stmt_profile (mkc_process_t *process, value_t *valnm)
 void
 mkc_process_stmt_profile_post (mkc_process_t *process)
 {
-  const char  *profnm;
-
-  profnm = scopedvar_get_current_profile (process->scopedvar);
-  /* this will also set the active profile */
-  scopedvar_set_current_profile (process->scopedvar, profnm, MKC_COMPILER_GENERAL);
+  scopedvar_reset_profile (process->scopedvar);
 }
 
 void
@@ -1432,6 +1444,7 @@ mkc_process_stmt_set (mkc_process_t *process,
   }
 
   scopedvar_value_get_str (process->scopedvar, valnm, nm, sizeof (nm));
+fprintf (stderr, "p: set: nm: %s\n", nm);
   if (*nm == '\0') {
     mkc_error_set (process->mkcerr, MKC_ERR_INVALID_ARGUMENT, 0, NULL);
     mkc_process_attr_clear (process);
@@ -2384,10 +2397,8 @@ static int
 mkc_process_int_checks (mkc_process_t *process)
 {
   int                 rc;
-  mstime_t            starttm;
   int                 isystype;
 
-  mstimestart (&starttm);
   mkc_create_dirs ();
 
   mkc_log (process->log, MKC_LOG_CHECK, "== internal checks\n");
@@ -2532,21 +2543,6 @@ mkc_process_int_checks (mkc_process_t *process)
   }
 
   mkc_process_attr_clear (process);
-
-  /* reset profile */
-
-  {
-    char    tbuff [40];
-    time_t  etm;
-
-    etm = mstimeend (&starttm);
-    mkc_elapsed_disp (etm, tbuff, sizeof (tbuff));
-    mkc_message ("-- mkc internal setup: %s\n", tbuff);
-    mkc_log (process->log, MKC_LOG_STATISTICS,
-        "-- mkc internal setup: %s\n", tbuff);
-  }
-
-  mkc_log (process->log, MKC_LOG_CHECK, "== end internal checks\n");
 
   return MKC_OK;
 }
@@ -2967,7 +2963,7 @@ mkc_process_dbg_print_var (mkc_process_t *process, const char *profname)
       profname = NULL;
       itertype = SV_ITER_USER_PROF;
     } else if (strcmp (profname, "compilers") == 0) {
-      profname = MKC_C_PROF_DEFAULT_NAME;
+      profname = NULL;
       itertype = SV_ITER_COMPILERS;
     } else if (strcmp (profname, "ts") == 0) {
       profname = MKC_C_PROF_TIMESTAMP_NAME;
