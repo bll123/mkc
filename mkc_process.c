@@ -1265,7 +1265,6 @@ mkc_process_stmt_loadcache (mkc_process_t *process, value_t *valvers)
     return;
   }
 
-fprintf (stderr, "-- loading cache\n");
   process->inloadcache = true;
   scopedvar_set_fromcache (process->scopedvar, true);
 
@@ -1276,7 +1275,6 @@ fprintf (stderr, "-- loading cache\n");
 void
 mkc_process_stmt_loadcache_post (mkc_process_t *process)
 {
-fprintf (stderr, "-- load cache POST\n");
   process->cacheloaded = true;
   scopedvar_set_fromcache (process->scopedvar, false);
 
@@ -1366,7 +1364,6 @@ mkc_process_stmt_profile (mkc_process_t *process, value_t *valnm)
 
   scopedvar_value_get_str (process->scopedvar, valnm, nm, sizeof (nm));
 
-fprintf (stderr, "p: profile: %s\n", nm);
   scopedvar_set_active_profile (process->scopedvar, nm);
   /* if a compiler is set, it has not yet been processed */
 }
@@ -1378,7 +1375,6 @@ mkc_process_stmt_profile_post (mkc_process_t *process)
 
   profnm = scopedvar_get_current_profile (process->scopedvar);
   /* this will also set the active profile */
-fprintf (stderr, ".. p: profile-post: set-curr-prof\n");
   scopedvar_set_current_profile (process->scopedvar, profnm, MKC_COMPILER_GENERAL);
 }
 
@@ -1633,7 +1629,6 @@ mkc_process_attr_compiler (mkc_process_t *process, value_t *name)
   if (mkc_context_check (process->context, MKC_CONTEXT_PROJECT)) {
     /* if in a project statement, the default compiler is set */
     process->dfltcompiler = compiler_get_id (nm);
-fprintf (stderr, ".. p: attr-compiler: set-dflt-compiler %s\n", nm);
     scopedvar_set_default_compiler (process->scopedvar, process->dfltcompiler);
   }
 
@@ -1642,10 +1637,8 @@ fprintf (stderr, ".. p: attr-compiler: set-dflt-compiler %s\n", nm);
   if (mkc_context_check (process->context, MKC_CONTEXT_PROFILE)) {
     const char  *profnm;
 
-fprintf (stderr, ".. p: attr-compiler: set-curr-compiler %s\n", nm);
     scopedvar_set_current_compiler (process->scopedvar, process->attr.currcompiler);
     profnm = scopedvar_get_current_profile (process->scopedvar);
-fprintf (stderr, ".. p: attr-compiler: set-current-prof %s\n", nm);
     scopedvar_set_current_profile (process->scopedvar, profnm, process->attr.currcompiler);
   }
 }
