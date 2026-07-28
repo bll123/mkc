@@ -11,7 +11,7 @@ profile default {
 }
 
 check_include_compile {
-  compiler_flags  '-Itests/data/257-stmt-chk-inc-compile-error';
-  path  'tests/data/257-stmt-chk-inc-compile-error';
+  compiler_flags  '-Itests/data/259-stmt-chk-inc-compile-error';
+  path  'tests/data/259-stmt-chk-inc-compile-error';
   match '\.h$';
 }

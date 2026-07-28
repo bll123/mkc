@@ -41,7 +41,7 @@ typedef enum {
   /* any scope defined before 'namespace' is part of the usual hierarchy */
   SV_T_NAMESPACE,
   SV_T_TIMESTAMP,
-  SV_T_DEPENDENCIES,
+  SV_T_DEPENDENCY,
   SV_T_PATHS,
 } sv_type_t;
 

@@ -14,7 +14,7 @@ mkcdebug printvar compilers;
 mkcdebug printvar test;
 
 check_include_compile {
-  compiler_flags  '-Itests/data/256-stmt-chk-inc-compile';
-  path  'tests/data/256-stmt-chk-inc-compile';
+  compiler_flags  '-Itests/data/258-stmt-chk-inc-compile';
+  path  'tests/data/258-stmt-chk-inc-compile';
   match '\.h$';
 }

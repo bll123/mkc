@@ -647,8 +647,6 @@ mkc_check_get_include_deps (mkc_check_t *check,
   char    **match;
   int     matchcount = 0;
 
-  mkc_log (check->log, MKC_LOG_CHECK, "== get-include-deps\n");
-
   if (check->rxincludedep == NULL) {
     check->rxincludedep = mkc_regex_init (
         "^# *(include|import) *\"?([^\"<>]+)\"?$",
@@ -666,12 +664,12 @@ mkc_check_get_include_deps (mkc_check_t *check,
     mkc_listidx_t   loc;
 
     match = mkc_regex_get (check->rxincludedep, rbuff, &matchcount);
-    mkc_log (check->log, MKC_LOG_CHECK, "  get-inc-deps: matches: %d\n", matchcount);
     if (matchcount != 3) {
       mkc_regex_get_free (match);
       break;
     }
 
+    mkc_log (check->log, MKC_LOG_CHECK, "  get-inc-deps: match: %s\n", match [2]);
     tp = strdup (match [2]);
 
 //    scopedvar_append_str_list (check->scopedvar, SV_T_SEARCH, dep, MKC_VCTXT_MKC);

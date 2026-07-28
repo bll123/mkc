@@ -55,6 +55,7 @@ typedef struct scopedvar_t {
   mkc_compiler_t      dfltcompiler;
   mkc_compiler_t      currcompiler;
   int                 standardsz;
+  sv_type_t           active_svtype;
   int                 active_idx;
   int                 dfltprof_idx;
   int                 currprof_idx;
@@ -80,7 +81,7 @@ static char const * const svtypenames [] = {
   [SV_T_ACTIVE] = "active",
   [SV_T_NAMESPACE] = "namespace",
   [SV_T_TIMESTAMP] = "timestamp",
-  [SV_T_DEPENDENCIES] = "dependencies",
+  [SV_T_DEPENDENCY] = "dependencies",
   [SV_T_PATHS] = "paths",
 };
 
@@ -120,6 +121,7 @@ scopedvar_init (mkc_log_t *log, mkc_error_t *mkcerr, mkc_option_t *mkcoptions)
   scopedvar->currcompiler = MKC_COMPILER_GENERAL;
   scopedvar->fromcache = false;
   scopedvar->current_profile = MKC_C_PROF_DEFAULT_NAME;
+  scopedvar->active_svtype = SV_T_ACTIVE;
   scopedvar->active_idx = -1;
   scopedvar->dfltprof_idx = -1;
   scopedvar->currprof_idx = -1;
@@ -265,6 +267,7 @@ scopedvar_set_active_profile (scopedvar_t *scopedvar, const char *name)
 
   for (int i = 0; i < scopedvar->variables.sz; ++i) {
     if (strcmp (scopedvar->variables.variables [i].name, name) == 0) {
+      scopedvar->active_svtype = scopedvar->variables.variables [i].svtype;
       scopedvar->active_idx = i;
       found = true;
       break;
@@ -272,6 +275,18 @@ scopedvar_set_active_profile (scopedvar_t *scopedvar, const char *name)
   }
 
   if (! found) {
+    for (int i = 0; i < scopedvar->namespaces.sz; ++i) {
+      if (strcmp (scopedvar->namespaces.variables [i].name, name) == 0) {
+        scopedvar->active_svtype = scopedvar->namespaces.variables [i].svtype;
+        scopedvar->active_idx = i;
+        found = true;
+        return;
+      }
+    }
+  }
+
+  if (! found) {
+fprintf (stderr, "sv: set-active: %s not-found\n", name);
     scopedvar_create (scopedvar, SV_T_CURR_PROF, name, false);
     if (scopedvar->currcompiler != MKC_COMPILER_GENERAL) {
       scopedvar_create (scopedvar, SV_T_CURR_PROF_COMPILER, name, false);
@@ -307,16 +322,18 @@ scopedvar_set_current_profile (scopedvar_t *scopedvar, const char *name,
   if (vars == NULL) {
     if (strcmp (name, MKC_C_PROF_DEFAULT_NAME) == 0) {
       scopedvar->active_idx = scopedvar->dfltprof_idx;
+      scopedvar->active_svtype = SV_T_DFLT_PROF;
     }
   }
 
   if (vars != NULL) {
-    if (compiler == MKC_COMPILER_GENERAL) {
-      scopedvar->active_idx = scopedvar->currprof_idx;
-    }
     scvar = &scopedvar->variables.variables [scopedvar->currprof_idx];
     scvar->varlist = vars;
     scvar->compiler = MKC_COMPILER_GENERAL;
+    if (compiler == MKC_COMPILER_GENERAL) {
+      scopedvar->active_idx = scopedvar->currprof_idx;
+      scopedvar->active_svtype = scvar->svtype;
+    }
   }
 
   vars = NULL;
@@ -336,12 +353,13 @@ scopedvar_set_current_profile (scopedvar_t *scopedvar, const char *name,
   }
 
   if (vars != NULL) {
-    if (compiler != MKC_COMPILER_GENERAL) {
-      scopedvar->active_idx = scopedvar->comp_idx;
-    }
     scvar = &scopedvar->variables.variables [scopedvar->comp_idx];
     scvar->varlist = vars;
     scvar->compiler = scopedvar->currcompiler;
+    if (compiler != MKC_COMPILER_GENERAL) {
+      scopedvar->active_idx = scopedvar->comp_idx;
+      scopedvar->active_svtype = scvar->svtype;
+    }
   }
 }
 
@@ -954,10 +972,12 @@ scopedvar_set (scopedvar_t *scopedvar, sv_type_t svtype,
   }
 
   if (svtype == SV_T_ACTIVE) {
-    scopedvar_var_t * scvar;
-
-    scvar = &scopedvar->variables.variables [scopedvar->active_idx];
-    svtype = scvar->svtype;
+    svtype = scopedvar->active_svtype;
+  }
+  if (svtype == SV_T_SEARCH &&
+      scopedvar->active_svtype > SV_T_NAMESPACE) {
+    /* this is a bit of a hack, not sure I like this */
+    svtype = scopedvar->active_svtype;
   }
 
   if (svtype > SV_T_NAMESPACE) {
@@ -1690,7 +1710,7 @@ scopedvar_init_vars (scopedvar_t *scopedvar, mkc_option_t *mkcoptions)
 
   /* namespaces */
   scopedvar_create (scopedvar, SV_T_TIMESTAMP, MKC_C_PROF_TIMESTAMP_NAME, false);
-  scopedvar_create (scopedvar, SV_T_DEPENDENCIES, MKC_C_PROF_DEPENDENCIES_NAME, false);
+  scopedvar_create (scopedvar, SV_T_DEPENDENCY, MKC_C_PROF_DEPENDENCIES_NAME, false);
   scopedvar_create (scopedvar, SV_T_PATHS, MKC_C_PROF_PATHS_NAME, false);
 
   /* default/general */

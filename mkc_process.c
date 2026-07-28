@@ -165,6 +165,7 @@ static char const * const MKC_C_CHK_INC_COMPILE_TS = "MKC_CHK_INC_COMPILE_TS";
 static char const * const MKC_C_CHK_INC_DEPS_TS = "MKC_CHK_INC_DEPS_TS";
 static char const * const MKC_C_CHK_INC_GUARDS_TS = "MKC_CHK_INC_GUARDS_TS";
 static char ** mkc_process_get_flags (mkc_process_t *process, const char *flagname);
+static void process_save_cache_profile (mkc_process_t *process, FILE *fh, char *tbuff, size_t sz, sv_iter_t *sviter, const char *profname, int *tcount);
 
 /* these are duplicated */
 /* so that the static aggregator can be initialized */
@@ -884,6 +885,8 @@ mkc_process_stmt_chk_inc_deps (mkc_process_t *process)
     return rc;
   }
 
+  mkc_log (process->log, MKC_LOG_CHECK, "== chk-include-deps\n");
+
 #if _have_regex
   rx = mkc_regex_init (process->attr.str [MKC_ATTR_MATCH],
       MKC_REGEX_NONE, process->mkcerr);
@@ -945,20 +948,12 @@ mkc_process_stmt_chk_inc_deps (mkc_process_t *process)
 
     toposort_disp_cycle (topo, tbuff, sizeof (tbuff));
     mkc_error_set (process->mkcerr, MKC_ERR_DEPENDENCY_CYCLE, 0, tbuff);
-  } else {
-    const char  *str;
-
-    toposort_iter_start (topo);
-    while ((str = toposort_iter_next (topo)) != NULL) {
-      mkc_log (process->log, MKC_LOG_PROCESS, " chk-inc-deps: %s\n", str);
-    }
   }
 
   ts = mstime ();
   // mkc_pvar_set_timestamp (process->pvar, MKC_C_CHK_INC_DEPS_TS, ts, MKC_VCTXT_MKC);
 
-  mkc_message ("-- check_include_dependencies - %s\n",
-      mkc_success_msg (rc));
+  mkc_message ("-- check_include_dependencies - %s\n", mkc_success_msg (rc));
   mkc_log (process->log, MKC_LOG_CHECK, "-- check_include_dependencies - %s\n",
       mkc_success_msg (rc));
 
@@ -2185,7 +2180,6 @@ mkc_process_save_cache (mkc_process_t *process)
   const char      * profname;
   FILE            * fh;
   int             tcount = 0;
-  const char      * indent = "  ";
   char            * tbuff;
   sv_iter_t       * sviter;
 
@@ -2219,57 +2213,37 @@ mkc_process_save_cache (mkc_process_t *process)
   /* version 1 */
   fprintf (fh, "load_cache %d {\n", MKC_CACHE_VERS_1);
 
-  sviter = scopedvar_iter_start (scopedvar, SV_ITER_HIERARCHY);
+  sviter = scopedvar_iter_start (scopedvar,
+      SV_ITER_HIERARCHY | SV_ITER_SKIP_CURR);
   while ((profname = scopedvar_iter_next (scopedvar, sviter)) != NULL) {
-    mkc_varidx_t  viter;
-    mkc_varidx_t  vidx;
-    int           count = 0;
-    sv_type_t     svtype;
-
     if (mkc_error_chk_err (process->mkcerr)) {
-      break;
+      return;
     }
 
-    fprintf (fh, "  profile %s {\n", profname);
-    svtype = scopedvar_iter_get_type (scopedvar, sviter);
-    if (svtype == SV_T_CURR_PROF_COMPILER) {
-      mkc_compiler_t    compiler;
+    process_save_cache_profile (process, fh, tbuff, MKC_SMALL_BUFF_SZ,
+        sviter, profname, &tcount);
+  }
+  scopedvar_iter_finish (sviter);
 
-      compiler = scopedvar_iter_get_compiler (scopedvar, sviter);
-      if (compiler != MKC_COMPILER_GENERAL) {
-        fprintf (fh, "    compiler %s;\n", compiler_get_name (compiler));
-      }
-    }
-    indent = "  ";
-
-    scopedvar_var_iter_start (scopedvar, sviter, &viter);
-    while ((vidx = scopedvar_var_iter_next (scopedvar, sviter, &viter)) != MKC_ITER_FINISH) {
-      const char    *nm;
-      value_t       *value;
-      const char    *vctxtstr = "";
-
-      nm = scopedvar_var_iter_get_name (scopedvar, sviter, vidx);
-      value = scopedvar_var_iter_get_value (scopedvar, sviter, vidx);
-      value_to_str (value, tbuff, MKC_SMALL_BUFF_SZ);
-
-      if (value->vtype == MKC_VT_INTEGER ||
-          value->vtype == MKC_VT_TIMESTAMP ||
-          value->vtype == MKC_VT_LIST) {
-        fprintf (fh, "  %sset %s %s ", indent, nm, tbuff);
-      } else {
-        fprintf (fh, "  %sset %s '%s' ", indent, nm, tbuff);
-      }
-      vctxtstr = value_ctxt_str (value->vctxt);
-      fprintf (fh, "{ context %s; }\n", vctxtstr);
-      ++count;
-      ++tcount;
+  sviter = scopedvar_iter_start (scopedvar, SV_ITER_COMPILERS);
+  while ((profname = scopedvar_iter_next (scopedvar, sviter)) != NULL) {
+    if (mkc_error_chk_err (process->mkcerr)) {
+      return;
     }
 
-    if (count == 0) {
-      fprintf (fh, "    ;\n");
+    process_save_cache_profile (process, fh, tbuff, MKC_SMALL_BUFF_SZ,
+        sviter, profname, &tcount);
+  }
+  scopedvar_iter_finish (sviter);
+
+  sviter = scopedvar_iter_start (scopedvar, SV_ITER_NAMESPACE);
+  while ((profname = scopedvar_iter_next (scopedvar, sviter)) != NULL) {
+    if (mkc_error_chk_err (process->mkcerr)) {
+      return;
     }
-    fprintf (fh, "  }\n\n");
-    fprintf (fh, "\n");
+
+    process_save_cache_profile (process, fh, tbuff, MKC_SMALL_BUFF_SZ,
+        sviter, profname, &tcount);
   }
   scopedvar_iter_finish (sviter);
 
@@ -3207,6 +3181,7 @@ static void
 mkc_process_topo_add_deps (mkc_process_t *process,
     toposort_t *topo, char *rbuff, const char *hdr)
 {
+  mkc_list_t      *elist;
   mkc_list_t      *deplist;
   mkc_listidx_t   diteridx;
   mkc_listidx_t   didx;
@@ -3216,15 +3191,25 @@ mkc_process_topo_add_deps (mkc_process_t *process,
   mkc_check_get_include_deps (process->check,
       process->attr.currcompiler, rbuff, deplist);
 
+  elist = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, process->mkcerr);
+  scopedvar_set_list (process->scopedvar, SV_T_DEPENDENCY,
+      hdr, elist, MKC_VCTXT_MKC);
+  mkc_list_free (elist);
+  mkc_log (process->log, MKC_LOG_CHECK, "  %s : ", hdr);
+
   mkc_list_iter_start (deplist, &diteridx);
   while ((didx = mkc_list_iter_next (deplist, &diteridx)) != MKC_ITER_FINISH) {
     char  **temp;
-    char  *dep;
+    char  *dep = NULL;
 
     temp = mkc_list_get_by_idx (deplist, didx);
     dep = *temp;
+    scopedvar_append_str_list (process->scopedvar, SV_T_DEPENDENCY,
+        hdr, dep, MKC_VCTXT_MKC);
+    mkc_log (process->log, MKC_LOG_CHECK, "  %s", dep);
     toposort_add_pair (topo, hdr, dep);
   }
+  mkc_log (process->log, MKC_LOG_CHECK, "\n");
 
   mkc_list_free (deplist);
 }
@@ -3343,6 +3328,9 @@ mkc_process_iter_includes (mkc_process_t *process, mkc_list_t *hlist,
       if (! fileop_exists (tbuff)) {
         continue;
       }
+
+      /* save the path to the header file */
+      scopedvar_set_str (process->scopedvar, SV_T_PATHS, thdr, tbuff, MKC_VCTXT_MKC);
 
       if (readflag == MKC_INC_READ) {
         rbuff = fileop_read_file (tbuff, &fsz, process->mkcerr);
@@ -3536,7 +3524,7 @@ mkc_process_source_file (mkc_process_t *process, const char *target,
   rbuff = fileop_read_file (srcfn, &fsz, process->mkcerr);
   mkc_check_get_include_deps (process->check, tcompiler, rbuff, deplist);
 
-//  scopedvar_append_str_list (process->scopedvar, SV_T_DEPENDENCIES,
+//  scopedvar_append_str_list (process->scopedvar, SV_T_DEPENDENCY,
 //      target, srcfn, MKC_VCTXT_MKC);
 
   mkc_list_iter_start (deplist, &diteridx);
@@ -3551,10 +3539,64 @@ mkc_process_source_file (mkc_process_t *process, const char *target,
 //    mkc_pvar_profile_select_idx (process->pvar, process->pidx_ts);
 //    scopedvar_set_timestamp (process->pvar, srcfn, ts, MKC_VCTXT_MKC);
 //    mkc_pvar_profile_select_idx (process->pvar, process->pidx_deps);
-//    tlist = scopedvar_append_str_list (process->scopedvar, SV_T_DEPENDENCIES,
+//    tlist = scopedvar_append_str_list (process->scopedvar, SV_T_DEPENDENCY,
 //        target, dep, MKC_VCTXT_MKC);
   }
 
   mkc_list_free (deplist);
   free (rbuff);
+}
+
+static void
+process_save_cache_profile (mkc_process_t *process, FILE *fh,
+    char *tbuff, size_t sz,
+    sv_iter_t *sviter, const char *profname, int *tcount)
+{
+  scopedvar_t   *scopedvar;
+  mkc_varidx_t  viter;
+  mkc_varidx_t  vidx;
+  int           count = 0;
+  sv_type_t     svtype;
+
+  scopedvar = process->scopedvar;
+
+  fprintf (fh, "  profile %s {\n", profname);
+  svtype = scopedvar_iter_get_type (scopedvar, sviter);
+  if (svtype == SV_T_CURR_PROF_COMPILER) {
+    mkc_compiler_t    compiler;
+
+    compiler = scopedvar_iter_get_compiler (scopedvar, sviter);
+    if (compiler != MKC_COMPILER_GENERAL) {
+      fprintf (fh, "    compiler %s;\n", compiler_get_name (compiler));
+    }
+  }
+
+  scopedvar_var_iter_start (scopedvar, sviter, &viter);
+  while ((vidx = scopedvar_var_iter_next (scopedvar, sviter, &viter)) != MKC_ITER_FINISH) {
+    const char    *nm;
+    value_t       *value;
+    const char    *vctxtstr = "";
+
+    nm = scopedvar_var_iter_get_name (scopedvar, sviter, vidx);
+    value = scopedvar_var_iter_get_value (scopedvar, sviter, vidx);
+    value_to_str (value, tbuff, sz);
+
+    if (value->vtype == MKC_VT_INTEGER ||
+        value->vtype == MKC_VT_TIMESTAMP ||
+        value->vtype == MKC_VT_LIST) {
+      fprintf (fh, "    set '%s' %s ", nm, tbuff);
+    } else {
+      fprintf (fh, "    set '%s' '%s' ", nm, tbuff);
+    }
+    vctxtstr = value_ctxt_str (value->vctxt);
+    fprintf (fh, "{ context %s; }\n", vctxtstr);
+    ++count;
+    *tcount += 1;
+  }
+
+  if (count == 0) {
+    fprintf (fh, "    ;\n");
+  }
+  fprintf (fh, "  }\n\n");
+  fprintf (fh, "\n");
 }
