@@ -665,11 +665,9 @@ mkc_check_get_include_deps (mkc_check_t *check,
 #if _have_regex
   char    **match;
   int     matchcount = 0;
-#endif
 
   mkc_log (check->log, MKC_LOG_CHECK, "== get-include-deps\n");
 
-#if _have_regex
   if (check->rxincludedep == NULL) {
     check->rxincludedep = mkc_regex_init (
         "^# *(include|import) *\"?([^\"<>]+)\"?$",
@@ -694,6 +692,7 @@ mkc_check_get_include_deps (mkc_check_t *check,
     }
 
     tp = strdup (match [2]);
+
 //    scopedvar_append_str_list (check->scopedvar, SV_T_SEARCH, dep, MKC_VCTXT_MKC);
     mkc_list_set (deplist, &tp, sizeof (char *), &loc);
 

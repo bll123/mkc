@@ -1295,15 +1295,7 @@ mkc_process_stmt_loadcache_post (mkc_process_t *process)
   scopedvar_set_fromcache (process->scopedvar, false);
 
   if (process->cacheloaded && process->cacheinvalidated) {
-// ### fix
-//    /* something changed that requires cache invalidation */
-//    mkc_profile_iter_start (process->profiles, &piter);
-//    while ((tpidx = mkc_profile_iter_next (process->profiles, &piter)) != MKC_ITER_FINISH) {
-//      if (mkc_pvar_profile_select_idx (process->pvar, tpidx) == MKC_PROF_NOT_FOUND) {
-//        continue;
-//      }
-//      mkc_profile_clear (process->profiles, tpidx);
-//    }
+    scopedvar_reset (process->scopedvar, process->mkcoptions);
 
     mkc_message ("-- cache invalidated\n");
     mkc_log (process->log, MKC_LOG_GENERAL, "-- cache invalidated\n");
@@ -2223,10 +2215,10 @@ mkc_process_save_cache (mkc_process_t *process)
 
   sviter = scopedvar_iter_start (scopedvar, SV_ITER_HIERARCHY);
   while ((profname = scopedvar_iter_next (scopedvar, sviter)) != NULL) {
-    mkc_varidx_t      viter;
-    mkc_varidx_t      vidx;
-    int               count = 0;
-    scopedvar_type_t  svtype;
+    mkc_varidx_t  viter;
+    mkc_varidx_t  vidx;
+    int           count = 0;
+    sv_type_t     svtype;
 
     if (mkc_error_chk_err (process->mkcerr)) {
       break;
@@ -3047,7 +3039,7 @@ mkc_process_dbg_print_prof (mkc_process_t *process)
 
   sviter = scopedvar_iter_start (scopedvar, SV_ITER_HIERARCHY | SV_ITER_SKIP_CURR);
   while ((profname = scopedvar_iter_next (scopedvar, sviter)) != NULL) {
-    scopedvar_type_t  svtype;
+    sv_type_t  svtype;
 
     if (mkc_error_chk_err (process->mkcerr)) {
       break;
@@ -3060,7 +3052,7 @@ mkc_process_dbg_print_prof (mkc_process_t *process)
 
   sviter = scopedvar_iter_start (scopedvar, SV_ITER_USER_PROF);
   while ((profname = scopedvar_iter_next (scopedvar, sviter)) != NULL) {
-    scopedvar_type_t  svtype;
+    sv_type_t  svtype;
 
     if (mkc_error_chk_err (process->mkcerr)) {
       break;
@@ -3073,8 +3065,8 @@ mkc_process_dbg_print_prof (mkc_process_t *process)
 
   sviter = scopedvar_iter_start (scopedvar, SV_ITER_COMPILERS);
   while ((profname = scopedvar_iter_next (scopedvar, sviter)) != NULL) {
-    scopedvar_type_t  svtype;
-    mkc_compiler_t compiler;
+    sv_type_t       svtype;
+    mkc_compiler_t  compiler;
 
     if (mkc_error_chk_err (process->mkcerr)) {
       break;
@@ -3089,7 +3081,7 @@ mkc_process_dbg_print_prof (mkc_process_t *process)
 
   sviter = scopedvar_iter_start (scopedvar, SV_ITER_NAMESPACE);
   while ((profname = scopedvar_iter_next (scopedvar, sviter)) != NULL) {
-    scopedvar_type_t  svtype;
+    sv_type_t  svtype;
 
     if (mkc_error_chk_err (process->mkcerr)) {
       break;
@@ -3370,12 +3362,14 @@ static char **
 mkc_process_get_flags (mkc_process_t *process, const char *flagname)
 {
   mkc_list_t      *tlist;
-  mkc_listidx_t   psz;
   char            **flags = NULL;
   int             fsz = 0;
   int             fallocsz = 0;
   char            *lastlibloc;
   char            *str;
+  scopedvar_t     *scopedvar;
+  sv_iter_t       *sviter = NULL;
+  const char      *profnm;
 
   lastlibloc = malloc (MKC_PATH_MAX);
   if (lastlibloc == NULL) {
@@ -3393,35 +3387,18 @@ mkc_process_get_flags (mkc_process_t *process, const char *flagname)
 
   tlist = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, process->mkcerr);
 
-#if 0
-  /* to get the flags, the profile hierarchy needs to be */
-  /* traversed in reverse order */
-  /* iterate the profile as usual, then traverse the list in reverse order */
-  mkc_profile_iter_hierarchy_start (process->profiles, &profiter);
-  while ((pidx = mkc_profile_iter_hierarchy_next (process->profiles, &profiter)) >= 0) {
-    mkc_listidx_t   loc;
+  scopedvar = process->scopedvar;
 
-    mkc_list_set (tlist, &pidx, sizeof (mkc_profidx_t), &loc);
-  }
-#endif
-
-  /* this is an unsorted list, the indices are in sequence */
-  psz = mkc_list_size (tlist);
-  for (int32_t i = psz - 1; i >= 0; --i) {
-//    mkc_profidx_t   *tpidx;
+  sviter = scopedvar_iter_start (scopedvar, SV_ITER_HIERARCHY);
+  while ((profnm = scopedvar_iter_next (scopedvar, sviter)) != NULL) {
+    value_t         *value = NULL;
     mkc_listidx_t   fiter;
     mkc_listidx_t   fidx;
-    value_t         *value = NULL;
+    sv_type_t       svtype;
 
-//    tpidx = mkc_list_get_by_idx (tlist, i);
 
-//    if (*tpidx == process->pidx_internal) {
-//      /* the internal profile will not have any flags */
-//      continue;
-//    }
-
-//    mkc_pvar_profile_select_idx (process->pvar, *tpidx);
-//    value = scopedvar_get_value (process->scopedvar, *tpidx, flagname);
+    svtype = scopedvar_iter_get_type (scopedvar, sviter);
+    value = scopedvar_get_value (scopedvar, svtype, flagname);
     if (value == NULL || value->vtype != MKC_VT_LIST) {
       continue;
     }
@@ -3431,7 +3408,7 @@ mkc_process_get_flags (mkc_process_t *process, const char *flagname)
       value_t   *fval;
 
       fval = mkc_list_get_by_idx (value->list, fidx);
-      scopedvar_value_get_str (process->scopedvar, fval, str, MKC_PATH_MAX);
+      scopedvar_value_get_str (scopedvar, fval, str, MKC_PATH_MAX);
       if (! *str) {
         continue;
       }
@@ -3450,6 +3427,7 @@ mkc_process_get_flags (mkc_process_t *process, const char *flagname)
       fsz += 1;
     }
   }
+  scopedvar_iter_finish (sviter);
 
   mkc_list_free (tlist);
   free (lastlibloc);
