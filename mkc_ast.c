@@ -142,7 +142,7 @@ typedef struct mkc_ast_set_t {
   mkc_astnode_t     *nm;
   mkc_astnode_t     *vala;
   mkc_astnode_t     *stmtblock;
-  bool              tempflag;
+  bool              local;
 } mkc_ast_set_t;
 
 typedef struct mkc_ast_while_t {
@@ -769,7 +769,7 @@ MKC_NODISCARD
 mkc_astnode_t *
 mkc_ast_mk_set (mkc_astmain_t *astmain,
     mkc_astnode_t *nm, mkc_astnode_t *vala, mkc_astnode_t *stmtblock,
-    bool tempflag,
+    bool local,
     int32_t lineno, int colno)
 {
   mkc_astnode_t   *astnode;
@@ -785,7 +785,7 @@ mkc_ast_mk_set (mkc_astmain_t *astmain,
   astnode->stmt_set.nm = nm;
   astnode->stmt_set.vala = vala;
   astnode->stmt_set.stmtblock = stmtblock;
-  astnode->stmt_set.tempflag = tempflag;
+  astnode->stmt_set.local = local;
 
   return astnode;
 }
@@ -1782,7 +1782,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
 
       mkc_ast_process (astmain, astnode->stmt_set.vala, ifcond, stmtcontrol, funcret, depth);
       rc = mkc_process_stmt_set (astmain->process, valnm, &astmain->value,
-          astnode->stmt_set.tempflag);
+          astnode->stmt_set.local);
       if (mkc_context_check (astmain->context, MKC_CONTEXT_CACHE)) {
         if (rc == MKC_OK_CHANGE) {
           *stmtcontrol = MKC_LOOP_BREAK;

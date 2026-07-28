@@ -1418,13 +1418,14 @@ mkc_process_stmt_project (mkc_process_t *process)
 
 int
 mkc_process_stmt_set (mkc_process_t *process,
-    value_t *valnm, value_t *value, bool tempflag)
+    value_t *valnm, value_t *value, bool local)
 {
-  char              nm [MKC_VNAME_MAX];
-  value_t       *tvalue;
-  mkc_err_code_t    trc = MKC_ERR_FAILURE;
+  char            nm [MKC_VNAME_MAX];
+  value_t         *tvalue;
+  mkc_err_code_t  trc = MKC_ERR_FAILURE;
   value_ctxt_t    vctxt = MKC_VCTXT_USER_DISABLE;
-  bool              istempval = false;
+  bool            istempval = false;
+  sv_type_t       svtype;
 
   if (process == NULL) {
     return trc;
@@ -1472,7 +1473,12 @@ mkc_process_stmt_set (mkc_process_t *process,
     }
   }
 
-  trc = scopedvar_set (process->scopedvar, SV_T_SEARCH, nm, tvalue, vctxt);
+  svtype = SV_T_SEARCH;
+  if (local) {
+    svtype = SV_T_LOCAL;
+  }
+
+  trc = scopedvar_set (process->scopedvar, svtype, nm, tvalue, vctxt);
   if (trc == MKC_OK_CHANGE) {
     process->cacheinvalidated = true;
   }

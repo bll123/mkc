@@ -357,14 +357,12 @@ mkc_chk_arg_count (mkc_check_t *check, mkc_compiler_t compiler,
 
   mkc_log (check->log, MKC_LOG_CHECK, "== chk: arg_count: %s\n", funcname);
 
-  scopedvar_push (check->scopedvar, SV_T_LOCAL, "local-chk-arg-count");
   scopedvar_set_str (check->scopedvar, SV_T_LOCAL, "MKC_TV_TEST_FUNCTION_NAME", funcname, MKC_VCTXT_TEMP);
 
   rbuff = malloc (rsz);
   if (rbuff == NULL) {
     mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
     mkc_chk_reset (check);
-    scopedvar_pop (check->scopedvar);
     return MKC_OK;
   }
 
@@ -382,7 +380,6 @@ mkc_chk_arg_count (mkc_check_t *check, mkc_compiler_t compiler,
     if (mkc_error_chk_err (check->mkcerr)) {
       free (rbuff);
       mkc_chk_reset (check);
-      scopedvar_pop (check->scopedvar);
       return MKC_ERR_FAILURE;
     }
   }
@@ -395,7 +392,6 @@ mkc_chk_arg_count (mkc_check_t *check, mkc_compiler_t compiler,
   if (mkc_error_chk_err (check->mkcerr)) {
     free (rbuff);
     mkc_chk_reset (check);
-    scopedvar_pop (check->scopedvar);
     return MKC_ERR_FAILURE;
   }
 
@@ -420,7 +416,6 @@ mkc_chk_arg_count (mkc_check_t *check, mkc_compiler_t compiler,
 
   mkc_chk_reset (check);
   free (rbuff);
-  scopedvar_pop (check->scopedvar);
   return rc;
 }
 
@@ -478,13 +473,11 @@ mkc_chk_const (mkc_check_t *check,
 
   mkc_log (check->log, MKC_LOG_CHECK, "== chk: constant: %s\n", consttxt);
 
-  scopedvar_push (check->scopedvar, SV_T_LOCAL, "local-chk-const");
   scopedvar_set_str (check->scopedvar, SV_T_LOCAL, "MKC_TV_TEST_CONSTANT", consttxt, MKC_VCTXT_TEMP);
 
   rc = mkc_do_test (MKC_CHK_TEST_COMPILE_ONLY,
       check, compiler, "c-const", NULL, NULL, 0);
   mkc_chk_reset (check);
-  scopedvar_pop (check->scopedvar);
   return rc;
 }
 
@@ -496,13 +489,11 @@ mkc_chk_define (mkc_check_t *check,
 
   mkc_log (check->log, MKC_LOG_CHECK, "== chk: define: %s\n", def);
 
-  scopedvar_push (check->scopedvar, SV_T_LOCAL, "local-chk-define");
   scopedvar_set_str (check->scopedvar, SV_T_LOCAL, "MKC_TV_TEST_DEFINE", def, MKC_VCTXT_TEMP);
 
   rc = mkc_do_test (MKC_CHK_TEST_COMPILE_ONLY,
       check, compiler, "c-define", NULL, NULL, 0);
   mkc_chk_reset (check);
-  scopedvar_pop (check->scopedvar);
   return rc;
 }
 
@@ -559,7 +550,6 @@ mkc_chk_size (mkc_check_t *check,
 
   mkc_log (check->log, MKC_LOG_CHECK, "== chk: size: %s\n", type);
 
-  scopedvar_push (check->scopedvar, SV_T_LOCAL, "local-chk-size");
   scopedvar_set_str (check->scopedvar, SV_T_LOCAL, "MKC_TV_TEST_SIZE", type, MKC_VCTXT_TEMP);
 
   rc = mkc_do_test (MKC_CHK_TEST_COMPILE_RUN,
@@ -568,7 +558,6 @@ mkc_chk_size (mkc_check_t *check,
     rc = 0;
   }
   mkc_chk_reset (check);
-  scopedvar_pop (check->scopedvar);
   return rc;
 }
 
@@ -580,13 +569,11 @@ mkc_chk_type (mkc_check_t *check,
 
   mkc_log (check->log, MKC_LOG_CHECK, "== chk: type: %s\n", type);
 
-  scopedvar_push (check->scopedvar, SV_T_LOCAL, "local-chk-type");
   scopedvar_set_str (check->scopedvar, SV_T_LOCAL, "MKC_TV_TEST_TYPE", type, MKC_VCTXT_TEMP);
 
   rc = mkc_do_test (MKC_CHK_TEST_COMPILE_ONLY,
       check, compiler, "c-type", NULL, NULL, 0);
   mkc_chk_reset (check);
-  scopedvar_pop (check->scopedvar);
   return rc;
 }
 
@@ -600,14 +587,12 @@ mkc_chk_struct_member (mkc_check_t *check,
   mkc_log (check->log, MKC_LOG_CHECK,
       "== chk: struct member: %s.%s\n", structname, membername);
 
-  scopedvar_push (check->scopedvar, SV_T_LOCAL, "local-chk-member");
   scopedvar_set_str (check->scopedvar, SV_T_LOCAL, "MKC_TV_TEST_STRUCT_NAME", structname, MKC_VCTXT_TEMP);
   scopedvar_set_str (check->scopedvar, SV_T_LOCAL, "MKC_TV_TEST_STRUCT_MEMBER", membername, MKC_VCTXT_TEMP);
 
   rc = mkc_do_test (MKC_CHK_TEST_COMPILE_ONLY,
       check, compiler, "c-struct-member", NULL, NULL, 0);
   mkc_chk_reset (check);
-  scopedvar_pop (check->scopedvar);
   return rc;
 }
 
@@ -620,13 +605,11 @@ mkc_chk_function (mkc_check_t *check, mkc_compiler_t compiler,
   mkc_log (check->log, MKC_LOG_CHECK,
       "== chk: function: %s\n", funcname);
 
-  scopedvar_push (check->scopedvar, SV_T_LOCAL, "local-chk-function");
   scopedvar_set_str (check->scopedvar, SV_T_LOCAL, "MKC_TV_TEST_FUNCTION_NAME", funcname, MKC_VCTXT_TEMP);
 
   rc = mkc_do_test (MKC_CHK_TEST_COMPILE_LINK,
       check, compiler, "c-function", NULL, NULL, 0);
   mkc_chk_reset (check);
-  scopedvar_pop (check->scopedvar);
   return rc;
 }
 
@@ -648,13 +631,11 @@ mkc_chk_header (mkc_check_t *check, mkc_compiler_t compiler,
     ec = '"';
   }
   snprintf (tbuff, sizeof (tbuff), "%c%s%c", bc, header, ec);
-  scopedvar_push (check->scopedvar, SV_T_LOCAL, "local-chk-header");
   scopedvar_set_str (check->scopedvar, SV_T_LOCAL, "MKC_TV_TEST_HEADER", tbuff, MKC_VCTXT_TEMP);
 
   rc = mkc_do_test (MKC_CHK_TEST_COMPILE_LINK,
       check, compiler, "c-header", flags, NULL, 0);
   mkc_chk_reset (check);
-  scopedvar_pop (check->scopedvar);
   return rc;
 }
 
@@ -1107,7 +1088,6 @@ mkc_do_test (mkc_check_test_t ctype,
   test_func_t     func = NULL;
   bool            first = true;
 
-  scopedvar_push (check->scopedvar, SV_T_LOCAL, "local-do-test");
   alternates = check->attr->alternates;
   altsz = mkc_list_size (alternates);
 
@@ -1160,7 +1140,6 @@ mkc_do_test (mkc_check_test_t ctype,
   }
 
   check->attr->curralt = oldcurr;
-  scopedvar_pop (check->scopedvar);
   return rc;
 }
 

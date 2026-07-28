@@ -27,7 +27,6 @@ typedef struct scopedvar_var_t {
   mkc_varlist_t   * varlist;
   char            * name;
   int32_t         local_id;
-  int             local_count;
   sv_type_t       svtype;
   mkc_compiler_t  compiler;
 } scopedvar_var_t;
@@ -186,10 +185,6 @@ scopedvar_pop (scopedvar_t *scopedvar)
   }
 
   scvar = &svarlist->variables [svarlist->sz - 1];
-  if (scvar->local_count > 0) {
-    scvar->local_count -= 1;
-    return;
-  }
 
   svarlist->sz -= 1;
   datafree (scvar->name);
@@ -244,6 +239,18 @@ scopedvar_incr_local_id (scopedvar_t *scopedvar)
 void
 scopedvar_decr_local_id (scopedvar_t *scopedvar)
 {
+  scopedvar_var_t *scvar;
+  int             sz;
+
+  sz = scopedvar->variables.sz - 1;
+  scvar = &scopedvar->variables.variables [sz];
+
+  if ((scvar->svtype == SV_T_LOCAL ||
+      scvar->svtype == SV_T_TARGET) &&
+      scvar->local_id == scopedvar->local_id) {
+    scopedvar_pop (scopedvar);
+  }
+
   scopedvar->local_id -= 1;
   if (scopedvar->local_id < 0) {
     mkc_error_set (scopedvar->mkcerr, MKC_ERR_FATAL_ERROR, 0, "local-counter");
@@ -995,6 +1002,9 @@ scopedvar_set (scopedvar_t *scopedvar, sv_type_t svtype,
         }
       }
     } else {
+      if (svtype == SV_T_LOCAL) {
+        scopedvar_push (scopedvar, SV_T_LOCAL, "local");
+      }
       /* the set statement is for a specific profile */
       idx = scopedvar_locate_svtype (scopedvar, svtype);
       scvar = &scopedvar->variables.variables [idx];
@@ -1405,8 +1415,7 @@ scopedvar_create (scopedvar_t *scopedvar, sv_type_t svtype,
       if (scvar->svtype == svtype) {
         if (svtype == SV_T_LOCAL &&
             scvar->local_id == scopedvar->local_id) {
-          /* already exists, increment the count */
-          scvar->local_count += 1;
+          /* already exists */
           return;
         }
         if (svtype == SV_T_TARGET) {
@@ -1455,7 +1464,6 @@ scopedvar_push_variables (scopedvar_t *scopedvar,
       scvar->svtype = SV_T_NOT_IN_USE;
       scvar->compiler = MKC_COMPILER_GENERAL;
       scvar->local_id = scopedvar->local_id;
-      scvar->local_count = 0;
     }
   }
 

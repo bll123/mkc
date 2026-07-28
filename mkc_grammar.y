@@ -243,11 +243,6 @@
 %%
 mkc:
     %empty
-  | stmtblock[a]
-    {
-      mkc_ast_mk_main (ast, $a,
-          yylloc.first_line, yylloc.first_column);
-    }
   | stmtlist[a]
     {
       mkc_ast_mk_main (ast, $a,
@@ -265,6 +260,10 @@ stmt[v]:
     {
       $v = mkc_ast_mk_exit (ast, $a,
           yylloc.first_line, yylloc.first_column);
+    }
+  | stmtblock[a]
+    {
+      $v = $a;
     }
   | stmt_if[a]
     {

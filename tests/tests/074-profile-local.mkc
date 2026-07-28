@@ -1,0 +1,41 @@
+
+project {
+  name mkctest;
+  compiler c;
+}
+
+set local a 1;
+
+print "  a-1: ${a}";        # 1
+{
+  set local a 2;
+  print "  a-2: ${a}";      # 2
+}
+print "  a-3: ${a}";        # 1
+
+if (1) {
+  print "  a-4: ${a}";      # 1
+  if (1) {
+    print "  a-5: ${a}";    # 1
+  }
+}
+print "  a-6: ${a}";        # 1
+
+if (1) {
+  set local a 3;
+  print "  a-7: ${a}";      # 3
+  if (1) {
+    print "  a-8: ${a}";    # 3
+  }
+}
+print "  a-9: ${a}";        # 1
+
+if (1) {
+  set local a 4;
+  print "  a-10: ${a}";     # 4
+  if (1) {
+    set local a 5;
+    print "  a-11: ${a}";   # 5
+  }
+}
+print "  a-12: ${a}";       # 1
