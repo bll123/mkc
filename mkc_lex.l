@@ -185,6 +185,7 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 "match"                     { return T_ATTR_MATCH; }
 "method"                    { return T_ATTR_METHOD; }
 "name"                      { return T_ATTR_NAME; }
+"namespace"                 { return T_ATTR_NAMESPACE; }
 "negate"                    { return T_ATTR_NEGATE; }
 "output"                    { return T_ATTR_OUTPUT; }
 "path"                      { return T_ATTR_PATH; }
@@ -198,7 +199,7 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
     return T_VAL_INTEGER;
   }
 
-({DIGIT})+"ll" {
+({DIGIT})+"LL" {
     yylval->sval = strdup (yytext);
     return T_VAL_TIMESTAMP;
   }

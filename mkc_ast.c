@@ -1872,6 +1872,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
     case MKC_T_ATTR_MATCH:
     case MKC_T_ATTR_METHOD:
     case MKC_T_ATTR_NAME:
+    case MKC_T_ATTR_NAMESPACE:
     case MKC_T_ATTR_NEGATE:
     case MKC_T_ATTR_OUTPUT:
     case MKC_T_ATTR_VERSION: {

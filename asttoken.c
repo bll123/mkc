@@ -18,6 +18,7 @@ char const * const typenames [MKC_T_MAX] = {
   [MKC_T_ATTR_MATCH] = "match",
   [MKC_T_ATTR_METHOD] = "method",
   [MKC_T_ATTR_NAME] = "name",
+  [MKC_T_ATTR_NAMESPACE] = "namespace",
   [MKC_T_ATTR_NEGATE] = "negate",
   [MKC_T_ATTR_OUTPUT] = "output",
   [MKC_T_ATTR_PATH] = "path",

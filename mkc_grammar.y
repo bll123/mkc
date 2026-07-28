@@ -96,7 +96,7 @@
 
 %token T_VAL_FALSE            "false"
 %token <sval> T_VAL_INTEGER   "[0-9]+"
-%token <sval> T_VAL_TIMESTAMP "[0-9]+ll"
+%token <sval> T_VAL_TIMESTAMP "[0-9]+LL"
 %token T_VAL_TRUE             "true"
 %token T_VAL_BOOTSTRAP        "bootstrap"
 
@@ -165,13 +165,14 @@
 %token T_ATTR_CONTEXT         "context"
 %token T_ATTR_DEFINE_ZERO     "define_zero"
 %token T_ATTR_FAILURE         "failure"
-%token T_ATTR_MATCH           "match"
 %token T_ATTR_HEADER          "header"
 %token T_ATTR_INPUT           "input"
 %token T_ATTR_LIBRARY_VERSION "library_version"
 %token T_ATTR_LINK_FLAGS      "link_flags"
+%token T_ATTR_MATCH           "match"
 %token T_ATTR_METHOD          "method"
 %token T_ATTR_NAME            "name"
+%token T_ATTR_NAMESPACE       "namespace"
 %token T_ATTR_NEGATE          "negate"
 %token T_ATTR_OUTPUT          "output"
 %token T_ATTR_PATH            "path"
@@ -222,11 +223,11 @@
 %type <astnode> chk_define chk_function chk_header chk_linkflag
 %type <astnode> chk_member chk_package chk_shellcmc chk_size chk_type
 // attributes
-%type <astnode> attr attr_alternate attr_name attr_path attr_compiler
-%type <astnode> attr_compilerflags attr_context attr_define_zero
-%type <astnode> attr_failure attr_header attr_input attr_libversion
-%type <astnode> attr_linkflags attr_match attr_method
-%type <astnode> attr_negate attr_output attr_replace attr_source
+%type <astnode> attr attr_alternate attr_compiler attr_compilerflags
+%type <astnode> attr_context attr_define_zero attr_failure attr_header
+%type <astnode> attr_input attr_libversion attr_linkflags attr_match
+%type <astnode> attr_method attr_name attr_namespace attr_negate
+%type <astnode> attr_output attr_path attr_replace attr_source
 %type <astnode> attr_success attr_version
 
 // precedence rules: the lowest precedence comes first
@@ -409,6 +410,10 @@ attr[v]:
       $v = $a;
     }
   | attr_name[a]
+    {
+      $v = $a;
+    }
+  | attr_namespace[a]
     {
       $v = $a;
     }
@@ -988,6 +993,15 @@ attr_name[v]:
     T_ATTR_NAME varany[a] T_SEMICOLON
     {
       $v = mkc_ast_mk_attribute (ast, $a, MKC_T_ATTR_NAME,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+/* used in load_cache/profile/set */
+attr_namespace[v]:
+    T_ATTR_NAMESPACE varany[a] T_SEMICOLON
+    {
+      $v = mkc_ast_mk_attribute (ast, $a, MKC_T_ATTR_NAMESPACE,
           yylloc.first_line, yylloc.first_column);
     }
   ;

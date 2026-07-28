@@ -91,7 +91,7 @@ value_to_str (value_t *value, char *buff, size_t sz)
       break;
     }
     case MKC_VT_TIMESTAMP: {
-      snprintf (buff, sz, "%" PRId64 "ll", value->tmval);
+      snprintf (buff, sz, "%" PRId64 "LL", value->tmval);
       break;
     }
     case MKC_VT_LIST: {
