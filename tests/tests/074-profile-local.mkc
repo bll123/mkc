@@ -1,6 +1,5 @@
 
-project {
-  name mkctest;
+project mkctest {
   compiler c;
 }
 

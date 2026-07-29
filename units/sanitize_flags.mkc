@@ -1,0 +1,31 @@
+# Copyright 2026 Brad Lanam Pleasant Hill CA
+
+# Autorun: false
+# Usage:
+#   sanitize_flags <profile-name>;
+#
+# Sets:
+#     MKC_FORTIFY (boolean)
+#
+
+{
+  function sanitize_flags (profname) {
+
+    set MKC_FORTIFY true;
+    profile ${profname} {
+      set MKC_FORTIFY false;
+      add_compile_flag '-O0';
+      check_compile_flag '-ggdb';
+      check_compile_flag '-fsanitize=address';
+      check_link_flag '-fsanitize=address';
+      check_compile_flag '-fsanitize-address-use-after-scope';
+      check_link_flag '-fsanitize-address-use-after-scope';
+      check_compile_flag '-fsanitize-recover-address';
+      check_link_flag '-fsanitize-recover-address';
+      check_compile_flag '-fno-omit-frame-pointer';
+      check_compile_flag '-fno-common';
+      check_compile_flag '-fno-inline';
+    }
+
+  }
+}

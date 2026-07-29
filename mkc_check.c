@@ -26,6 +26,7 @@
 #include "mkc_regex.h"
 #include "strutil.h"
 #include "scopedvar.h"
+#include "tmutil.h"
 #include "value.h"
 
 #define MKC_PKG_TRACE 0
@@ -61,12 +62,13 @@ static int mkc_chk_package_exec (mkc_check_t *check, const char *pkg);
 static void mkc_chk_create_header_var (mkc_check_t *check);
 static void mkc_check_append_list_arg (mkc_check_t *check, mkc_list_t *list);
 
-typedef int (*test_func_t)(mkc_check_t *check, mkc_compiler_t compiler, const char *fname, const char *flags [], char *rbuff, size_t rsz);
+typedef int (*test_func_t)(mkc_check_t *check, mkc_compiler_t compiler, const char *fname, const char * compflags [], const char * ldflags [], char *rbuff, size_t rsz);
 
-static int mkc_do_test (mkc_check_test_t type, mkc_check_t *check, mkc_compiler_t compiler, const char *fname, const char * flags[], char *rbuff, size_t rsz);
-static int mkc_compile_only (mkc_check_t *check, mkc_compiler_t compiler, const char *fname, const char *flags[], char *rbuff, size_t rsz);
-static int mkc_compile_link (mkc_check_t *check, mkc_compiler_t compiler, const char *fname, const char *flags[], char *rbuff, size_t rsz);
-static int mkc_compile_run (mkc_check_t *check, mkc_compiler_t compiler, const char *fname, const char *flags[], char *rbuff, size_t rsz);
+static int mkc_do_test (mkc_check_test_t type, mkc_check_t *check, mkc_compiler_t compiler, const char *fname, const char * compflags [], const char * ldflags [], char *rbuff, size_t rsz);
+static int mkc_compile_only (mkc_check_t *check, mkc_compiler_t compiler, const char *fname, const char * compflags [], const char * ignored [], char *rbuff, size_t rsz);
+static int mkc_compile_link (mkc_check_t *check, mkc_compiler_t compiler, const char *fname, const char * compflags [], const char * ldflags [], char *rbuff, size_t rsz);
+static int mkc_compile_run (mkc_check_t *check, mkc_compiler_t compiler, const char *fname, const char * compflags [], const char * ldflags [], char *rbuff, size_t rsz);
+static bool mkc_check_append_flags (mkc_check_t *check, const char *flags []);
 
 MKC_NODISCARD
 mkc_check_t *
@@ -161,7 +163,7 @@ mkc_chk_compiler_works (mkc_check_t *check, mkc_compiler_t compiler)
   mkc_chk_append_comp_flag (check, "-Wno-deprecated");
 
   mkc_log (check->log, MKC_LOG_CHECK, "  == chk: compiler-works\n");
-  rc = mkc_compile_only (check, compiler, "int-main", NULL, NULL, 0);
+  rc = mkc_compile_only (check, compiler, "int-main", NULL, NULL, NULL, 0);
   mkc_chk_reset (check);
   return rc;
 }
@@ -219,7 +221,7 @@ mkc_chk_header_modern (mkc_check_t *check, mkc_compiler_t compiler)
   int         rc;
 
   mkc_log (check->log, MKC_LOG_CHECK, "  == chk: header-modern\n");
-  rc = mkc_compile_only (check, compiler, "int-header-modern", NULL, NULL, 0);
+  rc = mkc_compile_only (check, compiler, "int-header-modern", NULL, NULL, NULL, 0);
   mkc_chk_reset (check);
   return rc;
 }
@@ -244,7 +246,7 @@ mkc_chk_system_type (mkc_check_t *check, mkc_compiler_t compiler)
   flags [fcount++] = "-I";
   flags [fcount++] = inc;
   flags [fcount++] = NULL;
-  rc = mkc_compile_run (check, compiler, "int-system", flags, NULL, 0);
+  rc = mkc_compile_run (check, compiler, "int-system", flags, NULL, NULL, 0);
   mkc_chk_reset (check);
   free (inc);
   return rc;
@@ -269,7 +271,7 @@ mkc_chk_system_id (mkc_check_t *check, mkc_compiler_t compiler)
   flags [fcount++] = "-I";
   flags [fcount++] = inc;
   flags [fcount++] = NULL;
-  rc = mkc_compile_run (check, compiler, "int-sysid", flags, NULL, 0);
+  rc = mkc_compile_run (check, compiler, "int-sysid", flags, NULL, NULL, 0);
   mkc_chk_reset (check);
   free (inc);
   return rc;
@@ -281,7 +283,7 @@ mkc_chk_variadic_macro (mkc_check_t *check, mkc_compiler_t compiler)
   int         rc;
 
   mkc_log (check->log, MKC_LOG_CHECK, "  == chk: variadic-macro\n");
-  rc = mkc_compile_only (check, compiler, "int-variadic-macro", NULL, NULL, 0);
+  rc = mkc_compile_only (check, compiler, "int-variadic-macro", NULL, NULL, NULL, 0);
   mkc_chk_reset (check);
   return rc;
 }
@@ -309,7 +311,7 @@ mkc_chk_library_location (mkc_check_t *check, mkc_compiler_t compiler)
   flags [fcount++] = "-I";
   flags [fcount++] = inc;
   flags [fcount++] = NULL;
-  rc = mkc_compile_run (check, compiler, "int-libloc", flags, NULL, 0);
+  rc = mkc_compile_run (check, compiler, "int-libloc", flags, NULL, NULL, 0);
   mkc_chk_reset (check);
   free (inc);
   return rc;
@@ -334,7 +336,7 @@ mkc_chk_compiler_id (mkc_check_t *check, mkc_compiler_t compiler)
   flags [fcount++] = "-I";
   flags [fcount++] = inc;
   flags [fcount++] = NULL;
-  rc = mkc_compile_run (check, compiler, "int-compid", flags, NULL, 0);
+  rc = mkc_compile_run (check, compiler, "int-compid", flags, NULL, NULL, 0);
   mkc_chk_reset (check);
   free (inc);
   return rc;
@@ -369,7 +371,7 @@ mkc_chk_arg_count (mkc_check_t *check, mkc_compiler_t compiler,
   flags [fcount++] = "-E";
   flags [fcount++] = NULL;
   rc = mkc_do_test (MKC_CHK_TEST_COMPILE_ONLY,
-      check, compiler, "c-argcount", flags, rbuff, rsz);
+      check, compiler, "c-argcount", flags, NULL, rbuff, rsz);
 
   /*  int mkdir (const char *__path, __mode_t __mode) */
   /*      ;   */
@@ -452,7 +454,7 @@ mkc_chk_compiler_flag (mkc_check_t *check,
   }
 
   mkc_chk_append_comp_flag (check, tbuff);
-  rc = mkc_compile_only (check, compiler, "c-main", NULL, rbuff, rsz);
+  rc = mkc_compile_only (check, compiler, "c-main", NULL, NULL, rbuff, rsz);
   if (rc == 0) {
     /* clang does not return an error code on a unknown warning */
     if (strstr (rbuff, "warning") != NULL) {
@@ -476,7 +478,7 @@ mkc_chk_const (mkc_check_t *check,
   scopedvar_set_str (check->scopedvar, SV_T_LOCAL, "MKC_TV_TEST_CONSTANT", consttxt, MKC_VCTXT_TEMP);
 
   rc = mkc_do_test (MKC_CHK_TEST_COMPILE_ONLY,
-      check, compiler, "c-const", NULL, NULL, 0);
+      check, compiler, "c-const", NULL, NULL, NULL, 0);
   mkc_chk_reset (check);
   return rc;
 }
@@ -492,7 +494,7 @@ mkc_chk_define (mkc_check_t *check,
   scopedvar_set_str (check->scopedvar, SV_T_LOCAL, "MKC_TV_TEST_DEFINE", def, MKC_VCTXT_TEMP);
 
   rc = mkc_do_test (MKC_CHK_TEST_COMPILE_ONLY,
-      check, compiler, "c-define", NULL, NULL, 0);
+      check, compiler, "c-define", NULL, NULL, NULL, 0);
   mkc_chk_reset (check);
   return rc;
 }
@@ -530,7 +532,7 @@ mkc_chk_link_flag (mkc_check_t *check,
 
   mkc_chk_append_link_flag (check, flag);
   mkc_log (check->log, MKC_LOG_CHECK, "== chk: link-flag: %s\n", flag);
-  rc = mkc_compile_link (check, compiler, "c-main", NULL, rbuff, MKC_PATH_MAX);
+  rc = mkc_compile_link (check, compiler, "c-main", NULL, NULL, rbuff, MKC_PATH_MAX);
   if (rc == 0) {
     /* clang does not return an error code on a unknown warning */
     if (strstr (rbuff, "warning") != NULL) {
@@ -553,7 +555,7 @@ mkc_chk_size (mkc_check_t *check,
   scopedvar_set_str (check->scopedvar, SV_T_LOCAL, "MKC_TV_TEST_SIZE", type, MKC_VCTXT_TEMP);
 
   rc = mkc_do_test (MKC_CHK_TEST_COMPILE_RUN,
-      check, compiler, "c-size", NULL, NULL, 0);
+      check, compiler, "c-size", NULL, NULL, NULL, 0);
   if (rc < 0) {
     rc = 0;
   }
@@ -572,7 +574,7 @@ mkc_chk_type (mkc_check_t *check,
   scopedvar_set_str (check->scopedvar, SV_T_LOCAL, "MKC_TV_TEST_TYPE", type, MKC_VCTXT_TEMP);
 
   rc = mkc_do_test (MKC_CHK_TEST_COMPILE_ONLY,
-      check, compiler, "c-type", NULL, NULL, 0);
+      check, compiler, "c-type", NULL, NULL, NULL, 0);
   mkc_chk_reset (check);
   return rc;
 }
@@ -591,7 +593,7 @@ mkc_chk_struct_member (mkc_check_t *check,
   scopedvar_set_str (check->scopedvar, SV_T_LOCAL, "MKC_TV_TEST_STRUCT_MEMBER", membername, MKC_VCTXT_TEMP);
 
   rc = mkc_do_test (MKC_CHK_TEST_COMPILE_ONLY,
-      check, compiler, "c-struct-member", NULL, NULL, 0);
+      check, compiler, "c-struct-member", NULL, NULL, NULL, 0);
   mkc_chk_reset (check);
   return rc;
 }
@@ -608,14 +610,14 @@ mkc_chk_function (mkc_check_t *check, mkc_compiler_t compiler,
   scopedvar_set_str (check->scopedvar, SV_T_LOCAL, "MKC_TV_TEST_FUNCTION_NAME", funcname, MKC_VCTXT_TEMP);
 
   rc = mkc_do_test (MKC_CHK_TEST_COMPILE_LINK,
-      check, compiler, "c-function", NULL, NULL, 0);
+      check, compiler, "c-function", NULL, NULL, NULL, 0);
   mkc_chk_reset (check);
   return rc;
 }
 
 int
 mkc_chk_header (mkc_check_t *check, mkc_compiler_t compiler,
-    const char *header, const char * flags [])
+    const char *header, const char * compflags [], const char * ldflags [])
 {
   int             rc;
   char            tbuff [MKC_VNAME_MAX];
@@ -634,18 +636,33 @@ mkc_chk_header (mkc_check_t *check, mkc_compiler_t compiler,
   scopedvar_set_str (check->scopedvar, SV_T_LOCAL, "MKC_TV_TEST_HEADER", tbuff, MKC_VCTXT_TEMP);
 
   rc = mkc_do_test (MKC_CHK_TEST_COMPILE_LINK,
-      check, compiler, "c-header", flags, NULL, 0);
+      check, compiler, "c-header", compflags, ldflags, NULL, 0);
   mkc_chk_reset (check);
   return rc;
 }
 
 void
 mkc_check_get_include_deps (mkc_check_t *check,
-    mkc_compiler_t compiler, const char *rbuff, mkc_list_t *deplist)
+    mkc_compiler_t compiler, const char *filename, const char *filepath)
 {
 #if _have_regex
-  char    **match;
-  int     matchcount = 0;
+  char        ** match;
+  int         matchcount = 0;
+  mkc_list_t  * elist;
+  char        * rbuff;
+  size_t      fsz = 0;
+  time_t      fts;
+  time_t      currtm;
+
+  currtm = mstime ();
+  fts = 0;
+  if (scopedvar_is_defined (check->scopedvar, SV_T_TIMESTAMP, filename)) {
+    fts = scopedvar_get_timestamp (check->scopedvar, SV_T_TIMESTAMP, filename);
+  }
+  if (currtm < fts &&
+      scopedvar_is_defined (check->scopedvar, SV_T_DEPENDENCY, filename)) {
+    return;
+  }
 
   if (check->rxincludedep == NULL) {
     check->rxincludedep = mkc_regex_init (
@@ -657,11 +674,17 @@ mkc_check_get_include_deps (mkc_check_t *check,
     }
   }
 
+  elist = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, check->mkcerr);
+  scopedvar_set_list (check->scopedvar, SV_T_DEPENDENCY,
+      filename, elist, MKC_VCTXT_MKC);
+  mkc_list_free (elist);
+
   mkc_regex_get_reset (check->rxincludedep);
 
+  rbuff = fileop_read_file (filepath, &fsz, check->mkcerr);
+
   while (true) {
-    char            *tp;
-    mkc_listidx_t   loc;
+    const char      * dep;
 
     match = mkc_regex_get (check->rxincludedep, rbuff, &matchcount);
     if (matchcount != 3) {
@@ -670,13 +693,20 @@ mkc_check_get_include_deps (mkc_check_t *check,
     }
 
     mkc_log (check->log, MKC_LOG_CHECK, "  get-inc-deps: match: %s\n", match [2]);
-    tp = strdup (match [2]);
+    dep = match [2];
 
-//    scopedvar_append_str_list (check->scopedvar, SV_T_SEARCH, dep, MKC_VCTXT_MKC);
-    mkc_list_set (deplist, &tp, sizeof (char *), &loc);
+    scopedvar_append_str_list (check->scopedvar, SV_T_DEPENDENCY,
+        filename, dep, MKC_VCTXT_MKC);
 
     mkc_regex_get_free (match);
   }
+
+  free (rbuff);
+
+  /* set the timestamp when the file is processed */
+  fts = fileop_modtime (filepath);
+  fts *= 1000;
+  scopedvar_set_timestamp (check->scopedvar, SV_T_TIMESTAMP, filename, fts, MKC_VCTXT_MKC);
 
   mkc_regex_free (check->rxargcount);
   check->rxargcount = NULL;
@@ -1074,7 +1104,8 @@ mkc_check_append_list_arg (mkc_check_t *check, mkc_list_t *list)
 static int
 mkc_do_test (mkc_check_test_t ctype,
     mkc_check_t *check, mkc_compiler_t compiler,
-    const char *fname, const char * flags [], char *rbuff, size_t rsz)
+    const char *fname, const char * compflags [], const char *ldflags [],
+    char *rbuff, size_t rsz)
 {
   int             rc = MKC_ERR_FAILURE;
   int             altsz;
@@ -1119,7 +1150,7 @@ mkc_do_test (mkc_check_test_t ctype,
 
     check->attr->curralt = alt;
     mkc_chk_create_header_var (check);
-    rc = (*func) (check, compiler, fname, flags, rbuff, rsz);
+    rc = (*func) (check, compiler, fname, compflags, ldflags, rbuff, rsz);
 
     /* check doesn't really have the knowledge as to how */
     /* the return code should be processed */
@@ -1143,7 +1174,8 @@ mkc_do_test (mkc_check_test_t ctype,
 
 static int
 mkc_compile_only (mkc_check_t *check, mkc_compiler_t compiler,
-    const char *fname, const char *flags [], char *rbuff, size_t rsz)
+    const char *fname, const char * compflags [], const char * ldflags [],
+    char *rbuff, size_t rsz)
 {
   int             rc;
   char            * tbuff;
@@ -1195,17 +1227,7 @@ mkc_compile_only (mkc_check_t *check, mkc_compiler_t compiler,
 
   check->targc = 0;
   mkc_check_append_arg (check, compstr);
-  if (flags != NULL) {
-    const char  *p;
-    int         count = 0;
-
-    while ((p = flags [count++]) != NULL) {
-      if (strcmp (p, "-E") == 0) {
-        cpreprocess = true;
-      }
-      mkc_check_append_arg (check, p);
-    }
-  }
+  cpreprocess = mkc_check_append_flags (check, compflags);
 
   alt = check->attr->curralt;
   mkc_check_append_list_arg (check, alt->compflags);
@@ -1265,7 +1287,7 @@ mkc_compile_only (mkc_check_t *check, mkc_compiler_t compiler,
 
 static int
 mkc_compile_link (mkc_check_t *check, mkc_compiler_t compiler,
-    const char *fname, const char *flags [],
+    const char *fname, const char * compflags [], const char * ldflags [],
     char *rbuff, size_t rsz)
 {
   int               rc;
@@ -1288,7 +1310,7 @@ mkc_compile_link (mkc_check_t *check, mkc_compiler_t compiler,
     rallocated = true;
   }
 
-  rc = mkc_compile_only (check, compiler, fname, flags, rbuff, rsz);
+  rc = mkc_compile_only (check, compiler, fname, compflags, NULL, rbuff, rsz);
   if (rc > 0) {
     rc = - rc;
   }
@@ -1327,6 +1349,8 @@ mkc_compile_link (mkc_check_t *check, mkc_compiler_t compiler,
   mkc_check_append_arg (check, outfile);
   path_build (MKC_PATH_MKCF_TMP, objfile, MKC_PATH_MAX, "mkctest.o", check->mkcerr);
   mkc_check_append_arg (check, objfile);
+
+  mkc_check_append_flags (check, ldflags);
 
   alt = check->attr->curralt;
   mkc_check_append_list_arg (check, alt->linkflags);
@@ -1368,7 +1392,7 @@ mkc_compile_link (mkc_check_t *check, mkc_compiler_t compiler,
 
 static int
 mkc_compile_run (mkc_check_t *check, mkc_compiler_t compiler,
-    const char *fname, const char *flags [],
+    const char *fname, const char * compflags [], const char * ldflags [],
     char *rbuff, size_t rsz)
 {
   int         rc;
@@ -1376,7 +1400,7 @@ mkc_compile_run (mkc_check_t *check, mkc_compiler_t compiler,
   size_t      retsz;
   char        *exefile;
 
-  rc = mkc_compile_link (check, compiler, fname, flags, NULL, 0);
+  rc = mkc_compile_link (check, compiler, fname, compflags, ldflags, NULL, 0);
 
   if (rc != 0) {
     return rc;
@@ -1427,3 +1451,23 @@ mkc_compile_run (mkc_check_t *check, mkc_compiler_t compiler,
   return rc;
 }
 
+
+static bool
+mkc_check_append_flags (mkc_check_t *check, const char *flags [])
+{
+  bool        cpreprocess = false;
+
+  if (flags != NULL) {
+    const char  *p;
+    int         count = 0;
+
+    while ((p = flags [count++]) != NULL) {
+      if (strcmp (p, "-E") == 0) {
+        cpreprocess = true;
+      }
+      mkc_check_append_arg (check, p);
+    }
+  }
+
+  return cpreprocess;
+}

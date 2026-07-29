@@ -74,6 +74,7 @@ main (int argc, char *argv [])
     { "parsedebug",           no_argument,        NULL, 2   },
     { "prefix",               required_argument,  NULL, 6   },
     { "profile",              required_argument,  NULL, 'p' },
+    { "quiet",                no_argument,        NULL, 'q' },
     { "retest",               no_argument,        NULL, 'r' },
     { "verbose",              no_argument,        NULL, 'v' },
     { "version",              no_argument,        NULL, 3 },
@@ -83,7 +84,7 @@ main (int argc, char *argv [])
   mkcoptions.currprofile = strdup (MKC_C_PROF_DEFAULT_NAME);
   mkcoptions.stage = NULL;
   mkcoptions.prefix = NULL;
-  mkcoptions.verbose = 0;
+  mkcoptions.verbose = 1;
   mkcoptions.retest = false;
 
   mkcerr = mkc_error_init ();
@@ -111,6 +112,10 @@ main (int argc, char *argv [])
           datafree (mkcoptions.currprofile);
           mkcoptions.currprofile = strdup (argcopy.utf8argv [optind - 1]);
         }
+        break;
+      }
+      case 'q': {
+        mkcoptions.verbose = 0;
         break;
       }
       case 'r': {

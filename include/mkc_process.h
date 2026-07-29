@@ -52,7 +52,7 @@ void mkc_process_stmt_mark (mkc_process_t *process, value_t *vala, value_t *valb
 void mkc_process_stmt_print (mkc_process_t *process, value_t *value, int depth);
 void mkc_process_stmt_profile (mkc_process_t *process, value_t *valnm);
 void mkc_process_stmt_profile_post (mkc_process_t *process);
-void mkc_process_stmt_project (mkc_process_t *process);
+void mkc_process_stmt_project (mkc_process_t *process, value_t *valnm);
 int mkc_process_stmt_set (mkc_process_t *process, value_t *valnm, value_t *value, bool tempflag);
 
 void mkc_process_attr_alternate (mkc_process_t *process);

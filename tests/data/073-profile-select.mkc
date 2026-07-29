@@ -2,9 +2,7 @@
 
 # profile select
 
-project {
-  name mkctest;
-}
+project mkctest;
 
 set a 1;
 

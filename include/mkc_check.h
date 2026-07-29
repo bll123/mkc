@@ -83,14 +83,14 @@ int mkc_chk_compiler_flag (mkc_check_t *check, mkc_compiler_t compiler, const ch
 int mkc_chk_const (mkc_check_t *check, mkc_compiler_t compiler, const char *consttxt);
 int mkc_chk_define (mkc_check_t *check, mkc_compiler_t compiler, const char *def);
 int mkc_chk_function (mkc_check_t *check, mkc_compiler_t compiler, const char *funcname);
-int mkc_chk_header (mkc_check_t *check, mkc_compiler_t compiler, const char *header, const char * flags []);
+int mkc_chk_header (mkc_check_t *check, mkc_compiler_t compiler, const char *header, const char * compflags [], const char * ldflags []);
 int mkc_chk_link_flag (mkc_check_t *check, mkc_compiler_t compiler, const char *flag);
 int mkc_chk_package (mkc_check_t *check, mkc_compiler_t compiler, const char *pkg);
 int mkc_chk_size (mkc_check_t *check, mkc_compiler_t compiler, const char *type);
 int mkc_chk_struct_member (mkc_check_t *check, mkc_compiler_t compiler, const char *structname, const char *membername);
 int mkc_chk_type (mkc_check_t *check, mkc_compiler_t compiler, const char *type);
 
-void mkc_check_get_include_deps (mkc_check_t *check, mkc_compiler_t compiler, const char *rbuff, mkc_list_t *deplist);
+void mkc_check_get_include_deps (mkc_check_t *check, mkc_compiler_t compiler, const char *filename, const char *filepath);
 
 #if defined (__cplusplus) || defined (c_plusplus)
 }

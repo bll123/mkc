@@ -1,5 +1,6 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
+# Autorun: true
 #
 # Sets:
 #   If a known path is found, and both the matching

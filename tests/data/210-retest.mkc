@@ -1,8 +1,6 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
-project {
-  name mkctest;
-}
+project mkctest;
 
 check_constant alwaysdef {
   compiler_flags '-Itests/tmp';

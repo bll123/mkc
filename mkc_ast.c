@@ -38,12 +38,19 @@ typedef struct mkc_ast_stmtblock_t {
   mkc_astnode_t       *stmtblock;
 } mkc_ast_stmtblock_t;
 
-/* values and ops */
+typedef struct mkc_ast_val_stmtblock_t {
+  mkc_astnode_t       *val;
+  mkc_astnode_t       *stmtblock;
+} mkc_ast_val_stmtblock_t;
 
-typedef struct mkc_ast_op_t {
+typedef struct mkc_ast_val_val_t {
   mkc_astnode_t       *vala;
   mkc_astnode_t       *valb;
-} mkc_ast_op_t;
+} mkc_ast_val_val_t;
+
+/* values and ops */
+
+typedef struct mkc_ast_val_val_t mkc_ast_op_t;
 
 typedef struct mkc_ast_value_t {
   value_t       value;
@@ -75,16 +82,6 @@ typedef struct mkc_ast_conf_t {
   mkc_astnode_t       *stmtblock;
   bool                definezero;
 } mkc_ast_conf_t;
-
-typedef struct mkc_ast_debug_t {
-  mkc_astnode_t       *dbga;
-  mkc_astnode_t       *dbgb;
-} mkc_ast_debug_t;
-
-typedef struct mkc_ast_executable_t {
-  mkc_astnode_t       *name;
-  mkc_astnode_t       *stmtblock;
-} mkc_ast_executable_t;
 
 typedef struct mkc_ast_elseif_t {
   mkc_astnode_t       *expr;
@@ -124,19 +121,9 @@ typedef struct mkc_ast_loadcache_t {
   mkc_astnode_t       *stmtblock;
 } mkc_ast_loadcache_t;
 
-typedef struct mkc_ast_mark_t {
-  mkc_astnode_t       *vala;
-  mkc_astnode_t       *valb;
-} mkc_ast_mark_t;
-
 typedef struct mkc_ast_print_t {
   mkc_astnode_t       *vala;
 } mkc_ast_print_t;
-
-typedef struct mkc_ast_profile_t {
-  mkc_astnode_t     *nm;
-  mkc_astnode_t     *stmtblock;
-} mkc_ast_profile_t;
 
 typedef struct mkc_ast_set_t {
   mkc_astnode_t     *nm;
@@ -152,21 +139,11 @@ typedef struct mkc_ast_while_t {
 
 /* checks */
 
-typedef struct mkc_ast_check_t {
-  mkc_astnode_t     *vala;
-  mkc_astnode_t     *stmtblock;
-} mkc_ast_check_t;
-
 typedef struct mkc_ast_check_flag_t {
   mkc_astnode_t   *vala;
   mkc_astnode_t   *stmtblock;
   int             addchk;
 } mkc_ast_check_flag_t;
-
-typedef struct mkc_ast_chk_package_t {
-  mkc_astnode_t     *vala;
-  mkc_astnode_t     *stmtblock;
-} mkc_ast_chk_package_t;
 
 typedef struct mkc_ast_chk_member_t {
   mkc_astnode_t     *vala;
@@ -196,10 +173,7 @@ typedef struct mkc_ast_attr_linkflag_t {
   mkc_astnode_t     *linkflaglist;
 } mkc_ast_attr_linkflag_t;
 
-typedef struct mkc_ast_attr_replace_t {
-  mkc_astnode_t     *str;
-  mkc_astnode_t     *val;
-} mkc_ast_attr_replace_t;
+typedef struct mkc_ast_val_val_t mkc_ast_attr_replace_t;
 
 typedef struct mkc_ast_attr_source_t {
   mkc_astnode_t     *srclist;
@@ -220,13 +194,11 @@ typedef struct mkc_astnode_t {
     mkc_ast_attr_replace_t      attr_repl;
     mkc_ast_attr_source_t       attr_source;
     mkc_ast_attr_success_fail_t attr_success_fail;
-    mkc_ast_check_t             chk_check;
     mkc_ast_check_flag_t        chk_flag;
-    mkc_ast_chk_package_t       chk_package;
     mkc_ast_chk_member_t        chk_member;
     mkc_ast_stmt_stmtblock_t    stmt_stmtblock;
-    mkc_ast_debug_t             stmt_debug;
-    mkc_ast_executable_t        stmt_executable;
+    mkc_ast_val_stmtblock_t     stmt_val_stmtblock;
+    mkc_ast_val_val_t           val_val;
     mkc_ast_exit_t              stmt_exit;
     mkc_ast_foreach_t           stmt_foreach;
     mkc_ast_function_t          stmt_function;
@@ -234,9 +206,7 @@ typedef struct mkc_astnode_t {
     mkc_ast_if_t                stmt_if;
     mkc_ast_elseif_t            stmt_elseif;
     mkc_ast_loadcache_t         stmt_loadcache;
-    mkc_ast_mark_t              stmt_mark;
     mkc_ast_print_t             stmt_print;
-    mkc_ast_profile_t           stmt_profile;
     mkc_ast_set_t               stmt_set;
     mkc_ast_while_t             stmt_while;
     mkc_ast_list_t              list;
@@ -637,44 +607,45 @@ mkc_ast_mk_stmt_stmtblock (mkc_astmain_t *astmain,
 
 MKC_NODISCARD
 mkc_astnode_t *
-mkc_ast_mk_debug (mkc_astmain_t *astmain,
-    mkc_astnode_t *vala, mkc_astnode_t *valb,
+mkc_ast_mk_stmt_val_stmtblock (mkc_astmain_t *astmain,
+    mkc_astnode_t *val, mkc_astnode_t *stmtblock, mkc_astnode_token_t asttype,
     int32_t lineno, int colno)
 {
   mkc_astnode_t   *astnode;
 
   mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
-      "ast-mk: mkcdebug\n");
+      "ast-mk: %s\n", typenames [asttype]);
 
-  astnode = mkc_astnode_init (astmain, MKC_T_STMT_DEBUG, lineno, colno);
+  astnode = mkc_astnode_init (astmain, asttype, lineno, colno);
   if (astnode == NULL) {
     return NULL;
   }
 
-  astnode->stmt_debug.dbga = vala;
-  astnode->stmt_debug.dbgb = valb;
+  astnode->stmt_val_stmtblock.val = val;
+  astnode->stmt_val_stmtblock.stmtblock = stmtblock;
 
   return astnode;
 }
 
 MKC_NODISCARD
 mkc_astnode_t *
-mkc_ast_mk_stmt_executable (mkc_astmain_t *astmain,
-    mkc_astnode_t *name, mkc_astnode_t *stmtblock,
+mkc_ast_mk_val_val (mkc_astmain_t *astmain,
+    mkc_astnode_t *vala, mkc_astnode_t *valb, mkc_astnode_token_t asttype,
     int32_t lineno, int colno)
 {
   mkc_astnode_t   *astnode;
 
   mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
-      "ast-mk: stmt-executable\n");
+      "ast-mk: %s\n", typenames [asttype]);
 
-  astnode = mkc_astnode_init (astmain, MKC_T_STMT_EXECUTABLE, lineno, colno);
+  astnode = mkc_astnode_init (astmain, asttype, lineno, colno);
   if (astnode == NULL) {
     return NULL;
   }
 
-  astnode->stmt_executable.name = name;
-  astnode->stmt_executable.stmtblock = stmtblock;
+  astnode->val_val.vala = vala;
+  astnode->val_val.valb = valb;
+
   return astnode;
 }
 
@@ -702,28 +673,6 @@ mkc_ast_mk_loadcache (mkc_astmain_t *astmain,
 
 MKC_NODISCARD
 mkc_astnode_t *
-mkc_ast_mk_mark (mkc_astmain_t *astmain,
-    mkc_astnode_t *vala, mkc_astnode_t *valb,
-    int32_t lineno, int colno)
-{
-  mkc_astnode_t   *astnode;
-
-  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
-      "ast-mk: mark\n");
-
-  astnode = mkc_astnode_init (astmain, MKC_T_STMT_MARK, lineno, colno);
-  if (astnode == NULL) {
-    return NULL;
-  }
-
-  astnode->stmt_mark.vala = vala;
-  astnode->stmt_mark.valb = valb;
-
-  return astnode;
-}
-
-MKC_NODISCARD
-mkc_astnode_t *
 mkc_ast_mk_print (mkc_astmain_t *astmain,
     mkc_astnode_t *vala,
     int32_t lineno, int colno)
@@ -739,28 +688,6 @@ mkc_ast_mk_print (mkc_astmain_t *astmain,
   }
 
   astnode->stmt_print.vala = vala;
-
-  return astnode;
-}
-
-MKC_NODISCARD
-mkc_astnode_t *
-mkc_ast_mk_profile (mkc_astmain_t *astmain,
-    mkc_astnode_t *nm, mkc_astnode_t *stmtblock,
-    int32_t lineno, int colno)
-{
-  mkc_astnode_t   *astnode;
-
-  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
-      "ast-mk: profile\n");
-
-  astnode = mkc_astnode_init (astmain, MKC_T_STMT_PROFILE, lineno, colno);
-  if (astnode == NULL) {
-    return NULL;
-  }
-
-  astnode->stmt_profile.nm = nm;
-  astnode->stmt_profile.stmtblock = stmtblock;
 
   return astnode;
 }
@@ -1062,8 +989,8 @@ mkc_ast_mk_check (mkc_astmain_t *astmain,
     return NULL;
   }
 
-  astnode->chk_check.vala = vala;
-  astnode->chk_check.stmtblock = stmtblock;
+  astnode->stmt_val_stmtblock.val = vala;
+  astnode->stmt_val_stmtblock.stmtblock = stmtblock;
   return astnode;
 }
 
@@ -1106,8 +1033,8 @@ mkc_ast_mk_chk_package (mkc_astmain_t *astmain,
     return NULL;
   }
 
-  astnode->chk_package.vala = vala;
-  astnode->chk_package.stmtblock = stmtblock;
+  astnode->stmt_val_stmtblock.val = vala;
+  astnode->stmt_val_stmtblock.stmtblock = stmtblock;
   return astnode;
 }
 
@@ -1271,8 +1198,8 @@ mkc_ast_mk_attr_replace (mkc_astmain_t *astmain,
     return NULL;
   }
 
-  astnode->attr_repl.str = valstr;
-  astnode->attr_repl.val = value;
+  astnode->attr_repl.vala = valstr;
+  astnode->attr_repl.valb = value;
   return astnode;
 }
 
@@ -1531,12 +1458,12 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       value_t   *vala;
       value_t   *valb = NULL;
 
-      vala = mkc_ast_get_value (astmain, astnode->stmt_debug.dbga);
+      vala = mkc_ast_get_value (astmain, astnode->val_val.vala);
       if (mkc_error_chk_err (astmain->mkcerr)) {
         break;
       }
       /* valb can be null */
-      valb = mkc_ast_get_value (astmain, astnode->stmt_debug.dbgb);
+      valb = mkc_ast_get_value (astmain, astnode->val_val.valb);
       if (mkc_error_chk_err (astmain->mkcerr)) {
         break;
       }
@@ -1568,10 +1495,10 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       value_t   *valnm;
 
       mkc_context_push (astmain->context, MKC_CONTEXT_EXECUTABLE, astmain->mkcerr);
-      mkc_ast_process (astmain, astnode->stmt_executable.stmtblock, ifcond, stmtcontrol, funcret, depth + 1);
+      mkc_ast_process (astmain, astnode->stmt_val_stmtblock.stmtblock, ifcond, stmtcontrol, funcret, depth + 1);
       mkc_context_pop (astmain->context);
 
-      valnm = mkc_ast_get_value (astmain, astnode->stmt_executable.name);
+      valnm = mkc_ast_get_value (astmain, astnode->stmt_val_stmtblock.val);
       mkc_process_stmt_executable (astmain->process, valnm);
       break;
     }
@@ -1716,8 +1643,8 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       value_t *vala;
       value_t *valb;
 
-      vala = mkc_ast_get_value (astmain, astnode->stmt_mark.vala);
-      valb = mkc_ast_get_value (astmain, astnode->stmt_mark.valb);
+      vala = mkc_ast_get_value (astmain, astnode->val_val.vala);
+      valb = mkc_ast_get_value (astmain, astnode->val_val.valb);
       mkc_process_stmt_mark (astmain->process, vala, valb);
       break;
     }
@@ -1736,7 +1663,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
     case MKC_T_STMT_PROFILE: {
       value_t   *valnm;
 
-      valnm = mkc_ast_get_value (astmain, astnode->stmt_profile.nm);
+      valnm = mkc_ast_get_value (astmain, astnode->stmt_val_stmtblock.val);
       if (mkc_error_chk_err (astmain->mkcerr)) {
         break;
       }
@@ -1749,19 +1676,26 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
 
       mkc_process_stmt_profile (astmain->process, valnm);
       mkc_context_push (astmain->context, MKC_CONTEXT_PROFILE, astmain->mkcerr);
-      mkc_ast_process (astmain, astnode->stmt_profile.stmtblock, ifcond, stmtcontrol, funcret, depth + 1);
+      mkc_ast_process (astmain, astnode->stmt_val_stmtblock.stmtblock, ifcond, stmtcontrol, funcret, depth + 1);
       mkc_context_pop (astmain->context);
       mkc_process_stmt_profile_post (astmain->process);
       break;
     }
 
     case MKC_T_STMT_PROJECT: {
+      value_t   *valnm;
+
+      valnm = mkc_ast_get_value (astmain, astnode->stmt_val_stmtblock.val);
+      if (mkc_error_chk_err (astmain->mkcerr)) {
+        break;
+      }
+
       if (astnode->stmt_stmtblock.stmtblock != NULL) {
         mkc_context_push (astmain->context, MKC_CONTEXT_PROJECT, astmain->mkcerr);
-        mkc_ast_process (astmain, astnode->stmt_stmtblock.stmtblock, ifcond, stmtcontrol, funcret, depth + 1);
+        mkc_ast_process (astmain, astnode->stmt_val_stmtblock.stmtblock, ifcond, stmtcontrol, funcret, depth + 1);
         mkc_context_pop (astmain->context);
       }
-      mkc_process_stmt_project (astmain->process);
+      mkc_process_stmt_project (astmain->process, valnm);
       break;
     }
 
@@ -1955,11 +1889,11 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       value_t   *str;
       value_t   *val;
 
-      str = mkc_ast_get_value (astmain, astnode->attr_repl.str);
+      str = mkc_ast_get_value (astmain, astnode->attr_repl.vala);
       if (mkc_error_chk_err (astmain->mkcerr)) {
         break;
       }
-      val = mkc_ast_get_value (astmain, astnode->attr_repl.val);
+      val = mkc_ast_get_value (astmain, astnode->attr_repl.valb);
       if (mkc_error_chk_err (astmain->mkcerr)) {
         break;
       }
@@ -2011,7 +1945,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
     case MKC_T_CHK_SHELL_EXTRACT: {
       value_t   *val;
 
-      val = mkc_ast_get_value (astmain, astnode->chk_check.vala);
+      val = mkc_ast_get_value (astmain, astnode->stmt_val_stmtblock.val);
       if (mkc_error_chk_err (astmain->mkcerr)) {
         break;
       }
@@ -2034,12 +1968,12 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
     case MKC_T_CHK_TYPE: {
       value_t   *val;
 
-      if (astnode->chk_check.stmtblock != NULL) {
+      if (astnode->stmt_val_stmtblock.stmtblock != NULL) {
         mkc_context_push (astmain->context, MKC_CONTEXT_CHECK, astmain->mkcerr);
-        mkc_ast_process (astmain, astnode->chk_check.stmtblock, ifcond, stmtcontrol, funcret, depth + 1);
+        mkc_ast_process (astmain, astnode->stmt_val_stmtblock.stmtblock, ifcond, stmtcontrol, funcret, depth + 1);
         mkc_context_pop (astmain->context);
       }
-      val = mkc_ast_get_value (astmain, astnode->chk_check.vala);
+      val = mkc_ast_get_value (astmain, astnode->stmt_val_stmtblock.val);
       if (mkc_error_chk_err (astmain->mkcerr)) {
         break;
       }

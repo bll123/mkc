@@ -54,7 +54,7 @@ SAN_LDFLAGS = $(SAN_OPTFLAGS) $(BASE_LDFLAGS) \
     -fsanitize-address-use-after-scope \
     -fsanitize-recover=address
 SAN_LIBS = $$(pkgconf --libs $(MKC_REGEX_PKG))
-SAN_LINUX_LIBS = -lrt
+SAN_LINUX_LIBS = 
 
 
 WIN=F

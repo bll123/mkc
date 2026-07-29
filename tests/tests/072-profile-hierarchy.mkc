@@ -3,8 +3,7 @@
 # profile hierarchy
 # only default/internal at this testing level
 
-project {
-  name mkctest;
+project mkctest {
   compiler c;
 }
 

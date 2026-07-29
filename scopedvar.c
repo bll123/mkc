@@ -280,12 +280,11 @@ scopedvar_set_active_profile (scopedvar_t *scopedvar, const char *name)
   }
 
   if (! found) {
-fprintf (stderr, "sv: set-active: %s not-found\n", name);
     scopedvar_create (scopedvar, SV_T_CURR_PROF, name, false);
     if (scopedvar->currcompiler != MKC_COMPILER_GENERAL) {
       scopedvar_create (scopedvar, SV_T_CURR_PROF_COMPILER, name, false);
     }
-//    scopedvar_set_active_profile (scopedvar, name);
+    scopedvar_set_current_profile (scopedvar, name, scopedvar->currcompiler);
   }
 }
 
@@ -301,8 +300,6 @@ scopedvar_set_current_profile (scopedvar_t *scopedvar, const char *name,
 {
   mkc_varlist_t     *vars = NULL;
   scopedvar_var_t   *scvar = NULL;
-
-  scopedvar->current_profile = name;
 
   for (int i = 0; i < scopedvar->profiles.sz; ++i) {
     scvar = &scopedvar->profiles.variables [i];
@@ -537,11 +534,12 @@ scopedvar_var_iter_get_value (scopedvar_t *scopedvar, sv_iter_t *sviter,
 /* get */
 
 time_t
-scopedvar_get_timestamp (scopedvar_t *scopedvar, const char *vname)
+scopedvar_get_timestamp (scopedvar_t *scopedvar, sv_type_t svtype,
+    const char *vname)
 {
   value_t     *value;
 
-  value = scopedvar_get_value (scopedvar, SV_T_SEARCH, vname);
+  value = scopedvar_get_value (scopedvar, svtype, vname);
   return scopedvar_value_get_timestamp (scopedvar, value);
 }
 
@@ -1150,7 +1148,7 @@ scopedvar_append_str_list (scopedvar_t *scopedvar, sv_type_t svtype,
 }
 
 bool
-scopedvar_is_defined (scopedvar_t *scopedvar, const char *vname)
+scopedvar_is_defined (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname)
 {
   value_t     *value;
 
@@ -1158,7 +1156,7 @@ scopedvar_is_defined (scopedvar_t *scopedvar, const char *vname)
     return false;
   }
 
-  value = scopedvar_get_value (scopedvar, SV_T_SEARCH, vname);
+  value = scopedvar_get_value (scopedvar, svtype, vname);
   if (value == NULL) {
     return false;
   }
@@ -1692,6 +1690,7 @@ scopedvar_init_vars (scopedvar_t *scopedvar, mkc_option_t *mkcoptions)
 
   scopedvar->currcompiler = MKC_COMPILER_C;
   if (strcmp (mkcoptions->currprofile, MKC_C_PROF_DEFAULT_NAME) != 0) {
+    scopedvar->current_profile = mkcoptions->currprofile;
     scopedvar_create (scopedvar, SV_T_CURR_PROF, mkcoptions->currprofile, false);
   }
 
@@ -1703,6 +1702,6 @@ scopedvar_init_vars (scopedvar_t *scopedvar, mkc_option_t *mkcoptions)
   scopedvar_create (scopedvar, SV_T_PATHS, MKC_C_PROF_PATHS_NAME, false);
 
   /* default/general */
-  scopedvar_set_current_profile (scopedvar, scopedvar->current_profile,
+  scopedvar_set_current_profile (scopedvar, MKC_C_PROF_DEFAULT_NAME,
       MKC_COMPILER_GENERAL);
 }

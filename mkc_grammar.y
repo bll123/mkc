@@ -674,7 +674,7 @@ stmt_config[v]:
 stmt_executable[v]:
     T_STMT_EXECUTABLE varname[a] stmtblock[b]
     {
-      $v = mkc_ast_mk_stmt_executable (ast, $a, $b,
+      $v = mkc_ast_mk_stmt_val_stmtblock (ast, $a, $b, MKC_T_STMT_EXECUTABLE,
           yylloc.first_line, yylloc.first_column);
     }
   ;
@@ -706,7 +706,7 @@ stmt_include:
 stmt_mark[v]:
     T_STMT_MARK varname[a] varname[b] T_SEMICOLON
     {
-      $v = mkc_ast_mk_mark (ast, $a, $b,
+      $v = mkc_ast_mk_val_val (ast, $a, $b, MKC_T_STMT_MARK,
           yylloc.first_line, yylloc.first_column);
     }
   ;
@@ -722,15 +722,15 @@ stmt_print[v]:
 stmt_profile[v]:
     T_STMT_PROFILE varname[a] stmtblock[b]
     {
-      $v = mkc_ast_mk_profile (ast, $a, $b,
+      $v = mkc_ast_mk_stmt_val_stmtblock (ast, $a, $b, MKC_T_STMT_PROFILE,
           yylloc.first_line, yylloc.first_column);
     }
   ;
 
 stmt_project[v]:
-    T_STMT_PROJECT stmtblock[a]
+    T_STMT_PROJECT varname[a] stmtblock_or_semi[b]
     {
-      $v = mkc_ast_mk_stmt_stmtblock (ast, $a, MKC_T_STMT_PROJECT,
+      $v = mkc_ast_mk_stmt_val_stmtblock (ast, $a, $b, MKC_T_STMT_PROJECT,
           yylloc.first_line, yylloc.first_column);
     }
   ;
@@ -761,12 +761,12 @@ stmt_loadcache[v]:
 directive[v]:
     T_STMT_DEBUG varname[a] T_SEMICOLON
     {
-      $v = mkc_ast_mk_debug (ast, $a, NULL,
+      $v = mkc_ast_mk_val_val (ast, $a, NULL, MKC_T_STMT_DEBUG,
           yylloc.first_line, yylloc.first_column);
     }
   | T_STMT_DEBUG varname[a] varname[b] T_SEMICOLON
     {
-      $v = mkc_ast_mk_debug (ast, $a, $b,
+      $v = mkc_ast_mk_val_val (ast, $a, $b, MKC_T_STMT_DEBUG,
           yylloc.first_line, yylloc.first_column);
     }
   | T_STMT_OPTION varname[a] varany[b] T_SEMICOLON

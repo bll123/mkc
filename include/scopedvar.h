@@ -87,7 +87,7 @@ mkc_varidx_t scopedvar_var_iter_next (scopedvar_t *scopedvar, sv_iter_t *sviter,
 const char *scopedvar_var_iter_get_name (scopedvar_t *scopedvar, sv_iter_t *sviter, mkc_varidx_t vidx);
 value_t *scopedvar_var_iter_get_value (scopedvar_t *scopedvar, sv_iter_t *sviter, mkc_varidx_t vidx);
 
-time_t scopedvar_get_timestamp (scopedvar_t *scopedvar, const char *vname);
+time_t scopedvar_get_timestamp (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname);
 value_t * scopedvar_get_value (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname);
 int32_t scopedvar_value_get_integer (scopedvar_t *scopedvar, value_t *value);
 time_t scopedvar_value_get_timestamp (scopedvar_t *scopedvar, value_t *value);
@@ -104,7 +104,7 @@ int scopedvar_set_list (scopedvar_t *scopedvar, sv_type_t svtype, const char *vn
 int scopedvar_set_list_from_str (scopedvar_t *scopedvar, const char *vname, char *str, value_ctxt_t vctxt);
 int scopedvar_append_str_list (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, const char *data, value_ctxt_t vctxt);
 
-bool scopedvar_is_defined (scopedvar_t *scopedvar, const char *vname);
+bool scopedvar_is_defined (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname);
 bool scopedvar_var_is_list (scopedvar_t *scopedvar, const char *vname);
 void scopedvar_temp_value_free (void *tvalue);
 char * scopedvar_substitute (scopedvar_t *scopedvar, const char *data, scopedvar_escape_t subescapeflag, int depth);

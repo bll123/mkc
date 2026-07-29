@@ -1,7 +1,6 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
-project {
-  name mkctest;
+project mkctest {
   version '0.1';
 }
 

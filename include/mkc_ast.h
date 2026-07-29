@@ -43,13 +43,15 @@ MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_while (mkc_astmain_t *astmain, mkc_astn
 MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_exit (mkc_astmain_t *astmain, mkc_astnode_t *vala, int32_t lineno, int colno);
 void mkc_ast_process_include (mkc_astmain_t *astmain, mkc_astnode_t *path, mkc_astnode_t *fn, char *tbuff, size_t sz, int32_t lineno, int colno);
 
+/* generics */
 MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_stmt_stmtblock (mkc_astmain_t *astmain, mkc_astnode_t *stmtblock, mkc_astnode_token_t asttype, int32_t lineno, int colno);
+MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_stmt_val_stmtblock (mkc_astmain_t *astmain, mkc_astnode_t *val, mkc_astnode_t *stmtblock, mkc_astnode_token_t asttype, int32_t lineno, int colno);
+MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_val_val (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *valb, mkc_astnode_token_t asttype, int32_t lineno, int colno);
+
 MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_debug (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *valb, int32_t lineno, int colno);
 MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_stmt_executable (mkc_astmain_t *astmain, mkc_astnode_t *name, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
 MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_loadcache (mkc_astmain_t *astmain, mkc_astnode_t *vers, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
-MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_mark (mkc_astmain_t *astmain, mkc_astnode_t *vala, mkc_astnode_t *valb, int32_t lineno, int colno);
 MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_print (mkc_astmain_t *astmain, mkc_astnode_t *vala, int32_t lineno, int colno);
-MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_profile (mkc_astmain_t *astmain, mkc_astnode_t *nm, mkc_astnode_t *stmtblock, int32_t lineno, int colno);
 MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_set (mkc_astmain_t *astmain, mkc_astnode_t *nm, mkc_astnode_t *expr, mkc_astnode_t *stmtblock, bool local, int32_t lineno, int colno);
 MKC_NODISCARD mkc_astnode_t * mkc_ast_mk_set_value (mkc_astmain_t *astmain, mkc_astnode_t *nm, mkc_astnode_t *vala, int32_t lineno, int colno);
 
