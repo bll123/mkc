@@ -18,7 +18,10 @@
 #include <errno.h>
 #include <time.h>
 
+#include "alternate.h"
 #include "asttoken.h"
+#include "attribute.h"
+#include "comptest.h"
 #include "envutil.h"
 #include "fileop.h"
 #include "mkc_check.h"
@@ -67,6 +70,7 @@ typedef struct mkc_foreach_t {
 
 typedef struct mkc_process_t {
   scopedvar_t       * scopedvar;
+  comptest_t        * comptest;
   mkc_check_t       * check;
   mkc_context_t     * context;
   mkc_error_t       * mkcerr;
@@ -270,7 +274,14 @@ mkc_process_init (scopedvar_t *scopedvar,
   process->attr.headertype = process->headertype;
   process->variadicmacro = MKC_VARIADIC_MACRO_SUPPORTED;
 
-  process->check = mkc_check_init (process->scopedvar,
+  process->comptest = comptest_init (process->scopedvar,
+      &process->attr, log, mkcerr);
+  if (process->comptest == NULL) {
+    mkc_process_free (process);
+    return NULL;
+  }
+
+  process->check = mkc_check_init (process->scopedvar, process->comptest,
       &process->attr, log, mkcerr);
   if (process->check == NULL) {
     mkc_process_free (process);
@@ -312,6 +323,9 @@ mkc_process_free (mkc_process_t *process)
 
   if (process->check != NULL) {
     mkc_check_free (process->check);
+  }
+  if (process->comptest != NULL) {
+    comptest_free (process->comptest);
   }
   datafree (process->projectname);
 
