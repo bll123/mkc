@@ -605,14 +605,14 @@ void
 mkc_check_get_include_deps (mkc_check_t *check,
     mkc_compiler_t compiler, const char *filename, const char *filepath)
 {
-  time_t      fts;
+  int64_t      fts;
 #if _have_regex
   char        ** match;
   int         matchcount = 0;
   mkc_list_t  * elist;
   char        * rbuff;
   size_t      fsz = 0;
-  time_t      currtm;
+  int64_t      currtm;
 
   currtm = mstime ();
   fts = 0;

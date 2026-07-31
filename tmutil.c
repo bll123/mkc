@@ -50,11 +50,11 @@ mssleep (uint32_t ms)
 #endif
 }
 
-time_t
+int64_t
 mstime (void)
 {
   struct timeval    curr;
-  time_t            s, u, m, tot;
+  int64_t            s, u, m, tot;
 
   gettimeofday (&curr, NULL);
 
@@ -66,16 +66,16 @@ mstime (void)
 }
 
 void
-mstimestart (mstime_t *mstm)
+mstimestart (msint64_t *mstm)
 {
   gettimeofday (&mstm->tm, NULL);
 }
 
-time_t
-mstimeend (mstime_t *mstm)
+int64_t
+mstimeend (msint64_t *mstm)
 {
   struct timeval    end;
-  time_t            s, u, m;
+  int64_t          s, u, m;
 
   gettimeofday (&end, NULL);
   s = end.tv_sec - mstm->tm.tv_sec;

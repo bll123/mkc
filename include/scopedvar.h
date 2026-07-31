@@ -82,10 +82,10 @@ mkc_varidx_t scopedvar_var_iter_next (scopedvar_t *scopedvar, sv_iter_t *sviter,
 const char *scopedvar_var_iter_get_name (scopedvar_t *scopedvar, sv_iter_t *sviter, mkc_varidx_t vidx);
 value_t *scopedvar_var_iter_get_value (scopedvar_t *scopedvar, sv_iter_t *sviter, mkc_varidx_t vidx);
 
-time_t scopedvar_get_timestamp (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname);
+int64_t scopedvar_get_timestamp (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname);
 value_t * scopedvar_get_value (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname);
 int32_t scopedvar_value_get_integer (scopedvar_t *scopedvar, value_t *value);
-time_t scopedvar_value_get_timestamp (scopedvar_t *scopedvar, value_t *value);
+int64_t scopedvar_value_get_timestamp (scopedvar_t *scopedvar, value_t *value);
 void scopedvar_value_get_str (scopedvar_t *scopedvar, value_t *value, char *buff, size_t sz);
 value_t * scopedvar_value_get_value (scopedvar_t *scopedvar, value_t *value);
 value_t * scopedvar_value_get_list_value (scopedvar_t *scopedvar, value_t *value);
@@ -93,7 +93,7 @@ value_t * scopedvar_value_get_list_value (scopedvar_t *scopedvar, value_t *value
 void scopedvar_set_context (scopedvar_t *scopedvar, const char *vname, value_ctxt_t vctxt);
 int scopedvar_set (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, value_t *value, value_ctxt_t vctxt);
 int scopedvar_set_integer (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, int32_t ival, value_ctxt_t vctxt);
-int scopedvar_set_timestamp (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, time_t tmval, value_ctxt_t vctxt);
+int scopedvar_set_timestamp (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, int64_t tmval, value_ctxt_t vctxt);
 int scopedvar_set_str (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, const char *str, value_ctxt_t vctxt);
 int scopedvar_set_list (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, mkc_list_t *list, value_ctxt_t vctxt);
 int scopedvar_set_list_from_str (scopedvar_t *scopedvar, const char *vname, char *str, value_ctxt_t vctxt);

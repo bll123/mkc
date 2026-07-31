@@ -4,20 +4,21 @@
 
 <!--
 
-**0.6 2026-7---**
-
-* Changes:
-    * The 'check_include_...' statements are now efficient.
-    * Remove 'set temporary'.
-    * Simplify bootstrap process.
-* New Features:
-    * set local
-* Internal:
-    * Re-write variable handling.
+**0.7 2026-7---**
 
 -->
 
 pre-alpha
+
+**0.6 2026-7-31**
+
+* Changes:
+    * The 'check_include_...' statements are now efficient.
+    * Remove 'set temporary'.
+* New Features:
+    * set local
+* Internal:
+    * Re-write variable handling.
 
 **0.5 2026-7-15**
 

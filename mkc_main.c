@@ -59,9 +59,9 @@ main (int argc, char *argv [])
   mkc_astmain_t   * astmain = NULL;
   mkc_error_t     * mkcerr = NULL;
   mkc_log_t       * log = NULL;
-  mstime_t        starttm;
-  mstime_t        proctm;
-  time_t          etm;
+  msint64_t        starttm;
+  msint64_t        proctm;
+  int64_t          etm;
   bool            loadcache = true;
   bool            debug = false;
   int             rc = 0;
@@ -207,8 +207,8 @@ main (int argc, char *argv [])
   path_build (MKC_PATH_MKCFILES, cachename, sizeof (cachename), "cache.mkc", mkcerr);
 
   if (loadcache) {
-    time_t    cachetm;
-    time_t    mkctm;
+    int64_t    cachetm;
+    int64_t    mkctm;
 
     cachetm = fileop_modtime (cachename);
     mkctm = fileop_modtime (argcopy.utf8argv [fnidx]);

@@ -23,7 +23,7 @@ Build Requirements
 - bison
 - flex
 - pkgconf or pkg-config
-- /bin/sh touch rm
+- /bin/sh touch rm sed echo
 
 Runtime Requirements
 

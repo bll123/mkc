@@ -506,7 +506,7 @@ scopedvar_var_iter_get_value (scopedvar_t *scopedvar, sv_iter_t *sviter,
 
 /* get */
 
-time_t
+int64_t
 scopedvar_get_timestamp (scopedvar_t *scopedvar, sv_type_t svtype,
     const char *vname)
 {
@@ -628,10 +628,10 @@ scopedvar_value_get_integer (scopedvar_t *scopedvar, value_t *value)
   return ival;
 }
 
-time_t
+int64_t
 scopedvar_value_get_timestamp (scopedvar_t *scopedvar, value_t *value)
 {
-  time_t    tmval = 0;
+  int64_t    tmval = 0;
 
   if (value == NULL) {
     mkc_error_set (scopedvar->mkcerr, MKC_ERR_NULL_ARGUMENT, 0, NULL);
@@ -718,7 +718,7 @@ scopedvar_value_get_str (scopedvar_t *scopedvar, value_t *value,
       break;
     }
     case MKC_VT_TIMESTAMP: {
-      snprintf (buff, sz, "%" PRId64, (int64_t) value->tmval);
+      snprintf (buff, sz, "%" PRId64, value->tmval);
       break;
     }
     case MKC_VT_STRING: {
@@ -1020,7 +1020,7 @@ scopedvar_set_integer (scopedvar_t *scopedvar, sv_type_t svtype,
 
 int
 scopedvar_set_timestamp (scopedvar_t *scopedvar, sv_type_t svtype,
-    const char *vname, time_t tmval, value_ctxt_t vctxt)
+    const char *vname, int64_t tmval, value_ctxt_t vctxt)
 {
   int       rc = MKC_ERR_FAILURE;
   value_t   value;
@@ -1520,6 +1520,9 @@ scopedvar_get_variable_str (scopedvar_t *scopedvar, value_t *value,
   *buff = '\0';
 
   tvalue = scopedvar_get_variable_value (scopedvar, value->sval);
+  if (mkc_error_chk_err (scopedvar->mkcerr)) {
+    return;
+  }
   if (tvalue == NULL) {
     mkc_error_set (scopedvar->mkcerr, MKC_ERR_UNKNOWN_VARIABLE, 0, NULL);
     return;
@@ -1607,9 +1610,12 @@ static value_t *
 scopedvar_get_variable_value (scopedvar_t *scopedvar, const char *str)
 {
   char        *tstr;
-  value_t *value;
+  value_t     *value;
 
   tstr = scopedvar_substitute (scopedvar, str, SV_NO_ESCAPE, 0);
+  if (tstr == NULL) {
+    return NULL;
+  }
   value = scopedvar_get_value (scopedvar, SV_T_SEARCH, tstr);
   free (tstr);
   return value;

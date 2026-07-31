@@ -56,7 +56,7 @@ typedef struct value_t {
     char        * sval;
     range_t     range;
     int32_t     ival;
-    time_t      tmval;
+    int64_t    tmval;
   };
   value_type_t    vtype;
   value_ctxt_t    vctxt;

@@ -2,21 +2,16 @@
 
 ### Status
 
-##### 2026-7-30 pre-alpha 0.5
+##### 2026-7-31 pre-alpha 0.6
 
 Currently, the pre-alpha code will only create a configuration file.
-
-Version 0.6 is getting closer to release, but still have some issues
-to work through.
 
 In version 0.6 the internal variable handling was re-written
 completely (a couple of times).  Many internal fixes for variables and
 cache handling.
 
-The 'return' statement is currently broken.
-
-To do list:
-- fix 'return' statement.
+To do list (major tasks):
+- fix 'return' statement (local scopes).
 - the difficult process of handling targets and building the software.
 
 ##### Testing
@@ -74,8 +69,6 @@ If you have a system that you want regularly tested, please
     * Test with the [libmp4tag](https://sourceforge.net/projects/libmp4tag/) package.
     * Test with _mkc_.
 * Phase 2
-    * Generate Makefiles
-      This will be difficult.
     * Build executables.
     * Build shared libraries.
     * Test with _libmp4tag_.

@@ -251,6 +251,10 @@ topochk: $(TOPOCHKOBJ)
 
 mkc_grammar.h mkc_grammar.c: mkc_grammar.y
 	bison -d -v -o mkc_grammar.c --defines=mkc_grammar.h mkc_grammar.y
+	cat mkc_grammar.c | \
+	  sed -e 's,yynerrs = 0;,yynerrs YY_ATTRIBUTE_UNUSED = 0;,' \
+	  > mkc_grammar.c.n
+	mv mkc_grammar.c.n mkc_grammar.c
 
 mkc_lex.h mkc_lex.c: mkc_lex.l
 	flex --header-file=mkc_lex.h -o mkc_lex.c mkc_lex.l

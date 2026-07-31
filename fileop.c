@@ -92,10 +92,10 @@ fileop_exists (const char *fname)
   return brc;
 }
 
-time_t
+int64_t
 fileop_modtime (const char *fname)
 {
-  time_t      tm = 0;
+  int64_t      tm = 0;
 
 #if _function__wstat64 || (MKC_BOOTSTRAP && MKC_SYS_WIN)
   {

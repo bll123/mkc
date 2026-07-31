@@ -13,14 +13,14 @@
 extern "C" {
 #endif
 
-typedef struct mstime_t {
+typedef struct msint64_t {
   struct timeval    tm;
-} mstime_t;
+} msint64_t;
 
 void mssleep (uint32_t ms);
-time_t mstime (void);
-void mstimestart (mstime_t *mstm);
-time_t mstimeend (mstime_t *mstm);
+int64_t mstime (void);
+void mstimestart (msint64_t *mstm);
+int64_t mstimeend (msint64_t *mstm);
 
 #if defined (__cplusplus) || defined (c_plusplus)
 }

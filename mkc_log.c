@@ -107,7 +107,7 @@ mkc_success_msg (int rc)
 }
 
 const char *
-mkc_elapsed_disp (time_t etm, char *buff, size_t sz)
+mkc_elapsed_disp (int64_t etm, char *buff, size_t sz)
 {
   snprintf (buff, sz, "%" PRId32 "ms", (int32_t) etm);
   return buff;

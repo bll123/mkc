@@ -18,7 +18,7 @@ extern "C" {
 
 MKC_NODISCARD FILE * fileop_open (const char *fname, const char *mode);
 bool fileop_exists (const char *fname);
-time_t fileop_modtime (const char *fname);
+int64_t fileop_modtime (const char *fname);
 ssize_t fileop_size (const char *fname);
 bool fileop_is_link (const char *fname);
 
