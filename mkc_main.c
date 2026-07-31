@@ -81,7 +81,7 @@ main (int argc, char *argv [])
     { NULL,                   no_argument,        NULL, 0   },
   };
 
-  mkcoptions.currprofile = strdup (MKC_C_PROF_DEFAULT_NAME);
+  mkcoptions.currprofile = strdup (MKC_C_PROF_NAME_DEFAULT);
   mkcoptions.stage = NULL;
   mkcoptions.prefix = NULL;
   mkcoptions.verbose = 1;

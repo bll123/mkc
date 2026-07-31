@@ -8,11 +8,11 @@
 extern "C" {
 #endif
 
-extern char const * const MKC_C_PROF_DEFAULT_NAME;
-extern char const * const MKC_C_PROF_DEPENDENCY_NAME;
-extern char const * const MKC_C_PROF_INTERNAL_NAME;
-extern char const * const MKC_C_PROF_PATHS_NAME;
-extern char const * const MKC_C_PROF_TIMESTAMP_NAME;
+extern char const * const MKC_C_PROF_NAME_DEFAULT;
+extern char const * const MKC_C_PROF_NAME_DEPENDENCY;
+extern char const * const MKC_C_PROF_NAME_INTERNAL;
+extern char const * const MKC_C_PROF_NAME_PATHS;
+extern char const * const MKC_C_PROF_NAME_TIMESTAMP;
 
 extern char const * const MKC_C_PATH_PKGCONF;
 extern char const * const MKC_C_PATH_PKGCONFIG;

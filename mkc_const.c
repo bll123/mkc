@@ -2,11 +2,11 @@
  * Copyright 2026 Brad Lanam Pleasant Hill CA
  */
 
-char const * const MKC_C_PROF_DEFAULT_NAME = "default";
-char const * const MKC_C_PROF_DEPENDENCY_NAME = "dependency";
-char const * const MKC_C_PROF_INTERNAL_NAME = "internal";
-char const * const MKC_C_PROF_PATHS_NAME = "paths";
-char const * const MKC_C_PROF_TIMESTAMP_NAME = "timestamp";
+char const * const MKC_C_PROF_NAME_DEFAULT = "default";
+char const * const MKC_C_PROF_NAME_DEPENDENCY = "dependency";
+char const * const MKC_C_PROF_NAME_INTERNAL = "internal";
+char const * const MKC_C_PROF_NAME_PATHS = "paths";
+char const * const MKC_C_PROF_NAME_TIMESTAMP = "timestamp";
 /* these are duplicated in mkc_process.c */
 char const * const MKC_C_PATH_PKGCONF = "MKC_PATH_PKGCONF";
 char const * const MKC_C_PATH_PKGCONFIG = "MKC_PATH_PKG_CONFIG";

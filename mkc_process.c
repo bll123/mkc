@@ -1407,7 +1407,6 @@ mkc_process_stmt_profile (mkc_process_t *process, value_t *valnm)
   char        nm [MKC_VNAME_MAX];
 
   scopedvar_value_get_str (process->scopedvar, valnm, nm, sizeof (nm));
-fprintf (stderr, "p: stmt-profile %s\n", nm);
   scopedvar_set_active_profile (process->scopedvar, nm);
   /* if a compiler is set, it has not yet been processed */
 }
@@ -1415,7 +1414,6 @@ fprintf (stderr, "p: stmt-profile %s\n", nm);
 void
 mkc_process_stmt_profile_post (mkc_process_t *process)
 {
-fprintf (stderr, "p: stmt-profile-post\n");
   scopedvar_reset_profile (process->scopedvar);
 }
 
@@ -2293,11 +2291,10 @@ mkc_process_profile_is_current (mkc_process_t *process, value_t *valnm)
 
   scopedvar_value_get_str (process->scopedvar, valnm, nm, sizeof (nm));
   profnm = scopedvar_get_current_profile (process->scopedvar);
-fprintf (stderr, "p: prof-is-curr: %s %s\n", nm, profnm);
 
   if (strcmp (nm, profnm) == 0 ||
-      strcmp (nm, MKC_C_PROF_INTERNAL_NAME) == 0 ||
-      strcmp (nm, MKC_C_PROF_DEFAULT_NAME) == 0) {
+      strcmp (nm, MKC_C_PROF_NAME_INTERNAL) == 0 ||
+      strcmp (nm, MKC_C_PROF_NAME_DEFAULT) == 0) {
     return true;
   }
 
@@ -2629,6 +2626,7 @@ mkc_process_configure_auto (mkc_process_t *process, int defzero)
   scopedvar_t     * scopedvar;
   sv_iter_t       * sviter;
   const char      * profname;
+  const char      * currprof;
 
   fname = malloc (MKC_PATH_MAX);
   if (fname == NULL) {
@@ -2686,18 +2684,23 @@ mkc_process_configure_auto (mkc_process_t *process, int defzero)
 
   scopedvar = process->scopedvar;
 
+  currprof = scopedvar_get_current_profile (scopedvar);
+
   sviter = scopedvar_iter_start (scopedvar, SV_ITER_PROFILES);
   while ((profname = scopedvar_iter_next (scopedvar, sviter)) != NULL) {
     mkc_varidx_t    viter;
     mkc_varidx_t    vidx;
-    sv_type_t       svtype;
 
     if (mkc_error_chk_err (process->mkcerr)) {
       break;
     }
 
-    svtype = scopedvar_iter_get_type (scopedvar, sviter);
-fprintf (stderr, "conf-auto: %s %s\n", profname, scopedvar_type_disp (svtype));
+    if (strcmp (profname, MKC_C_PROF_NAME_INTERNAL) != 0 &&
+        strcmp (profname, MKC_C_PROF_NAME_DEFAULT) != 0 &&
+        strcmp (profname, currprof) != 0) {
+      /* only process internal, default and the user selected profile */
+      continue;
+    }
 
     scopedvar_var_iter_start (scopedvar, sviter, &viter);
     while ((vidx = scopedvar_var_iter_next (scopedvar, sviter, &viter)) != MKC_ITER_FINISH) {
@@ -2950,7 +2953,7 @@ mkc_process_dbg_print_var (mkc_process_t *process, const char *profname)
   itertype = SV_ITER_HIERARCHY;
   if (profname != NULL) {
     if (strcmp (profname, "test") == 0) {
-      profname = MKC_C_PROF_DEFAULT_NAME;
+      profname = MKC_C_PROF_NAME_DEFAULT;
       intest = true;
       itertype = SV_ITER_PROFILES;
     } else if (strcmp (profname, "hierarchy") == 0) {
