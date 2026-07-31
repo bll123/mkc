@@ -2,13 +2,22 @@
 
 ### Status
 
-##### 2026-7-22 pre-alpha 0.5
+##### 2026-7-30 pre-alpha 0.5
 
 Currently, the pre-alpha code will only create a configuration file.
 
-Working on (a) re-writing and simplifying variable handling.  This is
-a major piece of work and will break everything. (b) The difficult
-process of handling targets and building the software.
+Version 0.6 is getting closer to release, but still have some issues
+to work through.
+
+In version 0.6 the internal variable handling was re-written
+completely (a couple of times).  Many internal fixes for variables and
+cache handling.
+
+The 'return' statement is currently broken.
+
+To do list:
+- fix 'return' statement.
+- the difficult process of handling targets and building the software.
 
 ##### Testing
 
@@ -53,7 +62,7 @@ If you have a system that you want regularly tested, please
         * __Complete__: headers
         * __Complete__: link flags
     * Statements:
-        * check_include_compilation
+        * __Complete__: check_include_compilation
         * __Complete__: check_include_dependencies
         * __Complete__: check_include_guards
         * __Complete__: foreach

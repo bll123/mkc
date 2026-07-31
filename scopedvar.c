@@ -46,12 +46,12 @@ typedef struct scopedvar_t {
   mkc_log_t           * log;
   /* 'current_profile' may only be 'default', or the user-selected profile */
   const char          * current_profile;
-  char                * active_name;
   int32_t             local_id;
   mkc_compiler_t      dfltcompiler;
   mkc_compiler_t      currcompiler;
-  int                 standardsz;
+  sv_profile_t        * active_prof;
   int                 active_idx;
+  int                 standardsz;
   int                 dfltprof_idx;
   int                 currprof_idx;
   int                 comp_idx;
@@ -97,6 +97,7 @@ static void scopedvar_compiler_check_create (scopedvar_t *scopedvar, const char 
 static void scopedvar_free_vars (scopedvar_t *scopedvar);
 static void scopedvar_init_vars (scopedvar_t *scopedvar, mkc_option_t *mkcoptions);
 static void scopedvar_push_hierarchy (scopedvar_t *scopedvar, sv_profile_t *svprof);
+static const char * scopedvar_get_active_name (scopedvar_t *scopedvar);
 
 scopedvar_t *
 scopedvar_init (mkc_log_t *log, mkc_error_t *mkcerr, mkc_option_t *mkcoptions)
@@ -118,7 +119,7 @@ scopedvar_init (mkc_log_t *log, mkc_error_t *mkcerr, mkc_option_t *mkcoptions)
   scopedvar->currcompiler = MKC_COMPILER_GENERAL;
   scopedvar->fromcache = false;
   scopedvar->current_profile = MKC_C_PROF_NAME_DEFAULT;
-  scopedvar->active_name = NULL;
+  scopedvar->active_prof = NULL;
   scopedvar->active_idx = -1;
   scopedvar->dfltprof_idx = -1;
   scopedvar->currprof_idx = -1;
@@ -137,7 +138,6 @@ scopedvar_free (scopedvar_t *scopedvar)
   if (scopedvar == NULL) {
     return;
   }
-  datafree (scopedvar->active_name);
   scopedvar_free_vars (scopedvar);
   scopedvar_free_variables (&scopedvar->hierarchy, true);
   free (scopedvar);
@@ -209,6 +209,8 @@ scopedvar_pop (scopedvar_t *scopedvar)
 void
 scopedvar_set_default_compiler (scopedvar_t *scopedvar, mkc_compiler_t compiler)
 {
+  const char  *active_name;
+
   if (scopedvar == NULL) {
     return;
   }
@@ -216,12 +218,17 @@ scopedvar_set_default_compiler (scopedvar_t *scopedvar, mkc_compiler_t compiler)
   scopedvar->dfltcompiler = compiler;
   scopedvar_compiler_check_create (scopedvar, MKC_C_PROF_NAME_DEFAULT, compiler);
   scopedvar_compiler_check_create (scopedvar, scopedvar->current_profile, compiler);
-  scopedvar_set_comp_profile (scopedvar, scopedvar->active_name, compiler);
+  active_name = scopedvar_get_active_name (scopedvar);
+  scopedvar_set_comp_profile (scopedvar, active_name, compiler);
+  /* reset the active profile */
+  scopedvar_set_active_profile (scopedvar, active_name);
 }
 
 void
 scopedvar_set_current_compiler (scopedvar_t *scopedvar, mkc_compiler_t compiler)
 {
+  const char    * active_name;
+
   if (scopedvar == NULL) {
     return;
   }
@@ -233,8 +240,11 @@ scopedvar_set_current_compiler (scopedvar_t *scopedvar, mkc_compiler_t compiler)
   }
 
   scopedvar_compiler_check_create (scopedvar, MKC_C_PROF_NAME_DEFAULT, compiler);
-  scopedvar_compiler_check_create (scopedvar, scopedvar->active_name, compiler);
-  scopedvar_set_comp_profile (scopedvar, scopedvar->active_name, compiler);
+  active_name = scopedvar_get_active_name (scopedvar);
+  scopedvar_compiler_check_create (scopedvar, active_name, compiler);
+  scopedvar_set_comp_profile (scopedvar, active_name, compiler);
+  scopedvar->active_prof =
+      &scopedvar->hierarchy.variables [scopedvar->comp_idx];
   scopedvar->active_idx = scopedvar->comp_idx;
 }
 
@@ -277,19 +287,52 @@ scopedvar_decr_local_id (scopedvar_t *scopedvar)
   }
 }
 
-/* in this case, the profile may be 'internal', 'default' or any other name */
+/* the profile may be 'internal', 'default' or any other name */
+/* when the cache is being loaded, or the profile is one of the */
+/* namespaces, the active profile will point into the .profiles array */
 void
 scopedvar_set_active_profile (scopedvar_t *scopedvar, const char *name)
 {
+  int     idx = -1;
+
   /* when loading from the cache, there can be any sort of name */
   /* make sure the profile exists */
   scopedvar_profile_check_create (scopedvar, name);
 
-  scopedvar_set_current_profile (scopedvar, name);
+  /* locate the name in the hierarchy */
+  for (int i = scopedvar->hierarchy.sz - 1; i >= 0; --i) {
+    sv_profile_t    *svprof;
 
-  scopedvar->active_idx = scopedvar->currprof_idx;
-  datafree (scopedvar->active_name);
-  scopedvar->active_name = strdup (name);
+    svprof = &scopedvar->hierarchy.variables [i];
+    if (svprof->svtype != SV_T_CURR_PROF_COMPILER &&
+        strcmp (svprof->name, name) == 0) {
+      idx = i;
+      scopedvar->active_prof = svprof;
+      scopedvar->active_idx = idx;
+      break;
+    }
+  }
+
+  if (idx == -1) {
+    /* try the profile list -- this happens when loading the cache */
+    /* locate the name in the hierarchy */
+    for (int i = scopedvar->profiles.sz - 1; i >= 0; --i) {
+      sv_profile_t    *svprof;
+
+      svprof = &scopedvar->profiles.variables [i];
+      if (svprof->svtype != SV_T_CURR_PROF_COMPILER &&
+          strcmp (svprof->name, name) == 0) {
+        idx = i;
+        scopedvar->active_prof = svprof;
+        break;
+      }
+    }
+  }
+
+  if (idx == -1) {
+    mkc_log (scopedvar->log, MKC_LOG_ERROR, "  scope-set-active: %s not found\n", name);
+    return;
+  }
 }
 
 const char *
@@ -482,7 +525,7 @@ scopedvar_get_value (scopedvar_t *scopedvar, sv_type_t svtype,
   mkc_varlist_t   * varlist;
 
   if (svtype == SV_T_ACTIVE) {
-    svprof = &scopedvar->hierarchy.variables [scopedvar->active_idx];
+    svprof = scopedvar->active_prof;
     svtype = svprof->svtype;
   }
 
@@ -781,7 +824,6 @@ scopedvar_value_get_value (scopedvar_t *scopedvar, value_t *value)
       while ((lidx = mkc_list_iter_next (value->list, &iteridx)) != MKC_ITER_FINISH) {
         value_t   *lvalue;
         value_t   *tmpvalue;
-        mkc_listidx_t loc = MKC_LIST_NOTFOUND;
 
         if (mkc_error_chk_err (scopedvar->mkcerr)) {
           break;
@@ -789,7 +831,7 @@ scopedvar_value_get_value (scopedvar_t *scopedvar, value_t *value)
 
         lvalue = mkc_list_get_by_idx (value->list, lidx);
         tmpvalue = scopedvar_value_get_value (scopedvar, lvalue);
-        mkc_list_set (nlist, tmpvalue, sizeof (value_t), &loc);
+        mkc_list_set (nlist, tmpvalue, sizeof (value_t));
       }
 
       tvalue = malloc (sizeof (value_t));
@@ -893,7 +935,7 @@ scopedvar_set (scopedvar_t *scopedvar, sv_type_t svtype,
   if (svtype == SV_T_ACTIVE) {
     sv_profile_t * svprof;
 
-    svprof = &scopedvar->hierarchy.variables [scopedvar->active_idx];
+    svprof = scopedvar->active_prof;
     svtype = svprof->svtype;
   }
 
@@ -1053,7 +1095,6 @@ scopedvar_append_str_list (scopedvar_t *scopedvar, sv_type_t svtype,
 {
   value_t       *listval;
   mkc_list_t    *list;
-  mkc_listidx_t loc;
   value_t       tvalue;
 
 
@@ -1070,7 +1111,7 @@ scopedvar_append_str_list (scopedvar_t *scopedvar, sv_type_t svtype,
     value_init (&tvalue);
     tvalue.vtype = MKC_VT_STRING;
     tvalue.sval = strdup (data);
-    mkc_list_set (list, &tvalue, sizeof (value_t), &loc);
+    mkc_list_set (list, &tvalue, sizeof (value_t));
   }
 
   return MKC_OK;
@@ -1311,6 +1352,7 @@ scopedvar_type_disp (sv_type_t svtype)
 
 /* internal routines */
 
+/* only called once by the initialization */
 static void
 scopedvar_set_current_profile (scopedvar_t *scopedvar, const char *name)
 {
@@ -1333,6 +1375,7 @@ scopedvar_set_current_profile (scopedvar_t *scopedvar, const char *name)
     hsvprof = &scopedvar->hierarchy.variables [scopedvar->currprof_idx];
     memcpy (hsvprof, fsvprof, sizeof (sv_profile_t));
   } else {
+    mkc_error_set (scopedvar->mkcerr, MKC_ERR_FATAL_ERROR, 0, "profile not found");
     fprintf (stderr, "ERR: set-curr-profile: profile %s not found\n", name);
   }
 }
@@ -1682,7 +1725,7 @@ scopedvar_init_vars (scopedvar_t *scopedvar, mkc_option_t *mkcoptions)
   scopedvar_create (scopedvar, SV_T_DEPENDENCY, MKC_C_PROF_NAME_DEPENDENCY, false);
   scopedvar_create (scopedvar, SV_T_PATHS, MKC_C_PROF_NAME_PATHS, false);
 
-  scopedvar_set_current_profile (scopedvar, MKC_C_PROF_NAME_DEFAULT);
+  scopedvar_set_current_profile (scopedvar, scopedvar->current_profile);
   scopedvar_set_comp_profile (scopedvar, MKC_C_PROF_NAME_DEFAULT, scopedvar->currcompiler);
   scopedvar_set_active_profile (scopedvar, MKC_C_PROF_NAME_DEFAULT);
 }
@@ -1712,4 +1755,10 @@ scopedvar_push_hierarchy (scopedvar_t *scopedvar, sv_profile_t *svprof)
   hsvprof = &profiles->variables [profiles->sz];
   memcpy (hsvprof, svprof, sizeof (sv_profile_t));
   profiles->sz += 1;
+}
+
+static const char *
+scopedvar_get_active_name (scopedvar_t *scopedvar)
+{
+  return scopedvar->active_prof->name;
 }

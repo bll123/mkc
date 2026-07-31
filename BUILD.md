@@ -16,17 +16,18 @@ required if building from the source distribution.
 Build Requirements
 
 - C compiler
-- libpcre2-8
+- libpcre2-posix
 - lorder
   For future use. Recommended.
   Linux doesn't ship this, an lorder script is included for Linux.
 - bison
 - flex
 - pkgconf or pkg-config
+- /bin/sh touch rm
 
 Runtime Requirements
 
-- libpcre2-8
+- libpcre2-posix
 - lorder
   For future use. Recommended.
   Linux doesn't ship this, an lorder script is included for Linux.
@@ -36,7 +37,7 @@ Runtime Requirements
 
 The bootstrap process will build _mkc_ three times.
 
-make realclean
+make realclean    # preserves the mkc_bison.[ch] and mkc_lex.[ch] files
 make
 
 #### Testing

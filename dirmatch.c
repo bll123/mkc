@@ -3,7 +3,7 @@
  *    (from ballroomdj4)
  */
 
-#if ! defined (MKC_BOOTSTRAP)
+#ifndef MKC_BOOTSTRAP
 # include "mkc_config.h"
 #endif
 
@@ -43,7 +43,6 @@ dir_match (const char *dirname, mkc_regex_t *rx, mkc_error_t *mkcerr)
   while ((fidx = mkc_list_iter_next (flist, &fiteridx)) != MKC_ITER_FINISH) {
     char          **temp;
     char          *fn;
-    mkc_listidx_t loc;
 
     if (mkc_error_chk_err (mkcerr)) {
       break;
@@ -55,7 +54,7 @@ dir_match (const char *dirname, mkc_regex_t *rx, mkc_error_t *mkcerr)
       char    *tp;
 
       tp = strdup (fn);
-      mkc_list_set (nflist, &tp, sizeof (char *), &loc);
+      mkc_list_set (nflist, &tp, sizeof (char *));
     }
   }
 

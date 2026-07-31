@@ -1,8 +1,7 @@
 
 __mkc__ is build configuration tool.  It will create a configuration
-file based on the requested checks, generate makefiles for the project
-(not yet implemented), build the project (not yet implemented), and
-install the project (not yet implemented).
+file based on the requested checks, build the project (not yet
+implemented), and install the project (not yet implemented).
 
 ### Contents
 
@@ -18,8 +17,8 @@ Anything can change.
 
 As of pre-alpha version 0.6, mkc can only create a configuration file.
 
-version 0.6 has been tested on Windows/MSys2, FreeBSD 14.3, Debian 13,
-MacOS Sequoia (intel), MacOS Tahoe (m1).
+version 0.6 has been tested on Windows 10/MSys2, FreeBSD 14.3,
+Debian 13, MacOS Sequoia (intel), MacOS Tahoe (m1).
 
 (See also: [wiki: Status](https://sourceforge.net/p/mkconf/wiki/Status/)).
 

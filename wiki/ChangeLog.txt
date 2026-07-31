@@ -9,6 +9,7 @@
 * Changes:
     * The 'check_include_...' statements are now efficient.
     * Remove 'set temporary'.
+    * Simplify bootstrap process.
 * New Features:
     * set local
 * Internal:

@@ -31,8 +31,8 @@ typedef struct mkc_varlist_t {
   bool          fromcache;
 } mkc_varlist_t;
 
-static mkc_var_t *mkc_var_create (mkc_varlist_t *varlist, const char *vname, value_type_t type, mkc_listidx_t *loc);
-static mkc_varidx_t mkc_var_find (mkc_varlist_t *varlist, const char *name, mkc_listidx_t *loc);
+static mkc_var_t *mkc_var_create (mkc_varlist_t *varlist, const char *vname, value_type_t type);
+static mkc_varidx_t mkc_var_find (mkc_varlist_t *varlist, const char *name);
 static void mkc_var_free (void *data);
 static int mkc_var_compare (void *tvara, void *tvarb);
 static mkc_list_t * mkc_var_list_copy (mkc_varlist_t *varlist, mkc_list_t *list);
@@ -84,24 +84,22 @@ mkc_var_set_fromcache (mkc_varlist_t *varlist, bool flag)
 }
 
 int
-mkc_var_set (mkc_varlist_t *varlist,
-    const char *vname, value_t *value)
+mkc_var_set (mkc_varlist_t *varlist, const char *vname, value_t *value)
 {
   mkc_err_code_t  rc = MKC_OK;
   mkc_var_t       *var;
   mkc_varidx_t    vidx;
-  value_t     *tvalue;
-  value_t     valuecopy;
-  value_type_t  nvtype;
-  mkc_listidx_t   loc = MKC_LIST_NOTFOUND;
+  value_t         *tvalue;
+  value_t         valuecopy;
+  value_type_t    nvtype;
 
   /* need a copy of the value, as it may get trashed by a realloc */
   memcpy (&valuecopy, value, sizeof (value_t));
   value = &valuecopy;
 
-  vidx = mkc_var_find (varlist, vname, &loc);
+  vidx = mkc_var_find (varlist, vname);
   if (vidx == MKC_VAR_NOTFOUND) {
-    var = mkc_var_create (varlist, vname, value->vtype, &loc);
+    var = mkc_var_create (varlist, vname, value->vtype);
     if (mkc_error_chk_err (varlist->mkcerr)) {
       return MKC_ERR_FAILURE;
     }
@@ -174,7 +172,6 @@ void
 mkc_var_set_context (mkc_varlist_t *varlist, const char *vname, int vctxt)
 {
   mkc_listidx_t   vidx;
-  mkc_listidx_t   loc = MKC_LIST_NOTFOUND;
   mkc_var_t       *var;
   value_t     *tvalue;
 
@@ -186,7 +183,7 @@ mkc_var_set_context (mkc_varlist_t *varlist, const char *vname, int vctxt)
     return;
   }
 
-  vidx = mkc_var_find (varlist, vname, &loc);
+  vidx = mkc_var_find (varlist, vname);
   if (vidx == MKC_VAR_NOTFOUND) {
     return;
   }
@@ -237,8 +234,7 @@ mkc_var_get_value (mkc_varlist_t *varlist, const char *name)
 {
   mkc_varidx_t  vidx = MKC_VAR_NOTFOUND;
   mkc_var_t     *var;
-  value_t   *value;
-  mkc_listidx_t loc = MKC_LIST_NOTFOUND;
+  value_t       *value;
 
   if (varlist == NULL) {
     return NULL;
@@ -248,7 +244,7 @@ mkc_var_get_value (mkc_varlist_t *varlist, const char *name)
     return NULL;
   }
 
-  vidx = mkc_var_find (varlist, name, &loc);
+  vidx = mkc_var_find (varlist, name);
   if (vidx == MKC_VAR_NOTFOUND) {
     return NULL;
   }
@@ -266,7 +262,7 @@ value_t *
 mkc_var_get_value_by_idx (mkc_varlist_t *varlist, mkc_varidx_t vidx)
 {
   mkc_var_t     *var;
-  value_t   *value;
+  value_t       *value;
 
   if (varlist == NULL) {
     return 0;
@@ -304,10 +300,9 @@ bool
 mkc_var_is_defined (mkc_varlist_t *varlist, const char *vname)
 {
   mkc_varidx_t    vidx;
-  mkc_listidx_t   loc = MKC_LIST_NOTFOUND;
   bool            rc = false;
 
-  vidx = mkc_var_find (varlist, vname, &loc);
+  vidx = mkc_var_find (varlist, vname);
   if (vidx != MKC_VAR_NOTFOUND) {
     rc = true;
   }
@@ -319,10 +314,9 @@ bool
 mkc_var_is_list (mkc_varlist_t *varlist, const char *vname)
 {
   mkc_varidx_t    vidx;
-  mkc_listidx_t   loc = MKC_LIST_NOTFOUND;
   bool            rc = false;
 
-  vidx = mkc_var_find (varlist, vname, &loc);
+  vidx = mkc_var_find (varlist, vname);
   if (vidx != MKC_VAR_NOTFOUND) {
     mkc_var_t   *var;
     value_t *value;
@@ -344,7 +338,7 @@ mkc_var_is_list (mkc_varlist_t *varlist, const char *vname)
 
 static mkc_var_t *
 mkc_var_create (mkc_varlist_t *varlist,
-    const char *name, value_type_t vtype, mkc_listidx_t *loc)
+    const char *name, value_type_t vtype)
 {
   mkc_var_t     *var;
   mkc_var_t     tvar;
@@ -358,24 +352,24 @@ mkc_var_create (mkc_varlist_t *varlist,
   value_init (&tvar.value);
   tvar.fromcache = varlist->fromcache;
 
-  var = mkc_list_set (varlist->list, &tvar, sizeof (mkc_var_t), loc);
+  var = mkc_list_set (varlist->list, &tvar, sizeof (mkc_var_t));
 
   return var;
 }
 
 static mkc_varidx_t
-mkc_var_find (mkc_varlist_t *varlist, const char *name, mkc_listidx_t *loc)
+mkc_var_find (mkc_varlist_t *varlist, const char *name)
 {
   mkc_var_t     tvar;
-  mkc_varidx_t  rc;
+  mkc_varidx_t  idx;
 
   if (varlist == NULL) {
     return MKC_ERR_FAILURE;
   }
 
   tvar.name = (char *) name;
-  rc = mkc_list_find (varlist->list, &tvar, loc);
-  return rc;
+  idx = mkc_list_find (varlist->list, &tvar);
+  return idx;
 }
 
 static void
@@ -425,8 +419,6 @@ mkc_var_list_copy (mkc_varlist_t *varlist, mkc_list_t *list)
 
   mkc_list_iter_start (list, &iteridx);
   while ((lidx = mkc_list_iter_next (list, &iteridx)) != MKC_ITER_FINISH) {
-    mkc_listidx_t   loc = MKC_LIST_NOTFOUND;
-
     if (mkc_error_chk_err (varlist->mkcerr)) {
       break;
     }
@@ -441,7 +433,7 @@ mkc_var_list_copy (mkc_varlist_t *varlist, mkc_list_t *list)
     if (value->vtype == MKC_VT_LIST) {
       nvalue.list = mkc_var_list_copy (varlist, value->list);
     }
-    mkc_list_set (nlist, &nvalue, sizeof (value_t), &loc);
+    mkc_list_set (nlist, &nvalue, sizeof (value_t));
   }
 
   return nlist;

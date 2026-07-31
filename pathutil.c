@@ -11,6 +11,12 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
+#include <wchar.h>
+
+#if __has_include (<windows.h>)
+# define WIN32_LEAN_AND_MEAN 1
+# include <windows.h>
+#endif
 
 #include "mkc_def.h"
 #include "mkc_error.h"

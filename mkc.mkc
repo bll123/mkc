@@ -1,25 +1,19 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
-# when mkc is first bootstrapped, the regular expression library is
-# not enabled, and check_shell_extract will not work.
-if (! bootstrap) {
-  check_shell_extract VERSION.txt;
-  mark VERSION enable-output;
-  mark BUILD enable-output;
-  mark BUILDDATE enable-output;
-  mark RELEASELEVEL enable-output;
-}
+check_shell_extract VERSION.txt;
+mark VERSION enable-output;
+mark BUILD enable-output;
+mark BUILDDATE enable-output;
+mark RELEASELEVEL enable-output;
 
 project mkc {
   compiler c;
-  if (! bootstrap) {
-    version ${VERSION};
-  }
+  version ${VERSION};
 }
 
 # configure
 
-check_package 'libpcre2-posix' {
+check_package 'libpcre2-8' {
   name pcre;
 }
 
@@ -115,6 +109,12 @@ mark _have_regex enable-output;
 configure {
   method auto;
   define_zero;
+}
+
+if (bootstrap) {
+  # any configuration after this point is not needed
+  # for the initial bootstrap process
+  exit 0;
 }
 
 # set compile and link flags

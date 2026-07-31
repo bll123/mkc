@@ -83,10 +83,7 @@ mkc_list_free (void *tlist)
     }
     free (list->data);
   }
-  if (list->idxsort != NULL) {
-    free (list->idxsort);
-  }
-
+  datafree (list->idxsort);
   free (list);
 }
 
@@ -125,7 +122,7 @@ mkc_list_get_compfunc (mkc_list_t *list)
 }
 
 void *
-mkc_list_set (mkc_list_t *list, void *data, size_t sz, mkc_listidx_t *loc)
+mkc_list_set (mkc_list_t *list, void *data, size_t sz)
 {
   int             rc = MKC_LIST_NOTFOUND;
   mkc_listidx_t   newloc;
@@ -136,7 +133,7 @@ mkc_list_set (mkc_list_t *list, void *data, size_t sz, mkc_listidx_t *loc)
   }
 
   if (list->type == MKC_LIST_UNSORTED) {
-    data = mkc_list_append (list, data, sz, loc);
+    data = mkc_list_append (list, data, sz);
     return data;
   }
 
@@ -144,12 +141,8 @@ mkc_list_set (mkc_list_t *list, void *data, size_t sz, mkc_listidx_t *loc)
   dataloc = list->sz;
   list->itemsz = sz;
 
-  if (*loc != MKC_LIST_NOTFOUND) {
-    newloc = *loc;
-  } else {
-    if (list->idxsz > 0) {
-      rc = mkc_list_binary_search (list, data, &newloc);
-    }
+  if (list->idxsz > 0) {
+    rc = mkc_list_binary_search (list, data, &newloc);
   }
 
   if (rc == MKC_LIST_FOUND) {
@@ -170,8 +163,7 @@ mkc_list_set (mkc_list_t *list, void *data, size_t sz, mkc_listidx_t *loc)
     }
   }
 
-  if (rc == MKC_LIST_NOTFOUND &&
-      newloc < list->idxsz) {
+  if (rc == MKC_LIST_NOTFOUND && newloc < list->idxsz) {
     for (int i = list->idxsz; i > newloc; --i) {
       if (i > 0) {
         list->idxsort [i] = list->idxsort [i - 1];
@@ -187,18 +179,13 @@ mkc_list_set (mkc_list_t *list, void *data, size_t sz, mkc_listidx_t *loc)
     list->idxsz += 1;
   }
 
-  if (loc != NULL) {
-    /* return the data index, not the idx-sort index */
-    *loc = dataloc;
-  }
-
   return list->data + list->itemsz * dataloc;
 }
 
 /* an append to a sorted list will not update the sort-index */
 /* the data is simply appended to the list */
 void *
-mkc_list_append (mkc_list_t *list, void *data, size_t sz, mkc_listidx_t *loc)
+mkc_list_append (mkc_list_t *list, void *data, size_t sz)
 {
   int             rc = MKC_LIST_NOTFOUND;
   mkc_listidx_t   dataloc;
@@ -208,7 +195,6 @@ mkc_list_append (mkc_list_t *list, void *data, size_t sz, mkc_listidx_t *loc)
   }
 
   dataloc = list->sz;
-  *loc = dataloc;
   list->itemsz = sz;
 
   if (rc == MKC_LIST_NOTFOUND &&
@@ -245,25 +231,26 @@ mkc_list_pop (mkc_list_t *list, mkc_listidx_t lidx)
 }
 
 mkc_listidx_t
-mkc_list_find (mkc_list_t *list, void *data, mkc_listidx_t *loc)
+mkc_list_find (mkc_list_t *list, void *data)
 {
   int32_t         rc = -1;
+  mkc_listidx_t   loc = MKC_LIST_NOTFOUND;
 
   if (list == NULL) {
-    return *loc;
+    return MKC_LIST_NOTFOUND;
   }
 
   if (list->type == MKC_LIST_UNSORTED) {
     mkc_error_set (list->mkcerr, MKC_ERR_SEARCH_UNSORTED_LIST, 0, NULL);
     fprintf (stderr, "ERROR: searching an unsorted list\n");
-    return *loc;
+    return MKC_LIST_NOTFOUND;
   }
 
-  rc = mkc_list_binary_search (list, data, loc);
+  rc = mkc_list_binary_search (list, data, &loc);
   if (rc == MKC_LIST_FOUND) {
     /* return the data index */
-    *loc = list->idxsort [*loc];
-    return *loc;
+    loc = list->idxsort [loc];
+    return loc;
   }
 
   return rc;

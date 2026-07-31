@@ -43,9 +43,8 @@ variable substitution will be performed.
 
 ###### Example 1: Auto, with define_zero
 
-    project {
-      name mkctest;
-    }
+    project mktest;
+
     check_function malloc;
     check_function junk;
 
@@ -68,9 +67,8 @@ mkctest_config.h:
 
 ###### Example 2: Auto, without define_zero
 
-    project {
-      name mkctest;
-    }
+    project mkctest;
+
     check_function malloc;
     check_function junk;
 

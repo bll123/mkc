@@ -446,9 +446,8 @@ mkc_ast_mk_value_list (mkc_astmain_t *astmain,
     mkc_astnode_t *listnode, mkc_astnode_t *vala, int32_t lineno, int colno)
 {
   mkc_list_t      *tlist = NULL;
-  mkc_listidx_t   loc = MKC_LIST_NOTFOUND;
   mkc_ast_value_t *astvalue;
-  value_t     *value;
+  value_t         *value;
 
   mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
       "ast-mk: value-list\n");
@@ -472,7 +471,7 @@ mkc_ast_mk_value_list (mkc_astmain_t *astmain,
 
   if (vala != NULL) {
     value = &vala->value.value;
-    mkc_list_set (tlist, value, sizeof (value_t), &loc);
+    mkc_list_set (tlist, value, sizeof (value_t));
   }
 
   return listnode;
@@ -520,7 +519,6 @@ mkc_ast_mk_stmtlist (mkc_astmain_t *astmain,
 {
   mkc_astnode_t   *astnode = NULL;
   mkc_list_t      *tlist = NULL;
-  mkc_listidx_t   loc = MKC_LIST_NOTFOUND;
 
   mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
       "ast-mk: stmt-list\n");
@@ -537,7 +535,7 @@ mkc_ast_mk_stmtlist (mkc_astmain_t *astmain,
   tlist = stmtlist->stmtlist.stmtlist;
   /* the node is already created, there's no need to store the */
   /* entire structure, just store the pointer */
-  mkc_list_set (tlist, &stmt, sizeof (mkc_astnode_t *), &loc);
+  mkc_list_set (tlist, &stmt, sizeof (mkc_astnode_t *));
 
   return stmtlist;
 }
@@ -1563,9 +1561,8 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
     }
 
     case MKC_T_STMT_FUNCTION: {
-      mkc_listidx_t   loc = MKC_LIST_NOTFOUND;
       /* no need to store the entire structure, just store the pointer */
-      mkc_list_set (astmain->funclist, &astnode, sizeof (mkc_astnode_t *), &loc);
+      mkc_list_set (astmain->funclist, &astnode, sizeof (mkc_astnode_t *));
       break;
     }
 
@@ -1573,7 +1570,6 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       bool            funccallret = true;
       mkc_astnode_t   tfunc;
       mkc_listidx_t   fidx;
-      mkc_listidx_t   loc = MKC_LIST_NOTFOUND;
       mkc_astnode_t   **funcp;
       mkc_astnode_t   *func;
       value_t     *valfuncargs;
@@ -1584,7 +1580,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
       func = &tfunc;
 
       /* the list is a list of pointers to mkc_astnode_t */
-      fidx = mkc_list_find (astmain->funclist, &func, &loc);
+      fidx = mkc_list_find (astmain->funclist, &func);
       if (fidx == MKC_LIST_NOTFOUND) {
         mkc_error_set (astmain->mkcerr, MKC_ERR_FUNCTION_NOT_FOUND, 0, NULL);
         break;

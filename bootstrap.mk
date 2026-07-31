@@ -14,11 +14,13 @@ MKC_REGEX_SRC = mkc_regex_pcre.c
 
 MAIN_TMP = tmp
 BOOTSTRAP_INIT = ${MAIN_TMP}/bootstrap-init.txt
-BOOTSTRAP_NOREGEX = ${MAIN_TMP}/bootstrap-noregex.txt
+BOOTSTRAP_PASS2 = ${MAIN_TMP}/bootstrap-pass2.txt
 BOOTSTRAP_TMPDIR = ${MAIN_TMP}/bootstrap-tmpdir.txt
-BOOTSTRAP_MKC_FILES = ${MAIN_TMP}/bootstrap-mkcfiles.txt
+BOOTSTRAP_MKC_DIRS = ${MAIN_TMP}/bootstrap-mkcfiles.txt
 MKC_FILES = mkc_files
-MKC_TMP = mkc_files/tmp
+MKCF_TMP = mkc_files/tmp
+
+# base configuration
 
 BASE_OPTFLAGS = -g -O2
 BASE_CFLAGS = -Wall -Wextra -Wno-unused-parameter \
@@ -26,12 +28,16 @@ BASE_CFLAGS = -Wall -Wextra -Wno-unused-parameter \
 BASE_LDFLAGS = -Wall -Wextra
 BASE_LIBS =
 
-INIT_DEF = -DMKC_BOOTSTRAP=1
+INIT_DEF = -DMKC_BOOTSTRAP=1 -D_have_regex=1 -D_package_pcre=1
+
+# standard build
 
 CONF_CFLAGS = $(BASE_OPTFLAGS) $(BASE_CFLAGS) \
     $$($(PKGCONF) --cflags $(MKC_REGEX_PKG))
 CONF_LDFLAGS = $(BASE_OPTFLAGS) $(BASE_LDFLAGS)
 CONF_LIBS = $$($(PKGCONF) --libs $(MKC_REGEX_PKG))
+
+# debug build
 
 DBG_OPTFLAGS = -g -ggdb3 -O0
 DBG_CFLAGS = $(DBG_OPTFLAGS) $(BASE_CFLAGS) \
@@ -39,7 +45,10 @@ DBG_CFLAGS = $(DBG_OPTFLAGS) $(BASE_CFLAGS) \
 DBG_LDFLAGS = $(DBG_OPTFLAGS) $(BASE_LDFLAGS)
 DBG_LIBS = $$($(PKGCONF) --libs $(MKC_REGEX_PKG))
 
+# sanitize build
+
 SAN_OPTFLAGS = -g -ggdb3 -Og
+#SAN_OPTFLAGS = -g -ggdb3 -O2
 SAN_CFLAGS = $(SAN_OPTFLAGS) $(BASE_CFLAGS) \
     -Wno-unused-parameter \
     -fsanitize=address,undefined \
@@ -54,11 +63,12 @@ SAN_LDFLAGS = $(SAN_OPTFLAGS) $(BASE_LDFLAGS) \
     -fsanitize-address-use-after-scope \
     -fsanitize-recover=address
 SAN_LIBS = $$(pkgconf --libs $(MKC_REGEX_PKG))
-SAN_LINUX_LIBS = 
-
+SAN_LINUX_LIBS =
 
 WIN=F
 WINOBJ=os_win_process.o
+
+# initial targets
 
 .PHONY: start
 start:
@@ -67,68 +77,6 @@ start:
 	    LDFLAGS="$(CONF_LDFLAGS)" \
 	    LIBS="$(CONF_LIBS)" \
 	    real-start
-
-.PHONY: real-start
-real-start:
-	@$(MAKE) -f $(MAKEFILE) \
-	    CFLAGS="$(CFLAGS)" \
-	    LDFLAGS="$(LDFLAGS)" \
-	    LIBS="$(LIBS)" \
-	    bootstrap-final
-
-# the initial pass
-# there is no mkc_cnofig.h file; MKC_BOOTSTRAP must be defined
-$(BOOTSTRAP_INIT): $(BOOTSTRAP_TMPDIR) $(BOOTSTRAP_MKC_FILES)
-	@echo "make: -- bootstrap mkc (initial)"
-	@$(MAKE) -f $(MAKEFILE) \
-	    CFLAGS="$(CFLAGS) $(INIT_DEF)" \
-	    LDFLAGS="$(LDFLAGS)" \
-	    LIBS="$(LIBS)" \
-	    TARGET=all oscheck
-	@touch $(BOOTSTRAP_INIT)
-
-# the second time through, the mkc_config.h file has been
-# created, but regular expressions were not available, therefore
-# any check that uses regular expressions did not work
-# (arg-count, shell-extract)
-# re-compile any module that uses mkc_config.h
-# and re-build mkc_config.h
-# the mkc_config.h that is created is now correct and complete
-$(BOOTSTRAP_NOREGEX): $(BOOTSTRAP_TMPDIR) $(BOOTSTRAP_MKC_FILES) \
-		$(BOOTSTRAP_INIT)
-	@$(MAKE) -f $(MAKEFILE) \
-	    CFLAGS="$(CFLAGS)" \
-	    LDFLAGS="$(LDFLAGS)" \
-	    LIBS="$(LIBS)" \
-	    bootstrap-noregex
-
-.PHONY: bootstrap-noregex
-bootstrap-noregex: mkc_config.h
-	@echo "make: -- bootstrap mkc (noregex)"
-	@$(MAKE) -f $(MAKEFILE) initialclean
-	@$(MAKE) -f $(MAKEFILE) \
-	    CFLAGS="$(CFLAGS)" \
-	    LDFLAGS="$(LDFLAGS)" \
-	    LIBS="$(LIBS)" \
-	    TARGET=all oscheck
-	@# make sure mkc_config.h is re-built
-	@rm -f mkc_config.h
-	@echo "make: -- bootstrap mkc (prep-final)"
-	@$(MAKE) -f $(MAKEFILE) mkc_config.h
-	@# prep for the bootstrap-final target
-	@$(MAKE) -f $(MAKEFILE) noregexclean
-	@touch $(BOOTSTRAP_NOREGEX)
-
-# now that a correct and complete mkc_config.h file has been
-# created, re-compile once more
-.PHONY: bootstrap-final
-bootstrap-final: $(BOOTSTRAP_TMPDIR) $(BOOTSTRAP_MKC_FILES) \
-		$(BOOTSTRAP_NOREGEX)
-	@$(MAKE) -f $(MAKEFILE) \
-	    CFLAGS="$(CFLAGS)" \
-	    LDFLAGS="$(LDFLAGS)" \
-	    LIBS="$(LIBS)" \
-	    TARGET=all oscheck
 
 .PHONY: sanitize
 sanitize:
@@ -154,6 +102,62 @@ debug:
 	    LIBS="$(DBG_LIBS)" \
 	    real-start
 
+.PHONY: real-start
+real-start:
+	@$(MAKE) -f $(MAKEFILE) \
+	    CFLAGS="$(CFLAGS)" \
+	    LDFLAGS="$(LDFLAGS)" \
+	    LIBS="$(LIBS)" \
+	    bootstrap-final
+
+# the initial pass
+# there is no mkc_config.h file
+# MKC_BOOTSTRAP must be defined
+# _have_regex and _package_pcre are also defined
+$(BOOTSTRAP_INIT): $(BOOTSTRAP_TMPDIR) $(BOOTSTRAP_MKC_DIRS)
+	@echo "make: -- bootstrap mkc (initial)"
+	@$(MAKE) -f $(MAKEFILE) \
+	    CFLAGS="$(CFLAGS) $(INIT_DEF)" \
+	    LDFLAGS="$(LDFLAGS)" \
+	    LIBS="$(LIBS)" \
+	    TARGET=all oscheck
+	@touch $(BOOTSTRAP_INIT)
+
+$(BOOTSTRAP_PASS2): $(BOOTSTRAP_TMPDIR) $(BOOTSTRAP_MKC_DIRS) \
+		$(BOOTSTRAP_INIT)
+	@$(MAKE) -f $(MAKEFILE) \
+	    CFLAGS="$(CFLAGS)" \
+	    LDFLAGS="$(LDFLAGS)" \
+	    LIBS="$(LIBS)" \
+	    bootstrap-pass2
+
+# create the first mkc_config.h file, clean and re-build
+# then re-generate mkc_config.h with the new code.
+bootstrap-pass2: mkc_config.h
+	@echo "make: -- bootstrap mkc (pass2)"
+	@$(MAKE) -f $(MAKEFILE) initialclean
+	@$(MAKE) -f $(MAKEFILE) \
+	    CFLAGS="$(CFLAGS)" \
+	    LDFLAGS="$(LDFLAGS)" \
+	    LIBS="$(LIBS)" \
+	    TARGET=all oscheck
+	@# make sure mkc_config.h is re-built
+	@rm -f mkc_config.h
+	@echo "make: -- bootstrap mkc (prep-final)"
+	@$(MAKE) -f $(MAKEFILE) mkc_config.h
+	@touch $(BOOTSTRAP_PASS2)
+
+# After the first pass, the mkc_config.h file has been
+# created.
+# any module that uses mkc_config.h will be re-compiled
+bootstrap-final: $(BOOTSTRAP_TMPDIR) $(BOOTSTRAP_MKC_DIRS) \
+		$(BOOTSTRAP_PASS2)
+	@$(MAKE) -f $(MAKEFILE) \
+	    CFLAGS="$(CFLAGS)" \
+	    LDFLAGS="$(LDFLAGS)" \
+	    LIBS="$(LIBS)" \
+	    TARGET=all oscheck
+
 mkc_config.h: mkc.mkc
 	@./mkc --no-cache mkc.mkc
 
@@ -161,22 +165,16 @@ $(BOOTSTRAP_TMPDIR):
 	@test -d $(MAIN_TMP) || mkdir $(MAIN_TMP)
 	@touch $(BOOTSTRAP_TMPDIR)
 
-$(BOOTSTRAP_MKC_FILES):
+$(BOOTSTRAP_MKC_DIRS):
 	@test -d $(MKC_FILES) || mkdir $(MKC_FILES)
-	@test -d $(MKC_TMP) || mkdir $(MKC_TMP)
-	@touch $(BOOTSTRAP_MKC_FILES)
+	@test -d $(MKCF_TMP) || mkdir $(MKCF_TMP)
+	@touch $(BOOTSTRAP_MKC_DIRS)
 
-# only clean the object files that are dependent on mkc_config.h
+# clean the object files and 'mkc' only
 # do not clean the mkc_files/ directory
 .PHONY: initialclean
 initialclean:
-	@rm -f $(INITIALOBJ) mkc
-
-# only clean the object files that are dependent on mkc_config.h
-# do not clean the mkc_files/ directory
-.PHONY: noregexclean
-noregexclean:
-	@rm -f $(NOREGEXOBJ) mkc
+	@rm -f $(MKCOBJECTS) mkc
 
 .PHONY: oscheck
 oscheck:
@@ -242,32 +240,6 @@ TOPOCHKOBJ = \
 	mkc_list.o \
 	strutil.o \
 	mkc_error.o
-
-# the INITIALOBJ variable will be replaced
-# be sure it is followed by a blank line
-# INITIALOBJ keep this line
-INITIALOBJ = \
-	mkc_grammar.o \
-	dirmatch.o \
-	dirop.o \
-	envutil.o \
-	fileop.o \
-	mkc_check.o \
-	mkc_main.o \
-	mkc_process.o \
-	mkc_regex_pcre.o \
-	os_process.o \
-	$(MKC_WIN_OBJ) \
-	pathutil.o \
-	strutil.o \
-	tmutil.o
-
-# the NOREGEXOBJ variable will be replaced
-# be sure it is followed by a blank line
-# NOREGEXOBJ keep this line
-NOREGEXOBJ = \
-	dirop.o \
-	mkc_main.o
 
 mkc: $(MKCOBJECTS)
 	$(CC) $(LDFLAGS) -o $@ $(MKCOBJECTS) $(LIBS)
@@ -425,7 +397,7 @@ os_win_process.o:  include/mkc_def.h
 os_win_process.o:  include/fileop.h include/mkc_error.h
 os_win_process.o: include/mkc_nodiscard.h include/os_process.h
 os_win_process.o: include/strutil.h include/tmutil.h
-pathutil.o:   include/mkc_def.h
+pathutil.o: include/mkc_def.h  
 pathutil.o:  include/mkc_error.h include/mkc_nodiscard.h
 pathutil.o: include/fileop.h  include/pathutil.h
 pathutil.o: include/strutil.h

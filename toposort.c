@@ -82,8 +82,6 @@ toposort_free (toposort_t *topo)
 void
 toposort_add_item (toposort_t *topo, const char *item)
 {
-  mkc_listidx_t   loc = MKC_LIST_NOTFOUND;
-  mkc_topocount_t count;
   mkc_topoitem_t  titem;
 
   if (topo == NULL) {
@@ -91,12 +89,7 @@ toposort_add_item (toposort_t *topo, const char *item)
   }
 
   titem.name = strdup (item);
-  mkc_list_set (topo->items, &titem, sizeof (mkc_topoitem_t), &loc);
-
-  count.idx = loc;
-  count.count = 0;
-  loc = MKC_LIST_NOTFOUND;
-  mkc_list_set (topo->counts, &count, sizeof (mkc_topocount_t), &loc);
+  mkc_list_set (topo->items, &titem, sizeof (mkc_topoitem_t));
 
   return;
 }
@@ -106,7 +99,6 @@ toposort_add_pair (toposort_t *topo,
     const char *item_a, const char *item_b)
 {
   mkc_topopair_t    tpair;
-  mkc_listidx_t     loc = MKC_LIST_NOTFOUND;
   mkc_topoitem_t    titem;
 
   if (topo == NULL) {
@@ -114,19 +106,19 @@ toposort_add_pair (toposort_t *topo,
   }
 
   titem.name = (char *) item_a;
-  tpair.itemidx = mkc_list_find (topo->items, &titem, &loc);
+  tpair.itemidx = mkc_list_find (topo->items, &titem);
   if (tpair.itemidx == MKC_LIST_NOTFOUND) {
     mkc_error_set (topo->mkcerr, MKC_ERR_FILE_NOT_FOUND, 0, item_a);
     return MKC_ERR_FAILURE;
   }
   titem.name = (char *) item_b;
-  tpair.dependson = mkc_list_find (topo->items, &titem, &loc);
+  tpair.dependson = mkc_list_find (topo->items, &titem);
   if (tpair.dependson == MKC_LIST_NOTFOUND) {
     mkc_error_set (topo->mkcerr, MKC_ERR_FILE_NOT_FOUND, 0, item_b);
     return MKC_ERR_FAILURE;
   }
 
-  mkc_list_set (topo->pairs, &tpair, sizeof (mkc_topopair_t), &loc);
+  mkc_list_set (topo->pairs, &tpair, sizeof (mkc_topopair_t));
 
   return MKC_OK;
 }
@@ -135,25 +127,33 @@ toposort_add_pair (toposort_t *topo,
 int
 toposort (toposort_t *topo)
 {
-  mkc_listidx_t   pairiteridx;
-  mkc_listidx_t   pairidx;
+  mkc_listidx_t   iteridx;
+  mkc_listidx_t   idx;
   bool            done = false;
   int32_t         itemcount = 0;
   int             rc = MKC_ERR_FAILURE;
 
   itemcount = mkc_list_size (topo->items);
 
-  /* populate the initial counts list */
+  /* create the initial counts list */
+  mkc_list_iter_start (topo->items, &iteridx);
+  while ((idx = mkc_list_iter_next (topo->items, &iteridx)) != MKC_ITER_FINISH) {
+    mkc_topocount_t   count;
+
+    count.idx = idx;
+    count.count = 0;
+    mkc_list_set (topo->counts, &count, sizeof (mkc_topocount_t));
+  }
+
   /* each pair is "a depends on b" */
-  mkc_list_iter_start (topo->pairs, &pairiteridx);
-  while ((pairidx = mkc_list_iter_next (topo->pairs, &pairiteridx)) != MKC_ITER_FINISH) {
+  mkc_list_iter_start (topo->pairs, &iteridx);
+  while ((idx = mkc_list_iter_next (topo->pairs, &iteridx)) != MKC_ITER_FINISH) {
     mkc_topopair_t  *pair;
-    mkc_listidx_t   loc;
     mkc_listidx_t   cidx;
     mkc_topocount_t *count;
 
-    pair = mkc_list_get_by_idx (topo->pairs, pairidx);
-    cidx = mkc_list_find (topo->counts, &pair->dependson, &loc);
+    pair = mkc_list_get_by_idx (topo->pairs, idx);
+    cidx = mkc_list_find (topo->counts, &pair->dependson);
     count = mkc_list_get_by_idx (topo->counts, cidx);
     count->count += 1;
   }
@@ -163,7 +163,6 @@ toposort (toposort_t *topo)
     mkc_listidx_t   citeridx;
     mkc_listidx_t   cidx;
     mkc_topocount_t *count;
-    mkc_listidx_t   loc = MKC_LIST_NOTFOUND;
     int             found = 0;
 
     /* locate any items with a count of 0, add them to the results */
@@ -174,8 +173,7 @@ toposort (toposort_t *topo)
         found += 1;
         count->count = MKC_TOPO_DONE;
 
-        loc = MKC_LIST_NOTFOUND;
-        mkc_list_set (topo->results, &count->idx, sizeof (mkc_listidx_t), &loc);
+        mkc_list_set (topo->results, &count->idx, sizeof (mkc_listidx_t));
 
         /* update the edge counts for items that the item depends on */
         mkc_topo_update_counts (topo, count->idx);
@@ -285,11 +283,10 @@ mkc_topo_update_counts (toposort_t *topo, mkc_listidx_t idx)
     mkc_topopair_t    *pair;
     mkc_listidx_t     cidx;
     mkc_topocount_t   *count;
-    mkc_listidx_t     loc;
 
     pair = mkc_list_get_by_idx (topo->pairs, pairidx);
     if (pair->itemidx == idx) {
-      cidx = mkc_list_find (topo->counts, &pair->dependson, &loc);
+      cidx = mkc_list_find (topo->counts, &pair->dependson);
       count = mkc_list_get_by_idx (topo->counts, cidx);
       count->count -= 1;
     }

@@ -3,7 +3,7 @@
  *    (from ballroomdj4)
  */
 
-#if ! defined (MKC_BOOTSTRAP)
+#ifndef MKC_BOOTSTRAP
 # include "mkc_config.h"
 #endif
 
@@ -281,15 +281,13 @@ dirop_basic_list (const char *dirname, mkc_error_t *mkcerr)
   filelist = mkc_list_init (MKC_LIST_UNSORTED, mkc_list_ind_free, NULL, mkcerr);
   dh = dirop_open (dirname, mkcerr);
   while ((fname = dirop_iterate (dh, mkcerr)) != NULL) {
-    mkc_listidx_t   loc;
-
     snprintf (temp, sizeof (temp), "%s/%s", dirname, fname);
     if (fileop_is_directory (temp)) {
       free (fname);
       continue;
     }
 
-    mkc_list_set (filelist, &fname, sizeof (char *), &loc);
+    mkc_list_set (filelist, &fname, sizeof (char *));
   }
   dirop_close (dh);
 
@@ -306,8 +304,6 @@ dirop_list_recursive (const char *dirname, int flags, mkc_error_t *mkcerr)
   mkc_list_t      *dirqueue;
   char            temp [MKC_PATH_MAX];
   char            *p;
-//  size_t          dirnamelen;
-  mkc_listidx_t   loc;
   int32_t         processed = 0;
 
   if (! fileop_is_directory (dirname)) {
@@ -315,12 +311,11 @@ dirop_list_recursive (const char *dirname, int flags, mkc_error_t *mkcerr)
     return NULL;
   }
 
-//  dirnamelen = strlen (dirname);
   filelist = mkc_list_init (MKC_LIST_UNSORTED, mkc_list_ind_free, NULL, mkcerr);
   dirqueue = mkc_list_init (MKC_LIST_UNSORTED, mkc_list_ind_free, NULL, mkcerr);
 
   p = strdup (dirname);
-  mkc_list_set (dirqueue, &p, sizeof (char *), &loc);
+  mkc_list_set (dirqueue, &p, sizeof (char *));
   while (mkc_list_size (dirqueue) - processed > 0) {
     char  *dir;
 
@@ -343,21 +338,21 @@ dirop_list_recursive (const char *dirname, int flags, mkc_error_t *mkcerr)
         if ((flags & DIRLIST_FILES) == DIRLIST_FILES) {
           // p = temp + dirnamelen + 1;
           tp = strdup (temp);
-          mkc_list_set (filelist, &tp, sizeof (char *), &loc);
+          mkc_list_set (filelist, &tp, sizeof (char *));
         }
       } else if (fileop_is_directory (temp)) {
         tp = strdup (temp);
-        mkc_list_set (dirqueue, &tp, sizeof (char *), &loc);
+        mkc_list_set (dirqueue, &tp, sizeof (char *));
         if ((flags & DIRLIST_DIRS) == DIRLIST_DIRS) {
           // p = temp + dirnamelen + 1;
           tp = strdup (temp);
-          mkc_list_set (filelist, &tp, sizeof (char *), &loc);
+          mkc_list_set (filelist, &tp, sizeof (char *));
         }
       } else if (fileop_exists (temp)) {
         if ((flags & DIRLIST_FILES) == DIRLIST_FILES) {
           // p = temp + dirnamelen + 1;
           tp = strdup (temp);
-          mkc_list_set (filelist, &tp, sizeof (char *), &loc);
+          mkc_list_set (filelist, &tp, sizeof (char *));
         }
       }
       free (fname);

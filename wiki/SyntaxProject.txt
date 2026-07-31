@@ -3,34 +3,34 @@
 
 ### Syntax: project
 
-The _project_ statement defines attributes for the project.
+The _project_ statement sets the project name and defines attributes
+for the project.
 
-    project {
-      name <project-name>;
+    project <project-name>;
+
+    project <project-name> {
       compiler <default-compiler>;
       version <version-string>;
     }
 
-The name of the project is defined with the [name](SyntaxName) attribute.
 The default compiler is defined with the [compiler](SyntaxCompiler) attribute.
 
 ##### Examples
 
-    project {
-      name mkctest;
+    project mkctest;
+
+    project mkctest {
       compiler c;
     }
 
-    project {
-      name mkctestb;
+    project mkctest {
       compiler c++;
-      version 0.3;
+      version '0.3';
     }
 
 ##### Attributes
 
 * [compiler](SyntaxAttrCompiler)
-* [name](SyntaxAttrName) (required)
 * [version](SyntaxAttrVersion)
 
 [Wiki Home](Home)

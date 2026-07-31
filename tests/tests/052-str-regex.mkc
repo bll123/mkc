@@ -10,10 +10,16 @@ if ('a' eq~ 'a') {
 } else {
   print '  fail a';
 }
-if ('b' eq~ '.') {
-  print '  ok b';
+# re-use same pattern
+if ('b' eq~ 'a') {
+  print '  fail b1';
 } else {
-  print '  fail b';
+  print '  ok b1';
+}
+if ('b' eq~ '.') {
+  print '  ok b2';
+} else {
+  print '  fail b2';
 }
 if ('c' eq~ '[abc]') {
   print '  ok c';

@@ -5,12 +5,15 @@
 
 ##### Internal Debugging
 
-    mkcdebug printinternal;         # prints internal values
+    mkcdebug null;                  # does nothing
+    mkcdebug printhierarchy;        # prints current hierarchy (not useful)
+    mkcdebug printinternal;         # prints some internal values
+    mkcdebug printpath;             # prints internal paths
     mkcdebug printprof;             # prints profile names
     mkcdebug printvar <profile>;    # user defined profile
-    mkcdebug printvar internal;
-    mkcdebug printvar internalall;  # including temporary variables
-    mkcdebug printvar test;         # most variables
+    mkcdebug printvar test;         # prints default profile
+    mkcdebug printvar hierarchy;    # prints all variables in hierarchy (not useful)
+    mkcdebug printvar profiles;     # prints all defined variables
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

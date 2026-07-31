@@ -140,9 +140,8 @@ mkc_chk_compiler_works (mkc_check_t *check, mkc_compiler_t compiler)
 void
 mkc_chk_append_comp_flag (mkc_check_t *check, const char *flag)
 {
-  value_t     tvalue;
-  mkc_listidx_t   loc = MKC_LIST_NOTFOUND;
-  mkc_alternate_t  * alt;
+  value_t           tvalue;
+  mkc_alternate_t   * alt;
 
   if (check == NULL || flag == NULL) {
     return;
@@ -152,15 +151,14 @@ mkc_chk_append_comp_flag (mkc_check_t *check, const char *flag)
   tvalue.sval = (char *) flag;
   tvalue.vtype = MKC_VT_STRING;
   alt = check->attr->curralt;
-  mkc_list_set (alt->compflags, &tvalue, sizeof (value_t), &loc);
+  mkc_list_set (alt->compflags, &tvalue, sizeof (value_t));
 }
 
 void
 mkc_chk_append_link_flag (mkc_check_t *check, const char *flag)
 {
-  value_t     tvalue;
-  mkc_listidx_t   loc = MKC_LIST_NOTFOUND;
-  mkc_alternate_t  * alt;
+  value_t           tvalue;
+  mkc_alternate_t   * alt;
 
   if (check == NULL || flag == NULL) {
     return;
@@ -170,7 +168,7 @@ mkc_chk_append_link_flag (mkc_check_t *check, const char *flag)
   tvalue.sval = (char *) flag;
   tvalue.vtype = MKC_VT_STRING;
   alt = check->attr->curralt;
-  mkc_list_set (alt->linkflags, &tvalue, sizeof (value_t), &loc);
+  mkc_list_set (alt->linkflags, &tvalue, sizeof (value_t));
 }
 
 int
@@ -607,12 +605,13 @@ void
 mkc_check_get_include_deps (mkc_check_t *check,
     mkc_compiler_t compiler, const char *filename, const char *filepath)
 {
+  time_t      fts;
+#if _have_regex
   char        ** match;
   int         matchcount = 0;
   mkc_list_t  * elist;
   char        * rbuff;
   size_t      fsz = 0;
-  time_t      fts;
   time_t      currtm;
 
   currtm = mstime ();
@@ -625,7 +624,6 @@ mkc_check_get_include_deps (mkc_check_t *check,
     return;
   }
 
-#if _have_regex
   if (check->rxincludedep == NULL) {
     check->rxincludedep = mkc_regex_init (
         "^# *(include|import) *\"?([^\"<>]+)\"?$",
