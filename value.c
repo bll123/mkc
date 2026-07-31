@@ -243,3 +243,22 @@ value_ctxt_str (value_ctxt_t vctxt)
 }
 
 
+int
+value_str_compare (void *tvala, void *tvalb)
+{
+  value_t   *vala = tvala;
+  value_t   *valb = tvalb;
+
+  if (vala == NULL || valb == NULL) {
+    fprintf (stderr, "ERR: value_str_compare: null\n");
+    return 0;
+  }
+
+  if (! value_is_string_type (vala) ||
+      ! value_is_string_type (valb)) {
+    fprintf (stderr, "ERR: value_str_compare: comparison of non-string values\n");
+    return 0;
+  }
+
+  return strcmp (vala->sval, valb->sval);
+}

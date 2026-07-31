@@ -1,17 +1,11 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
-project {
-  name printall;
+project printall {
   compiler c;
 }
 
 mkcdebug printprof;
-mkcdebug printvar internal;
-mkcdebug printvar default;
-mkcdebug printvar userprof;
-mkcdebug printvar compilers;
-mkcdebug printvar ts;
-mkcdebug printvar paths;
-mkcdebug printvar dep;
+mkcdebug printhierarchy;
+mkcdebug printvar profiles;
 mkcdebug printpath;
 mkcdebug printinternal;

@@ -186,3 +186,25 @@ mkc_log_flush (mkc_log_t *log)
 {
   fflush (log->fh);
 }
+
+void
+mkc_log_command (mkc_log_t *log, const char *tag,
+    int targc, const char * targv [])
+{
+  int   count;
+
+  count = 0;
+  mkc_log (log, MKC_LOG_CHECK, "%s: ", tag);
+  while (targv [count] != NULL) {
+    mkc_log (log, MKC_LOG_CHECK, "%s ", targv [count]);
+    ++count;
+  }
+  mkc_log (log, MKC_LOG_CHECK, "\n");
+  if (count == 0) {
+    mkc_log (log, MKC_LOG_CHECK, "invalid count %d\n", count);
+  }
+  if (count + 1 != targc) {
+    mkc_log (log, MKC_LOG_CHECK, "mismatch count %d %d\n", count + 1, targc);
+  }
+  mkc_log_flush (log);
+}

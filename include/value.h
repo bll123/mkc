@@ -77,6 +77,7 @@ bool value_is_string_type (const value_t *value);
 
 const char * value_disp_type (value_t *value);
 const char * value_ctxt_str (value_ctxt_t vctxt);
+int value_str_compare (void *tvala, void *tvalb);
 
 #if defined (__cplusplus) || defined (c_plusplus)
 }

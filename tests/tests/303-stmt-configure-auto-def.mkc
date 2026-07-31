@@ -12,6 +12,8 @@ check_function sqrt {
 }
 check_function other;
 
+mkcdebug printvar profiles;
+
 configure {
   method auto;
   define_zero;

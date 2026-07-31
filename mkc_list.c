@@ -104,6 +104,26 @@ mkc_list_size (mkc_list_t *list)
   return list->idxsz;
 }
 
+mkc_list_type_t
+mkc_list_get_type (mkc_list_t *list)
+{
+  if (list == NULL) {
+    return MKC_LIST_UNSORTED;
+  }
+
+  return list->type;
+}
+
+mkc_list_compare_t
+mkc_list_get_compfunc (mkc_list_t *list)
+{
+  if (list == NULL) {
+    return NULL;
+  }
+
+  return list->compare;
+}
+
 void *
 mkc_list_set (mkc_list_t *list, void *data, size_t sz, mkc_listidx_t *loc)
 {

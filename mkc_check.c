@@ -607,7 +607,6 @@ void
 mkc_check_get_include_deps (mkc_check_t *check,
     mkc_compiler_t compiler, const char *filename, const char *filepath)
 {
-#if _have_regex
   char        ** match;
   int         matchcount = 0;
   mkc_list_t  * elist;
@@ -626,6 +625,7 @@ mkc_check_get_include_deps (mkc_check_t *check,
     return;
   }
 
+#if _have_regex
   if (check->rxincludedep == NULL) {
     check->rxincludedep = mkc_regex_init (
         "^# *(include|import) *\"?([^\"<>]+)\"?$",
@@ -635,7 +635,14 @@ mkc_check_get_include_deps (mkc_check_t *check,
     }
   }
 
-  elist = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, check->mkcerr);
+  /* note that the lists loaded from the cache are not sorted */
+  /* since they are supposedly complete, they should not need to be searched */
+  /* and processing should work.  this may need to be re-visited later */
+
+  /* keep the dependency list sorted so that duplicates can be found */
+  /* any existing list must be cleared, so set the variable to an empty list */
+
+  elist = mkc_list_init (MKC_LIST_SORTED, NULL, value_str_compare, check->mkcerr);
   scopedvar_set_list (check->scopedvar, SV_T_DEPENDENCY,
       filename, elist, MKC_VCTXT_MKC);
   mkc_list_free (elist);
@@ -664,14 +671,15 @@ mkc_check_get_include_deps (mkc_check_t *check,
 
   free (rbuff);
 
-  /* set the timestamp when the file is processed */
-  fts = fileop_modtime (filepath);
-  fts *= 1000;
-  scopedvar_set_timestamp (check->scopedvar, SV_T_TIMESTAMP, filename, fts, MKC_VCTXT_MKC);
-
   mkc_regex_free (check->rxargcount);
   check->rxargcount = NULL;
 #endif
+
+  /* set the timestamp when the file is processed */
+  /* convert to ms for comparison to the real time */
+  fts = fileop_modtime (filepath);
+  fts *= 1000;
+  scopedvar_set_timestamp (check->scopedvar, SV_T_TIMESTAMP, filename, fts, MKC_VCTXT_MKC);
 }
 
 /* internal routines */
@@ -775,7 +783,7 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
     free (tpath);
     return MKC_ERR_FAILURE;
   }
-//  mkc_check_log_command (check, "pkg-exists");
+  mkc_log_command (check->log, "pkg-exists: cmd: ", targc, targv);
 
   rc = os_process_pipe (targv,
       OS_PROC_WAIT | OS_PROC_NOWINDOW, rbuff, rsz, &retsz);
@@ -811,7 +819,7 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
     return MKC_ERR_FAILURE;
   }
 
-//  mkc_check_log_command (check, "pkg-cflags");
+  mkc_log_command (check->log, "pkg-cflags: cmd: ", targc, targv);
 
   alt = check->attr->curralt;
   tmp = pkg;
@@ -863,7 +871,7 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
     return MKC_ERR_FAILURE;
   }
 
-//  mkc_check_log_command (check, "pkg-libs");
+  mkc_log_command (check->log, "pkg-libs: cmd: ", targc, targv);
 
   rc = os_process_pipe (targv,
       OS_PROC_WAIT | OS_PROC_NOWINDOW, rbuff, rsz, &retsz);

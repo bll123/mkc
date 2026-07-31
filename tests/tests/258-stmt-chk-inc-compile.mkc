@@ -9,7 +9,6 @@ profile default {
   add_compile_flag '-DMKCTEST=1';
 }
 
-mkcdebug printvar compilers;
 mkcdebug printvar test;
 
 check_include_compile {

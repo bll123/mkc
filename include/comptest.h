@@ -29,7 +29,6 @@ comptest_t * comptest_init (scopedvar_t *scopedvar, mkc_attribute_t *attr, mkc_l
 void comptest_free (comptest_t *comptest);
 void comptest_set_flags (comptest_t *comptest, const char *compflags [], const char *ldflags [], const char *libs []);
 void comptest_set_compiler (comptest_t *comptest, mkc_compiler_t compiler);
-void comptest_set_print (comptest_t *comptest, bool printflag);
 void comptest_reset (comptest_t *comptest);
 
 void comptest_create_header_var (comptest_t *comptest);

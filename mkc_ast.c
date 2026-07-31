@@ -2241,12 +2241,13 @@ mkc_ast_func_compare (void *a, void *b)
   np = a;
   fa = *np;
   fa = fa->stmt_function.nm;
+  va = &fa->value.value;
+  sa = va->sval;
+
   np = b;
   fb = *np;
   fb = fb->stmt_function.nm;
-  va = &fa->value.value;
   vb = &fb->value.value;
-  sa = va->sval;
   sb = vb->sval;
 
   return strcmp (sa, sb);

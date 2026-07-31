@@ -34,5 +34,4 @@ if (${C_CF_G} ne '') {
   print '  fail c';
 }
 
-mkcdebug printvar compilers;
 mkcdebug printvar test;

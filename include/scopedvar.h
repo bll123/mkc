@@ -36,9 +36,8 @@ typedef enum {
   /* for a 'get', only checks the active profile */
   /* for a 'set', only sets in the active profile */
   SV_T_ACTIVE,
-  /* the namespace type is used in comparisons and is never used directly */
-  /* any special namespace should follow the 'namespace' enum */
-  /* any scope defined before 'namespace' is part of the usual hierarchy */
+  /* namespace is used for comparison purposes */
+  /* any type following namespaces is not in the hierarchy */
   SV_T_NAMESPACE,
   SV_T_TIMESTAMP,
   SV_T_DEPENDENCY,
@@ -52,10 +51,7 @@ typedef enum {
 
 typedef enum {
   SV_ITER_HIERARCHY   = 0x0001,
-  SV_ITER_USER_PROF   = 0x0002,
-  SV_ITER_COMPILERS   = 0x0004,
-  SV_ITER_NAMESPACE   = 0x0008,
-  SV_ITER_SKIP_CURR   = 0x1000,
+  SV_ITER_PROFILES    = 0x0002,
 } sv_iter_flag_t;
 
 typedef struct scopedvar_t scopedvar_t;
@@ -75,7 +71,6 @@ void scopedvar_incr_local_id (scopedvar_t *scopedvar);
 void scopedvar_decr_local_id (scopedvar_t *scopedvar);
 void scopedvar_set_active_profile (scopedvar_t *scopedvar, const char *name);
 const char * scopedvar_get_current_profile (scopedvar_t *scopedvar);
-void scopedvar_set_current_profile (scopedvar_t *scopedvar, const char *name, mkc_compiler_t compiler);
 
 sv_iter_t *scopedvar_iter_start (scopedvar_t *scopedvar, sv_iter_flag_t flags);
 const char * scopedvar_iter_next (scopedvar_t *scopedvar, sv_iter_t *sviter);

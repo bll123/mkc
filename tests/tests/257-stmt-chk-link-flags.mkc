@@ -24,5 +24,4 @@ if (${lf_g} ne '') {
   print '  fail g';
 }
 
-mkcdebug printvar compilers;
 mkcdebug printvar test;

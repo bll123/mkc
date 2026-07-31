@@ -48,6 +48,7 @@ void mkc_log_loc (mkc_log_t *log, int32_t logflag, int32_t lineno, int col, cons
 void mkc_error_disp (mkc_error_t mkcerr);
 void mkc_log_set_disp_filename (mkc_log_t *log, const char *fname);
 void mkc_log_flush (mkc_log_t *log);
+void mkc_log_command (mkc_log_t *log, const char *tag, int targc, const char * targv []);
 
 #if defined (__cplusplus) || defined (c_plusplus)
 }

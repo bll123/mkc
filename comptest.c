@@ -32,7 +32,6 @@ typedef struct comptest_t {
   int               targc;
   int               targvallocsz;
   mkc_compiler_t    compiler;
-  bool              printflag;
 } comptest_t;
 
 static char const * const MKC_C_TEST_HDR_LIST = "MKC_TV_TEST_HEADER_LIST";
@@ -44,7 +43,6 @@ static int compile_link (comptest_t *comptest, mkc_compiler_t compiler, const ch
 static int compile_run (comptest_t *comptest, mkc_compiler_t compiler, const char *fname, char *rbuff, size_t rsz);
 static void comptest_append_list_arg (comptest_t *comptest, mkc_list_t *list);
 static bool comptest_append_flags (comptest_t *comptest, const char *flags []);
-static void comptest_log_command (comptest_t *comptest, const char *tag);
 
 comptest_t *
 comptest_init (scopedvar_t *scopedvar,
@@ -113,17 +111,6 @@ comptest_set_compiler (comptest_t *comptest, mkc_compiler_t compiler)
 }
 
 void
-comptest_set_print (comptest_t *comptest, bool printflag)
-{
-  if (comptest == NULL) {
-    return;
-  }
-
-  comptest->printflag = printflag;
-  return;
-}
-
-void
 comptest_reset (comptest_t *comptest)
 {
   if (comptest == NULL) {
@@ -133,7 +120,6 @@ comptest_reset (comptest_t *comptest)
   comptest->compflags = NULL;
   comptest->ldflags = NULL;
   comptest->libs = NULL;
-  comptest->printflag = false;
 
   comptest->targv [0] = NULL;
   comptest->targc = 0;
@@ -414,7 +400,7 @@ compile_only (comptest_t *comptest, mkc_compiler_t compiler,
     return MKC_ERR_FAILURE;
   }
 
-  comptest_log_command (comptest, "comp-only");
+  mkc_log_command (comptest->log, "comp-only: cmd:", comptest->targc, comptest->targv);
 
   rc = os_process_pipe (comptest->targv,
       OS_PROC_WAIT | OS_PROC_NOWINDOW, rbuff, rsz, &retsz);
@@ -526,7 +512,7 @@ compile_link (comptest_t *comptest, mkc_compiler_t compiler,
     return MKC_ERR_FAILURE;
   }
 
-  comptest_log_command (comptest, "link");
+  mkc_log_command (comptest->log, "link: cmd:", comptest->targc, comptest->targv);
 
   rc = os_process_pipe (comptest->targv,
       OS_PROC_WAIT | OS_PROC_NOWINDOW, rbuff, rsz, &retsz);
@@ -583,7 +569,7 @@ compile_run (comptest_t *comptest, mkc_compiler_t compiler,
     return MKC_ERR_FAILURE;
   }
 
-  comptest_log_command (comptest, "run");
+  mkc_log_command (comptest->log, "run: cmd:", comptest->targc, comptest->targv);
 
   if (rbuff == NULL) {
     rsz = MKC_SMALL_BUFF_SZ;
@@ -655,25 +641,3 @@ comptest_append_flags (comptest_t *comptest, const char *flags [])
 
   return cpreprocess;
 }
-
-static void
-comptest_log_command (comptest_t *comptest, const char *tag)
-{
-  int   targc;
-
-  targc = 0;
-  mkc_log (comptest->log, MKC_LOG_CHECK, "%s: cmd: ", tag);
-  while (comptest->targv [targc] != NULL) {
-    mkc_log (comptest->log, MKC_LOG_CHECK, "%s ", comptest->targv [targc]);
-    ++targc;
-  }
-  mkc_log (comptest->log, MKC_LOG_CHECK, "\n");
-  if (targc == 0) {
-    mkc_log (comptest->log, MKC_LOG_CHECK, "invalid count %d\n", targc);
-  }
-  if (targc + 1 != comptest->targc) {
-    mkc_log (comptest->log, MKC_LOG_CHECK, "mismatch count %d %d\n", targc + 1, comptest->targc);
-  }
-  mkc_log_flush (comptest->log);
-}
-

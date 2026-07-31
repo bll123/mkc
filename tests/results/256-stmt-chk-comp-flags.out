@@ -1,10 +1,10 @@
   ok n
   ok c
-== default c
-  C_CF_G '-g'
-  MKC_CFLAGS [ '-g' ]
-== default general
+== default
   HAVE_CF_ERROR '-Werror'
   MKC_CFLAGS [ '-Wunreachable-code' '-Wno-unreachable-code' '-Werror' ]
   cf_no_unreachable_code '-Wno-unreachable-code'
   cf_unreachable_code '-Wunreachable-code'
+== default c
+  C_CF_G '-g'
+  MKC_CFLAGS [ '-g' ]

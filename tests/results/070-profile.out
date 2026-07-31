@@ -6,7 +6,7 @@
   timestamp timestamps
   dependencies dependencies
   paths paths
-== default general
+== default
   e 'dflt-general'
 == default c
   a 'dflt-c'

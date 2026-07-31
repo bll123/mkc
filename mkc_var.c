@@ -410,12 +410,15 @@ mkc_var_list_copy (mkc_varlist_t *varlist, mkc_list_t *list)
   mkc_list_t      *nlist;
   mkc_listidx_t   iteridx;
   mkc_listidx_t   lidx;
-  value_t     *value;
-  value_t     nvalue;
+  value_t         *value;
+  value_t         nvalue;
 
   /* the values created in this list are copies, and are not */
   /* present in an astnode, so must be freed */
-  nlist = mkc_list_init (MKC_LIST_UNSORTED, value_free, NULL, varlist->mkcerr);
+  /* preserve the original list type */
+  /* assume that the comparison function is value-str-compare */
+  nlist = mkc_list_init (mkc_list_get_type (list),
+        value_free, mkc_list_get_compfunc (list), varlist->mkcerr);
   if (mkc_error_chk_err (varlist->mkcerr)) {
     return NULL;
   }
