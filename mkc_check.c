@@ -46,7 +46,8 @@ typedef struct mkc_check_t {
 } mkc_check_t;
 
 static mkc_err_code_t mkc_chk_env_var_set (mkc_check_t *check, const char *nm);
-static int mkc_chk_package_exec (mkc_check_t *check, const char *pkg);
+static int mkc_chk_package_exec (mkc_check_t *check, const char *pkgconfpath, const char *flag, const char *pkg, int targc, const char * targv [], char *rbuff, size_t rsz, const char *name);
+static int mkc_chk_getconf_exec (mkc_check_t *check, const char *getconfpath, const char *name, char *buff, size_t bsz);
 
 MKC_NODISCARD
 mkc_check_t *
@@ -304,6 +305,60 @@ mkc_chk_compiler_id (mkc_check_t *check, mkc_compiler_t compiler)
 }
 
 int
+mkc_chk_getconf (mkc_check_t *check)
+{
+  int     rc = MKC_ERR_FAILURE;
+  char    * getconfpath;
+  value_t * value;
+  char    * flag;
+
+  value = scopedvar_get_value (check->scopedvar, SV_T_INTERNAL, MKC_C_PATH_GETCONF);
+  if (value == NULL) {
+    /* no getconf executable was found */
+    return MKC_OK;
+  }
+
+  getconfpath = malloc (MKC_PATH_MAX);
+  if (getconfpath  == NULL) {
+    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return rc;
+  }
+  *getconfpath = '\0';
+
+  scopedvar_value_get_str (check->scopedvar, value, getconfpath, MKC_PATH_MAX);
+
+  flag = malloc (MKC_VNAME_MAX);
+  if (flag == NULL) {
+    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    free (getconfpath);
+    return rc;
+  }
+  *flag = '\0';
+
+  rc = mkc_chk_getconf_exec (check, getconfpath, "LFS_CFLAGS", flag, MKC_VNAME_MAX);
+  if (*flag) {
+    scopedvar_append_str_list (check->scopedvar, SV_T_ACTIVE,
+        MKC_C_CFLAGS, flag, MKC_VCTXT_MKC);
+  }
+
+  *flag = '\0';
+  rc = mkc_chk_getconf_exec (check, getconfpath, "LFS_LDFLAGS", flag, MKC_VNAME_MAX);
+  if (*flag) {
+    scopedvar_append_str_list (check->scopedvar, SV_T_ACTIVE,
+        MKC_C_LDFLAGS, flag, MKC_VCTXT_MKC);
+  }
+
+  *flag = '\0';
+  rc = mkc_chk_getconf_exec (check, getconfpath, "LFS_LIBS", flag, MKC_VNAME_MAX);
+  if (*flag) {
+    scopedvar_append_str_list (check->scopedvar, SV_T_ACTIVE,
+        MKC_C_LIBS, flag, MKC_VCTXT_MKC);
+  }
+
+  return rc;
+}
+
+int
 mkc_chk_arg_count (mkc_check_t *check, mkc_compiler_t compiler,
     const char *funcname)
 {
@@ -464,13 +519,119 @@ mkc_chk_package (mkc_check_t *check,
     mkc_compiler_t compiler, const char *pkg)
 {
   int             rc = MKC_ERR_FAILURE;
+  char            * pkgconfpath;
+  value_t         * value;
+  int             targc = 0;
+  int             btargc = 0;
+  const char      * targv [20];
+  char            * tpath;
+  const char      * tmpnm;
+  mkc_alternate_t * alt;
+  mkc_listidx_t   iteridx;
+  mkc_listidx_t   pathidx;
+  char            tmpname [MKC_VNAME_MAX];
+  char            * rbuff;
+
+  pkgconfpath = malloc (MKC_PATH_MAX);
+  if (pkgconfpath == NULL) {
+    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return MKC_ERR_FAILURE;
+  }
+
+  *pkgconfpath = '\0';
+  /* if pkgconf is installed, pkg-config is a symlink. */
+  /* use pkg-config by preference (pkgconf does not seem to work in macos macports) */
+  value = scopedvar_get_value (check->scopedvar, SV_T_INTERNAL, MKC_C_PATH_PKGCONFIG);
+  if (value == NULL) {
+    value = scopedvar_get_value (check->scopedvar, SV_T_INTERNAL, MKC_C_PATH_PKGCONF);
+  }
+  if (value != NULL) {
+    scopedvar_value_get_str (check->scopedvar, value, pkgconfpath, MKC_PATH_MAX);
+  }
+
+  if (! *pkgconfpath) {
+    mkc_error_set (check->mkcerr, MKC_ERR_PKGCONF_NOT_FOUND, 0, NULL);
+    free (pkgconfpath);
+    return MKC_ERR_FAILURE;
+  }
 
   mkc_log (check->log, MKC_LOG_CHECK, "== chk: package: %s\n", pkg);
 
   datafree (check->pkgname);
   check->pkgname = strdup (pkg);
+
+  targv [targc++] = pkgconfpath;
+
+  tpath = malloc (MKC_PATH_MAX);
+  if (tpath == NULL) {
+    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    free (pkgconfpath);
+    return MKC_ERR_FAILURE;
+  }
+
+  mkc_list_iter_start (check->attr->pathlist, &iteridx);
+  while ((pathidx = mkc_list_iter_next (check->attr->pathlist, &iteridx)) != MKC_ITER_FINISH) {
+    value_t   *path;
+
+    if (mkc_error_chk_err (check->mkcerr)) {
+      free (pkgconfpath);
+      free (tpath);
+      return MKC_ERR_FAILURE;
+    }
+
+    path = mkc_list_get_by_idx (check->attr->pathlist, pathidx);
+    scopedvar_value_get_str (check->scopedvar, path, tpath, MKC_PATH_MAX);
+    if (*tpath) {
+      targv [targc++] = "--with-path";
+      targv [targc++] = tpath;
+    }
+  }
+
+  if (mkc_error_chk_err (check->mkcerr)) {
+    free (pkgconfpath);
+    free (tpath);
+    return MKC_ERR_FAILURE;
+  }
+
+  rbuff = malloc (MKC_SMALL_BUFF_SZ);
+  if (rbuff == NULL) {
+    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    free (pkgconfpath);
+    free (tpath);
+    return MKC_ERR_FAILURE;
+  }
+
+  alt = check->attr->curralt;
+  tmpnm = pkg;
+  if (alt->name != NULL) {
+    tmpnm = alt->name;
+  }
+
+  targc = 0;
+  targv [targc++] = pkgconfpath;
+
+  btargc = targc;
+
   /* libpkgconf's api is far to complex to bother using. */
-  rc = mkc_chk_package_exec (check, pkg);
+  rc = mkc_chk_package_exec (check, pkgconfpath, "--exists", pkg,
+      targc, targv, rbuff, MKC_SMALL_BUFF_SZ, NULL);
+  if (rc != MKC_OK) {
+    return rc;
+  }
+
+  targc = btargc;
+  snprintf (tmpname, sizeof (tmpname), "%s_CFLAGS", tmpnm);
+  str_clean (tmpname, 0);
+
+  rc = mkc_chk_package_exec (check, pkgconfpath, "--cflags", pkg,
+      targc, targv, rbuff, MKC_SMALL_BUFF_SZ, tmpname);
+
+  targc = btargc;
+  snprintf (tmpname, sizeof (tmpname), "%s_LIBS", tmpnm);
+  str_clean (tmpname, 0);
+
+  rc = mkc_chk_package_exec (check, pkgconfpath, "--libs", pkg,
+      targc, targv, rbuff, MKC_SMALL_BUFF_SZ, tmpname);
 
   return rc;
 }
@@ -706,189 +867,57 @@ mkc_chk_env_var_set (mkc_check_t *check, const char *nm)
 }
 
 static int
-mkc_chk_package_exec (mkc_check_t *check, const char *pkg)
+mkc_chk_package_exec (mkc_check_t *check, const char *pkgconfpath,
+    const char *flag, const char *pkg, int targc, const char * targv [],
+    char *rbuff, size_t rsz, const char *name)
 {
-  value_t           *value;
-  char              *pkgconfpath;
-  char              *tpath;
-  const char        *tmp;
-  char              tmpname [MKC_VNAME_MAX];
-  char              *rbuff;
-  size_t            rsz;
   size_t            retsz;
   int               rc;
-  mkc_alternate_t   * alt;
-  mkc_listidx_t     iteridx;
-  mkc_listidx_t     pathidx;
-  int               targc = 0;
-  const char        * targv [10];
 
-  pkgconfpath = malloc (MKC_PATH_MAX);
-  if (pkgconfpath == NULL) {
-    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return MKC_ERR_FAILURE;
-  }
-
-  *pkgconfpath = '\0';
-  /* if pkgconf is installed, pkg-config is a symlink. */
-  /* use pkg-config by preference (pkgconf does not seem to work in macos macports) */
-  value = scopedvar_get_value (check->scopedvar, SV_T_INTERNAL, MKC_C_PATH_PKGCONFIG);
-  if (value == NULL) {
-    value = scopedvar_get_value (check->scopedvar, SV_T_INTERNAL, MKC_C_PATH_PKGCONF);
-  }
-  if (value != NULL) {
-    scopedvar_value_get_str (check->scopedvar, value, pkgconfpath, MKC_PATH_MAX);
-  }
-
-  if (! *pkgconfpath) {
-    mkc_error_set (check->mkcerr, MKC_ERR_PKGCONF_NOT_FOUND, 0, NULL);
-    free (pkgconfpath);
-    return MKC_ERR_FAILURE;
-  }
-
-  targv [targc++] = pkgconfpath;
-
-  tpath = malloc (MKC_PATH_MAX);
-  if (tpath == NULL) {
-    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return MKC_ERR_FAILURE;
-  }
-
-  mkc_list_iter_start (check->attr->pathlist, &iteridx);
-  while ((pathidx = mkc_list_iter_next (check->attr->pathlist, &iteridx)) != MKC_ITER_FINISH) {
-    value_t   *path;
-
-    path = mkc_list_get_by_idx (check->attr->pathlist, pathidx);
-    scopedvar_value_get_str (check->scopedvar, path, tpath, MKC_PATH_MAX);
-    targv [targc++] = "--with-path";
-    targv [targc++] = tpath;
-  }
-
-  targv [targc++] = "--exists";
+  targv [targc++] = flag;
   targv [targc++] = pkg;
   targv [targc++] = NULL;
-  if (mkc_error_chk_err (check->mkcerr)) {
-    free (pkgconfpath);
-    free (tpath);
-    return MKC_ERR_FAILURE;
-  }
 
-  rsz = MKC_SMALL_BUFF_SZ;
-  rbuff = malloc (rsz);
-  if (rbuff == NULL) {
-    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    free (pkgconfpath);
-    free (tpath);
-    return MKC_ERR_FAILURE;
-  }
-  mkc_log_command (check->log, "pkg-exists: cmd: ", targc, targv);
+  mkc_log_command (check->log, "pkg: cmd: ", targc, targv);
 
   rc = os_process_pipe (targv,
       OS_PROC_WAIT | OS_PROC_NOWINDOW, rbuff, rsz, &retsz);
-  mkc_log (check->log, MKC_LOG_CHECK, "pkg exists: %s\n", pkg);
   mkc_log (check->log, MKC_LOG_CHECK, "  rc: %d\n", rc);
   if (rc != MKC_OK) {
-    free (pkgconfpath);
-    free (rbuff);
-    free (tpath);
     return rc;
   }
 
-  targc = 0;
-  targv [targc++] = pkgconfpath;
-
-  mkc_list_iter_start (check->attr->pathlist, &iteridx);
-  while ((pathidx = mkc_list_iter_next (check->attr->pathlist, &iteridx)) != MKC_ITER_FINISH) {
-    value_t   *path;
-
-    path = mkc_list_get_by_idx (check->attr->pathlist, pathidx);
-    scopedvar_value_get_str (check->scopedvar, path, tpath, MKC_PATH_MAX);
-    targv [targc++] = "--with-path";
-    targv [targc++] = tpath;
+  if (name != NULL) {
+    /* make sure a list exists */
+    scopedvar_append_str_list (check->scopedvar, SV_T_SEARCH, name, NULL, MKC_VCTXT_MKC);
+    if (retsz > 0) {
+      str_trim (rbuff, retsz);
+      scopedvar_set_list_from_str (check->scopedvar, name, rbuff, MKC_VCTXT_MKC);
+    }
   }
 
-  targv [targc++] = "--cflags";
-  targv [targc++] = pkg;
-  targv [targc++] = NULL;
-  if (mkc_error_chk_err (check->mkcerr)) {
-    free (pkgconfpath);
-    free (rbuff);
-    free (tpath);
-    return MKC_ERR_FAILURE;
-  }
-
-  mkc_log_command (check->log, "pkg-cflags: cmd: ", targc, targv);
-
-  alt = check->attr->curralt;
-  tmp = pkg;
-  if (alt->name != NULL) {
-    tmp = alt->name;
-  }
-
-  rc = os_process_pipe (targv,
-      OS_PROC_WAIT | OS_PROC_NOWINDOW, rbuff, rsz, &retsz);
-  mkc_log (check->log, MKC_LOG_CHECK, "pkg cflags: %s", rbuff);
-  mkc_log (check->log, MKC_LOG_CHECK, "  rc: %d\n", rc);
-  if (rc != MKC_OK) {
-    free (pkgconfpath);
-    free (rbuff);
-    free (tpath);
-    return rc;
-  }
-
-  /* make sure a list exists */
-  snprintf (tmpname, sizeof (tmpname), "%s_CFLAGS", tmp);
-  str_clean (tmpname, 0);
-  scopedvar_append_str_list (check->scopedvar, SV_T_SEARCH, tmpname, NULL, MKC_VCTXT_MKC);
-
-  if (retsz > 0) {
-    str_trim (rbuff, retsz);
-    scopedvar_set_list_from_str (check->scopedvar, tmpname, rbuff, MKC_VCTXT_MKC);
-  }
-
-  targc = 0;
-  targv [targc++] = pkgconfpath;
-
-  mkc_list_iter_start (check->attr->pathlist, &iteridx);
-  while ((pathidx = mkc_list_iter_next (check->attr->pathlist, &iteridx)) != MKC_ITER_FINISH) {
-    value_t   *path;
-
-    path = mkc_list_get_by_idx (check->attr->pathlist, pathidx);
-    scopedvar_value_get_str (check->scopedvar, path, tpath, MKC_PATH_MAX);
-    targv [targc++] = "--with-path";
-    targv [targc++] = tpath;
-  }
-
-  targv [targc++] = "--libs";
-  targv [targc++] = pkg;
-  targv [targc++] = NULL;
-  if (mkc_error_chk_err (check->mkcerr)) {
-    free (pkgconfpath);
-    free (rbuff);
-    free (tpath);
-    return MKC_ERR_FAILURE;
-  }
-
-  mkc_log_command (check->log, "pkg-libs: cmd: ", targc, targv);
-
-  rc = os_process_pipe (targv,
-      OS_PROC_WAIT | OS_PROC_NOWINDOW, rbuff, rsz, &retsz);
-  mkc_log (check->log, MKC_LOG_CHECK, "pkg libs: %s\n", rbuff);
-  mkc_log (check->log, MKC_LOG_CHECK, "  rc: %d\n", rc);
-
-  /* make sure a list exists */
-  snprintf (tmpname, sizeof (tmpname), "%s_LIBS", tmp);
-  str_clean (tmpname, 0);
-  scopedvar_append_str_list (check->scopedvar, SV_T_SEARCH, tmpname, NULL, MKC_VCTXT_MKC);
-
-  if (retsz > 0) {
-    str_trim (rbuff, retsz);
-    scopedvar_set_list_from_str (check->scopedvar, tmpname, rbuff, MKC_VCTXT_MKC);
-  }
-
-  free (pkgconfpath);
-  free (rbuff);
-  free (tpath);
   return rc;
 }
 
+static int
+mkc_chk_getconf_exec (mkc_check_t *check, const char *getconfpath,
+   const char *name, char *buff, size_t bsz)
+{
+  int         rc = MKC_ERR_FAILURE;
+  int         targc = 0;
+  const char  * targv [10];
+  size_t      retsz;
+
+  targv [targc++] = getconfpath;
+  targv [targc++] = name;
+  targv [targc++] = NULL;
+  mkc_log_command (check->log, "getconf: cmd: ", targc, targv);
+
+  rc = os_process_pipe (targv,
+      OS_PROC_WAIT | OS_PROC_NOWINDOW, buff, bsz, &retsz);
+  str_trim (buff, retsz);
+  mkc_log (check->log, MKC_LOG_CHECK, "getconf: %s\n", name);
+  mkc_log (check->log, MKC_LOG_CHECK, "  rc: %d\n", rc);
+
+  return rc;
+}

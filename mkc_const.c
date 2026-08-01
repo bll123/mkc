@@ -8,6 +8,7 @@ char const * const MKC_C_PROF_NAME_INTERNAL = "internal";
 char const * const MKC_C_PROF_NAME_PATHS = "paths";
 char const * const MKC_C_PROF_NAME_TIMESTAMP = "timestamp";
 /* these are duplicated in mkc_process.c */
+char const * const MKC_C_PATH_GETCONF = "MKC_PATH_GETCONF";
 char const * const MKC_C_PATH_PKGCONF = "MKC_PATH_PKGCONF";
 char const * const MKC_C_PATH_PKGCONFIG = "MKC_PATH_PKG_CONFIG";
 

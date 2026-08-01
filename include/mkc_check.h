@@ -40,6 +40,7 @@ int mkc_chk_library_location (mkc_check_t *check, mkc_compiler_t compiler);
 int mkc_chk_system_id (mkc_check_t *check, mkc_compiler_t compiler);
 int mkc_chk_system_type (mkc_check_t *check, mkc_compiler_t compiler);
 int mkc_chk_variadic_macro (mkc_check_t *check, mkc_compiler_t compiler);
+int mkc_chk_getconf (mkc_check_t *check);
 
 /* user checks */
 int mkc_chk_arg_count (mkc_check_t *check, mkc_compiler_t compiler, const char *funcname);

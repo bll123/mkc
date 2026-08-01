@@ -176,6 +176,7 @@ static void process_save_cache_profile (mkc_process_t *process, FILE *fh, char *
 /* so that the static aggregator can be initialized */
 static char const * const MKC_C_P_PKGCONF = "MKC_PATH_PKGCONF";
 static char const * const MKC_C_P_PKGCONFIG = "MKC_PATH_PKG_CONFIG";
+static char const * const MKC_C_P_GETCONF = "MKC_PATH_GETCONF";
 
 typedef struct mkc_prog_chk_t {
   const char  * program;
@@ -184,6 +185,7 @@ typedef struct mkc_prog_chk_t {
 
 /* these are executables that are used by mkc */
 static mkc_prog_chk_t proglist [] = {
+  { "getconf",      MKC_C_P_GETCONF },
   { "pkgconf",      MKC_C_P_PKGCONF },
   { "pkg-config",   MKC_C_P_PKGCONFIG },
   { NULL,           NULL },
@@ -299,6 +301,7 @@ mkc_process_init (scopedvar_t *scopedvar,
 
   mkc_process_get_path (process);
   mkc_process_find_executables (process);
+  mkc_chk_getconf (process->check);
 
   {
     char    tbuff [40];
