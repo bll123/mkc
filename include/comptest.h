@@ -33,6 +33,8 @@ void comptest_set_compiler (comptest_t *comptest, mkc_compiler_t compiler);
 void comptest_preprocess (comptest_t *comptest);
 void comptest_usetemplate (comptest_t *comptest);
 void comptest_reset (comptest_t *comptest);
+void comptest_append_compflag (comptest_t *comptest, const char *flag);
+void comptest_append_linkflag (comptest_t *comptest, const char *flag);
 
 void comptest_create_header_var (comptest_t *comptest);
 int comptest_test (comptest_t *comptest, ct_type_t ctype, mkc_compiler_t compiler, const char *fname, char *rbuff, size_t rsz);

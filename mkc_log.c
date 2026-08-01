@@ -197,22 +197,22 @@ mkc_log_chararr (mkc_log_t *log, const char *tag, chararr_t *carr)
 
   targv = chararr_get_arr (carr);
   count = 0;
-fprintf (stderr, "%s ", tag);
   mkc_log (log, MKC_LOG_CHECK, "%s ", tag);
+  if (targv == NULL) {
+    mkc_log (log, MKC_LOG_CHECK, "\n");
+    return;
+  }
+
   while (targv [count] != NULL) {
-fprintf (stderr, "%s ", targv [count]);
     mkc_log (log, MKC_LOG_CHECK, "%s ", targv [count]);
     ++count;
   }
-fprintf (stderr, "\n");
   mkc_log (log, MKC_LOG_CHECK, "\n");
   if (count == 0) {
-fprintf (stderr, "invalid count %d\n", count);
     mkc_log (log, MKC_LOG_CHECK, "invalid count %d\n", count);
   }
   csz = chararr_size (carr);
   if (count + 1 != csz) {
-fprintf (stderr, "mismatch count %d %d\n", count + 1, csz);
     mkc_log (log, MKC_LOG_CHECK, "mismatch count %d %d\n", count + 1, csz);
   }
   mkc_log_flush (log);

@@ -158,8 +158,6 @@ target_get_dependencies (target_t *target,
   size_t          rsz;
   int64_t         currtm;
   chararr_t       * cflags;
-  value_t         tvalue;
-  mkc_alternate_t *alt;
 
   currtm = mstime ();
   fts = 0;
@@ -179,23 +177,15 @@ target_get_dependencies (target_t *target,
   }
   *rbuff = '\0';
 
-// cc -MM filepath for basic
-// cc -M filepath for everything
-
-fprintf (stderr, "== get-deps: %s\n", filepath);
-// ### this is not the way to do this...
-  value_init (&tvalue);
-  tvalue.sval = "-MM";
-  tvalue.vtype = MKC_VT_STRING;
-  alt = target->attr->curralt;
-  mkc_list_set (alt->compflags, &tvalue, sizeof (value_t));
-
   cflags = target_get_flags (target, MKC_C_CFLAGS);
+  comptest_append_compflag (target->comptest, "-M");
+  comptest_append_compflag (target->comptest, NULL);
   comptest_preprocess (target->comptest);
   comptest_set_flags (target->comptest, cflags, NULL, NULL);
   rc = comptest_test (target->comptest, MKC_COMPILE_ONLY, compiler,
       filepath, rbuff, rsz);
   comptest_reset (target->comptest);
+fprintf (stderr, "== file: %s\n", filepath);
 fprintf (stderr, "== rbuff: \n%s\n", rbuff);
 
   /* note that the lists loaded from the cache are not sorted */

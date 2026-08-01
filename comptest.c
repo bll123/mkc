@@ -26,8 +26,11 @@ typedef struct comptest_t {
   mkc_error_t       * mkcerr;
   mkc_log_t         * log;
   chararr_t         * compflags;
-  chararr_t         * ldflags;
+  chararr_t         * addcompflags;
+  chararr_t         * linkflags;
+  chararr_t         * addlinkflags;
   chararr_t         * libs;
+  chararr_t         * addlibs;
   chararr_t         * targv;
   mkc_compiler_t    compiler;
   bool              preprocess;
@@ -60,6 +63,18 @@ comptest_init (scopedvar_t *scopedvar,
   comptest->attr = attr;
   comptest->log = log;
   comptest->mkcerr = mkcerr;
+  comptest->addcompflags = chararr_init (mkcerr);
+  if (comptest->addcompflags == NULL) {
+    return NULL;
+  }
+  comptest->addlinkflags = chararr_init (mkcerr);
+  if (comptest->addlinkflags == NULL) {
+    return NULL;
+  }
+  comptest->addlibs = chararr_init (mkcerr);
+  if (comptest->addlibs == NULL) {
+    return NULL;
+  }
 
   comptest->targv = chararr_init (mkcerr);
   if (comptest->targv == NULL) {
@@ -78,19 +93,22 @@ comptest_free (comptest_t *comptest)
   }
 
   chararr_free (comptest->targv);
+  chararr_free (comptest->addcompflags);
+  chararr_free (comptest->addlinkflags);
+  chararr_free (comptest->addlibs);
   free (comptest);
 }
 
 void
 comptest_set_flags (comptest_t *comptest, chararr_t * compflags,
-    chararr_t * ldflags, chararr_t * libs)
+    chararr_t * linkflags, chararr_t * libs)
 {
   if (comptest == NULL) {
     return;
   }
 
   comptest->compflags = compflags;
-  comptest->ldflags = ldflags;
+  comptest->linkflags = linkflags;
   comptest->libs = libs;
   return;
 }
@@ -136,10 +154,13 @@ comptest_reset (comptest_t *comptest)
   }
 
   comptest->compflags = NULL;
-  comptest->ldflags = NULL;
+  comptest->linkflags = NULL;
   comptest->libs = NULL;
 
   chararr_reset (comptest->targv, 0);
+  chararr_reset (comptest->addcompflags, 0);
+  chararr_reset (comptest->addlinkflags, 0);
+  chararr_reset (comptest->addlibs, 0);
   comptest->preprocess = false;
   comptest->usetemplate = false;
 }
@@ -198,11 +219,8 @@ comptest_get_compstr (comptest_t *comptest, mkc_compiler_t compiler,
   value_t       *value;
 
   envstr = compiler_get_env_name (compiler);
-fprintf (stderr, "envstr: %s\n", envstr);
   value = scopedvar_get_value (comptest->scopedvar, SV_T_INTERNAL, envstr);
-fprintf (stderr, "value %d\n", value == NULL ? 0 : 1);
   scopedvar_value_get_str (comptest->scopedvar, value, buff, sz);
-fprintf (stderr, "compstr: %s\n", buff);
   return buff;
 }
 
@@ -321,6 +339,26 @@ comptest_test (comptest_t *comptest, ct_type_t ctype,
   return rc;
 }
 
+void
+comptest_append_compflag (comptest_t *comptest, const char *flag)
+{
+  if (comptest == NULL) {
+    return;
+  }
+
+  chararr_append (comptest->addcompflags, flag);
+}
+
+void
+comptest_append_linkflag (comptest_t *comptest, const char *flag)
+{
+  if (comptest == NULL) {
+    return;
+  }
+
+  chararr_append (comptest->addlinkflags, flag);
+}
+
 /* internal routines */
 
 static int
@@ -381,6 +419,7 @@ compile_only (comptest_t *comptest, mkc_compiler_t compiler,
     stpecpy (tbuff, tbuff + MKC_PATH_MAX, fname);
   }
 
+  comptest_append_flags (comptest, comptest->addcompflags);
   cpreprocess = comptest_append_flags (comptest, comptest->compflags);
 
   alt = comptest->attr->curralt;
@@ -398,7 +437,6 @@ compile_only (comptest_t *comptest, mkc_compiler_t compiler,
   }
   chararr_append (comptest->targv, tbuff);
   comptest_append_list_arg (comptest, alt->linkflags);
-  chararr_append (comptest->targv, NULL);
   if (mkc_error_chk_err (comptest->mkcerr)) {
     free (tbuff);
     free (compstr);
@@ -408,6 +446,7 @@ compile_only (comptest_t *comptest, mkc_compiler_t compiler,
     }
     return MKC_ERR_FAILURE;
   }
+  chararr_append (comptest->targv, NULL);
 
   mkc_log_chararr (comptest->log, "comp-only: cmd:", comptest->targv);
 
@@ -505,7 +544,8 @@ compile_link (comptest_t *comptest, mkc_compiler_t compiler,
   path_build (MKC_PATH_MKCF_TMP, outfile, MKC_PATH_MAX, "mkctest.exe", comptest->mkcerr);
   chararr_append (comptest->targv, outfile);
 
-  comptest_append_flags (comptest, comptest->ldflags);
+  comptest_append_flags (comptest, comptest->addlinkflags);
+  comptest_append_flags (comptest, comptest->linkflags);
 
   alt = comptest->attr->curralt;
   comptest_append_list_arg (comptest, alt->linkflags);
@@ -513,9 +553,10 @@ compile_link (comptest_t *comptest, mkc_compiler_t compiler,
   path_build (MKC_PATH_MKCF_TMP, objfile, MKC_PATH_MAX, "mkctest.o", comptest->mkcerr);
   chararr_append (comptest->targv, objfile);
 
+  comptest_append_flags (comptest, comptest->addlibs);
   comptest_append_flags (comptest, comptest->libs);
-
   chararr_append (comptest->targv, NULL);
+
   if (mkc_error_chk_err (comptest->mkcerr)) {
     if (rallocated) {
       free (rbuff);
@@ -574,11 +615,11 @@ compile_run (comptest_t *comptest, mkc_compiler_t compiler,
   chararr_reset (comptest->targv, 0);
   path_build (MKC_PATH_MKCF_TMP, exefile, MKC_PATH_MAX, "mkctest.exe", comptest->mkcerr);
   chararr_append (comptest->targv, exefile);
-  chararr_append (comptest->targv, NULL);
   if (mkc_error_chk_err (comptest->mkcerr)) {
     free (exefile);
     return MKC_ERR_FAILURE;
   }
+  chararr_append (comptest->targv, NULL);
 
   mkc_log_chararr (comptest->log, "run: cmd:", comptest->targv);
 
@@ -637,20 +678,24 @@ static bool
 comptest_append_flags (comptest_t *comptest, chararr_t *flags)
 {
   bool        cpreprocess = false;
+  const char  *p;
+  const char  **flagarr;
+  int         count = 0;
 
-  if (flags != NULL) {
-    const char  *p;
-    const char  **flagarr;
-    int         count = 0;
+  if (flags == NULL) {
+    return false;
+  }
 
-    flagarr = chararr_get_arr (flags);
+  flagarr = chararr_get_arr (flags);
+  if (flagarr == NULL) {
+    return false;
+  }
 
-    while ((p = flagarr [count++]) != NULL) {
-      if (strcmp (p, "-E") == 0) {
-        cpreprocess = true;
-      }
-      chararr_append (comptest->targv, p);
+  while ((p = flagarr [count++]) != NULL) {
+    if (strcmp (p, "-E") == 0) {
+      cpreprocess = true;
     }
+    chararr_append (comptest->targv, p);
   }
 
   return cpreprocess;

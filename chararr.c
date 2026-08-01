@@ -93,12 +93,15 @@ chararr_append (chararr_t *carr, const char *txt)
   }
 
   if (carr->sz >= carr->allocsz) {
-    carr->allocsz += 10;
+    carr->allocsz += 5;
     carr->targv = realloc (carr->targv,
         carr->allocsz * sizeof (const char *));
     if (carr->targv == NULL) {
       mkc_error_set (carr->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
       return;
+    }
+    for (int i = carr->sz; i < carr->allocsz; ++i) {
+      carr->targv [i] = NULL;
     }
   }
 

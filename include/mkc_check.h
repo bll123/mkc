@@ -32,8 +32,6 @@ int mkc_chk_compiler_works (mkc_check_t *check, mkc_compiler_t compiler);
 int mkc_chk_compiler_id (mkc_check_t *check, mkc_compiler_t compiler);
 
 void mkc_chk_reset (mkc_check_t *check);
-void mkc_chk_append_comp_flag (mkc_check_t *check, const char *flag);
-void mkc_chk_append_link_flag (mkc_check_t *check, const char *flag);
 
 /* internal checks */
 int mkc_chk_header_modern (mkc_check_t *check, mkc_compiler_t compiler);

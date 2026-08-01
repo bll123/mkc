@@ -131,49 +131,15 @@ mkc_chk_compiler_works (mkc_check_t *check, mkc_compiler_t compiler)
 
   /* clang prints the deprecated error when compiling C with */
   /* c++ or objective-c */
-  mkc_chk_append_comp_flag (check, "-Wno-deprecated");
 
   mkc_log (check->log, MKC_LOG_CHECK, "  == chk: compiler-works\n");
   comptest_usetemplate (check->comptest);
-fprintf (stderr, "works\n");
+  comptest_append_compflag (check->comptest, "-Wno-deprecated");
+  comptest_append_compflag (check->comptest, NULL);
   rc = comptest_test (check->comptest, MKC_COMPILE_ONLY, compiler,
       "int-main", NULL, 0);
   comptest_reset (check->comptest);
   return rc;
-}
-
-void
-mkc_chk_append_comp_flag (mkc_check_t *check, const char *flag)
-{
-  value_t           tvalue;
-  mkc_alternate_t   * alt;
-
-  if (check == NULL || flag == NULL) {
-    return;
-  }
-
-  value_init (&tvalue);
-  tvalue.sval = (char *) flag;
-  tvalue.vtype = MKC_VT_STRING;
-  alt = check->attr->curralt;
-  mkc_list_set (alt->compflags, &tvalue, sizeof (value_t));
-}
-
-void
-mkc_chk_append_link_flag (mkc_check_t *check, const char *flag)
-{
-  value_t           tvalue;
-  mkc_alternate_t   * alt;
-
-  if (check == NULL || flag == NULL) {
-    return;
-  }
-
-  value_init (&tvalue);
-  tvalue.sval = (char *) flag;
-  tvalue.vtype = MKC_VT_STRING;
-  alt = check->attr->curralt;
-  mkc_list_set (alt->linkflags, &tvalue, sizeof (value_t));
 }
 
 int
@@ -183,7 +149,6 @@ mkc_chk_header_modern (mkc_check_t *check, mkc_compiler_t compiler)
 
   mkc_log (check->log, MKC_LOG_CHECK, "  == chk: header-modern\n");
   comptest_usetemplate (check->comptest);
-fprintf (stderr, "hdr-modern\n");
   rc = comptest_test (check->comptest, MKC_COMPILE_ONLY, compiler,
       "int-header-modern", NULL, 0);
   comptest_reset (check->comptest);
@@ -210,7 +175,6 @@ mkc_chk_system_type (mkc_check_t *check, mkc_compiler_t compiler)
   chararr_append (check->flags, NULL);
   comptest_set_flags (check->comptest, check->flags, NULL, NULL);
   comptest_usetemplate (check->comptest);
-fprintf (stderr, "system\n");
   rc = comptest_test (check->comptest, MKC_COMPILE_RUN, compiler,
       "int-system", NULL, 0);
   comptest_reset (check->comptest);
@@ -237,7 +201,6 @@ mkc_chk_system_id (mkc_check_t *check, mkc_compiler_t compiler)
   chararr_append (check->flags, NULL);
   comptest_set_flags (check->comptest, check->flags, NULL, NULL);
   comptest_usetemplate (check->comptest);
-fprintf (stderr, "sys-id\n");
   rc = comptest_test (check->comptest, MKC_COMPILE_RUN, compiler,
       "int-sysid", NULL, 0);
   comptest_reset (check->comptest);
@@ -253,7 +216,6 @@ mkc_chk_variadic_macro (mkc_check_t *check, mkc_compiler_t compiler)
 
   mkc_log (check->log, MKC_LOG_CHECK, "  == chk: variadic-macro\n");
   comptest_usetemplate (check->comptest);
-fprintf (stderr, "variadic\n");
   rc = comptest_test (check->comptest, MKC_COMPILE_RUN, compiler,
       "int-variadic-macro", NULL, 0);
   comptest_reset (check->comptest);
@@ -282,7 +244,6 @@ mkc_chk_library_location (mkc_check_t *check, mkc_compiler_t compiler)
   chararr_append (check->flags, NULL);
   comptest_set_flags (check->comptest, check->flags, NULL, NULL);
   comptest_usetemplate (check->comptest);
-fprintf (stderr, "libloc\n");
   rc = comptest_test (check->comptest, MKC_COMPILE_RUN, compiler,
       "int-libloc", NULL, 0);
   comptest_reset (check->comptest);
@@ -309,7 +270,6 @@ mkc_chk_compiler_id (mkc_check_t *check, mkc_compiler_t compiler)
   chararr_append (check->flags, NULL);
   comptest_set_flags (check->comptest, check->flags, NULL, NULL);
   comptest_usetemplate (check->comptest);
-fprintf (stderr, "comp-id\n");
   rc = comptest_test (check->comptest, MKC_COMPILE_RUN, compiler,
       "int-compid", NULL, 0);
   comptest_reset (check->comptest);
@@ -375,7 +335,6 @@ mkc_chk_arg_count (mkc_check_t *check, mkc_compiler_t compiler,
 
   comptest_preprocess (check->comptest);
   comptest_usetemplate (check->comptest);
-fprintf (stderr, "argcount\n");
   rc = comptest_test (check->comptest, MKC_COMPILE_ONLY, compiler,
       "c-argcount", rbuff, rsz);
   comptest_reset (check->comptest);
@@ -456,10 +415,10 @@ mkc_chk_compiler_flag (mkc_check_t *check,
     }
   }
 
-  mkc_chk_append_comp_flag (check, tbuff);
   comptest_set_flags (check->comptest, NULL, NULL, NULL);
   comptest_usetemplate (check->comptest);
-fprintf (stderr, "c-main\n");
+  comptest_append_compflag (check->comptest, tbuff);
+  comptest_append_compflag (check->comptest, NULL);
   rc = comptest_test (check->comptest, MKC_COMPILE_ONLY, compiler,
       "c-main", rbuff, rsz);
   comptest_reset (check->comptest);
@@ -485,7 +444,6 @@ mkc_chk_const (mkc_check_t *check,
   scopedvar_set_str (check->scopedvar, SV_T_LOCAL, "MKC_TV_TEST_CONSTANT", consttxt, MKC_VCTXT_TEMP);
 
   comptest_usetemplate (check->comptest);
-fprintf (stderr, "c-const\n");
   rc = comptest_test (check->comptest, MKC_COMPILE_ONLY, compiler,
       "c-const", NULL, 0);
   comptest_reset (check->comptest);
@@ -503,7 +461,6 @@ mkc_chk_define (mkc_check_t *check,
   scopedvar_set_str (check->scopedvar, SV_T_LOCAL, "MKC_TV_TEST_DEFINE", def, MKC_VCTXT_TEMP);
 
   comptest_usetemplate (check->comptest);
-fprintf (stderr, "c-define\n");
   rc = comptest_test (check->comptest, MKC_COMPILE_ONLY, compiler,
       "c-define", NULL, 0);
   comptest_reset (check->comptest);
@@ -650,10 +607,10 @@ mkc_chk_link_flag (mkc_check_t *check,
     return MKC_ERR_FAILURE;
   }
 
-  mkc_chk_append_link_flag (check, flag);
   mkc_log (check->log, MKC_LOG_CHECK, "== chk: link-flag: %s\n", flag);
+  comptest_append_linkflag (check->comptest, flag);
+  comptest_append_linkflag (check->comptest, NULL);
   comptest_usetemplate (check->comptest);
-fprintf (stderr, "chk-link\n");
   rc = comptest_test (check->comptest, MKC_COMPILE_LINK, compiler,
       "c-main", rbuff, MKC_PATH_MAX);
   comptest_reset (check->comptest);
@@ -678,7 +635,6 @@ mkc_chk_size (mkc_check_t *check,
   scopedvar_set_str (check->scopedvar, SV_T_LOCAL, "MKC_TV_TEST_SIZE", type, MKC_VCTXT_TEMP);
 
   comptest_usetemplate (check->comptest);
-fprintf (stderr, "c-size\n");
   rc = comptest_test (check->comptest, MKC_COMPILE_RUN, compiler,
       "c-size", NULL, 0);
   comptest_reset (check->comptest);
@@ -699,7 +655,6 @@ mkc_chk_type (mkc_check_t *check,
   scopedvar_set_str (check->scopedvar, SV_T_LOCAL, "MKC_TV_TEST_TYPE", type, MKC_VCTXT_TEMP);
 
   comptest_usetemplate (check->comptest);
-fprintf (stderr, "c-type\n");
   rc = comptest_test (check->comptest, MKC_COMPILE_ONLY, compiler,
       "c-type", NULL, 0);
   comptest_reset (check->comptest);
@@ -720,7 +675,6 @@ mkc_chk_struct_member (mkc_check_t *check,
   scopedvar_set_str (check->scopedvar, SV_T_LOCAL, "MKC_TV_TEST_STRUCT_MEMBER", membername, MKC_VCTXT_TEMP);
 
   comptest_usetemplate (check->comptest);
-fprintf (stderr, "c-member\n");
   rc = comptest_test (check->comptest, MKC_COMPILE_ONLY, compiler,
       "c-struct-member", NULL, 0);
   comptest_reset (check->comptest);
@@ -739,7 +693,6 @@ mkc_chk_function (mkc_check_t *check, mkc_compiler_t compiler,
   scopedvar_set_str (check->scopedvar, SV_T_LOCAL, "MKC_TV_TEST_FUNCTION_NAME", funcname, MKC_VCTXT_TEMP);
 
   comptest_usetemplate (check->comptest);
-fprintf (stderr, "c-function\n");
   rc = comptest_test (check->comptest, MKC_COMPILE_LINK, compiler,
       "c-function", NULL, 0);
   comptest_reset (check->comptest);
@@ -768,7 +721,6 @@ mkc_chk_header (mkc_check_t *check, mkc_compiler_t compiler,
 
   comptest_set_flags (check->comptest, compflags, ldflags, NULL);
   comptest_usetemplate (check->comptest);
-fprintf (stderr, "c-header\n");
   rc = comptest_test (check->comptest, MKC_COMPILE_LINK, compiler,
       "c-header", NULL, 0);
   comptest_reset (check->comptest);
