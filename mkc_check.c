@@ -47,7 +47,6 @@ typedef struct mkc_check_t {
 
 static mkc_err_code_t mkc_chk_env_var_set (mkc_check_t *check, const char *nm);
 static int mkc_chk_package_exec (mkc_check_t *check, const char *pkgconfpath, const char *flag, const char *pkg, int targc, const char * targv [], char *rbuff, size_t rsz, const char *name);
-static int mkc_chk_getconf_exec (mkc_check_t *check, const char *getconfpath, const char *name, char *buff, size_t bsz);
 
 MKC_NODISCARD
 mkc_check_t *
@@ -308,52 +307,30 @@ int
 mkc_chk_getconf (mkc_check_t *check)
 {
   int     rc = MKC_ERR_FAILURE;
-  char    * getconfpath;
-  value_t * value;
-  char    * flag;
+#if _function_confstr
+  char    flag [MKC_VNAME_MAX];
 
-  value = scopedvar_get_value (check->scopedvar, SV_T_INTERNAL, MKC_C_PATH_GETCONF);
-  if (value == NULL) {
-    /* no getconf executable was found */
-    return MKC_OK;
-  }
-
-  getconfpath = malloc (MKC_PATH_MAX);
-  if (getconfpath  == NULL) {
-    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return rc;
-  }
-  *getconfpath = '\0';
-
-  scopedvar_value_get_str (check->scopedvar, value, getconfpath, MKC_PATH_MAX);
-
-  flag = malloc (MKC_VNAME_MAX);
-  if (flag == NULL) {
-    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    free (getconfpath);
-    return rc;
-  }
   *flag = '\0';
-
-  rc = mkc_chk_getconf_exec (check, getconfpath, "LFS_CFLAGS", flag, MKC_VNAME_MAX);
+  confstr (_CS_LFS_CFLAGS, flag, sizeof (flag));
   if (*flag) {
     scopedvar_append_str_list (check->scopedvar, SV_T_ACTIVE,
         MKC_C_CFLAGS, flag, MKC_VCTXT_MKC);
   }
 
   *flag = '\0';
-  rc = mkc_chk_getconf_exec (check, getconfpath, "LFS_LDFLAGS", flag, MKC_VNAME_MAX);
+  confstr (_CS_LFS_LDFLAGS, flag, sizeof (flag));
   if (*flag) {
     scopedvar_append_str_list (check->scopedvar, SV_T_ACTIVE,
         MKC_C_LDFLAGS, flag, MKC_VCTXT_MKC);
   }
 
   *flag = '\0';
-  rc = mkc_chk_getconf_exec (check, getconfpath, "LFS_LIBS", flag, MKC_VNAME_MAX);
+  confstr (_CS_LFS_LDFLAGS, flag, sizeof (flag));
   if (*flag) {
     scopedvar_append_str_list (check->scopedvar, SV_T_ACTIVE,
         MKC_C_LIBS, flag, MKC_VCTXT_MKC);
   }
+#endif
 
   return rc;
 }
@@ -899,25 +876,3 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkgconfpath,
   return rc;
 }
 
-static int
-mkc_chk_getconf_exec (mkc_check_t *check, const char *getconfpath,
-   const char *name, char *buff, size_t bsz)
-{
-  int         rc = MKC_ERR_FAILURE;
-  int         targc = 0;
-  const char  * targv [10];
-  size_t      retsz;
-
-  targv [targc++] = getconfpath;
-  targv [targc++] = name;
-  targv [targc++] = NULL;
-  mkc_log_command (check->log, "getconf: cmd: ", targc, targv);
-
-  rc = os_process_pipe (targv,
-      OS_PROC_WAIT | OS_PROC_NOWINDOW, buff, bsz, &retsz);
-  str_trim (buff, retsz);
-  mkc_log (check->log, MKC_LOG_CHECK, "getconf: %s\n", name);
-  mkc_log (check->log, MKC_LOG_CHECK, "  rc: %d\n", rc);
-
-  return rc;
-}

@@ -17,6 +17,9 @@ check_package 'libpcre2-8' {
   name pcre;
 }
 
+check_function confstr {
+  header unistd.h;
+}
 check_function geteuid {
   header unistd.h;
 }
