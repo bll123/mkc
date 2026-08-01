@@ -197,7 +197,7 @@ other-all:
 
 # topochk
 .PHONY: real-all
-real-all: mkc
+real-all: mkc topochk
 
 # the MKCOBJECTS variable is re-generated
 # be sure it is followed by a blank line

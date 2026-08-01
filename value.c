@@ -98,26 +98,29 @@ value_to_str (value_t *value, char *buff, size_t sz)
       mkc_list_t    *tlist;
       mkc_listidx_t iteridx;
       mkc_listidx_t lidx;
-      value_t   *tvalue;
+      value_t       *tvalue;
       char          tbuff [MKC_PATH_MAX];
       char          *p;
+      char          *eptr;
 
-      p = stpecpy (buff, buff + sz, "[ ");
+      eptr = buff + sz;
+      p = stpecpy (buff, eptr, "[");
       tlist = value->list;
       mkc_list_iter_start (tlist, &iteridx);
       while ((lidx = mkc_list_iter_next (tlist, &iteridx)) != MKC_ITER_FINISH) {
+        p = stpecpy (p, eptr, "\n");
         tvalue = mkc_list_get_by_idx (tlist, lidx);
+        p = stpecpy (p, eptr, "        ");
         value_to_str (tvalue, tbuff, sizeof (tbuff));
         if (value_is_string_type (tvalue)) {
-          p = stpecpy (p, buff + sz, "'");
+          p = stpecpy (p, eptr, "'");
         }
-        p = stpecpy (p, buff + sz, tbuff);
+        p = stpecpy (p, eptr, tbuff);
         if (value_is_string_type (tvalue)) {
-          p = stpecpy (p, buff + sz, "'");
+          p = stpecpy (p, eptr, "'");
         }
-        p = stpecpy (p, buff + sz, " ");
       }
-      p = stpecpy (p, buff + sz, "]");
+      p = stpecpy (p, eptr, " ]");
       break;
     }
     case MKC_VT_STRING:

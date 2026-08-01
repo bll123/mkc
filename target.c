@@ -114,6 +114,10 @@ target_get_flags (target_t *target, const char *flagname)
     mkc_listidx_t   fidx;
     sv_type_t       svtype;
 
+    if (mkc_error_chk_err (target->mkcerr)) {
+      break;
+    }
+
     svtype = scopedvar_iter_get_type (scopedvar, sviter);
     value = scopedvar_get_value (scopedvar, svtype, flagname);
     if (value == NULL || value->vtype != MKC_VT_LIST) {
@@ -123,6 +127,10 @@ target_get_flags (target_t *target, const char *flagname)
     mkc_list_iter_start (value->list, &fiter);
     while ((fidx = mkc_list_iter_next (value->list, &fiter)) != MKC_ITER_FINISH) {
       value_t   *fval;
+
+      if (mkc_error_chk_err (target->mkcerr)) {
+        break;
+      }
 
       fval = mkc_list_get_by_idx (value->list, fidx);
       scopedvar_value_get_str (scopedvar, fval, str, MKC_PATH_MAX);
@@ -158,6 +166,9 @@ target_get_dependencies (target_t *target,
   size_t          rsz;
   int64_t         currtm;
   chararr_t       * cflags;
+  char            * tokstr;
+  char            * p;
+  bool            first = true;
 
   currtm = mstime ();
   fts = 0;
@@ -185,20 +196,46 @@ target_get_dependencies (target_t *target,
   rc = comptest_test (target->comptest, MKC_COMPILE_ONLY, compiler,
       filepath, rbuff, rsz);
   comptest_reset (target->comptest);
-fprintf (stderr, "== file: %s\n", filepath);
-fprintf (stderr, "== rbuff: \n%s\n", rbuff);
+  if (rc != MKC_OK) {
+    return;
+  }
 
   /* note that the lists loaded from the cache are not sorted */
   /* since they are supposedly complete, they should not need to be searched */
   /* and processing should work.  this may need to be re-visited later */
 
-  /* keep the dependency list sorted so that duplicates can be found */
   /* any existing list must be cleared, so set the variable to an empty list */
 
-  elist = mkc_list_init (MKC_LIST_SORTED, NULL, value_str_compare, target->mkcerr);
+  elist = mkc_list_init (MKC_LIST_UNSORTED, NULL, value_str_compare, target->mkcerr);
   scopedvar_set_list (target->scopedvar, SV_T_DEPENDENCY,
       filename, elist, MKC_VCTXT_MKC);
   mkc_list_free (elist);
+
+  p = str_token (rbuff, " ", &tokstr);
+
+  while (p != NULL) {
+    char    *tp;
+
+    if (mkc_error_chk_err (target->mkcerr)) {
+      break;
+    }
+
+    if (*p != '\\' && ! first) {
+      str_trim (p, 0);
+      tp = strrchr (p, '/');
+      if (tp == NULL) {
+        tp = p;
+      } else {
+        tp += 1;
+      }
+      if (strcmp (filename, tp) != 0) {
+        scopedvar_append_str_list (target->scopedvar, SV_T_DEPENDENCY,
+            filename, p, MKC_VCTXT_MKC);
+      }
+    }
+    p = str_token (NULL, " ", &tokstr);
+    first = false;
+  }
 
   /* set the timestamp when the file is processed */
   /* convert to ms for comparison to the real time */
