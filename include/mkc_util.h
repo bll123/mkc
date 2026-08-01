@@ -11,7 +11,7 @@ extern "C" {
 #endif
 
 bool mkc_flag_is_libloc (const char *str);
-void mkc_flags_free (char **flags);
+void mkc_chararr_free (char **flags);
 
 #if defined (__cplusplus) || defined (c_plusplus)
 }

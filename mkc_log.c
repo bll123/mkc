@@ -11,6 +11,7 @@
 #include <string.h>
 #include <errno.h>
 
+#include "chararr.h"
 #include "mkc_error.h"
 #include "fileop.h"
 #include "mkc_log.h"
@@ -188,23 +189,31 @@ mkc_log_flush (mkc_log_t *log)
 }
 
 void
-mkc_log_command (mkc_log_t *log, const char *tag,
-    int targc, const char * targv [])
+mkc_log_chararr (mkc_log_t *log, const char *tag, chararr_t *carr)
 {
-  int   count;
+  int           count;
+  int           csz;
+  const char    **targv;
 
+  targv = chararr_get_arr (carr);
   count = 0;
-  mkc_log (log, MKC_LOG_CHECK, "%s: ", tag);
+fprintf (stderr, "%s ", tag);
+  mkc_log (log, MKC_LOG_CHECK, "%s ", tag);
   while (targv [count] != NULL) {
+fprintf (stderr, "%s ", targv [count]);
     mkc_log (log, MKC_LOG_CHECK, "%s ", targv [count]);
     ++count;
   }
+fprintf (stderr, "\n");
   mkc_log (log, MKC_LOG_CHECK, "\n");
   if (count == 0) {
+fprintf (stderr, "invalid count %d\n", count);
     mkc_log (log, MKC_LOG_CHECK, "invalid count %d\n", count);
   }
-  if (count + 1 != targc) {
-    mkc_log (log, MKC_LOG_CHECK, "mismatch count %d %d\n", count + 1, targc);
+  csz = chararr_size (carr);
+  if (count + 1 != csz) {
+fprintf (stderr, "mismatch count %d %d\n", count + 1, csz);
+    mkc_log (log, MKC_LOG_CHECK, "mismatch count %d %d\n", count + 1, csz);
   }
   mkc_log_flush (log);
 }

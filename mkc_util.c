@@ -9,6 +9,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "mkc_util.h"
+
 bool
 mkc_flag_is_libloc (const char *str)
 {
@@ -20,22 +22,3 @@ mkc_flag_is_libloc (const char *str)
   return false;
 }
 
-void
-mkc_flags_free (char **flags)
-{
-  char      *p;
-  int       c;
-
-  if (flags == NULL) {
-    return;
-  }
-
-  c = 0;
-  p = flags [c];
-  while (p != NULL) {
-    free (p);
-    ++c;
-    p = flags [c];
-  }
-  free (flags);
-}

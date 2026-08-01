@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <time.h>
 
+#include "chararr.h"
 #include "mkc_error.h"
 #include "mkc_nodiscard.h"
 
@@ -52,7 +53,7 @@ void mkc_log_loc (mkc_log_t *log, int32_t logflag, int32_t lineno, int col, cons
 void mkc_error_disp (mkc_error_t mkcerr);
 void mkc_log_set_disp_filename (mkc_log_t *log, const char *fname);
 void mkc_log_flush (mkc_log_t *log);
-void mkc_log_command (mkc_log_t *log, const char *tag, int targc, const char * targv []);
+void mkc_log_chararr (mkc_log_t *log, const char *tag, chararr_t *carr);
 
 #if defined (__cplusplus) || defined (c_plusplus)
 }

@@ -21,6 +21,7 @@
 #include "alternate.h"
 #include "asttoken.h"
 #include "attribute.h"
+#include "chararr.h"
 #include "comptest.h"
 #include "envutil.h"
 #include "fileop.h"
@@ -39,6 +40,7 @@
 #include "mkc_var.h"      // for debugging
 #include "pathutil.h"
 #include "scopedvar.h"
+#include "target.h"
 #include "tmutil.h"
 #include "toposort.h"
 #include "value.h"
@@ -73,6 +75,7 @@ typedef struct mkc_process_t {
   comptest_t        * comptest;
   mkc_check_t       * check;
   mkc_context_t     * context;
+  target_t          * target;
   mkc_error_t       * mkcerr;
   mkc_log_t         * log;
   mkc_option_t      * mkcoptions;
@@ -218,8 +221,6 @@ static mkc_list_t * mkc_process_get_include_list (mkc_process_t *process, mkc_re
 static const char * mkc_process_iter_includes (mkc_process_t *process, mkc_list_t *hlist, mkc_listidx_t *hiteridx, char *hdr, size_t hsz);
 static void mkc_process_attr_flags (mkc_process_t *process, value_t *value, mkc_list_t *flags, bool inlist);
 static void mkc_process_source_file (mkc_process_t *process, const char *target, const char *srcfn);
-static char ** mkc_process_get_flags (mkc_process_t *process, const char *flagname);
-static bool mkc_process_chk_last_libloc (char *lastlibloc, size_t sz, const char *str);
 
 
 MKC_NODISCARD
@@ -242,6 +243,7 @@ mkc_process_init (scopedvar_t *scopedvar,
   process->context = context;
   process->mkcoptions = mkcoptions;
   process->check = NULL;
+  process->target = NULL;
   process->objext = ".o";
   process->exeext = "";
   process->projectname = NULL;
@@ -292,6 +294,13 @@ mkc_process_init (scopedvar_t *scopedvar,
     return NULL;
   }
 
+  process->target = target_init (process->scopedvar, process->comptest,
+      &process->attr, log, mkcerr);
+  if (process->target == NULL) {
+    mkc_process_free (process);
+    return NULL;
+  }
+
   mkc_process_set_defaults (process);
   rc = mkc_process_int_checks (process);
   if (rc < 0) {
@@ -331,6 +340,9 @@ mkc_process_free (mkc_process_t *process)
   }
   if (process->comptest != NULL) {
     comptest_free (process->comptest);
+  }
+  if (process->target != NULL) {
+    target_free (process->target);
   }
   datafree (process->projectname);
 
@@ -806,15 +818,15 @@ mkc_process_stmt_foreach_finish (mkc_process_t *process, mkc_foreach_t *pforeach
 int
 mkc_process_stmt_chk_inc_compile (mkc_process_t *process)
 {
-  int             rc = MKC_ERR_FAILURE;
+  int               rc = MKC_ERR_FAILURE;
 #if _have_regex
   mkc_list_t        * hlist = NULL;
   mkc_listidx_t     hiteridx;
   char              * hdrpath;
   const char        * hdr;
-  char              ** cflags = NULL;
-  char              ** ldflags = NULL;
-  int64_t          ts;
+  chararr_t         * cflags = NULL;
+  chararr_t         * ldflags = NULL;
+  int64_t           ts;
   int               count = 0;
   mkc_user_regex_t  *urx;
 
@@ -847,8 +859,8 @@ mkc_process_stmt_chk_inc_compile (mkc_process_t *process)
 
   process->attr.localheader = true;
   process->attr.printerrors = true;
-  cflags = mkc_process_get_flags (process, MKC_C_CFLAGS);
-  ldflags = mkc_process_get_flags (process, MKC_C_LDFLAGS);
+  cflags = target_get_flags (process->target, MKC_C_CFLAGS);
+  ldflags = target_get_flags (process->target, MKC_C_LDFLAGS);
 
   ts = 0;
   if (scopedvar_is_defined (process->scopedvar, SV_T_INTERNAL,
@@ -867,7 +879,7 @@ mkc_process_stmt_chk_inc_compile (mkc_process_t *process)
 
     count += 1;
     rc = mkc_chk_header (process->check, process->attr.currcompiler, hdr,
-        (const char **) cflags, (const char **) ldflags);
+        cflags, ldflags);
     if (rc != MKC_OK) {
       mkc_error_set (process->mkcerr, MKC_ERR_INCLUDE_COMPILE_FAIL, 0, hdrpath);
       break;
@@ -888,8 +900,8 @@ mkc_process_stmt_chk_inc_compile (mkc_process_t *process)
         mkc_success_msg (rc), count);
   }
 
-  mkc_flags_free (cflags);
-  mkc_flags_free (ldflags);
+  chararr_free (cflags);
+  chararr_free (ldflags);
   mkc_list_free (hlist);
   free (hdrpath);
 #endif
@@ -3199,7 +3211,7 @@ mkc_process_topo_add_deps (mkc_process_t *process,
   mkc_listidx_t   didx;
   value_t         tvalue;
 
-  mkc_check_get_include_deps (process->check,
+  target_get_dependencies (process->target,
       process->attr.currcompiler, filename, filepath);
 
   mkc_log (process->log, MKC_LOG_CHECK, "  %s : ", filename);
@@ -3340,99 +3352,6 @@ mkc_process_iter_includes (mkc_process_t *process, mkc_list_t *hlist,
   }
 
   return NULL;
-}
-
-static char **
-mkc_process_get_flags (mkc_process_t *process, const char *flagname)
-{
-  mkc_list_t      *tlist;
-  char            **flags = NULL;
-  int             fsz = 0;
-  int             fallocsz = 0;
-  char            *lastlibloc;
-  char            *str;
-  scopedvar_t     *scopedvar;
-  sv_iter_t       *sviter = NULL;
-  const char      *profnm;
-
-  lastlibloc = malloc (MKC_PATH_MAX);
-  if (lastlibloc == NULL) {
-    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return NULL;
-  }
-  *lastlibloc = '\0';
-
-  str = malloc (MKC_PATH_MAX);
-  if (str == NULL) {
-    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return NULL;
-  }
-  *str = '\0';
-
-  tlist = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, process->mkcerr);
-
-  scopedvar = process->scopedvar;
-
-  sviter = scopedvar_iter_start (scopedvar, SV_ITER_HIERARCHY);
-  while ((profnm = scopedvar_iter_next (scopedvar, sviter)) != NULL) {
-    value_t         *value = NULL;
-    mkc_listidx_t   fiter;
-    mkc_listidx_t   fidx;
-    sv_type_t       svtype;
-
-
-    svtype = scopedvar_iter_get_type (scopedvar, sviter);
-    value = scopedvar_get_value (scopedvar, svtype, flagname);
-    if (value == NULL || value->vtype != MKC_VT_LIST) {
-      continue;
-    }
-
-    mkc_list_iter_start (value->list, &fiter);
-    while ((fidx = mkc_list_iter_next (value->list, &fiter)) != MKC_ITER_FINISH) {
-      value_t   *fval;
-
-      fval = mkc_list_get_by_idx (value->list, fidx);
-      scopedvar_value_get_str (scopedvar, fval, str, MKC_PATH_MAX);
-      if (! *str) {
-        continue;
-      }
-      if (mkc_process_chk_last_libloc (lastlibloc, MKC_PATH_MAX, str)) {
-        /* de-duplication check */
-        continue;
-      }
-
-      if (fsz >= fallocsz) {
-        fallocsz += 10;
-        /* always make room for a trailing NULL */
-        flags = realloc (flags, sizeof (char *) * (fallocsz + 1));
-      }
-      flags [fsz + 1] = NULL;
-      flags [fsz] = strdup (str);
-      fsz += 1;
-    }
-  }
-  scopedvar_iter_finish (sviter);
-
-  mkc_list_free (tlist);
-  free (lastlibloc);
-  free (str);
-
-  return flags;
-}
-
-static bool
-mkc_process_chk_last_libloc (char *lastlibloc, size_t sz, const char *str)
-{
-  if (! mkc_flag_is_libloc (str)) {
-    return false;
-  }
-
-  if (strcmp (lastlibloc, str) == 0) {
-    return true;
-  }
-
-  stpecpy (lastlibloc, lastlibloc + sz, str);
-  return false;
 }
 
 static void

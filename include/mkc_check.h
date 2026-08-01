@@ -8,6 +8,7 @@
 #include <stdbool.h>
 
 #include "attribute.h"
+#include "chararr.h"
 #include "comptest.h"
 #include "mkc_compiler.h"
 #include "mkc_error.h"
@@ -48,7 +49,7 @@ int mkc_chk_compiler_flag (mkc_check_t *check, mkc_compiler_t compiler, const ch
 int mkc_chk_const (mkc_check_t *check, mkc_compiler_t compiler, const char *consttxt);
 int mkc_chk_define (mkc_check_t *check, mkc_compiler_t compiler, const char *def);
 int mkc_chk_function (mkc_check_t *check, mkc_compiler_t compiler, const char *funcname);
-int mkc_chk_header (mkc_check_t *check, mkc_compiler_t compiler, const char *header, const char * compflags [], const char * ldflags []);
+int mkc_chk_header (mkc_check_t *check, mkc_compiler_t compiler, const char *header, chararr_t * compflags, chararr_t * ldflags);
 int mkc_chk_link_flag (mkc_check_t *check, mkc_compiler_t compiler, const char *flag);
 int mkc_chk_package (mkc_check_t *check, mkc_compiler_t compiler, const char *pkg);
 int mkc_chk_size (mkc_check_t *check, mkc_compiler_t compiler, const char *type);

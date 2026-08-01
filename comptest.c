@@ -25,13 +25,13 @@ typedef struct comptest_t {
   mkc_attribute_t   * attr;
   mkc_error_t       * mkcerr;
   mkc_log_t         * log;
-  const char        ** compflags;
-  const char        ** ldflags;
-  const char        ** libs;
-  const char        ** targv;
-  int               targc;
-  int               targvallocsz;
+  chararr_t         * compflags;
+  chararr_t         * ldflags;
+  chararr_t         * libs;
+  chararr_t         * targv;
   mkc_compiler_t    compiler;
+  bool              preprocess;
+  bool              usetemplate;
 } comptest_t;
 
 static char const * const MKC_C_TEST_HDR_LIST = "MKC_TV_TEST_HEADER_LIST";
@@ -42,7 +42,7 @@ static int compile_only (comptest_t *comptest, mkc_compiler_t compiler, const ch
 static int compile_link (comptest_t *comptest, mkc_compiler_t compiler, const char *fname, char *rbuff, size_t rsz);
 static int compile_run (comptest_t *comptest, mkc_compiler_t compiler, const char *fname, char *rbuff, size_t rsz);
 static void comptest_append_list_arg (comptest_t *comptest, mkc_list_t *list);
-static bool comptest_append_flags (comptest_t *comptest, const char *flags []);
+static bool comptest_append_flags (comptest_t *comptest, chararr_t *flags);
 
 comptest_t *
 comptest_init (scopedvar_t *scopedvar,
@@ -61,15 +61,10 @@ comptest_init (scopedvar_t *scopedvar,
   comptest->log = log;
   comptest->mkcerr = mkcerr;
 
-  comptest->targv = NULL;
-  comptest->targc = 0;
-  comptest->targvallocsz = 10;
-  comptest->targv = realloc (comptest->targv,
-        comptest->targvallocsz * sizeof (const char *));
+  comptest->targv = chararr_init (mkcerr);
   if (comptest->targv == NULL) {
-    mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return NULL;
   }
-
   comptest_reset (comptest);
 
   return comptest;
@@ -82,12 +77,13 @@ comptest_free (comptest_t *comptest)
     return;
   }
 
-  free (comptest->targv);
+  chararr_free (comptest->targv);
   free (comptest);
 }
 
 void
-comptest_set_flags (comptest_t *comptest, const char *compflags [], const char *ldflags [], const char *libs [])
+comptest_set_flags (comptest_t *comptest, chararr_t * compflags,
+    chararr_t * ldflags, chararr_t * libs)
 {
   if (comptest == NULL) {
     return;
@@ -111,6 +107,28 @@ comptest_set_compiler (comptest_t *comptest, mkc_compiler_t compiler)
 }
 
 void
+comptest_preprocess (comptest_t *comptest)
+{
+  if (comptest == NULL) {
+    return;
+  }
+
+  comptest->preprocess = true;
+  return;
+}
+
+void
+comptest_usetemplate (comptest_t *comptest)
+{
+  if (comptest == NULL) {
+    return;
+  }
+
+  comptest->usetemplate = true;
+  return;
+}
+
+void
 comptest_reset (comptest_t *comptest)
 {
   if (comptest == NULL) {
@@ -121,29 +139,9 @@ comptest_reset (comptest_t *comptest)
   comptest->ldflags = NULL;
   comptest->libs = NULL;
 
-  comptest->targv [0] = NULL;
-  comptest->targc = 0;
-}
-
-void
-comptest_append_arg (comptest_t *comptest, const char *arg)
-{
-  if (comptest == NULL) {
-    return;
-  }
-
-  if (comptest->targc >= comptest->targvallocsz) {
-    comptest->targvallocsz += 10;
-    comptest->targv = realloc (comptest->targv,
-        comptest->targvallocsz * sizeof (const char *));
-    if (comptest->targv == NULL) {
-      mkc_error_set (comptest->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-      return;
-    }
-  }
-
-  comptest->targv [comptest->targc] = arg;
-  comptest->targc += 1;
+  chararr_reset (comptest->targv, 0);
+  comptest->preprocess = false;
+  comptest->usetemplate = false;
 }
 
 void
@@ -200,8 +198,11 @@ comptest_get_compstr (comptest_t *comptest, mkc_compiler_t compiler,
   value_t       *value;
 
   envstr = compiler_get_env_name (compiler);
+fprintf (stderr, "envstr: %s\n", envstr);
   value = scopedvar_get_value (comptest->scopedvar, SV_T_INTERNAL, envstr);
+fprintf (stderr, "value %d\n", value == NULL ? 0 : 1);
   scopedvar_value_get_str (comptest->scopedvar, value, buff, sz);
+fprintf (stderr, "compstr: %s\n", buff);
   return buff;
 }
 
@@ -250,8 +251,6 @@ comptest_file_sub_copy (comptest_t *comptest,
   free (ndata);
   free (fbuff);
 }
-
-/* internal routines */
 
 int
 comptest_test (comptest_t *comptest, ct_type_t ctype,
@@ -322,6 +321,8 @@ comptest_test (comptest_t *comptest, ct_type_t ctype,
   return rc;
 }
 
+/* internal routines */
+
 static int
 compile_only (comptest_t *comptest, mkc_compiler_t compiler,
     const char *fname, char *rbuff, size_t rsz)
@@ -370,26 +371,34 @@ compile_only (comptest_t *comptest, mkc_compiler_t compiler,
   }
 
   comptest_get_compstr (comptest, compiler, compstr, MKC_PATH_MAX);
-  sfx = compiler_get_suffix (compiler);
-// ### will need to be fixed, the original suffix may change
-  comptest_file_sub_copy (comptest, tbuff, MKC_PATH_MAX, fname, ".c", sfx);
+  chararr_append (comptest->targv, compstr);
 
-  comptest->targc = 0;
-  comptest_append_arg (comptest, compstr);
+  if (comptest->usetemplate) {
+    sfx = compiler_get_suffix (compiler);
+// ### will need to be fixed, the original suffix may change
+    comptest_file_sub_copy (comptest, tbuff, MKC_PATH_MAX, fname, ".c", sfx);
+  } else {
+    stpecpy (tbuff, tbuff + MKC_PATH_MAX, fname);
+  }
+
   cpreprocess = comptest_append_flags (comptest, comptest->compflags);
 
   alt = comptest->attr->curralt;
   comptest_append_list_arg (comptest, alt->compflags);
 
-  if (! cpreprocess) {
-    comptest_append_arg (comptest, "-c");
-    comptest_append_arg (comptest, "-o");
-    path_build (MKC_PATH_MKCF_TMP, outfile, MKC_PATH_MAX, "mkctest.o", comptest->mkcerr);
-    comptest_append_arg (comptest, outfile);
+  if (comptest->preprocess) {
+    chararr_append (comptest->targv, "-E");
+    cpreprocess = true;
   }
-  comptest_append_arg (comptest, tbuff);
+  if (! cpreprocess) {
+    chararr_append (comptest->targv, "-c");
+    chararr_append (comptest->targv, "-o");
+    path_build (MKC_PATH_MKCF_TMP, outfile, MKC_PATH_MAX, "mkctest.o", comptest->mkcerr);
+    chararr_append (comptest->targv, outfile);
+  }
+  chararr_append (comptest->targv, tbuff);
   comptest_append_list_arg (comptest, alt->linkflags);
-  comptest_append_arg (comptest, NULL);
+  chararr_append (comptest->targv, NULL);
   if (mkc_error_chk_err (comptest->mkcerr)) {
     free (tbuff);
     free (compstr);
@@ -400,9 +409,9 @@ compile_only (comptest_t *comptest, mkc_compiler_t compiler,
     return MKC_ERR_FAILURE;
   }
 
-  mkc_log_command (comptest->log, "comp-only: cmd:", comptest->targc, comptest->targv);
+  mkc_log_chararr (comptest->log, "comp-only: cmd:", comptest->targv);
 
-  rc = os_process_pipe (comptest->targv,
+  rc = os_process_pipe (chararr_get_arr (comptest->targv),
       OS_PROC_WAIT | OS_PROC_NOWINDOW, rbuff, rsz, &retsz);
 
   if (retsz > 0) {
@@ -459,6 +468,7 @@ compile_link (comptest_t *comptest, mkc_compiler_t compiler,
   }
 
   rc = compile_only (comptest, compiler, fname, rbuff, rsz);
+  comptest_reset (comptest);
   if (rc > 0) {
     rc = - rc;
   }
@@ -489,22 +499,23 @@ compile_link (comptest_t *comptest, mkc_compiler_t compiler,
   }
 
   comptest_get_compstr (comptest, compiler, compstr, MKC_PATH_MAX);
+  chararr_append (comptest->targv, compstr);
 
-  comptest->targc = 0;
-  comptest_append_arg (comptest, compstr);
-  comptest_append_arg (comptest, "-o");
+  chararr_append (comptest->targv, "-o");
   path_build (MKC_PATH_MKCF_TMP, outfile, MKC_PATH_MAX, "mkctest.exe", comptest->mkcerr);
-  comptest_append_arg (comptest, outfile);
-  path_build (MKC_PATH_MKCF_TMP, objfile, MKC_PATH_MAX, "mkctest.o", comptest->mkcerr);
-  comptest_append_arg (comptest, objfile);
+  chararr_append (comptest->targv, outfile);
 
   comptest_append_flags (comptest, comptest->ldflags);
 
   alt = comptest->attr->curralt;
   comptest_append_list_arg (comptest, alt->linkflags);
+
+  path_build (MKC_PATH_MKCF_TMP, objfile, MKC_PATH_MAX, "mkctest.o", comptest->mkcerr);
+  chararr_append (comptest->targv, objfile);
+
   comptest_append_flags (comptest, comptest->libs);
 
-  comptest_append_arg (comptest, NULL);
+  chararr_append (comptest->targv, NULL);
   if (mkc_error_chk_err (comptest->mkcerr)) {
     if (rallocated) {
       free (rbuff);
@@ -512,9 +523,9 @@ compile_link (comptest_t *comptest, mkc_compiler_t compiler,
     return MKC_ERR_FAILURE;
   }
 
-  mkc_log_command (comptest->log, "link: cmd:", comptest->targc, comptest->targv);
+  mkc_log_chararr (comptest->log, "link: cmd:", comptest->targv);
 
-  rc = os_process_pipe (comptest->targv,
+  rc = os_process_pipe (chararr_get_arr (comptest->targv),
       OS_PROC_WAIT | OS_PROC_NOWINDOW, rbuff, rsz, &retsz);
 
   mkc_log (comptest->log, MKC_LOG_CHECK, "  rc: %d\n", rc);
@@ -549,7 +560,7 @@ compile_run (comptest_t *comptest, mkc_compiler_t compiler,
   char        *exefile;
 
   rc = compile_link (comptest, compiler, fname, NULL, 0);
-
+  comptest_reset (comptest);
   if (rc != 0) {
     return rc;
   }
@@ -560,16 +571,16 @@ compile_run (comptest_t *comptest, mkc_compiler_t compiler,
     return MKC_ERR_FAILURE;
   }
 
-  comptest->targc = 0;
+  chararr_reset (comptest->targv, 0);
   path_build (MKC_PATH_MKCF_TMP, exefile, MKC_PATH_MAX, "mkctest.exe", comptest->mkcerr);
-  comptest_append_arg (comptest, exefile);
-  comptest_append_arg (comptest, NULL);
+  chararr_append (comptest->targv, exefile);
+  chararr_append (comptest->targv, NULL);
   if (mkc_error_chk_err (comptest->mkcerr)) {
     free (exefile);
     return MKC_ERR_FAILURE;
   }
 
-  mkc_log_command (comptest->log, "run: cmd:", comptest->targc, comptest->targv);
+  mkc_log_chararr (comptest->log, "run: cmd:", comptest->targv);
 
   if (rbuff == NULL) {
     rsz = MKC_SMALL_BUFF_SZ;
@@ -581,7 +592,7 @@ compile_run (comptest_t *comptest, mkc_compiler_t compiler,
     rallocated = true;
   }
 
-  rc = os_process_pipe (comptest->targv,
+  rc = os_process_pipe (chararr_get_arr (comptest->targv),
       OS_PROC_WAIT | OS_PROC_NOWINDOW, rbuff, rsz, &retsz);
 
   mkc_log (comptest->log, MKC_LOG_CHECK, "  run: rc: %d\n", rc);
@@ -618,24 +629,27 @@ comptest_append_list_arg (comptest_t *comptest, mkc_list_t *list)
     }
 
     lvalue = mkc_list_get_by_idx (list, lidx);
-    comptest_append_arg (comptest, lvalue->sval);
+    chararr_append (comptest->targv, lvalue->sval);
   }
 }
 
 static bool
-comptest_append_flags (comptest_t *comptest, const char *flags [])
+comptest_append_flags (comptest_t *comptest, chararr_t *flags)
 {
   bool        cpreprocess = false;
 
   if (flags != NULL) {
     const char  *p;
+    const char  **flagarr;
     int         count = 0;
 
-    while ((p = flags [count++]) != NULL) {
+    flagarr = chararr_get_arr (flags);
+
+    while ((p = flagarr [count++]) != NULL) {
       if (strcmp (p, "-E") == 0) {
         cpreprocess = true;
       }
-      comptest_append_arg (comptest, p);
+      chararr_append (comptest->targv, p);
     }
   }
 

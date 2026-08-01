@@ -109,6 +109,8 @@ if (${_package_pcre}) {
 }
 mark _have_regex enable-output;
 
+# configure
+
 configure {
   method auto;
   define_zero;
@@ -131,9 +133,6 @@ profile default {
 profile debug {
   add_compile_flag '-O0';
 }
-profile release {
-  add_compile_flag '-O2';
-}
 
 check_compile_flag '-pedantic';
 check_compile_flag '-pedantic-errors';
@@ -154,6 +153,7 @@ if (${MKC_COMP_ID_GCC}) {
 include sanitize_flags.mkc;
 sanitize_flags 'sanitize';
 
+# MKC_FORTIFY is set by sanitize_flags.mkc
 if (${MKC_FORTIFY}) {
   check_compile_flag '-fstack-protector-all';
   add_compile_flag '-D_FORTIFY_SOURCE=2';
@@ -182,8 +182,6 @@ check_include_compile {
   path  '.';
   match '\.h$';
 }
-
-# generate
 
 # build
 
