@@ -31,6 +31,11 @@ debug:
 .PHONY: distclean
 distclean:
 	@$(MAKE) realclean
+	@$(MAKE) cleangeneratedfiles
+	@-rm -f btest.log pkg.log
+
+.PHONY: cleangeneratedfiles
+cleangeneratedfiles:
 	@-rm -f mkc_grammar.h mkc_grammar.c
 	@-rm -f mkc_lex.h mkc_lex.c
 
@@ -41,7 +46,6 @@ realclean:
 	@$(MAKE) clean
 	@-rm -f mkc_config.h
 	@-rm -f z
-	@-rm -f bootstrap.txt
 	@# the tmp directory contains the bootstrap targets
 	@-rm -rf tmp
 

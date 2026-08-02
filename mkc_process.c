@@ -93,10 +93,11 @@ typedef struct mkc_process_t {
   mkc_compiler_id_t compid;
   mkc_lib_loc_t     libloc;
   mkc_header_t      headertype;
-  bool              variadicmacro;
-  bool              inloadcache;
-  bool              cacheloaded;
   bool              cacheinvalidated;
+  bool              cacheloaded;
+  bool              compiler_mm;
+  bool              inloadcache;
+  bool              variadicmacro;
 } mkc_process_t;
 
 static const char *sysnames [MKC_SYS_MAX] = {
@@ -160,6 +161,7 @@ enum {
 };
 
 static char const * const MKC_C_LIBLOCNAME = "MKC_LIB_LOC_LIB64";
+static char const * const MKC_C_SUPPORTS_MM = "MKC_COMPILER_SUPPORTS_MM";
 static char const * const MKC_C_SHLIBEXT = "MKC_SHARED_LIBRARY_EXTENSION";
 static char const * const MKC_C_OBJEXT = "MKC_OBJECT_EXTENSION";
 static char const * const MKC_C_EXEEXT = "MKC_EXECUTABLE_EXTENSION";
@@ -279,6 +281,7 @@ mkc_process_init (scopedvar_t *scopedvar,
   process->headertype = MKC_HEADER_MODERN;
   process->attr.headertype = process->headertype;
   process->variadicmacro = MKC_VARIADIC_MACRO_SUPPORTED;
+  process->compiler_mm = false;
 
   process->comptest = comptest_init (process->scopedvar,
       &process->attr, log, mkcerr);
@@ -1352,6 +1355,7 @@ mkc_process_stmt_loadcache_post (mkc_process_t *process)
     mkc_process_int_checks (process);
     mkc_process_get_path (process);
     mkc_process_find_executables (process);
+    mkc_chk_getconf (process->check);
   }
 
   process->inloadcache = false;
@@ -2552,6 +2556,17 @@ mkc_process_int_checks (mkc_process_t *process)
         MKC_C_LIBLOCNAME, process->libloc, MKC_VCTXT_MKC);
   }
 
+  /* check if compiler supports the -MM flag */
+
+  rc = mkc_chk_compiler_flag (process->check,
+      process->attr.currcompiler, "-MM", false);
+  if (rc == MKC_OK) {
+    mkc_log (process->log, MKC_LOG_GENERAL, "%s: %d\n", MKC_C_SUPPORTS_MM, process->libloc);
+    process->compiler_mm = true;
+  }
+  scopedvar_set_integer (process->scopedvar, SV_T_INTERNAL,
+      MKC_C_SUPPORTS_MM, process->compiler_mm, MKC_VCTXT_MKC);
+
   mkc_process_attr_clear (process);
 
   return MKC_OK;
@@ -3210,9 +3225,13 @@ mkc_process_topo_add_deps (mkc_process_t *process,
   mkc_listidx_t   diteridx;
   mkc_listidx_t   didx;
   value_t         tvalue;
+  target_flag_t   tgtflags = TARGET_IGNORE_SYS_INC;
 
+  if (process->compiler_mm) {
+    tgtflags |= TARGET_SUPPORTS_MM;
+  }
   target_get_dependencies (process->target,
-      process->attr.currcompiler, filename, filepath);
+      process->attr.currcompiler, filename, filepath, tgtflags);
 
   mkc_log (process->log, MKC_LOG_CHECK, "  %s : ", filename);
   valdeplist = scopedvar_get_value (process->scopedvar, SV_T_DEPENDENCY, filename);
@@ -3223,13 +3242,6 @@ mkc_process_topo_add_deps (mkc_process_t *process,
     char    *p;
 
     scopedvar_value_get_str (process->scopedvar, &tvalue, dep, sizeof (dep));
-    if (strncmp (dep, "/usr/", 5) == 0) {
-      continue;
-    }
-    if (strncmp (dep, "/opt/", 5) == 0) {
-      continue;
-    }
-
     mkc_log (process->log, MKC_LOG_CHECK, "  %s", dep);
     p = strrchr (dep, '/');
     if (p == NULL) {
@@ -3297,8 +3309,6 @@ mkc_process_get_include_list (mkc_process_t *process, mkc_regex_t *rx,
 
       snprintf (tbuff, MKC_PATH_MAX, "%s/%s", path, hdr);
       tts = fileop_modtime (tbuff);
-      /* convert to milliseconds */
-      tts *= 1000;
       if (tts > *ts) {
         hdr = strdup (*temp);
         mkc_list_set (hlist, &hdr, sizeof (char *));

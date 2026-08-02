@@ -19,12 +19,18 @@
 extern "C" {
 #endif
 
+typedef enum {
+  TARGET_NONE           = 0x0000,
+  TARGET_IGNORE_SYS_INC = 0x0001,
+  TARGET_SUPPORTS_MM    = 0x0002,
+} target_flag_t;
+
 typedef struct target_t target_t;
 
 target_t * target_init (scopedvar_t *scopedvar, comptest_t *comptest, mkc_attribute_t *attr, mkc_log_t *log, mkc_error_t *mkcerr);
 void target_free (target_t *target);
 chararr_t *target_get_flags (target_t *target, const char *flagname);
-void target_get_dependencies (target_t *target, mkc_compiler_t compiler, const char *filename, const char *filepath);
+void target_get_dependencies (target_t *target, mkc_compiler_t compiler, const char *filename, const char *filepath, target_flag_t flags);
 
 #if defined (__cplusplus) || defined (c_plusplus)
 }

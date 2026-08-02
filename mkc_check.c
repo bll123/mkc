@@ -282,26 +282,30 @@ int
 mkc_chk_getconf (mkc_check_t *check)
 {
   int     rc = MKC_ERR_FAILURE;
-#if _function_confstr
+
+  /* macos does not have _CS_LFS_CFLAGS defined */
+  /* getconf POSIX_V6_LPBIG_OFFBIG_CFLAGS on macos returns invalid flags */
+#if _function_confstr && _define__CS_LFS_CFLAGS
   char    flag [MKC_VNAME_MAX];
+  size_t  rsz;
 
   *flag = '\0';
-  confstr (_CS_LFS_CFLAGS, flag, sizeof (flag));
-  if (*flag) {
+  rsz = confstr (_CS_LFS_CFLAGS, flag, sizeof (flag));
+  if (rsz > 0 && *flag) {
     scopedvar_append_str_list (check->scopedvar, SV_T_ACTIVE,
         MKC_C_CFLAGS, flag, MKC_VCTXT_MKC);
   }
 
   *flag = '\0';
-  confstr (_CS_LFS_LDFLAGS, flag, sizeof (flag));
-  if (*flag) {
+  rsz = confstr (_CS_LFS_LDFLAGS, flag, sizeof (flag));
+  if (rsz > 0 && *flag) {
     scopedvar_append_str_list (check->scopedvar, SV_T_ACTIVE,
         MKC_C_LDFLAGS, flag, MKC_VCTXT_MKC);
   }
 
   *flag = '\0';
-  confstr (_CS_LFS_LDFLAGS, flag, sizeof (flag));
-  if (*flag) {
+  rsz = confstr (_CS_LFS_LDFLAGS, flag, sizeof (flag));
+  if (rsz > 0 && *flag) {
     scopedvar_append_str_list (check->scopedvar, SV_T_ACTIVE,
         MKC_C_LIBS, flag, MKC_VCTXT_MKC);
   }
@@ -571,6 +575,7 @@ mkc_chk_package (mkc_check_t *check,
   if (rc != MKC_OK) {
     free (pkgconfpath);
     free (tpath);
+    free (rbuff);
     return rc;
   }
 
@@ -591,6 +596,7 @@ mkc_chk_package (mkc_check_t *check,
   chararr_free (targv);
   free (pkgconfpath);
   free (tpath);
+  free (rbuff);
   return rc;
 }
 

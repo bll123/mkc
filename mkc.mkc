@@ -93,6 +93,15 @@ check_arg_count mkdir {
 check_define S_IRWXU {
   header sys/stat.h;
 }
+check_struct_member 'struct stat' st_mtim {
+  header sys/stat.h;
+}
+check_struct_member 'struct stat' st_mtimespec {
+  header sys/stat.h;
+}
+check_define _CS_LFS_CFLAGS {
+  header unistd.h;
+}
 
 # windows
 check_type HANDLE {
@@ -161,6 +170,9 @@ if (${MKC_FORTIFY}) {
   add_compile_flag '-U_FORTIFY_SOURCE';
   add_compile_flag '-D_FORTIFY_SOURCE=0';
 }
+
+add_compile_flag '-Iinclude';
+add_compile_flag '-I.';
 
 # more checks
 

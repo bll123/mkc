@@ -97,18 +97,20 @@ fileop_modtime (const char *fname)
 {
   int64_t      tm = 0;
 
-#if _function__wstat64 || (MKC_BOOTSTRAP && MKC_SYS_WIN)
+#if _function_FindFirstFileW || (MKC_BOOTSTRAP && MKC_SYS_WIN)
   {
-    struct __stat64  statbuf;
-    wchar_t       *tfname = NULL;
-    int           rc;
+    wchar_t           *tfname = NULL;
+    WIN32_FIND_DATAW  fd;
+    FILETIME          ft;
 
     tfname = str_towide (fname);
+
     if (tfname != NULL) {
-      rc = _wstat64 (tfname, &statbuf);
-      if (rc == 0) {
-        tm = statbuf.st_mtime;
-      }
+      FindFirstFileW (tfname, &fd);
+      FileTimeToLocalFileTime (&fd.ftLastWriteTime, &ft);
+      tm = (int64_t) ft.dwLowDateTime + ((int64_t)(ft.dwHighDateTime) << 32LL);
+      tm -= 116444736000000000LL;
+      tm /= 10000;
       free (tfname);
     }
   }
@@ -120,6 +122,13 @@ fileop_modtime (const char *fname)
     rc = stat (fname, &statbuf);
     if (rc == 0) {
       tm = statbuf.st_mtime;
+      tm *= 1000;
+#if _member_struct_stat_st_mtim
+      tm += statbuf.st_mtim.tv_nsec / 1000000;
+#endif
+#if _member_struct_stat_st_mtimespec
+      tm += statbuf.st_mtimespec.tv_nsec / 1000000;
+#endif
     }
   }
 #endif

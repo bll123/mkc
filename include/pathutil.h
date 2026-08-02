@@ -28,12 +28,14 @@ typedef enum {
   MKC_PATH_MKC_UNITS,           /* .../share/mkc/units */
   MKC_PATH_MKC_USER_UNITS,      /* <config>/units */
   MKC_PATH_ORIG_CWD,
+  MKC_PATH_CWD,
   MKC_PATH_SHARE,               /* .../share */
   MKC_PATH_PREFIX,              /* one level above exec */
   MKC_PATH_BUILD_MAX,
 } mkc_path_t;
 
 typedef enum {
+  MKC_DIR_CWD,
   MKC_DIR_EXEC,
   MKC_DIR_HOME,
   MKC_DIR_MKC_FILES,

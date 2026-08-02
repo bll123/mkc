@@ -39,6 +39,8 @@ typedef struct target_t {
   mkc_error_t     * mkcerr;
 } target_t;
 
+static const char * const dependency_delim = " \n\r\\";
+
 static bool target_chk_last_libloc (char *lastlibloc, size_t sz, const char *str);
 
 target_t *
@@ -157,25 +159,26 @@ target_get_flags (target_t *target, const char *flagname)
 
 void
 target_get_dependencies (target_t *target,
-    mkc_compiler_t compiler, const char *filename, const char *filepath)
+    mkc_compiler_t compiler, const char *filename, const char *filepath,
+    target_flag_t flags)
 {
   int             rc;
-  int64_t         fts;
+  int64_t         cachedfts;
   mkc_list_t      * elist;
   char            * rbuff;
   size_t          rsz;
-  int64_t         currtm;
+  int64_t         fts;
   chararr_t       * cflags;
   char            * tokstr;
   char            * p;
   bool            first = true;
 
-  currtm = mstime ();
-  fts = 0;
+  cachedfts = 0;
   if (scopedvar_is_defined (target->scopedvar, SV_T_TIMESTAMP, filename)) {
-    fts = scopedvar_get_timestamp (target->scopedvar, SV_T_TIMESTAMP, filename);
+    cachedfts = scopedvar_get_timestamp (target->scopedvar, SV_T_TIMESTAMP, filename);
   }
-  if (currtm < fts &&
+  fts = fileop_modtime (filepath);
+  if (cachedfts >= fts &&
       scopedvar_is_defined (target->scopedvar, SV_T_DEPENDENCY, filename)) {
     return;
   }
@@ -189,7 +192,11 @@ target_get_dependencies (target_t *target,
   *rbuff = '\0';
 
   cflags = target_get_flags (target, MKC_C_CFLAGS);
-  comptest_append_compflag (target->comptest, "-M");
+  if ((flags & TARGET_SUPPORTS_MM) == TARGET_SUPPORTS_MM) {
+    comptest_append_compflag (target->comptest, "-MM");
+  } else {
+    comptest_append_compflag (target->comptest, "-M");
+  }
   comptest_append_compflag (target->comptest, NULL);
   comptest_preprocess (target->comptest);
   comptest_set_flags (target->comptest, cflags, NULL, NULL);
@@ -211,7 +218,7 @@ target_get_dependencies (target_t *target,
       filename, elist, MKC_VCTXT_MKC);
   mkc_list_free (elist);
 
-  p = str_token (rbuff, " ", &tokstr);
+  p = str_token (rbuff, dependency_delim, &tokstr);
 
   while (p != NULL) {
     char    *tp;
@@ -220,27 +227,37 @@ target_get_dependencies (target_t *target,
       break;
     }
 
-    if (*p != '\\' && ! first) {
-      str_trim (p, 0);
-      tp = strrchr (p, '/');
-      if (tp == NULL) {
-        tp = p;
-      } else {
-        tp += 1;
-      }
-      if (strcmp (filename, tp) != 0) {
-        scopedvar_append_str_list (target->scopedvar, SV_T_DEPENDENCY,
-            filename, p, MKC_VCTXT_MKC);
+    if (first) {
+      first = false;
+      p = str_token (NULL, dependency_delim, &tokstr);
+      continue;
+    }
+
+    /* if the compilers supports -MM, then it is much easier to ignore */
+    /* system include files */
+    if ((flags & TARGET_IGNORE_SYS_INC) == TARGET_IGNORE_SYS_INC &&
+      (flags & TARGET_SUPPORTS_MM) != TARGET_SUPPORTS_MM) {
+      /* a big assumption */
+      if (*p == '/') {
+        p = str_token (NULL, dependency_delim, &tokstr);
+        continue;
       }
     }
-    p = str_token (NULL, " ", &tokstr);
-    first = false;
+
+    tp = strrchr (p, '/');
+    if (tp == NULL) {
+      tp = p;
+    } else {
+      tp += 1;
+    }
+    if (strcmp (filename, tp) != 0) {
+      scopedvar_append_str_list (target->scopedvar, SV_T_DEPENDENCY,
+          filename, p, MKC_VCTXT_MKC);
+    }
+    p = str_token (NULL, dependency_delim, &tokstr);
   }
 
   /* set the timestamp when the file is processed */
-  /* convert to ms for comparison to the real time */
-  fts = fileop_modtime (filepath);
-  fts *= 1000;
   scopedvar_set_timestamp (target->scopedvar, SV_T_TIMESTAMP, filename, fts, MKC_VCTXT_MKC);
 
   free (rbuff);

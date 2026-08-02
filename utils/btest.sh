@@ -37,7 +37,8 @@ fi
 echo "-- build ${tag}"
 echo "-- build ${tag}" >> $LOG
 echo "-- path: ${PATH}" >> $LOG
-make distclean >> $LOG 2>&1
+make realclean >> $LOG 2>&1
+make cleangeneratedfiles >> $LOG 2>&1
 
 (make;rc=$?;exit $rc) >> $LOG 2>&1
 rc=$?

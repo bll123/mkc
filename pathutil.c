@@ -25,6 +25,7 @@
 #include "strutil.h"
 
 static char mkc_dirs [MKC_DIR_MAX][MKC_PATH_MAX] = {
+  [MKC_DIR_CWD] = "",
   [MKC_DIR_EXEC] = "",
   [MKC_DIR_HOME] = "",
   [MKC_DIR_MKC_FILES] = "",
@@ -35,6 +36,7 @@ static char mkc_dirs [MKC_DIR_MAX][MKC_PATH_MAX] = {
 
 const char * const pathdesc [MKC_PATH_BUILD_MAX] = {
   [MKC_PATH_CONFIG] = "config",
+  [MKC_PATH_CWD] = "mkc_cwd",
   [MKC_PATH_EXEC_PATH] = "exec",
   [MKC_PATH_HOME] = "home",
   [MKC_PATH_MKC_TEMPLATES] = "mkc_templates",
@@ -65,6 +67,10 @@ path_build (mkc_path_t pathtype, char *buff, size_t sz,
   switch (pathtype) {
     case MKC_PATH_CONFIG: {
       p = mkc_path_config (buff, sz);
+      break;
+    }
+    case MKC_PATH_CWD: {
+      p = stpecpy (buff, buff + sz, mkc_dirs [MKC_DIR_CWD]);
       break;
     }
     case MKC_PATH_EXEC_PATH: {
@@ -229,6 +235,10 @@ mkc_path_init (mkc_error_t *mkcerr)
   path_getcwd (tbuff, MKC_PATH_MAX);
   stpecpy (mkc_dirs [dir], mkc_dirs [dir] + MKC_PATH_MAX, tbuff);
   fileop_normalize_path (mkc_dirs [dir], MKC_PATH_MAX);
+
+  dir = MKC_DIR_CWD;
+  stpecpy (mkc_dirs [dir], mkc_dirs [dir] + MKC_PATH_MAX,
+      mkc_dirs [MKC_DIR_ORIG_CWD]);
 
   /* set up the path to the mkc_files/ directory */
   /* if in bootstrap, use local relative paths */
