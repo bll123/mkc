@@ -167,7 +167,6 @@ target_check_dependency_timestamp (target_t *target,
   mkc_listidx_t iteridx;
 
   if (! scopedvar_is_defined (target->scopedvar, SV_T_DEPENDENCY, filename)) {
-fprintf (stderr, "chk-deps %s no deps\n", filename);
     return TARGET_OUT_OF_DATE;
   }
 
@@ -179,7 +178,6 @@ fprintf (stderr, "chk-deps %s no deps\n", filename);
   target_iter_dependency_ts_start (target, filename, &iteridx);
   while ((ts = target_iter_dependency_ts (target, filename, &iteridx)) != MKC_ITER_FINISH) {
     if (ts > fts) {
-fprintf (stderr, "chk-deps %s %zd > %zd ood\n", filename, ts, fts);
       return TARGET_OUT_OF_DATE;
     }
   }
@@ -209,7 +207,6 @@ target_get_dependencies (target_t *target,
   }
   *rbuff = '\0';
 
-fprintf (stderr, "get-deps %s\n", filename);
   cflags = target_get_flags (target, MKC_C_CFLAGS);
   if ((flags & TARGET_SUPPORTS_MM) == TARGET_SUPPORTS_MM) {
     comptest_append_compflag (target->comptest, "-MM");
@@ -291,9 +288,12 @@ target_get_include_list (target_t *target, mkc_regex_t *rx,
 #if _have_regex
   mkc_listidx_t   piteridx;
   mkc_listidx_t   pathidx;
-  char            *tbuff;
+  char            *tbuff = NULL;
+  char            *tname = NULL;
+  char            *tend = NULL;
   char            *path = NULL;
-  int64_t          newts = 0;
+  int64_t         newts = 0;
+  char            *p;
 
   tbuff = malloc (MKC_PATH_MAX);
   if (tbuff == NULL) {
@@ -302,12 +302,36 @@ target_get_include_list (target_t *target, mkc_regex_t *rx,
   }
   *tbuff = '\0';
 
+  tname = malloc (MKC_SMALL_BUFF_SZ);
+  if (tname == NULL) {
+    mkc_error_set (target->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    free (tbuff);
+    return NULL;
+  }
+  *tname = '\0';
+
   path = malloc (MKC_PATH_MAX);
   if (path == NULL) {
     mkc_error_set (target->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    free (tbuff);
+    free (tname);
     return NULL;
   }
   *path = '\0';
+
+  p = tname;
+  tend = tname + MKC_SMALL_BUFF_SZ;
+  p = stpecpy (p, tend, "matchts_");
+  mkc_list_iter_start (target->attr->pathlist, &piteridx);
+  while ((pathidx = mkc_list_iter_next (target->attr->pathlist, &piteridx)) != MKC_ITER_FINISH) {
+    value_t   *valpath = NULL;
+
+    valpath = mkc_list_get_by_idx (target->attr->pathlist, pathidx);
+    scopedvar_value_get_str (target->scopedvar, valpath, path, MKC_PATH_MAX);
+    p = stpecpy (p, tend, path);
+    p = stpecpy (p, tend, "_");
+  }
+  p = stpecpy (p, tend, target->attr->str [MKC_ATTR_MATCH]);
 
   hlist = mkc_list_init (MKC_LIST_UNSORTED, mkc_list_ind_free, NULL, target->mkcerr);
 
@@ -345,7 +369,6 @@ target_get_include_list (target_t *target, mkc_regex_t *rx,
 
         cachedfts = scopedvar_get_timestamp (target->scopedvar, SV_T_TIMESTAMP, hdr);
         if (tts > cachedfts) {
-fprintf (stderr, "invalidate: %s %zd > %zd\n", hdr, tts, cachedfts);
           scopedvar_delete (target->scopedvar, SV_T_DEPENDENCY, hdr);
         }
       }
@@ -363,11 +386,20 @@ fprintf (stderr, "invalidate: %s %zd > %zd\n", hdr, tts, cachedfts);
     mkc_list_free (tlist);
   }
 
-  /* return the timestamp of the latest include file */
-  *ts = newts;
+  if (scopedvar_is_defined (target->scopedvar, SV_T_LOCAL, tname)) {
+    int64_t   cachedts;
+
+    cachedts = scopedvar_get_timestamp (target->scopedvar, SV_T_LOCAL, tname);
+    *ts = cachedts;
+  } else {
+    /* return the timestamp of the latest include file */
+    *ts = newts;
+    scopedvar_set_timestamp (target->scopedvar, SV_T_LOCAL, tname, newts, MKC_VCTXT_MKC);
+  }
 
   free (path);
   free (tbuff);
+  free (tname);
 #endif
   return hlist;
 }
@@ -452,7 +484,6 @@ target_iter_dependency_ts (target_t *target, const char *filename,
   }
 
   ts = scopedvar_get_timestamp (target->scopedvar, SV_T_TIMESTAMP, dep);
-fprintf (stderr, "iter-ts: %s %zd\n", dep, ts);
   return ts;
 }
 

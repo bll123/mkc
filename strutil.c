@@ -132,6 +132,9 @@ str_clean (char *buff, size_t sz)
     sz = strlen (buff);
   }
   for (size_t i = 0; i < sz; ++i) {
+    if (buff [i] == '\0') {
+      break;
+    }
     if (! isalnum (buff [i])) {
       buff [i] = '_';
     }
