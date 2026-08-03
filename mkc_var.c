@@ -19,7 +19,7 @@
 
 typedef struct mkc_var_t {
   char          * name;
-  value_t   value;
+  value_t       value;
   bool          fromcache;
 } mkc_var_t;
 
@@ -166,6 +166,19 @@ mkc_var_set (mkc_varlist_t *varlist, const char *vname, value_t *value)
   }
 
   return rc;
+}
+
+void
+mkc_var_delete (mkc_varlist_t *varlist, const char *vname)
+{
+  mkc_varidx_t    vidx;
+
+  vidx = mkc_var_find (varlist, vname);
+  if (vidx == MKC_VAR_NOTFOUND) {
+    return;
+  }
+
+  mkc_list_delete (varlist->list, vidx, sizeof (mkc_var_t));
 }
 
 void
@@ -410,7 +423,6 @@ mkc_var_list_copy (mkc_varlist_t *varlist, mkc_list_t *list)
   /* the values created in this list are copies, and are not */
   /* present in an astnode, so must be freed */
   /* preserve the original list type */
-  /* assume that the comparison function is value-str-compare */
   nlist = mkc_list_init (mkc_list_get_type (list),
         value_free, mkc_list_get_compfunc (list), varlist->mkcerr);
   if (mkc_error_chk_err (varlist->mkcerr)) {
@@ -438,4 +450,3 @@ mkc_var_list_copy (mkc_varlist_t *varlist, mkc_list_t *list)
 
   return nlist;
 }
-

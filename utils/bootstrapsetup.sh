@@ -27,6 +27,10 @@ if [ "$LORDER" = "" ]; then
   # and doesn't even have it available for install
   LORDER=utils/lorder
 fi
+TAC=`which tac`
+if [ "$TAC" = "" ]; then
+  TAC=cat
+fi
 
 updbootstrapmake () {
   name=$1
@@ -46,6 +50,7 @@ if [ -f mkc ]; then
   ${LORDER} *.o |
       grep -v 'topochk' |
       tsort |
+      ${TAC} |
       sed -e '/os_process/ a \\t$(MKC_WIN_OBJ)\ \\' \
           -e '/os_win_process/ d' \
           -e '/mkc_regex_pcre/ s,mkc_regex_pcre\.o,$(MKC_REGEX_OBJ),' \

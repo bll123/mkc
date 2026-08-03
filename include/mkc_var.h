@@ -35,6 +35,8 @@ void mkc_var_set_fromcache (mkc_varlist_t *varlist, bool flag);
 int mkc_var_set (mkc_varlist_t *varlist, const char *vname, value_t *value);
 void mkc_var_set_context (mkc_varlist_t *varlist, const char *vname, int vctxt);
 
+void mkc_var_delete (mkc_varlist_t *varlist, const char *vname);
+
 int32_t mkc_var_size (mkc_varlist_t *varlist);
 void mkc_var_iter_start (mkc_varlist_t *varlist, mkc_varidx_t *iteridx);
 mkc_varidx_t mkc_var_iter_next (mkc_varlist_t *varlist, mkc_varidx_t *iteridx);

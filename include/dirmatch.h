@@ -4,7 +4,7 @@
 #ifndef INC_MKC_DIRMATCH_H
 #define INC_MKC_DIRMATCH_H
 
-#if ! defined (MKC_BOOTSTRAP)
+#ifndef MKC_BOOTSTRAP
 # include "mkc_config.h"
 #endif
 

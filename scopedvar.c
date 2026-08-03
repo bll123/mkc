@@ -98,6 +98,7 @@ static void scopedvar_free_vars (scopedvar_t *scopedvar);
 static void scopedvar_init_vars (scopedvar_t *scopedvar, mkc_option_t *mkcoptions);
 static void scopedvar_push_hierarchy (scopedvar_t *scopedvar, sv_profile_t *svprof);
 static const char * scopedvar_get_active_name (scopedvar_t *scopedvar);
+static mkc_varlist_t *scopedvar_get_varlist (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname);
 
 scopedvar_t *
 scopedvar_init (mkc_log_t *log, mkc_error_t *mkcerr, mkc_option_t *mkcoptions)
@@ -922,7 +923,6 @@ scopedvar_set (scopedvar_t *scopedvar, sv_type_t svtype,
 {
   mkc_varlist_t   *varlist = NULL;
   int             rc = MKC_ERR_FAILURE;
-  int             idx = -1;
 
   if (scopedvar == NULL) {
     return rc;
@@ -932,68 +932,9 @@ scopedvar_set (scopedvar_t *scopedvar, sv_type_t svtype,
     return rc;
   }
 
-  if (svtype == SV_T_ACTIVE) {
-    sv_profile_t * svprof;
-
-    svprof = scopedvar->active_prof;
-    svtype = svprof->svtype;
-  }
-
-  if (svtype > SV_T_NAMESPACE) {
-    sv_profile_t * svprof = NULL;
-
-    for (int i = 0; i < scopedvar->profiles.sz; ++i) {
-      svprof = &scopedvar->profiles.variables [i];
-
-      if (svprof->svtype == svtype) {
-        idx = i;
-        break;
-      }
-    }
-
-    if (idx == -1) {
-      return rc;
-    }
-
-    varlist = svprof->varlist;
-  } else {
-    sv_profile_t * svprof = NULL;
-
-    if (svtype == SV_T_SEARCH) {
-      /* search any local scopes that are on the stack */
-      /* if the active_idx is reached, stop there */
-      for (int i = scopedvar->hierarchy.sz - 1; i >= 0; --i) {
-        svprof = &scopedvar->hierarchy.variables [i];
-
-        if (i == scopedvar->active_idx) {
-          idx = i;
-          varlist = svprof->varlist;
-          break;
-        }
-
-        if (svprof->svtype == SV_T_LOCAL) {
-          mkc_varlist_t   *varlist;
-
-          varlist = svprof->varlist;
-          if (mkc_var_is_defined (varlist, vname)) {
-            idx = i;
-            break;
-          }
-        }
-      }
-    } else {
-      if (svtype == SV_T_LOCAL) {
-        scopedvar_push (scopedvar, SV_T_LOCAL, "local");
-      }
-      /* the set statement is for a specific profile */
-      idx = scopedvar_locate_svtype (scopedvar, svtype);
-      svprof = &scopedvar->profiles.variables [idx];
-      varlist = svprof->varlist;
-    }
-
-    if (idx == -1) {
-      return rc;
-    }
+  varlist = scopedvar_get_varlist (scopedvar, svtype, vname);
+  if (varlist == NULL) {
+    return rc;
   }
 
   value->vctxt = vctxt;
@@ -1115,6 +1056,27 @@ scopedvar_append_str_list (scopedvar_t *scopedvar, sv_type_t svtype,
   }
 
   return MKC_OK;
+}
+
+void
+scopedvar_delete (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname)
+{
+  mkc_varlist_t   *varlist;
+
+  if (scopedvar == NULL) {
+    return;
+  }
+  if (vname == NULL) {
+    mkc_error_set (scopedvar->mkcerr, MKC_ERR_NULL_ARGUMENT, 0, NULL);
+    return;
+  }
+
+  varlist = scopedvar_get_varlist (scopedvar, svtype, vname);
+  if (varlist == NULL) {
+    return;
+  }
+
+  mkc_var_delete (varlist, vname);
 }
 
 bool
@@ -1767,4 +1729,77 @@ static const char *
 scopedvar_get_active_name (scopedvar_t *scopedvar)
 {
   return scopedvar->active_prof->name;
+}
+
+static mkc_varlist_t *
+scopedvar_get_varlist (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname)
+{
+  mkc_varlist_t   *varlist = NULL;
+  int             idx = -1;
+
+  if (svtype == SV_T_ACTIVE) {
+    sv_profile_t * svprof;
+
+    svprof = scopedvar->active_prof;
+    svtype = svprof->svtype;
+  }
+
+  if (svtype > SV_T_NAMESPACE) {
+    sv_profile_t * svprof = NULL;
+
+    for (int i = 0; i < scopedvar->profiles.sz; ++i) {
+      svprof = &scopedvar->profiles.variables [i];
+
+      if (svprof->svtype == svtype) {
+        idx = i;
+        break;
+      }
+    }
+
+    if (idx == -1) {
+      return varlist;
+    }
+
+    varlist = svprof->varlist;
+  } else {
+    sv_profile_t * svprof = NULL;
+
+    if (svtype == SV_T_SEARCH) {
+      /* search any local scopes that are on the stack */
+      /* if the active_idx is reached, stop there */
+      for (int i = scopedvar->hierarchy.sz - 1; i >= 0; --i) {
+        svprof = &scopedvar->hierarchy.variables [i];
+
+        if (i == scopedvar->active_idx) {
+          idx = i;
+          varlist = svprof->varlist;
+          break;
+        }
+
+        if (svprof->svtype == SV_T_LOCAL) {
+          mkc_varlist_t   *varlist;
+
+          varlist = svprof->varlist;
+          if (mkc_var_is_defined (varlist, vname)) {
+            idx = i;
+            break;
+          }
+        }
+      }
+    } else {
+      if (svtype == SV_T_LOCAL) {
+        scopedvar_push (scopedvar, SV_T_LOCAL, "local");
+      }
+      /* the set statement is for a specific profile */
+      idx = scopedvar_locate_svtype (scopedvar, svtype);
+      svprof = &scopedvar->profiles.variables [idx];
+      varlist = svprof->varlist;
+    }
+
+    if (idx == -1) {
+      return varlist;
+    }
+  }
+
+  return varlist;
 }

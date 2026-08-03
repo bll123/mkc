@@ -283,6 +283,9 @@ mkc_chk_getconf (mkc_check_t *check)
 {
   int     rc = MKC_ERR_FAILURE;
 
+  /* getconf LFS_CFLAGS supports is far less prevalent than I expected */
+  /* e.g. getconf LFS_CFLAGS no longer works on FreeBSD */
+  /* in any case, this will work on Linux */
   /* macos does not have _CS_LFS_CFLAGS defined */
   /* getconf POSIX_V6_LPBIG_OFFBIG_CFLAGS on macos returns invalid flags */
 #if _function_confstr && _define__CS_LFS_CFLAGS

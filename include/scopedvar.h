@@ -18,6 +18,7 @@
 extern "C" {
 #endif
 
+/* profile types */
 typedef enum {
   SV_T_INTERNAL,
   /* the default-profile holds most of the variables for all profiles */
@@ -29,7 +30,7 @@ typedef enum {
   SV_T_LOCAL,
   SV_T_TARGET,
   SV_T_NOT_IN_USE,
-  /* for a 'get', searches the entire hierarchy */
+  /* for a 'get', checks the hierarchy until the active profile is found */
   /* for a 'set', searches any local profiles, */
   /* then then uses the active profile */
   SV_T_SEARCH,
@@ -98,6 +99,8 @@ int scopedvar_set_str (scopedvar_t *scopedvar, sv_type_t svtype, const char *vna
 int scopedvar_set_list (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, mkc_list_t *list, value_ctxt_t vctxt);
 int scopedvar_set_list_from_str (scopedvar_t *scopedvar, const char *vname, char *str, value_ctxt_t vctxt);
 int scopedvar_append_str_list (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, const char *data, value_ctxt_t vctxt);
+
+void scopedvar_delete (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname);
 
 bool scopedvar_is_defined (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname);
 bool scopedvar_var_is_list (scopedvar_t *scopedvar, const char *vname);

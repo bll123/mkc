@@ -230,6 +230,50 @@ mkc_list_pop (mkc_list_t *list, mkc_listidx_t lidx)
   list->sz -= 1;
 }
 
+/* doing a delete invalidates any list indexes */
+void
+mkc_list_delete (mkc_list_t *list, mkc_listidx_t lidx, size_t sz)
+{
+  void *data;
+
+  if (list == NULL || lidx >= list->sz) {
+    return;
+  }
+
+  if (list->freefunc != NULL) {
+    data = list->data + list->itemsz * lidx;
+    (*list->freefunc) (data);
+  }
+
+  list->sz -= 1;
+  for (mkc_listidx_t i = lidx; i < list->sz; ++i) {
+    memcpy (list->data + list->itemsz * i,
+        list->data + list->itemsz * (i + 1), sz);
+  }
+
+  if (list->type == MKC_LIST_SORTED) {
+    mkc_listidx_t   iidx = -1;
+
+    for (mkc_listidx_t i = 0; i < list->idxsz; ++i) {
+      if (list->idxsort [i] == lidx) {
+        iidx = i;
+      }
+      if (list->idxsort [i] > lidx) {
+        list->idxsort [i] -= 1;
+      }
+    }
+
+    if (iidx == -1) {
+      return;
+    }
+
+    list->idxsz -= 1;
+    for (mkc_listidx_t i = iidx; i < list->idxsz; ++i) {
+      list->idxsort [i] = list->idxsort [i + 1];
+    }
+  }
+}
+
 mkc_listidx_t
 mkc_list_find (mkc_list_t *list, void *data)
 {

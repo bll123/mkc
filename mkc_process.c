@@ -219,8 +219,6 @@ static char * mkc_process_configure_substitute (mkc_process_t *process, char *da
 static void mkc_process_alternate_free (void *talt);
 static void mkc_process_topo_add_items (mkc_process_t *process, toposort_t *topo, mkc_list_t *hlist);
 static void mkc_process_topo_add_deps (mkc_process_t *process, toposort_t *topo, const char *filename, const char *filepath);
-static mkc_list_t * mkc_process_get_include_list (mkc_process_t *process, mkc_regex_t *rx, int64_t *ts);
-static const char * mkc_process_iter_includes (mkc_process_t *process, mkc_list_t *hlist, mkc_listidx_t *hiteridx, char *hdr, size_t hsz);
 static void mkc_process_attr_flags (mkc_process_t *process, value_t *value, mkc_list_t *flags, bool inlist);
 static void mkc_process_source_file (mkc_process_t *process, const char *target, const char *srcfn);
 
@@ -871,10 +869,10 @@ mkc_process_stmt_chk_inc_compile (mkc_process_t *process)
     ts = scopedvar_get_timestamp (process->scopedvar, SV_T_INTERNAL,
         MKC_C_CHK_INC_COMPILE_TS);
   }
-  hlist = mkc_process_get_include_list (process, urx->rx, &ts);
+  hlist = target_get_include_list (process->target, urx->rx, &ts);
 
   mkc_list_iter_start (hlist, &hiteridx);
-  while ((hdr = mkc_process_iter_includes (process, hlist,
+  while ((hdr = target_iter_includes (process->target, hlist,
       &hiteridx, hdrpath, MKC_PATH_MAX)) != NULL) {
     if (mkc_error_chk_err (process->mkcerr)) {
       break;
@@ -919,7 +917,6 @@ mkc_process_stmt_chk_inc_deps (mkc_process_t *process)
   toposort_t        * topo = NULL;
   mkc_listidx_t     hiteridx;
   int               rc = MKC_ERR_FAILURE;
-  char              * rbuff = NULL;
   char              * hdrpath = NULL;
   const char        * hdr;
   int64_t          ts;
@@ -948,8 +945,9 @@ mkc_process_stmt_chk_inc_deps (mkc_process_t *process)
   /* always select all include files */
   /* the returned timestamp will be used to determine */
   /* if a check needs to be made */
+  /* target_get_include_list will update the saved timestamps */
   ts = 0;
-  hlist = mkc_process_get_include_list (process, urx->rx, &ts);
+  hlist = target_get_include_list (process->target, urx->rx, &ts);
   /* ts now holds the timestamp of the latest modification time in ms */
 
   if (scopedvar_is_defined (process->scopedvar, SV_T_INTERNAL,
@@ -981,10 +979,21 @@ mkc_process_stmt_chk_inc_deps (mkc_process_t *process)
   mkc_process_topo_add_items (process, topo, hlist);
 
   mkc_list_iter_start (hlist, &hiteridx);
-  while ((hdr = mkc_process_iter_includes (process, hlist, &hiteridx,
+  while ((hdr = target_iter_includes (process->target, hlist, &hiteridx,
       hdrpath, MKC_PATH_MAX)) != NULL) {
+    if (target_check_dependency_timestamp (
+        process->target, hdr, hdrpath) == TARGET_OUT_OF_DATE) {
+      target_flag_t   tgtflags = TARGET_IGNORE_SYS_INC;
+
+      if (process->compiler_mm) {
+        tgtflags |= TARGET_SUPPORTS_MM;
+      }
+
+      target_get_dependencies (process->target,
+          process->attr.currcompiler, hdr, hdrpath, tgtflags);
+    }
+
     mkc_process_topo_add_deps (process, topo, hdr, hdrpath);
-    free (rbuff);
   }
   mkc_list_free (hlist);
 
@@ -1068,7 +1077,7 @@ mkc_process_stmt_chk_inc_guards (mkc_process_t *process)
   /* the returned timestamp will be used to determine */
   /* if a check needs to be made */
 
-  hlist = mkc_process_get_include_list (process, urx->rx, &ts);
+  hlist = target_get_include_list (process->target, urx->rx, &ts);
 
   if (scopedvar_is_defined (process->scopedvar, SV_T_INTERNAL,
       MKC_C_CHK_INC_GUARDS_TS)) {
@@ -1099,7 +1108,7 @@ mkc_process_stmt_chk_inc_guards (mkc_process_t *process)
   *hdrpath = '\0';
 
   mkc_list_iter_start (hlist, &hiteridx);
-  while ((hdr = mkc_process_iter_includes (process, hlist, &hiteridx,
+  while ((hdr = target_iter_includes (process->target, hlist, &hiteridx,
       hdrpath, MKC_PATH_MAX)) != NULL) {
     char            *tp;
     mkc_listidx_t   idx;
@@ -3225,13 +3234,6 @@ mkc_process_topo_add_deps (mkc_process_t *process,
   mkc_listidx_t   diteridx;
   mkc_listidx_t   didx;
   value_t         tvalue;
-  target_flag_t   tgtflags = TARGET_IGNORE_SYS_INC;
-
-  if (process->compiler_mm) {
-    tgtflags |= TARGET_SUPPORTS_MM;
-  }
-  target_get_dependencies (process->target,
-      process->attr.currcompiler, filename, filepath, tgtflags);
 
   mkc_log (process->log, MKC_LOG_CHECK, "  %s : ", filename);
   valdeplist = scopedvar_get_value (process->scopedvar, SV_T_DEPENDENCY, filename);
@@ -3252,130 +3254,6 @@ mkc_process_topo_add_deps (mkc_process_t *process,
     toposort_add_pair (topo, filename, p);
   }
   mkc_log (process->log, MKC_LOG_CHECK, "\n");
-}
-
-static mkc_list_t *
-mkc_process_get_include_list (mkc_process_t *process, mkc_regex_t *rx,
-    int64_t *ts)
-{
-  mkc_list_t      *hlist = NULL;
-#if _have_regex
-  mkc_listidx_t   piteridx;
-  mkc_listidx_t   pathidx;
-  char            *tbuff;
-  char            *path = NULL;
-  int64_t          newts = 0;
-
-  tbuff = malloc (MKC_PATH_MAX);
-  if (tbuff == NULL) {
-    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return NULL;
-  }
-  *tbuff = '\0';
-
-  path = malloc (MKC_PATH_MAX);
-  if (path == NULL) {
-    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return NULL;
-  }
-  *path = '\0';
-
-  hlist = mkc_list_init (MKC_LIST_UNSORTED, mkc_list_ind_free, NULL, process->mkcerr);
-
-  mkc_list_iter_start (process->attr.pathlist, &piteridx);
-  while ((pathidx = mkc_list_iter_next (process->attr.pathlist, &piteridx)) != MKC_ITER_FINISH) {
-    value_t   *valpath = NULL;
-    mkc_list_t    *tlist = NULL;
-    mkc_listidx_t iteridx;
-    mkc_listidx_t idx;
-
-    if (mkc_error_chk_err (process->mkcerr)) {
-      break;
-    }
-
-    valpath = mkc_list_get_by_idx (process->attr.pathlist, pathidx);
-    scopedvar_value_get_str (process->scopedvar, valpath, path, MKC_PATH_MAX);
-
-    tlist = dir_match (path, rx, process->mkcerr);
-
-    mkc_list_iter_start (tlist, &iteridx);
-    while ((idx = mkc_list_iter_next (tlist, &iteridx)) != MKC_ITER_FINISH) {
-      char          **temp;
-      char          *hdr;
-      int64_t      tts;
-
-      temp = mkc_list_get_by_idx (tlist, idx);
-      hdr = *temp;
-
-      snprintf (tbuff, MKC_PATH_MAX, "%s/%s", path, hdr);
-      tts = fileop_modtime (tbuff);
-      if (tts > *ts) {
-        hdr = strdup (*temp);
-        mkc_list_set (hlist, &hdr, sizeof (char *));
-      }
-      if (tts > newts) {
-        newts = tts;
-      }
-    }
-
-    mkc_list_free (tlist);
-  }
-
-  /* return the timestamp of the latest include file */
-  *ts = newts;
-
-  free (path);
-  free (tbuff);
-#endif
-  return hlist;
-}
-
-static const char *
-mkc_process_iter_includes (mkc_process_t *process, mkc_list_t *hlist,
-    mkc_listidx_t *hiteridx, char *hdr, size_t hsz)
-{
-  mkc_listidx_t   hidx;
-  char            *retval = NULL;
-
-  while ((hidx = mkc_list_iter_next (hlist, hiteridx)) != MKC_ITER_FINISH) {
-    char            **temp;
-    const char      *thdr;
-    mkc_listidx_t   piteridx;
-    mkc_listidx_t   pathidx;
-
-    temp = mkc_list_get_by_idx (hlist, hidx);
-    thdr = *temp;
-    stpecpy (hdr, hdr + hsz, thdr);
-
-    /* always check the current directory */
-    if (fileop_exists (hdr)) {
-      scopedvar_set_str (process->scopedvar, SV_T_PATHS, hdr, hdr, MKC_VCTXT_MKC);
-      retval = hdr;
-      return retval;
-    }
-
-    mkc_list_iter_start (process->attr.pathlist, &piteridx);
-    while ((pathidx = mkc_list_iter_next (process->attr.pathlist, &piteridx)) != MKC_ITER_FINISH) {
-      value_t     * valpath;
-      const char  * path;
-
-      valpath = mkc_list_get_by_idx (process->attr.pathlist, pathidx);
-      path = valpath->sval;
-
-      snprintf (hdr, hsz, "%s/%s", path, thdr);
-      if (! fileop_exists (hdr)) {
-        continue;
-      }
-
-      /* save the path to the header file */
-      scopedvar_set_str (process->scopedvar, SV_T_PATHS, thdr, hdr, MKC_VCTXT_MKC);
-
-      retval = hdr + strlen (path) + 1;
-      return retval;
-    }
-  }
-
-  return NULL;
 }
 
 static void

@@ -17,6 +17,7 @@
 #include "attribute.h"
 #include "chararr.h"
 #include "comptest.h"
+#include "dirmatch.h"
 #include "fileop.h"
 #include "mkc_compiler.h"
 #include "mkc_const.h"
@@ -157,31 +158,48 @@ target_get_flags (target_t *target, const char *flagname)
   return flags;
 }
 
+int
+target_check_dependency_timestamp (target_t *target,
+    const char *filename, const char *filepath)
+{
+  int64_t       fts;
+  int64_t       ts;
+  mkc_listidx_t iteridx;
+
+  if (! scopedvar_is_defined (target->scopedvar, SV_T_DEPENDENCY, filename)) {
+fprintf (stderr, "chk-deps %s no deps\n", filename);
+    return TARGET_OUT_OF_DATE;
+  }
+
+  fts = 0;
+  if (scopedvar_is_defined (target->scopedvar, SV_T_TIMESTAMP, filename)) {
+    fts = scopedvar_get_timestamp (target->scopedvar, SV_T_TIMESTAMP, filename);
+  }
+
+  target_iter_dependency_ts_start (target, filename, &iteridx);
+  while ((ts = target_iter_dependency_ts (target, filename, &iteridx)) != MKC_ITER_FINISH) {
+    if (ts > fts) {
+fprintf (stderr, "chk-deps %s %zd > %zd ood\n", filename, ts, fts);
+      return TARGET_OUT_OF_DATE;
+    }
+  }
+
+  return TARGET_CURRENT;
+}
+
 void
 target_get_dependencies (target_t *target,
     mkc_compiler_t compiler, const char *filename, const char *filepath,
     target_flag_t flags)
 {
   int             rc;
-  int64_t         cachedfts;
   mkc_list_t      * elist;
   char            * rbuff;
   size_t          rsz;
-  int64_t         fts;
   chararr_t       * cflags;
   char            * tokstr;
   char            * p;
   bool            first = true;
-
-  cachedfts = 0;
-  if (scopedvar_is_defined (target->scopedvar, SV_T_TIMESTAMP, filename)) {
-    cachedfts = scopedvar_get_timestamp (target->scopedvar, SV_T_TIMESTAMP, filename);
-  }
-  fts = fileop_modtime (filepath);
-  if (cachedfts >= fts &&
-      scopedvar_is_defined (target->scopedvar, SV_T_DEPENDENCY, filename)) {
-    return;
-  }
 
   rsz = MKC_LARGE_BUFF_SZ;
   rbuff = malloc (rsz);
@@ -191,6 +209,7 @@ target_get_dependencies (target_t *target,
   }
   *rbuff = '\0';
 
+fprintf (stderr, "get-deps %s\n", filename);
   cflags = target_get_flags (target, MKC_C_CFLAGS);
   if ((flags & TARGET_SUPPORTS_MM) == TARGET_SUPPORTS_MM) {
     comptest_append_compflag (target->comptest, "-MM");
@@ -257,11 +276,184 @@ target_get_dependencies (target_t *target,
     p = str_token (NULL, dependency_delim, &tokstr);
   }
 
-  /* set the timestamp when the file is processed */
-  scopedvar_set_timestamp (target->scopedvar, SV_T_TIMESTAMP, filename, fts, MKC_VCTXT_MKC);
-
   free (rbuff);
   chararr_free (cflags);
+}
+
+/* creates a list of include files given the paths and match regex */
+/* the timestamp argument is set to the latest timestamp */
+/* the timestamps in the timestamp namespace are updated */
+mkc_list_t *
+target_get_include_list (target_t *target, mkc_regex_t *rx,
+    int64_t *ts)
+{
+  mkc_list_t      *hlist = NULL;
+#if _have_regex
+  mkc_listidx_t   piteridx;
+  mkc_listidx_t   pathidx;
+  char            *tbuff;
+  char            *path = NULL;
+  int64_t          newts = 0;
+
+  tbuff = malloc (MKC_PATH_MAX);
+  if (tbuff == NULL) {
+    mkc_error_set (target->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return NULL;
+  }
+  *tbuff = '\0';
+
+  path = malloc (MKC_PATH_MAX);
+  if (path == NULL) {
+    mkc_error_set (target->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return NULL;
+  }
+  *path = '\0';
+
+  hlist = mkc_list_init (MKC_LIST_UNSORTED, mkc_list_ind_free, NULL, target->mkcerr);
+
+  mkc_list_iter_start (target->attr->pathlist, &piteridx);
+  while ((pathidx = mkc_list_iter_next (target->attr->pathlist, &piteridx)) != MKC_ITER_FINISH) {
+    value_t   *valpath = NULL;
+    mkc_list_t    *tlist = NULL;
+    mkc_listidx_t iteridx;
+    mkc_listidx_t idx;
+
+    if (mkc_error_chk_err (target->mkcerr)) {
+      break;
+    }
+
+    valpath = mkc_list_get_by_idx (target->attr->pathlist, pathidx);
+    scopedvar_value_get_str (target->scopedvar, valpath, path, MKC_PATH_MAX);
+
+    tlist = dir_match (path, rx, target->mkcerr);
+
+    mkc_list_iter_start (tlist, &iteridx);
+    while ((idx = mkc_list_iter_next (tlist, &iteridx)) != MKC_ITER_FINISH) {
+      char          **temp;
+      char          *hdr;
+      int64_t       tts;
+
+      temp = mkc_list_get_by_idx (tlist, idx);
+      hdr = *temp;
+
+      snprintf (tbuff, MKC_PATH_MAX, "%s/%s", path, hdr);
+      tts = fileop_modtime (tbuff);
+
+      /* cache invalidation check */
+      if (scopedvar_is_defined (target->scopedvar, SV_T_TIMESTAMP, hdr)) {
+        int64_t     cachedfts;
+
+        cachedfts = scopedvar_get_timestamp (target->scopedvar, SV_T_TIMESTAMP, hdr);
+        if (tts > cachedfts) {
+fprintf (stderr, "invalidate: %s %zd > %zd\n", hdr, tts, cachedfts);
+          scopedvar_delete (target->scopedvar, SV_T_DEPENDENCY, hdr);
+        }
+      }
+
+      scopedvar_set_timestamp (target->scopedvar, SV_T_TIMESTAMP, hdr, tts, MKC_VCTXT_MKC);
+      if (tts > *ts) {
+        hdr = strdup (*temp);
+        mkc_list_set (hlist, &hdr, sizeof (char *));
+      }
+      if (tts > newts) {
+        newts = tts;
+      }
+    }
+
+    mkc_list_free (tlist);
+  }
+
+  /* return the timestamp of the latest include file */
+  *ts = newts;
+
+  free (path);
+  free (tbuff);
+#endif
+  return hlist;
+}
+
+const char *
+target_iter_includes (target_t *target, mkc_list_t *hlist,
+    mkc_listidx_t *hiteridx, char *hdr, size_t hsz)
+{
+  mkc_listidx_t   hidx;
+  char            *retval = NULL;
+
+  while ((hidx = mkc_list_iter_next (hlist, hiteridx)) != MKC_ITER_FINISH) {
+    char            **temp;
+    const char      *thdr;
+    mkc_listidx_t   piteridx;
+    mkc_listidx_t   pathidx;
+
+    temp = mkc_list_get_by_idx (hlist, hidx);
+    thdr = *temp;
+    stpecpy (hdr, hdr + hsz, thdr);
+
+    /* always check the current directory */
+    if (fileop_exists (hdr)) {
+      scopedvar_set_str (target->scopedvar, SV_T_PATHS, hdr, hdr, MKC_VCTXT_MKC);
+      retval = hdr;
+      return retval;
+    }
+
+    mkc_list_iter_start (target->attr->pathlist, &piteridx);
+    while ((pathidx = mkc_list_iter_next (target->attr->pathlist, &piteridx)) != MKC_ITER_FINISH) {
+      value_t     * valpath;
+      const char  * path;
+
+      valpath = mkc_list_get_by_idx (target->attr->pathlist, pathidx);
+      path = valpath->sval;
+
+      snprintf (hdr, hsz, "%s/%s", path, thdr);
+      if (! fileop_exists (hdr)) {
+        continue;
+      }
+
+      /* save the path to the header file */
+      scopedvar_set_str (target->scopedvar, SV_T_PATHS, thdr, hdr, MKC_VCTXT_MKC);
+
+      retval = hdr + strlen (path) + 1;
+      return retval;
+    }
+  }
+
+  return NULL;
+}
+
+void
+target_iter_dependency_ts_start (target_t *target, const char *filename,
+    mkc_listidx_t *iteridx)
+{
+  value_t     *value;
+
+  value = scopedvar_get_value (target->scopedvar, SV_T_DEPENDENCY, filename);
+  value_iter_start (value, iteridx);
+}
+
+int64_t
+target_iter_dependency_ts (target_t *target, const char *filename,
+    mkc_listidx_t *iteridx)
+{
+  value_t       *value;
+  value_t       tvalue;
+  mkc_listidx_t didx;
+  int64_t       ts;
+  char          dep [MKC_VNAME_MAX];
+
+  value = scopedvar_get_value (target->scopedvar, SV_T_DEPENDENCY, filename);
+  didx = value_iter_next (value, &tvalue, iteridx);
+  if (didx == MKC_ITER_FINISH) {
+    return didx;
+  }
+
+  scopedvar_value_get_str (target->scopedvar, &tvalue, dep, sizeof (dep));
+  if (! scopedvar_is_defined (target->scopedvar, SV_T_TIMESTAMP, dep)) {
+    return 0;
+  }
+
+  ts = scopedvar_get_timestamp (target->scopedvar, SV_T_TIMESTAMP, dep);
+fprintf (stderr, "iter-ts: %s %zd\n", dep, ts);
+  return ts;
 }
 
 /* internal routines */
@@ -280,4 +472,3 @@ target_chk_last_libloc (char *lastlibloc, size_t sz, const char *str)
   stpecpy (lastlibloc, lastlibloc + sz, str);
   return false;
 }
-
