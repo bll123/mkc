@@ -47,7 +47,7 @@ typedef enum {
 
 extern const char * const pathdesc [MKC_PATH_BUILD_MAX];
 
-void path_build (mkc_path_t pathtype, char *buff, size_t sz, char *filename, mkc_error_t *mkcerr);
+void path_build (mkc_path_t pathtype, char *buff, size_t sz, const char *filename, mkc_error_t *mkcerr);
 void path_set_dir (mkc_dir_t dir, const char *path);
 void path_getcwd (char *buff, size_t sz);
 void path_realpath (char *path, size_t sz);

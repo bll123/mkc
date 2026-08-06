@@ -351,6 +351,7 @@ scopedvar_reset_profile (scopedvar_t *scopedvar)
 
 /* iterators */
 
+/* iterates over the profiles */
 sv_iter_t *
 scopedvar_iter_start (scopedvar_t *scopedvar, sv_iter_flag_t flags)
 {
@@ -374,6 +375,7 @@ scopedvar_iter_start (scopedvar_t *scopedvar, sv_iter_flag_t flags)
   return sviter;
 }
 
+/* iterates over the profiles */
 const char *
 scopedvar_iter_next (scopedvar_t *scopedvar, sv_iter_t *sviter)
 {

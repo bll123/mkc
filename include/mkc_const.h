@@ -22,6 +22,7 @@ extern char const * const MKC_C_PROFILE_NAME;
 extern char const * const MKC_C_CFLAGS;
 extern char const * const MKC_C_LDFLAGS;
 extern char const * const MKC_C_LIBS;
+extern char const * const MKC_C_SUPPORTS_MM;
 
 #if defined (__cplusplus) || defined (c_plusplus)
 }

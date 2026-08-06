@@ -27,6 +27,7 @@
 #include "mkc_util.h"
 #include "mkc_util.h"
 #include "os_process.h"
+#include "pathutil.h"
 #include "scopedvar.h"
 #include "strutil.h"
 #include "target.h"
@@ -191,7 +192,6 @@ target_get_dependencies (target_t *target,
     target_flag_t flags)
 {
   int             rc;
-  mkc_list_t      * elist;
   char            * rbuff;
   size_t          rsz;
   chararr_t       * cflags;
@@ -220,6 +220,8 @@ target_get_dependencies (target_t *target,
       filepath, rbuff, rsz);
   comptest_reset (target->comptest);
   if (rc != MKC_OK) {
+    free (rbuff);
+    chararr_free (cflags);
     return;
   }
 
@@ -227,12 +229,9 @@ target_get_dependencies (target_t *target,
   /* since they are supposedly complete, they should not need to be searched */
   /* and processing should work.  this may need to be re-visited later */
 
-  /* any existing list must be cleared, so set the variable to an empty list */
+  scopedvar_delete (target->scopedvar, SV_T_DEPENDENCY, filename);
 
-  elist = mkc_list_init (MKC_LIST_UNSORTED, NULL, value_str_compare, target->mkcerr);
-  scopedvar_set_list (target->scopedvar, SV_T_DEPENDENCY,
-      filename, elist, MKC_VCTXT_MKC);
-  mkc_list_free (elist);
+  mkc_log (target->log, MKC_LOG_TARGET, "get-dep: %s", filename);
 
   p = str_token (rbuff, dependency_delim, &tokstr);
 
@@ -267,6 +266,7 @@ target_get_dependencies (target_t *target,
       tp += 1;
     }
     if (strcmp (filename, tp) != 0) {
+      mkc_log (target->log, MKC_LOG_TARGET, "  %s", p);
       scopedvar_append_str_list (target->scopedvar, SV_T_DEPENDENCY,
           filename, p, MKC_VCTXT_MKC);
     }
@@ -284,7 +284,8 @@ mkc_list_t *
 target_get_include_list (target_t *target, mkc_regex_t *rx,
     int64_t *ts)
 {
-  mkc_list_t      *hlist = NULL;
+  value_t         *valhdr = NULL;
+  mkc_list_t      *hlist;
 #if _have_regex
   mkc_listidx_t   piteridx;
   mkc_listidx_t   pathidx;
@@ -319,6 +320,8 @@ target_get_include_list (target_t *target, mkc_regex_t *rx,
   }
   *path = '\0';
 
+  /* tname is only used internally, there is no need to "clean" the */
+  /* variable name, and cleaning it makes it much less specific */
   p = tname;
   tend = tname + MKC_SMALL_BUFF_SZ;
   p = stpecpy (p, tend, "matchts_");
@@ -333,7 +336,24 @@ target_get_include_list (target_t *target, mkc_regex_t *rx,
   }
   p = stpecpy (p, tend, target->attr->str [MKC_ATTR_MATCH]);
 
-  hlist = mkc_list_init (MKC_LIST_UNSORTED, mkc_list_ind_free, NULL, target->mkcerr);
+  memcpy (tname, "matchil_", 8);
+  if (scopedvar_is_defined (target->scopedvar, SV_T_LOCAL, tname)) {
+    valhdr = scopedvar_get_value (target->scopedvar, SV_T_TIMESTAMP, tname);
+    hlist = valhdr->list;
+    memcpy (tname, "matchts_", 8);
+    if (scopedvar_is_defined (target->scopedvar, SV_T_LOCAL, tname)) {
+      int64_t   cachedts;
+
+      cachedts = scopedvar_get_timestamp (target->scopedvar, SV_T_LOCAL, tname);
+      *ts = cachedts;
+      return hlist;
+    }
+    memcpy (tname, "matchil_", 8);
+    scopedvar_delete (target->scopedvar, SV_T_DEPENDENCY, tname);
+  }
+
+//  hlist = mkc_list_init (MKC_LIST_UNSORTED, mkc_list_ind_free, NULL, target->mkcerr);
+//  hlist = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, target->mkcerr);
 
   mkc_list_iter_start (target->attr->pathlist, &piteridx);
   while ((pathidx = mkc_list_iter_next (target->attr->pathlist, &piteridx)) != MKC_ITER_FINISH) {
@@ -375,8 +395,10 @@ target_get_include_list (target_t *target, mkc_regex_t *rx,
 
       scopedvar_set_timestamp (target->scopedvar, SV_T_TIMESTAMP, hdr, tts, MKC_VCTXT_MKC);
       if (tts > *ts) {
-        hdr = strdup (*temp);
-        mkc_list_set (hlist, &hdr, sizeof (char *));
+        scopedvar_append_str_list (target->scopedvar, SV_T_DEPENDENCY,
+            tname, hdr, MKC_VCTXT_MKC);
+//        hdr = strdup (*temp);
+//        mkc_list_set (hlist, &hdr, sizeof (char *));
       }
       if (tts > newts) {
         newts = tts;
@@ -386,6 +408,10 @@ target_get_include_list (target_t *target, mkc_regex_t *rx,
     mkc_list_free (tlist);
   }
 
+  memcpy (tname, "matchil_", 8);
+  valhdr = scopedvar_get_value (target->scopedvar, SV_T_TIMESTAMP, tname);
+  hlist = valhdr->list;
+  memcpy (tname, "matchts_", 8);
   if (scopedvar_is_defined (target->scopedvar, SV_T_LOCAL, tname)) {
     int64_t   cachedts;
 
@@ -412,19 +438,19 @@ target_iter_includes (target_t *target, mkc_list_t *hlist,
   char            *retval = NULL;
 
   while ((hidx = mkc_list_iter_next (hlist, hiteridx)) != MKC_ITER_FINISH) {
-    char            **temp;
-    const char      *thdr;
+    value_t         *tvalue;
     mkc_listidx_t   piteridx;
     mkc_listidx_t   pathidx;
+    char            *thdr;
 
-    temp = mkc_list_get_by_idx (hlist, hidx);
-    thdr = *temp;
-    stpecpy (hdr, hdr + hsz, thdr);
+    tvalue = mkc_list_get_by_idx (hlist, hidx);
+    scopedvar_value_get_str (target->scopedvar, tvalue, hdr, hsz);
+    thdr = strdup (hdr);
 
     /* always check the current directory */
-    if (fileop_exists (hdr)) {
-      scopedvar_set_str (target->scopedvar, SV_T_PATHS, hdr, hdr, MKC_VCTXT_MKC);
-      retval = hdr;
+    if (fileop_exists (thdr)) {
+      scopedvar_set_str (target->scopedvar, SV_T_PATHS, thdr, thdr, MKC_VCTXT_MKC);
+      retval = thdr;
       return retval;
     }
 
@@ -485,6 +511,80 @@ target_iter_dependency_ts (target_t *target, const char *filename,
 
   ts = scopedvar_get_timestamp (target->scopedvar, SV_T_TIMESTAMP, dep);
   return ts;
+}
+
+void
+target_object_file (target_t *target, const char *execnm,
+    const char *objnm)
+{
+  char    *path;
+  int64_t fts = 0;
+
+  path = malloc (MKC_PATH_MAX);
+  if (path == NULL) {
+    mkc_error_set (target->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return;
+  }
+
+  mkc_log (target->log, MKC_LOG_TARGET, "exec-file: %s\n", execnm);
+// ### this is incorrect...but can be fixed later
+  path_build (MKC_PATH_MKCF_OBJECTS, path, MKC_PATH_MAX, execnm, target->mkcerr);
+  scopedvar_set_str (target->scopedvar, SV_T_PATHS, execnm, path, MKC_VCTXT_MKC);
+  fts = fileop_modtime (path);
+  scopedvar_set_timestamp (target->scopedvar, SV_T_TIMESTAMP, execnm, fts, MKC_VCTXT_MKC);
+
+  path_build (MKC_PATH_MKCF_OBJECTS, path, MKC_PATH_MAX, objnm, target->mkcerr);
+  scopedvar_set_str (target->scopedvar, SV_T_PATHS, objnm, path, MKC_VCTXT_MKC);
+  fts = fileop_modtime (path);
+  scopedvar_set_timestamp (target->scopedvar, SV_T_TIMESTAMP, objnm, fts, MKC_VCTXT_MKC);
+
+  mkc_log (target->log, MKC_LOG_TARGET, "  %s\n", objnm);
+  scopedvar_append_str_list (target->scopedvar, SV_T_DEPENDENCY,
+      execnm, objnm, MKC_VCTXT_MKC);
+
+  free (path);
+  return;
+}
+
+void
+target_source_file (target_t *target, const char *objnm,
+    const char *srcname)
+{
+  target_flag_t   tgtflags = TARGET_NONE;
+  value_t         tvalue;
+  value_t         *valdeplist;
+  mkc_listidx_t   diteridx;
+  mkc_listidx_t   didx;
+
+  mkc_log (target->log, MKC_LOG_TARGET, "object-file: %s\n", objnm);
+  target_get_dependencies (target,
+      target->attr->currcompiler, objnm, srcname, tgtflags);
+
+  valdeplist = scopedvar_get_value (target->scopedvar, SV_T_DEPENDENCY, srcname);
+  if (valdeplist == NULL) {
+    mkc_log (target->log, MKC_LOG_ERROR, "ERR: %s dependency list not found\n", srcname);
+    return;
+  }
+
+  value_iter_start (valdeplist, &diteridx);
+  while ((didx = value_iter_next (valdeplist, &tvalue, &diteridx)) != MKC_ITER_FINISH) {
+    char    dep [MKC_VNAME_MAX];
+    char    *p;
+
+    scopedvar_value_get_str (target->scopedvar, &tvalue, dep, sizeof (dep));
+    mkc_log (target->log, MKC_LOG_TARGET, "  %s\n", dep);
+    p = strrchr (dep, '/');
+    if (p == NULL) {
+      p = dep;
+    } else {
+      p += 1;
+    }
+
+    scopedvar_append_str_list (target->scopedvar, SV_T_DEPENDENCY,
+        objnm, dep, MKC_VCTXT_MKC);
+  }
+
+  return;
 }
 
 /* internal routines */

@@ -171,8 +171,7 @@ main (int argc, char *argv [])
   log = mkc_log_init (mkcerr);
   path_build (MKC_PATH_MKCFILES, tbuff, sizeof (tbuff),
       "log-mkc.txt", mkcerr);
-//  mkc_log_open (log, tbuff, MKC_LOG_NORMAL);
-  mkc_log_open (log, tbuff, MKC_LOG_ALL);
+  mkc_log_open (log, tbuff, MKC_LOG_NORMAL);
 
   fnidx = optind;
   if (fnidx >= argcopy.nargc) {

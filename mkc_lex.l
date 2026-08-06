@@ -144,6 +144,7 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 "range"       { return T_RANGE; }
 "return"      { return T_RETURN; }
 
+"build"       { return T_STMT_BUILD; }
 "check_include_compile"       { return T_STMT_CHK_INC_COMPILE; }
 "check_include_dependencies"  { return T_STMT_CHK_INC_DEPS; }
 "check_include_guards"        { return T_STMT_CHK_INC_GUARDS; }

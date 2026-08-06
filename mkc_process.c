@@ -161,7 +161,6 @@ enum {
 };
 
 static char const * const MKC_C_LIBLOCNAME = "MKC_LIB_LOC_LIB64";
-static char const * const MKC_C_SUPPORTS_MM = "MKC_COMPILER_SUPPORTS_MM";
 static char const * const MKC_C_SHLIBEXT = "MKC_SHARED_LIBRARY_EXTENSION";
 static char const * const MKC_C_OBJEXT = "MKC_OBJECT_EXTENSION";
 static char const * const MKC_C_EXEEXT = "MKC_EXECUTABLE_EXTENSION";
@@ -175,7 +174,7 @@ static char const * const MKC_C_CHK_INC_DEPS_TS = "MKC_CHK_INC_DEPS_TS";
 static char const * const MKC_C_CHK_INC_COMPILE_TS = "MKC_CHK_INC_COMPILE_TS";
 static char const * const MKC_C_CHK_INC_GUARDS_TS = "MKC_CHK_INC_GUARDS_TS";
 
-static void process_save_cache_profile (mkc_process_t *process, FILE *fh, char *tbuff, size_t sz, sv_iter_t *sviter, const char *profname, int *tcount);
+static void process_save_cache_profile (mkc_process_t *process, FILE *fh, sv_iter_t *sviter, const char *profname, int *tcount);
 
 /* these are duplicated */
 /* so that the static aggregator can be initialized */
@@ -220,7 +219,6 @@ static void mkc_process_alternate_free (void *talt);
 static void mkc_process_topo_add_items (mkc_process_t *process, toposort_t *topo, mkc_list_t *hlist);
 static void mkc_process_topo_add_deps (mkc_process_t *process, toposort_t *topo, const char *filename, const char *filepath);
 static void mkc_process_attr_flags (mkc_process_t *process, value_t *value, mkc_list_t *flags, bool inlist);
-static void mkc_process_source_file (mkc_process_t *process, const char *target, const char *srcfn);
 
 
 MKC_NODISCARD
@@ -919,7 +917,7 @@ mkc_process_stmt_chk_inc_deps (mkc_process_t *process)
   int               rc = MKC_ERR_FAILURE;
   char              * hdrpath = NULL;
   const char        * hdr;
-  int64_t          ts;
+  int64_t           ts;
   mkc_user_regex_t  *urx;
 
   if (process->attr.str [MKC_ATTR_MATCH] == NULL) {
@@ -1237,35 +1235,50 @@ mkc_process_stmt_executable (mkc_process_t *process, value_t *valnm)
   char            execnm [MKC_VNAME_MAX];
   mkc_listidx_t   siteridx;
   mkc_listidx_t   sidx;
-  char            *tbuff;
+  char            *srcbuff;
 
 
   scopedvar_value_get_str (process->scopedvar, valnm, nm, sizeof (nm));
   snprintf (execnm, sizeof (execnm), "%s%s", nm, process->exeext);
 
+// ### needs to be fixed...
+// not a push, but a create.
   scopedvar_push (process->scopedvar, SV_T_TARGET, execnm);
 
-  tbuff = malloc (MKC_PATH_MAX);
-  if (tbuff == NULL) {
+  srcbuff = malloc (MKC_PATH_MAX);
+  if (srcbuff == NULL) {
     mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
     return;
   }
-  *tbuff = '\0';
+  *srcbuff = '\0';
+
+  scopedvar_delete (process->scopedvar, SV_T_DEPENDENCY, execnm);
 
   mkc_list_iter_start (process->attr.sourcelist, &siteridx);
   while ((sidx = mkc_list_iter_next (process->attr.sourcelist, &siteridx)) != MKC_ITER_FINISH) {
     value_t     *src;
+    char        objnm [MKC_VNAME_MAX];
+    char        *p;
 
     if (mkc_error_chk_err (process->mkcerr)) {
       break;
     }
 
     src = mkc_list_get_by_idx (process->attr.sourcelist, sidx);
-    scopedvar_value_get_str (process->scopedvar, src, tbuff, MKC_PATH_MAX);
-    mkc_process_source_file (process, execnm, tbuff);
+    scopedvar_value_get_str (process->scopedvar, src, srcbuff, MKC_PATH_MAX);
+    stpecpy (objnm, objnm + sizeof (objnm), srcbuff);
+    p = strrchr (objnm, '.');
+    if (p != NULL) {
+      *p = '\0';
+    }
+    stpecpy (p, objnm + sizeof (objnm), process->objext);
+
+    target_object_file (process->target, execnm, objnm);
+    scopedvar_delete (process->scopedvar, SV_T_DEPENDENCY, objnm);
+    target_source_file (process->target, objnm, srcbuff);
   }
 
-  free (tbuff);
+  free (srcbuff);
   return;
 }
 
@@ -2253,7 +2266,6 @@ mkc_process_save_cache (mkc_process_t *process)
   const char      * profname;
   FILE            * fh;
   int             tcount = 0;
-  char            * tbuff;
   sv_iter_t       * sviter;
 
   if (mkc_error_chk_err (process->mkcerr)) {
@@ -2276,13 +2288,6 @@ mkc_process_save_cache (mkc_process_t *process)
     return;
   }
 
-  tbuff = malloc (MKC_SMALL_BUFF_SZ);
-  if (tbuff == NULL) {
-    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return;
-  }
-  *tbuff = '\0';
-
   scopedvar = process->scopedvar;
 
   /* version 1 */
@@ -2294,8 +2299,7 @@ mkc_process_save_cache (mkc_process_t *process)
       return;
     }
 
-    process_save_cache_profile (process, fh, tbuff, MKC_SMALL_BUFF_SZ,
-        sviter, profname, &tcount);
+    process_save_cache_profile (process, fh, sviter, profname, &tcount);
   }
   scopedvar_iter_finish (sviter);
 
@@ -2305,7 +2309,6 @@ mkc_process_save_cache (mkc_process_t *process)
   fprintf (fh, "}\n");
 
   free (cachename);
-  free (tbuff);
   fclose (fh);
 }
 
@@ -2995,7 +2998,7 @@ mkc_process_dbg_print_var (mkc_process_t *process, const char *profname)
 
   scopedvar = process->scopedvar;
 
-  itertype = SV_ITER_HIERARCHY;
+  itertype = SV_ITER_PROFILES;
   if (profname != NULL) {
     if (strcmp (profname, "test") == 0) {
       profname = MKC_C_PROF_NAME_DEFAULT;
@@ -3145,6 +3148,7 @@ mkc_process_dbg_print_info (mkc_process_t *process)
 {
   fprintf (stdout, "== info\n");
   fprintf (stdout, "  int %zd\n", sizeof (int));
+  fprintf (stdout, "  time_t %zd\n", sizeof (time_t));
   fprintf (stdout, "  int64_t %zd\n", sizeof (int64_t));
 }
 
@@ -3297,15 +3301,7 @@ mkc_process_attr_flags (mkc_process_t *process, value_t *value,
 }
 
 static void
-mkc_process_source_file (mkc_process_t *process, const char *target,
-    const char *srcfn)
-{
-  return;
-}
-
-static void
 process_save_cache_profile (mkc_process_t *process, FILE *fh,
-    char *tbuff, size_t sz,
     sv_iter_t *sviter, const char *profname, int *tcount)
 {
   scopedvar_t   *scopedvar;
@@ -3313,6 +3309,12 @@ process_save_cache_profile (mkc_process_t *process, FILE *fh,
   mkc_varidx_t  vidx;
   int           count = 0;
   sv_type_t     svtype;
+  char          *tbuff = NULL;
+  char          *tmp = NULL;
+  size_t        tmpsz;
+  char          *scbuff = NULL;
+  char          *p;
+  char          *scend;
 
   scopedvar = process->scopedvar;
   svtype = scopedvar_iter_get_type (scopedvar, sviter);
@@ -3321,13 +3323,42 @@ process_save_cache_profile (mkc_process_t *process, FILE *fh,
     return;
   }
 
-  fprintf (fh, "  profile %s {\n", profname);
+  tmp = malloc (MKC_SMALL_BUFF_SZ);
+  if (tmp == NULL) {
+    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return;
+  }
+  *tmp = '\0';
+  tmpsz = MKC_SMALL_BUFF_SZ;
+
+  tbuff = malloc (MKC_SMALL_BUFF_SZ);
+  if (tbuff == NULL) {
+    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    free (tmp);
+    return;
+  }
+  *tbuff = '\0';
+
+  scbuff = malloc (MKC_LARGE_BUFF_SZ);
+  if (scbuff == NULL) {
+    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    free (tmp);
+    free (scbuff);
+    return;
+  }
+  *scbuff = '\0';
+  p = scbuff;
+  scend = scbuff + MKC_LARGE_BUFF_SZ;
+
+  snprintf (tmp, tmpsz, "  profile %s {\n", profname);
+  p = stpecpy (p, scend, tmp);
   if (svtype == SV_T_CURR_PROF_COMPILER) {
     mkc_compiler_t    compiler;
 
     compiler = scopedvar_iter_get_compiler (scopedvar, sviter);
     if (compiler != MKC_COMPILER_GENERAL) {
-      fprintf (fh, "    compiler %s;\n", compiler_get_name (compiler));
+      snprintf (tmp, tmpsz, "    compiler %s;\n", compiler_get_name (compiler));
+      p = stpecpy (p, scend, tmp);
     }
   }
 
@@ -3339,38 +3370,48 @@ process_save_cache_profile (mkc_process_t *process, FILE *fh,
 
     nm = scopedvar_var_iter_get_name (scopedvar, sviter, vidx);
     value = scopedvar_var_iter_get_value (scopedvar, sviter, vidx);
-    value_to_str (value, tbuff, sz);
+    value_to_str (value, tbuff, MKC_SMALL_BUFF_SZ);
 
     if (value->vtype == MKC_VT_INTEGER ||
         value->vtype == MKC_VT_TIMESTAMP ||
         value->vtype == MKC_VT_LIST) {
-      fprintf (fh, "    set '%s' %s ", nm, tbuff);
+      snprintf (tmp, tmpsz, "    set '%s' %s ", nm, tbuff);
+      p = stpecpy (p, scend, tmp);
     } else {
-      fprintf (fh, "    set '%s' '%s' ", nm, tbuff);
+      snprintf (tmp, tmpsz, "    set '%s' '%s' ", nm, tbuff);
+      p = stpecpy (p, scend, tmp);
     }
     vctxtstr = value_ctxt_str (value->vctxt);
-    fprintf (fh, "{");
+    p = stpecpy (p, scend, "{");
     if (value->vtype == MKC_VT_LIST || svtype > SV_T_NAMESPACE) {
-      fprintf (fh, "\n      ");
+      p = stpecpy (p, scend, "\n      ");
     } else {
-      fprintf (fh, " ");
+      p = stpecpy (p, scend, " ");
     }
-    fprintf (fh, "context %s;", vctxtstr);
+    snprintf (tmp, tmpsz, "context %s;", vctxtstr);
+    p = stpecpy (p, scend, tmp);
     if (svtype > SV_T_NAMESPACE) {
-      fprintf (fh, " namespace %s;", scopedvar_type_disp (svtype));
+      snprintf (tmp, tmpsz, " namespace %s;", scopedvar_type_disp (svtype));
+      p = stpecpy (p, scend, tmp);
     }
     if (value->vtype == MKC_VT_LIST || svtype > SV_T_NAMESPACE) {
-      fprintf (fh, "\n    }\n");
+      p = stpecpy (p, scend, "\n    }\n");
     } else {
-      fprintf (fh, " }\n");
+      p = stpecpy (p, scend, " }\n");
     }
     ++count;
     *tcount += 1;
   }
 
   if (count == 0) {
-    fprintf (fh, "    ;\n");
+    p = stpecpy (p, scend, "    ;\n");
   }
-  fprintf (fh, "  }\n\n");
-  fprintf (fh, "\n");
+  p = stpecpy (p, scend, "  }\n\n");
+  if (count > 0) {
+    fprintf (fh, scbuff);
+  }
+
+  free (scbuff);
+  free (tmp);
+  free (tbuff);
 }

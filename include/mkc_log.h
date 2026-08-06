@@ -25,15 +25,15 @@ enum {
   MKC_LOG_ERROR         = (1 << 4),
   MKC_LOG_GENERAL       = (1 << 5),
   MKC_LOG_PROCESS       = (1 << 6),
-  MKC_LOG_PROFILE       = (1 << 7),
+  MKC_LOG_NOTINUSE_A    = (1 << 7),
   MKC_LOG_STATISTICS    = (1 << 8),
   MKC_LOG_VAR           = (1 << 9),
+  MKC_LOG_TARGET        = (1 << 10),
   MKC_LOG_NORMAL        = (
-                         MKC_LOG_AST_PROCESS |
                          MKC_LOG_CHECK |
                          MKC_LOG_ERROR |
                          MKC_LOG_GENERAL |
-                         MKC_LOG_PROFILE |
+                         MKC_LOG_TARGET |
                          MKC_LOG_STATISTICS
                          ),
   MKC_LOG_ALL           = (~ 0),

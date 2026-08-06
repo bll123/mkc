@@ -58,7 +58,7 @@ static char * mkc_path_config (char *buff, size_t sz);
 
 void
 path_build (mkc_path_t pathtype, char *buff, size_t sz,
-    char *filename, mkc_error_t *mkcerr)
+    const char *filename, mkc_error_t *mkcerr)
 {
   char        *p = NULL;
 

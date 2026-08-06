@@ -125,6 +125,7 @@
 %token T_RETURN               "return"
 
 // directives
+%token T_STMT_BUILD           "build"
 %token T_STMT_CHK_INC_COMPILE "check_include_compile"
 %token T_STMT_CHK_INC_DEPS    "check_include_dependencies"
 %token T_STMT_CHK_INC_GUARDS  "check_include_guards"
@@ -213,7 +214,7 @@
 %type <astnode> stmt_foreach stmt_function funcreturn stmt_while
 %type <astnode> stmt_function_call
 // statements
-%type <astnode> stmt_chk_inc_compile stmt_chk_inc_deps
+%type <astnode> stmt_build stmt_chk_inc_compile stmt_chk_inc_deps
 %type <astnode> stmt_chk_inc_guards stmt_config stmt_executable
 %type <astnode> stmt_mark stmt_print stmt_profile stmt_project stmt_set
 // other statements
@@ -292,6 +293,10 @@ stmt[v]:
       $v = $a;
     }
 // statements
+  | stmt_build[a]
+    {
+      $v = $a;
+    }
   | stmt_chk_inc_compile[a]
     {
       $v = $a;
@@ -638,6 +643,14 @@ stmt_function[v]:
   ;
 
 // statements
+
+stmt_build[v]:
+    T_STMT_BUILD stmtblock[a]
+    {
+      $v = mkc_ast_mk_stmt_stmtblock (ast, $a, MKC_T_STMT_BUILD,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
 
 stmt_chk_inc_compile[v]:
     T_STMT_CHK_INC_COMPILE stmtblock[a]

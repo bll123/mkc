@@ -1419,6 +1419,13 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
 
     /* statements */
 
+    case MKC_T_STMT_BUILD: {
+      mkc_context_push (astmain->context, MKC_CONTEXT_BUILD, astmain->mkcerr);
+      mkc_ast_process (astmain, astnode->stmt_stmtblock.stmtblock, ifcond, stmtcontrol, funcret, depth + 1);
+      mkc_context_pop (astmain->context);
+      break;
+    }
+
     case MKC_T_STMT_CHK_INC_COMPILE:
     case MKC_T_STMT_CHK_INC_DEPS:
     case MKC_T_STMT_CHK_INC_GUARDS: {

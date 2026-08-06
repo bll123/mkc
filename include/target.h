@@ -41,6 +41,8 @@ chararr_t *target_get_flags (target_t *target, const char *flagname);
 
 int target_check_dependency_timestamp (target_t *target, const char *filename, const char *filepath);
 void target_get_dependencies (target_t *target, mkc_compiler_t compiler, const char *filename, const char *filepath, target_flag_t flags);
+void target_object_file (target_t *target, const char *execnm, const char *objnm);
+void target_source_file (target_t *target, const char *objnm, const char *srcname);
 
 mkc_list_t * target_get_include_list (target_t *target, mkc_regex_t *rx, int64_t *ts);
 const char * target_iter_includes (target_t *target, mkc_list_t *hlist, mkc_listidx_t *hiteridx, char *hdr, size_t hsz);

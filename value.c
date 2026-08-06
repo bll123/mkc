@@ -110,7 +110,7 @@ value_to_str (value_t *value, char *buff, size_t sz)
       while ((lidx = mkc_list_iter_next (tlist, &iteridx)) != MKC_ITER_FINISH) {
         p = stpecpy (p, eptr, "\n");
         tvalue = mkc_list_get_by_idx (tlist, lidx);
-        p = stpecpy (p, eptr, "        ");
+        p = stpecpy (p, eptr, "      ");
         value_to_str (tvalue, tbuff, sizeof (tbuff));
         if (value_is_string_type (tvalue)) {
           p = stpecpy (p, eptr, "'");
