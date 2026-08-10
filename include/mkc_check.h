@@ -26,7 +26,6 @@ typedef struct mkc_check_t mkc_check_t;
 MKC_NODISCARD mkc_check_t *mkc_check_init (scopedvar_t *scopedvar, comptest_t *comptest, mkc_attribute_t *attr, mkc_log_t *log, mkc_error_t *mkcerr);
 void mkc_check_free (mkc_check_t *check);
 
-int mkc_create_dirs (void);
 mkc_err_code_t mkc_chk_compiler_env (mkc_check_t *check);
 int mkc_chk_compiler_works (mkc_check_t *check, mkc_compiler_t compiler);
 int mkc_chk_compiler_id (mkc_check_t *check, mkc_compiler_t compiler);

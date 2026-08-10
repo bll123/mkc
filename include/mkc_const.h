@@ -23,6 +23,8 @@ extern char const * const MKC_C_CFLAGS;
 extern char const * const MKC_C_LDFLAGS;
 extern char const * const MKC_C_LIBS;
 extern char const * const MKC_C_SUPPORTS_MM;
+extern char const * const MKC_C_MKC_TS;
+extern char const * const MKC_C_MKC_CHANGED;
 
 #if defined (__cplusplus) || defined (c_plusplus)
 }

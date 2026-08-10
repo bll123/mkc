@@ -87,6 +87,7 @@ typedef struct mkc_process_t {
   mkc_list_t        * user_rx_list;
   mkc_attribute_t   attr;
   /* internal */
+  int64_t           mkc_ts;
   mkc_compiler_t    dfltcompiler;
   mkc_system_type_t systype;
   mkc_system_id_t   sysid;
@@ -180,7 +181,6 @@ static void process_save_cache_profile (mkc_process_t *process, FILE *fh, sv_ite
 /* so that the static aggregator can be initialized */
 static char const * const MKC_C_P_PKGCONF = "MKC_PATH_PKGCONF";
 static char const * const MKC_C_P_PKGCONFIG = "MKC_PATH_PKG_CONFIG";
-static char const * const MKC_C_P_GETCONF = "MKC_PATH_GETCONF";
 
 typedef struct mkc_prog_chk_t {
   const char  * program;
@@ -189,7 +189,6 @@ typedef struct mkc_prog_chk_t {
 
 /* these are executables that are used by mkc */
 static mkc_prog_chk_t proglist [] = {
-  { "getconf",      MKC_C_P_GETCONF },
   { "pkgconf",      MKC_C_P_PKGCONF },
   { "pkg-config",   MKC_C_P_PKGCONFIG },
   { NULL,           NULL },
@@ -199,7 +198,7 @@ static void mkc_process_attr_clear (mkc_process_t *process);
 static void mkc_process_user_regex_free (void *turx);
 static int mkc_process_user_regex_comp (void *turxa, void *turxb);
 const char * mkc_process_create_name (mkc_process_t *process, mkc_astnode_token_t asttype, char *buff, size_t sz, const char *tag, ...);
-static int mkc_process_int_checks (mkc_process_t *process);
+static int mkc_process_initial_checks (mkc_process_t *process);
 static void mkc_process_set_defaults (mkc_process_t *process);
 static void mkc_process_configure_manual (mkc_process_t *process);
 static void mkc_process_configure_auto (mkc_process_t *process, int defzero);
@@ -218,7 +217,7 @@ static char * mkc_process_configure_substitute (mkc_process_t *process, char *da
 static void mkc_process_alternate_free (void *talt);
 static void mkc_process_topo_add_items (mkc_process_t *process, toposort_t *topo, mkc_list_t *hlist);
 static void mkc_process_topo_add_deps (mkc_process_t *process, toposort_t *topo, const char *filename, const char *filepath);
-static void mkc_process_attr_flags (mkc_process_t *process, value_t *value, mkc_list_t *flags, bool inlist);
+static void mkc_process_attr_flags (mkc_process_t *process, value_t *value, mkc_list_t *flags, mkc_list_t *libs, bool inlist);
 
 
 MKC_NODISCARD
@@ -229,7 +228,8 @@ mkc_process_init (scopedvar_t *scopedvar,
 {
   mkc_process_t     *process;
   int               rc;
-  msint64_t          starttm;
+  mstime_t          starttm;
+  char              tbuff [MKC_PATH_MAX];
 
   mstimestart (&starttm);
   process = malloc (sizeof (mkc_process_t));
@@ -265,6 +265,7 @@ mkc_process_init (scopedvar_t *scopedvar,
   process->attr.localheader = false;
   process->attr.printerrors = false;
 
+  process->mkc_ts = 0;
   process->inloadcache = false;
   process->cacheloaded = false;
   process->cacheinvalidated = false;
@@ -278,6 +279,9 @@ mkc_process_init (scopedvar_t *scopedvar,
   process->attr.headertype = process->headertype;
   process->variadicmacro = MKC_VARIADIC_MACRO_SUPPORTED;
   process->compiler_mm = false;
+
+  path_build (MKC_PATH_EXEC_PATH, tbuff, sizeof (tbuff), mkcoptions->file_mkc, mkcerr);
+  process->mkc_ts = fileop_modtime (tbuff);
 
   process->comptest = comptest_init (process->scopedvar,
       &process->attr, log, mkcerr);
@@ -301,7 +305,7 @@ mkc_process_init (scopedvar_t *scopedvar,
   }
 
   mkc_process_set_defaults (process);
-  rc = mkc_process_int_checks (process);
+  rc = mkc_process_initial_checks (process);
   if (rc < 0) {
     mkc_process_free (process);
     return NULL;
@@ -715,7 +719,7 @@ mkc_process_include (mkc_process_t *process,
   }
 
   if (valpath == NULL) {
-    path_build (MKC_PATH_MKC_UNITS, tbuff, MKC_PATH_MAX, fname, process->mkcerr);
+    path_build (MKC_PATH_MKC_SHR_UNITS, tbuff, MKC_PATH_MAX, fname, process->mkcerr);
     if (fileop_exists (tbuff)) {
       p = stpecpy (buff, buff + sz, tbuff);
     } else {
@@ -901,7 +905,6 @@ mkc_process_stmt_chk_inc_compile (mkc_process_t *process)
 
   chararr_free (cflags);
   chararr_free (ldflags);
-  mkc_list_free (hlist);
   free (hdrpath);
 #endif
   mkc_process_attr_clear (process);
@@ -984,7 +987,7 @@ mkc_process_stmt_chk_inc_deps (mkc_process_t *process)
       target_flag_t   tgtflags = TARGET_IGNORE_SYS_INC;
 
       if (process->compiler_mm) {
-        tgtflags |= TARGET_SUPPORTS_MM;
+        tgtflags |= TARGET_USE_MM;
       }
 
       target_get_dependencies (process->target,
@@ -993,7 +996,6 @@ mkc_process_stmt_chk_inc_deps (mkc_process_t *process)
 
     mkc_process_topo_add_deps (process, topo, hdr, hdrpath);
   }
-  mkc_list_free (hlist);
 
   rc = toposort (topo);
   if (rc == MKC_ERR_FAILURE) {
@@ -1148,7 +1150,6 @@ mkc_process_stmt_chk_inc_guards (mkc_process_t *process)
   mkc_log (process->log, MKC_LOG_CHECK, "-- check_include_guards - %s (%d)\n",
       mkc_success_msg (rc), count);
 
-  mkc_list_free (hlist);
   mkc_list_free (guardlist);
   free (hdrpath);
 #endif
@@ -1236,7 +1237,8 @@ mkc_process_stmt_executable (mkc_process_t *process, value_t *valnm)
   mkc_listidx_t   siteridx;
   mkc_listidx_t   sidx;
   char            *srcbuff;
-
+  value_t         *value;
+  bool            changed;
 
   scopedvar_value_get_str (process->scopedvar, valnm, nm, sizeof (nm));
   snprintf (execnm, sizeof (execnm), "%s%s", nm, process->exeext);
@@ -1251,6 +1253,14 @@ mkc_process_stmt_executable (mkc_process_t *process, value_t *valnm)
     return;
   }
   *srcbuff = '\0';
+
+  value = scopedvar_get_value (process->scopedvar, SV_T_INTERNAL, MKC_C_MKC_CHANGED);
+  changed = scopedvar_value_get_integer (process->scopedvar, value);
+  if (! changed &&
+      scopedvar_is_defined (process->scopedvar, SV_T_DEPENDENCY, execnm)) {
+    /* already in cache */
+    return;
+  }
 
   scopedvar_delete (process->scopedvar, SV_T_DEPENDENCY, execnm);
 
@@ -1273,9 +1283,9 @@ mkc_process_stmt_executable (mkc_process_t *process, value_t *valnm)
     }
     stpecpy (p, objnm + sizeof (objnm), process->objext);
 
-    target_object_file (process->target, execnm, objnm);
+    target_executable_object (process->target, execnm, objnm);
     scopedvar_delete (process->scopedvar, SV_T_DEPENDENCY, objnm);
-    target_source_file (process->target, objnm, srcbuff);
+    target_object_source (process->target, objnm, srcbuff);
   }
 
   free (srcbuff);
@@ -1374,10 +1384,31 @@ mkc_process_stmt_loadcache_post (mkc_process_t *process)
     mkc_message ("-- cache invalidated\n");
     mkc_log (process->log, MKC_LOG_GENERAL, "-- cache invalidated\n");
     mkc_process_set_defaults (process);
-    mkc_process_int_checks (process);
+    mkc_process_initial_checks (process);
     mkc_process_get_path (process);
     mkc_process_find_executables (process);
     mkc_chk_getconf (process->check);
+  }
+
+  if (! process->cacheinvalidated) {
+    int64_t     cachedts = 0;
+    bool        changed = false;
+
+    if (scopedvar_is_defined (process->scopedvar, SV_T_TIMESTAMP,
+        process->mkcoptions->file_mkc)) {
+      cachedts = scopedvar_get_timestamp (process->scopedvar, SV_T_TIMESTAMP,
+          process->mkcoptions->file_mkc);
+    }
+
+    if (process->mkc_ts > cachedts) {
+      changed = true;
+    }
+
+    scopedvar_set_timestamp (process->scopedvar, SV_T_TIMESTAMP,
+          MKC_C_MKC_TS, process->mkc_ts, MKC_VCTXT_MKC);
+    /* the changed flag will invalidate certain cached items */
+    scopedvar_set_integer (process->scopedvar, SV_T_INTERNAL,
+          MKC_C_MKC_CHANGED, changed, MKC_VCTXT_MKC);
   }
 
   process->inloadcache = false;
@@ -1566,8 +1597,10 @@ mkc_process_stmt_set (mkc_process_t *process,
   }
 
   trc = scopedvar_set (process->scopedvar, svtype, nm, tvalue, vctxt);
-  if (trc == MKC_OK_CHANGE) {
+  if (vctxt == MKC_VCTXT_ENV && trc == MKC_OK_CHANGE) {
     process->cacheinvalidated = true;
+  } else {
+    trc = MKC_OK;
   }
 
   /* tvalue may have been re-allocated, only call temp-value-free */
@@ -1703,6 +1736,7 @@ mkc_process_attr_alternate (mkc_process_t *process)
   alt.hdrlist = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, process->mkcerr);
   alt.compflags = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, process->mkcerr);
   alt.linkflags = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, process->mkcerr);
+  alt.libs = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, process->mkcerr);
   process->attr.curralt = mkc_list_set (process->attr.alternates,
       &alt, sizeof (mkc_alternate_t));
 }
@@ -1755,7 +1789,7 @@ mkc_process_attr_comp_flags (mkc_process_t *process, value_t *value)
   }
 
   clist = process->attr.curralt->compflags;
-  mkc_process_attr_flags (process, value, clist, false);
+  mkc_process_attr_flags (process, value, clist, NULL, false);
 }
 
 void
@@ -1796,6 +1830,7 @@ void
 mkc_process_attr_link_flags (mkc_process_t *process, value_t *value)
 {
   mkc_list_t      * llist;
+  mkc_list_t      * libs;
 
   if (process == NULL) {
     return;
@@ -1808,7 +1843,8 @@ mkc_process_attr_link_flags (mkc_process_t *process, value_t *value)
   }
 
   llist = process->attr.curralt->linkflags;
-  mkc_process_attr_flags (process, value, llist, false);
+  libs = process->attr.curralt->libs;
+  mkc_process_attr_flags (process, value, llist, libs, false);
 }
 
 void
@@ -1984,7 +2020,7 @@ mkc_process_check_flag (mkc_process_t *process,
   char        tnm [MKC_VNAME_MAX];
   char        flag [MKC_VNAME_MAX];
   const char  *pfx = NULL;
-  scopedvar_t     *scope;
+  scopedvar_t *scope;
   int         iasttype = asttype;
 
   if (process == NULL) {
@@ -2420,12 +2456,10 @@ mkc_process_create_name (mkc_process_t *process, mkc_astnode_token_t asttype,
 }
 
 static int
-mkc_process_int_checks (mkc_process_t *process)
+mkc_process_initial_checks (mkc_process_t *process)
 {
-  int                 rc;
-  int                 isystype;
-
-  mkc_create_dirs ();
+  int       rc;
+  int       isystype;
 
   mkc_log (process->log, MKC_LOG_CHECK, "== internal checks\n");
 
@@ -2580,6 +2614,12 @@ mkc_process_int_checks (mkc_process_t *process)
       MKC_C_SUPPORTS_MM, process->compiler_mm, MKC_VCTXT_MKC);
 
   mkc_process_attr_clear (process);
+
+  /* make sure these variables exist */
+  scopedvar_set_timestamp (process->scopedvar, SV_T_TIMESTAMP,
+        MKC_C_MKC_TS, 0, MKC_VCTXT_MKC);
+  scopedvar_set_integer (process->scopedvar, SV_T_INTERNAL,
+        MKC_C_MKC_CHANGED, false, MKC_VCTXT_MKC);
 
   return MKC_OK;
 }
@@ -3149,7 +3189,6 @@ mkc_process_dbg_print_info (mkc_process_t *process)
   fprintf (stdout, "== info\n");
   fprintf (stdout, "  int %zd\n", sizeof (int));
   fprintf (stdout, "  time_t %zd\n", sizeof (time_t));
-  fprintf (stdout, "  int64_t %zd\n", sizeof (int64_t));
 }
 
 static char *
@@ -3210,6 +3249,7 @@ mkc_process_alternate_free (void *tchkcontext)
   mkc_list_free (alt->hdrlist);
   mkc_list_free (alt->compflags);
   mkc_list_free (alt->linkflags);
+  mkc_list_free (alt->libs);
 }
 
 static void
@@ -3241,6 +3281,10 @@ mkc_process_topo_add_deps (mkc_process_t *process,
 
   mkc_log (process->log, MKC_LOG_CHECK, "  %s : ", filename);
   valdeplist = scopedvar_get_value (process->scopedvar, SV_T_DEPENDENCY, filename);
+  if (valdeplist == NULL) {
+    fprintf (stderr, "ERR: unable to locate dep list for %s\n", filename);
+    return;
+  }
 
   value_iter_start (valdeplist, &diteridx);
   while ((didx = value_iter_next (valdeplist, &tvalue, &diteridx)) != MKC_ITER_FINISH) {
@@ -3262,7 +3306,7 @@ mkc_process_topo_add_deps (mkc_process_t *process,
 
 static void
 mkc_process_attr_flags (mkc_process_t *process, value_t *value,
-    mkc_list_t *flags, bool inlist)
+    mkc_list_t *flags, mkc_list_t *libs, bool inlist)
 {
   mkc_listidx_t   iteridx;
   mkc_listidx_t   lidx;
@@ -3271,6 +3315,7 @@ mkc_process_attr_flags (mkc_process_t *process, value_t *value,
   while ((lidx = mkc_list_iter_next (value->list, &iteridx)) != MKC_ITER_FINISH) {
     value_t     *lvalue;
     value_t     *tvalue;
+    char        flag [MKC_VNAME_MAX];
 
     if (mkc_error_chk_err (process->mkcerr)) {
       break;
@@ -3279,7 +3324,7 @@ mkc_process_attr_flags (mkc_process_t *process, value_t *value,
     lvalue = mkc_list_get_by_idx (value->list, lidx);
     tvalue = scopedvar_value_get_value (process->scopedvar, lvalue);
     if (tvalue->vtype == MKC_VT_LIST) {
-      mkc_process_attr_flags (process, tvalue, flags, true);
+      mkc_process_attr_flags (process, tvalue, flags, libs, true);
       if (! inlist) {
         scopedvar_temp_value_free (tvalue);
       }
@@ -3293,7 +3338,18 @@ mkc_process_attr_flags (mkc_process_t *process, value_t *value,
     } else {
       mkc_error_set (process->mkcerr, MKC_ERR_UNEXPECTED_VALUE_TYPE, 0, NULL);
     }
-    mkc_list_set (flags, tvalue, sizeof (value_t));
+
+    scopedvar_value_get_str (process->scopedvar, tvalue, flag, sizeof (flag));
+    if (libs != NULL) {
+      if (mkc_flag_is_libloc (flag) ||
+          strncmp (flag, "-l", 2) == 0) {
+        mkc_list_set (libs, tvalue, sizeof (value_t));
+      } else {
+        mkc_list_set (flags, tvalue, sizeof (value_t));
+      }
+    } else {
+      mkc_list_set (flags, tvalue, sizeof (value_t));
+    }
     if (! inlist) {
       scopedvar_temp_value_free (tvalue);
     }

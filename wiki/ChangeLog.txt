@@ -9,6 +9,8 @@
 * Bug Fixes:
     * Various fixes for 'check_include...'.
     * file timestamps at millisecond resolution.
+* Changes:
+    * cache invalidation is more particular.
 
 -->
 

@@ -17,3 +17,5 @@ char const * const MKC_C_CFLAGS = "MKC_CFLAGS";
 char const * const MKC_C_LDFLAGS = "MKC_LDFLAGS";
 char const * const MKC_C_LIBS = "MKC_LIBS";
 char const * const MKC_C_SUPPORTS_MM = "MKC_COMPILER_SUPPORTS_MM";
+char const * const MKC_C_MKC_TS = "MKC_MKC_TIMESTAMP";
+char const * const MKC_C_MKC_CHANGED = "MKC_MKC_CHANGED";

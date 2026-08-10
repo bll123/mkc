@@ -19,18 +19,18 @@ typedef enum {
   MKC_PATH_CONFIG,              /* $HOME/.config/mkc/ or */
                                 /* $USERPROFILE/AppData/Roaming/mkc */
   MKC_PATH_EXEC_PATH,
+  MKC_PATH_EXEC_PREFIX,
   MKC_PATH_HOME,
   MKC_PATH_MKCFILES,            /* mkc_files */
   MKC_PATH_MKCF_OBJECTS,        /* mkc_files/objects */
   MKC_PATH_MKCF_TMP,            /* mkc_files/tmp */
-  MKC_PATH_MKC_INCLUDE,         /* .../share/mkc/include */
+  MKC_PATH_MKC_SHR_INCLUDE,         /* .../share/mkc/include */
   MKC_PATH_MKC_TEMPLATES,       /* .../share/mkc/templates */
-  MKC_PATH_MKC_UNITS,           /* .../share/mkc/units */
+  MKC_PATH_MKC_SHR_UNITS,           /* .../share/mkc/units */
   MKC_PATH_MKC_USER_UNITS,      /* <config>/units */
   MKC_PATH_ORIG_CWD,
   MKC_PATH_CWD,
   MKC_PATH_SHARE,               /* .../share */
-  MKC_PATH_PREFIX,              /* one level above exec */
   MKC_PATH_BUILD_MAX,
 } mkc_path_t;
 
@@ -41,7 +41,7 @@ typedef enum {
   MKC_DIR_MKC_FILES,
   MKC_DIR_SHARE,
   MKC_DIR_ORIG_CWD,
-  MKC_DIR_PREFIX,           /* one level above exec */
+  MKC_DIR_EXEC_PREFIX,
   MKC_DIR_MAX,
 } mkc_dir_t;
 
@@ -49,7 +49,6 @@ extern const char * const pathdesc [MKC_PATH_BUILD_MAX];
 
 void path_build (mkc_path_t pathtype, char *buff, size_t sz, const char *filename, mkc_error_t *mkcerr);
 void path_set_dir (mkc_dir_t dir, const char *path);
-void path_getcwd (char *buff, size_t sz);
 void path_realpath (char *path, size_t sz);
 
 #if defined (__cplusplus) || defined (c_plusplus)

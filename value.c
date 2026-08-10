@@ -108,9 +108,11 @@ value_to_str (value_t *value, char *buff, size_t sz)
       tlist = value->list;
       mkc_list_iter_start (tlist, &iteridx);
       while ((lidx = mkc_list_iter_next (tlist, &iteridx)) != MKC_ITER_FINISH) {
-        p = stpecpy (p, eptr, "\n");
+        if (p - buff > 70) {
+          p = stpecpy (p, eptr, "\n");
+        }
         tvalue = mkc_list_get_by_idx (tlist, lidx);
-        p = stpecpy (p, eptr, "      ");
+        p = stpecpy (p, eptr, " ");
         value_to_str (tvalue, tbuff, sizeof (tbuff));
         if (value_is_string_type (tvalue)) {
           p = stpecpy (p, eptr, "'");
@@ -194,7 +196,7 @@ value_iter_next (value_t *value,
 
   if (value->vtype == MKC_VT_LIST) {
     mkc_listidx_t   lidx;
-    value_t     *tvalue;
+    value_t         *tvalue;
 
     lidx = mkc_list_iter_next (value->list, iteridx);
     rc = lidx;

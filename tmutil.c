@@ -66,13 +66,13 @@ mstime (void)
 }
 
 void
-mstimestart (msint64_t *mstm)
+mstimestart (mstime_t *mstm)
 {
   gettimeofday (&mstm->tm, NULL);
 }
 
 int64_t
-mstimeend (msint64_t *mstm)
+mstimeend (mstime_t *mstm)
 {
   struct timeval    end;
   int64_t          s, u, m;

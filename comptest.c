@@ -317,6 +317,7 @@ comptest_test (comptest_t *comptest, ct_type_t ctype,
 
     comptest->attr->curralt = alt;
     comptest_create_header_var (comptest);
+// ### need to grab the flags from alt...
     rc = (*func) (comptest, compiler, fname, rbuff, rsz);
 
     /* check doesn't really have the knowledge as to how */
@@ -436,7 +437,7 @@ compile_only (comptest_t *comptest, mkc_compiler_t compiler,
     chararr_append (comptest->targv, outfile);
   }
   chararr_append (comptest->targv, tbuff);
-  comptest_append_list_arg (comptest, alt->linkflags);
+//  comptest_append_list_arg (comptest, alt->linkflags);
   if (mkc_error_chk_err (comptest->mkcerr)) {
     free (tbuff);
     free (compstr);
@@ -507,7 +508,8 @@ compile_link (comptest_t *comptest, mkc_compiler_t compiler,
   }
 
   rc = compile_only (comptest, compiler, fname, rbuff, rsz);
-  comptest_reset (comptest);
+  chararr_reset (comptest->targv, 0);
+  comptest->preprocess = false;
   if (rc > 0) {
     rc = - rc;
   }
@@ -555,6 +557,7 @@ compile_link (comptest_t *comptest, mkc_compiler_t compiler,
 
   comptest_append_flags (comptest, comptest->addlibs);
   comptest_append_flags (comptest, comptest->libs);
+  comptest_append_list_arg (comptest, alt->libs);
   chararr_append (comptest->targv, NULL);
 
   if (mkc_error_chk_err (comptest->mkcerr)) {
@@ -601,7 +604,8 @@ compile_run (comptest_t *comptest, mkc_compiler_t compiler,
   char        *exefile;
 
   rc = compile_link (comptest, compiler, fname, NULL, 0);
-  comptest_reset (comptest);
+  comptest->preprocess = false;
+  chararr_reset (comptest->targv, 0);
   if (rc != 0) {
     return rc;
   }

@@ -12,6 +12,7 @@ extern "C" {
 
 typedef struct mkc_option_t {
   char        * currprofile;
+  const char  * file_mkc;
   const char  * stage;
   const char  * prefix;
   int         verbose;

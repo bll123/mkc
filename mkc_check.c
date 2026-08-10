@@ -98,12 +98,6 @@ mkc_check_free (mkc_check_t *check)
   free (check);
 }
 
-int
-mkc_create_dirs (void)
-{
-  return 0;
-}
-
 mkc_err_code_t
 mkc_chk_compiler_env (mkc_check_t *check)
 {
@@ -168,7 +162,7 @@ mkc_chk_system_type (mkc_check_t *check, mkc_compiler_t compiler)
     mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
     return MKC_SYS_UNKNOWN;
   }
-  path_build (MKC_PATH_MKC_INCLUDE, inc, MKC_PATH_MAX, NULL, check->mkcerr);
+  path_build (MKC_PATH_MKC_SHR_INCLUDE, inc, MKC_PATH_MAX, NULL, check->mkcerr);
 
   chararr_append (check->flags, "-I");
   chararr_append (check->flags, inc);
@@ -195,7 +189,7 @@ mkc_chk_system_id (mkc_check_t *check, mkc_compiler_t compiler)
     return MKC_SYS_ID_NOTSET;
   }
   mkc_log (check->log, MKC_LOG_CHECK, "  == chk: system-id\n");
-  path_build (MKC_PATH_MKC_INCLUDE, inc, MKC_PATH_MAX, NULL, check->mkcerr);
+  path_build (MKC_PATH_MKC_SHR_INCLUDE, inc, MKC_PATH_MAX, NULL, check->mkcerr);
   chararr_append (check->flags, "-I");
   chararr_append (check->flags, inc);
   chararr_append (check->flags, NULL);
@@ -238,7 +232,7 @@ mkc_chk_library_location (mkc_check_t *check, mkc_compiler_t compiler)
     return rc;
   }
   mkc_log (check->log, MKC_LOG_CHECK, "  == chk: lib-location\n");
-  path_build (MKC_PATH_MKC_INCLUDE, inc, MKC_PATH_MAX, NULL, check->mkcerr);
+  path_build (MKC_PATH_MKC_SHR_INCLUDE, inc, MKC_PATH_MAX, NULL, check->mkcerr);
   chararr_append (check->flags, "-I");
   chararr_append (check->flags, inc);
   chararr_append (check->flags, NULL);
@@ -264,7 +258,7 @@ mkc_chk_compiler_id (mkc_check_t *check, mkc_compiler_t compiler)
     return rc;
   }
   mkc_log (check->log, MKC_LOG_CHECK, "  == chk: compiler-id\n");
-  path_build (MKC_PATH_MKC_INCLUDE, inc, MKC_PATH_MAX, NULL, check->mkcerr);
+  path_build (MKC_PATH_MKC_SHR_INCLUDE, inc, MKC_PATH_MAX, NULL, check->mkcerr);
   chararr_append (check->flags, "-I");
   chararr_append (check->flags, inc);
   chararr_append (check->flags, NULL);
@@ -553,6 +547,7 @@ mkc_chk_package (mkc_check_t *check,
   if (mkc_error_chk_err (check->mkcerr)) {
     free (pkgconfpath);
     free (tpath);
+    chararr_free (targv);
     return MKC_ERR_FAILURE;
   }
 
@@ -561,6 +556,7 @@ mkc_chk_package (mkc_check_t *check,
     mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
     free (pkgconfpath);
     free (tpath);
+    chararr_free (targv);
     return MKC_ERR_FAILURE;
   }
 
@@ -579,6 +575,7 @@ mkc_chk_package (mkc_check_t *check,
     free (pkgconfpath);
     free (tpath);
     free (rbuff);
+    chararr_free (targv);
     return rc;
   }
 

@@ -21,6 +21,7 @@ typedef struct mkc_alternate_t {
   mkc_list_t      * hdrlist;
   mkc_list_t      * compflags;
   mkc_list_t      * linkflags;
+  mkc_list_t      * libs;
 } mkc_alternate_t;
 
 #if defined (__cplusplus) || defined (c_plusplus)

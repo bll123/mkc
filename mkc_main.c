@@ -59,8 +59,8 @@ main (int argc, char *argv [])
   mkc_astmain_t   * astmain = NULL;
   mkc_error_t     * mkcerr = NULL;
   mkc_log_t       * log = NULL;
-  msint64_t        starttm;
-  msint64_t        proctm;
+  mstime_t        starttm;
+  mstime_t        proctm;
   int64_t          etm;
   bool            loadcache = true;
   bool            debug = false;
@@ -77,7 +77,7 @@ main (int argc, char *argv [])
     { "quiet",                no_argument,        NULL, 'q' },
     { "retest",               no_argument,        NULL, 'r' },
     { "verbose",              no_argument,        NULL, 'v' },
-    { "version",              no_argument,        NULL, 3 },
+    { "version",              no_argument,        NULL, 'V' },
     { NULL,                   no_argument,        NULL, 0   },
   };
 
@@ -105,7 +105,7 @@ main (int argc, char *argv [])
   mkc_main_set_exec_path (&argcopy);
 
   while ((c = getopt_long_only (argcopy.nargc, argcopy.utf8argv,
-      "p:rv", mkc_cli_opts, &option_index)) != -1) {
+      "p:rvV", mkc_cli_opts, &option_index)) != -1) {
     switch (c) {
       case 'p': {
         if (optarg != NULL) {
@@ -134,7 +134,7 @@ main (int argc, char *argv [])
         debug = 1;
         break;
       }
-      case 3: {
+      case 'V': {
         mkc_main_print_version ();
         exit (0);
         break;
@@ -180,13 +180,12 @@ main (int argc, char *argv [])
     return rc;
   }
 
-  if (fnidx < argcopy.nargc) {
-    fh = fileop_open (argcopy.utf8argv [fnidx], "r");
-    if (fh == NULL) {
-      mkc_error_set (mkcerr, MKC_ERR_FILE_NOT_FOUND, errno, argcopy.utf8argv [fnidx]);
-      rc = mkc_cleanup (astmain, &argcopy, log, &mkcoptions, mkcerr);
-      return rc;
-    }
+  mkcoptions.file_mkc = argcopy.utf8argv [fnidx];
+  fh = fileop_open (argcopy.utf8argv [fnidx], "r");
+  if (fh == NULL) {
+    mkc_error_set (mkcerr, MKC_ERR_FILE_NOT_FOUND, errno, argcopy.utf8argv [fnidx]);
+    rc = mkc_cleanup (astmain, &argcopy, log, &mkcoptions, mkcerr);
+    return rc;
   }
 
   astmain = mkc_ast_init (log, &mkcoptions, mkcerr);
@@ -204,19 +203,6 @@ main (int argc, char *argv [])
   }
 
   path_build (MKC_PATH_MKCFILES, cachename, sizeof (cachename), "cache.mkc", mkcerr);
-
-  if (loadcache) {
-    int64_t    cachetm;
-    int64_t    mkctm;
-
-    cachetm = fileop_modtime (cachename);
-    mkctm = fileop_modtime (argcopy.utf8argv [fnidx]);
-    if (mkctm >= cachetm) {
-      loadcache = false;
-      mkc_message ("-- cache out of date\n");
-      mkc_log (log, MKC_LOG_AST_PROCESS, "-- cache out of date\n");
-    }
-  }
 
   mkc_parse_start (parse, fh);
   if (mkc_error_chk_err (mkcerr)) {
@@ -376,7 +362,7 @@ mkc_main_set_exec_path (argcopy_t *argcopy)
   if (p != NULL) {
     *p = '\0';
   }
-  path_set_dir (MKC_DIR_PREFIX, tbuff);
+  path_set_dir (MKC_DIR_EXEC_PREFIX, tbuff);
 }
 
 static void
