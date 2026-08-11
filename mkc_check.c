@@ -727,7 +727,7 @@ mkc_chk_header (mkc_check_t *check, mkc_compiler_t compiler,
 
   comptest_set_flags (check->comptest, compflags, ldflags, NULL);
   comptest_usetemplate (check->comptest);
-  rc = comptest_test (check->comptest, MKC_COMPILE_LINK, compiler,
+  rc = comptest_test (check->comptest, MKC_COMPILE_ONLY, compiler,
       "c-header", NULL, 0);
   comptest_reset (check->comptest);
   return rc;

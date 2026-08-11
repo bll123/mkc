@@ -20,16 +20,18 @@ enum {
   MKC_LOG_NONE          = 0,
   MKC_LOG_AST           = (1 << 0),
   MKC_LOG_AST_PROCESS   = (1 << 1),
-  MKC_LOG_CHECK         = (1 << 2),
-  MKC_LOG_CHECK_VERBOSE = (1 << 3),
-  MKC_LOG_ERROR         = (1 << 4),
-  MKC_LOG_GENERAL       = (1 << 5),
-  MKC_LOG_PROCESS       = (1 << 6),
-  MKC_LOG_NOTINUSE_A    = (1 << 7),
-  MKC_LOG_STATISTICS    = (1 << 8),
-  MKC_LOG_VAR           = (1 << 9),
-  MKC_LOG_TARGET        = (1 << 10),
+  MKC_LOG_CACHE         = (1 << 2),
+  MKC_LOG_CHECK         = (1 << 3),
+  MKC_LOG_CHECK_VERBOSE = (1 << 4),
+  MKC_LOG_ERROR         = (1 << 5),
+  MKC_LOG_GENERAL       = (1 << 6),
+  MKC_LOG_PROCESS       = (1 << 7),
+  MKC_LOG_NOTINUSE_A    = (1 << 8),
+  MKC_LOG_STATISTICS    = (1 << 9),
+  MKC_LOG_VAR           = (1 << 10),
+  MKC_LOG_TARGET        = (1 << 11),
   MKC_LOG_NORMAL        = (
+                         MKC_LOG_CACHE |
                          MKC_LOG_CHECK |
                          MKC_LOG_ERROR |
                          MKC_LOG_GENERAL |

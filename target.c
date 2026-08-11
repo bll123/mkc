@@ -228,10 +228,6 @@ target_get_dependencies (target_t *target,
     return;
   }
 
-  /* note that the lists loaded from the cache are not sorted */
-  /* since they are supposedly complete, they should not need to be searched */
-  /* and processing should work.  this may need to be re-visited later */
-
   scopedvar_delete (target->scopedvar, SV_T_DEPENDENCY, filename);
 
   /* the dependency list must exist */
@@ -269,12 +265,7 @@ target_get_dependencies (target_t *target,
       }
     }
 
-    tp = strrchr (p, '/');
-    if (tp == NULL) {
-      tp = p;
-    } else {
-      tp += 1;
-    }
+    tp = path_filename (p);
     if (strcmp (filename, tp) != 0) {
       mkc_log (target->log, MKC_LOG_TARGET, "  %s", p);
       scopedvar_append_str_list (target->scopedvar, SV_T_DEPENDENCY,
@@ -306,17 +297,9 @@ target_get_include_list (target_t *target, mkc_regex_t *rx,
   int64_t         newts = 0;
   char            *p;
 
-  tbuff = malloc (MKC_PATH_MAX);
-  if (tbuff == NULL) {
-    mkc_error_set (target->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return NULL;
-  }
-  *tbuff = '\0';
-
   tname = malloc (MKC_SMALL_BUFF_SZ);
   if (tname == NULL) {
     mkc_error_set (target->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    free (tbuff);
     return NULL;
   }
   *tname = '\0';
@@ -324,7 +307,6 @@ target_get_include_list (target_t *target, mkc_regex_t *rx,
   path = malloc (MKC_PATH_MAX);
   if (path == NULL) {
     mkc_error_set (target->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    free (tbuff);
     free (tname);
     return NULL;
   }
@@ -356,11 +338,20 @@ target_get_include_list (target_t *target, mkc_regex_t *rx,
 
       cachedts = scopedvar_get_timestamp (target->scopedvar, SV_T_LOCAL, tname);
       *ts = cachedts;
+      free (path);
+      free (tname);
       return hlist;
     }
     memcpy (tname, "matchil_", 8);
     scopedvar_delete (target->scopedvar, SV_T_LOCAL, tname);
   }
+
+  tbuff = malloc (MKC_PATH_MAX);
+  if (tbuff == NULL) {
+    mkc_error_set (target->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return NULL;
+  }
+  *tbuff = '\0';
 
   mkc_list_iter_start (target->attr->pathlist, &piteridx);
   while ((pathidx = mkc_list_iter_next (target->attr->pathlist, &piteridx)) != MKC_ITER_FINISH) {
@@ -398,10 +389,10 @@ target_get_include_list (target_t *target, mkc_regex_t *rx,
       /* is out of date and must be cleared */
       /* header dependencies are used for the 'check_include_...' tests */
       if (scopedvar_is_defined (target->scopedvar, SV_T_TIMESTAMP, hdr)) {
-        int64_t     cachedfts;
+        int64_t     cachedts;
 
-        cachedfts = scopedvar_get_timestamp (target->scopedvar, SV_T_TIMESTAMP, hdr);
-        if (tts > cachedfts) {
+        cachedts = scopedvar_get_timestamp (target->scopedvar, SV_T_TIMESTAMP, hdr);
+        if (tts > cachedts) {
           scopedvar_delete (target->scopedvar, SV_T_DEPENDENCY, hdr);
         }
       }
@@ -422,17 +413,11 @@ target_get_include_list (target_t *target, mkc_regex_t *rx,
   memcpy (tname, "matchil_", 8);
   valhdr = scopedvar_get_value (target->scopedvar, SV_T_LOCAL, tname);
   hlist = valhdr->list;
-  memcpy (tname, "matchts_", 8);
-  if (scopedvar_is_defined (target->scopedvar, SV_T_LOCAL, tname)) {
-    int64_t   cachedts;
 
-    cachedts = scopedvar_get_timestamp (target->scopedvar, SV_T_LOCAL, tname);
-    *ts = cachedts;
-  } else {
-    /* return the timestamp of the latest include file */
-    *ts = newts;
-    scopedvar_set_timestamp (target->scopedvar, SV_T_LOCAL, tname, newts, MKC_VCTXT_MKC);
-  }
+  memcpy (tname, "matchts_", 8);
+  /* return the timestamp of the latest include file */
+  *ts = newts;
+  scopedvar_set_timestamp (target->scopedvar, SV_T_LOCAL, tname, newts, MKC_VCTXT_MKC);
 
   free (path);
   free (tbuff);
@@ -456,12 +441,7 @@ target_iter_includes (target_t *target, mkc_list_t *hlist,
     scopedvar_value_get_str (target->scopedvar, tvalue, hdr, sizeof (hdr));
     tvalue = scopedvar_get_value (target->scopedvar, SV_T_PATHS, hdr);
     scopedvar_value_get_str (target->scopedvar, tvalue, hdrpath, hpsz);
-    p = strrchr (hdrpath, '/');
-    if (p != NULL) {
-      p += 1;
-    } else {
-      p = hdrpath;
-    }
+    p = path_filename (hdrpath);
     return p;
   }
 
@@ -565,12 +545,7 @@ fprintf (stderr, "object-file: %s %s\n", objnm, srcname);
 
     scopedvar_value_get_str (target->scopedvar, &tvalue, dep, sizeof (dep));
     mkc_log (target->log, MKC_LOG_TARGET, "  %s\n", dep);
-    p = strrchr (dep, '/');
-    if (p == NULL) {
-      p = dep;
-    } else {
-      p += 1;
-    }
+    p = path_filename (dep);
 
 fprintf (stderr, "     obj-src: dep %s\n", dep);
     scopedvar_append_str_list (target->scopedvar, SV_T_DEPENDENCY,

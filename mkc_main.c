@@ -214,15 +214,11 @@ main (int argc, char *argv [])
     FILE    *cfh;
 
     cfh = fileop_open (cachename, "r");
-    if (cfh == NULL) {
-      mkc_error_set (mkcerr, MKC_ERR_FILE_NOT_FOUND, errno, cachename);
-      rc = mkc_cleanup (astmain, &argcopy, log, &mkcoptions, mkcerr);
-      return rc;
+    if (cfh != NULL) {
+      mkc_message ("-- loading cache\n");
+      mkc_parse_set_filename (parse, cachename);
+      mkc_parse_start (parse, cfh);
     }
-
-    mkc_message ("-- loading cache\n");
-    mkc_parse_start (parse, cfh);
-    mkc_parse_set_filename (parse, cachename);
   }
 
   mkc_parse_set_filename (parse, argcopy.utf8argv [fnidx]);

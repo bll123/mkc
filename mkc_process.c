@@ -866,11 +866,6 @@ mkc_process_stmt_chk_inc_compile (mkc_process_t *process)
   ldflags = target_get_flags (process->target, MKC_C_LDFLAGS);
 
   ts = 0;
-  if (scopedvar_is_defined (process->scopedvar, SV_T_INTERNAL,
-      MKC_C_CHK_INC_COMPILE_TS)) {
-    ts = scopedvar_get_timestamp (process->scopedvar, SV_T_INTERNAL,
-        MKC_C_CHK_INC_COMPILE_TS);
-  }
   hlist = target_get_include_list (process->target, urx->rx, &ts);
 
   mkc_list_iter_start (hlist, &hiteridx);
@@ -878,6 +873,11 @@ mkc_process_stmt_chk_inc_compile (mkc_process_t *process)
       &hiteridx, hdrpath, MKC_PATH_MAX)) != NULL) {
     if (mkc_error_chk_err (process->mkcerr)) {
       break;
+    }
+
+    if (target_check_dependency_timestamp (
+        process->target, hdr, hdrpath) == TARGET_CURRENT) {
+      continue;
     }
 
     count += 1;
@@ -943,7 +943,6 @@ mkc_process_stmt_chk_inc_deps (mkc_process_t *process)
     return rc;
   }
 
-  /* always select all include files */
   /* the returned timestamp will be used to determine */
   /* if a check needs to be made */
   /* target_get_include_list will update the saved timestamps */
@@ -1072,11 +1071,9 @@ mkc_process_stmt_chk_inc_guards (mkc_process_t *process)
 
   rc = MKC_OK;
   ts = 0;
-  /* always select all include files */
   /* as chk-inc-guards compares all guards to check for duplicates */
   /* the returned timestamp will be used to determine */
   /* if a check needs to be made */
-
   hlist = target_get_include_list (process->target, urx->rx, &ts);
 
   if (scopedvar_is_defined (process->scopedvar, SV_T_INTERNAL,
@@ -1132,6 +1129,7 @@ mkc_process_stmt_chk_inc_guards (mkc_process_t *process)
       idx = mkc_list_find (guardlist, &tp);
       if (idx != MKC_LIST_NOTFOUND) {
         mkc_error_set (process->mkcerr, MKC_ERR_INCLUDE_GUARD_DUPLICATE, 0, hdrpath);
+        free (tp);
         rc = MKC_ERR_FAILURE;
       } else {
         mkc_list_set (guardlist, &tp, sizeof (char *));
@@ -3293,12 +3291,7 @@ mkc_process_topo_add_deps (mkc_process_t *process,
 
     scopedvar_value_get_str (process->scopedvar, &tvalue, dep, sizeof (dep));
     mkc_log (process->log, MKC_LOG_CHECK, "  %s", dep);
-    p = strrchr (dep, '/');
-    if (p == NULL) {
-      p = dep;
-    } else {
-      p += 1;
-    }
+    p = path_filename (dep);
     toposort_add_pair (topo, filename, p);
   }
   mkc_log (process->log, MKC_LOG_CHECK, "\n");

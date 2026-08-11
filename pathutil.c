@@ -196,6 +196,27 @@ path_realpath (char *path, size_t sz)
   return;
 }
 
+/* path must be normalized */
+char *
+path_filename (const char *path)
+{
+  char        *rp;
+  const char  *tp;
+
+  if (path == NULL) {
+    return NULL;
+  }
+
+  tp = strrchr (path, '/');
+  if (tp == NULL) {
+    tp = path;
+  } else {
+    tp += 1;
+  }
+  rp = (char *) tp;
+  return rp;
+}
+
 /* internal routines */
 
 static void

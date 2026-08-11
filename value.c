@@ -102,17 +102,28 @@ value_to_str (value_t *value, char *buff, size_t sz)
       char          tbuff [MKC_PATH_MAX];
       char          *p;
       char          *eptr;
+      char          *tp;
+      bool          newline = false;
+      int           limit = 50;
 
+      tp = buff;
       eptr = buff + sz;
       p = stpecpy (buff, eptr, "[");
       tlist = value->list;
       mkc_list_iter_start (tlist, &iteridx);
       while ((lidx = mkc_list_iter_next (tlist, &iteridx)) != MKC_ITER_FINISH) {
-        if (p - buff > 70) {
+        if (p - tp > limit) {
           p = stpecpy (p, eptr, "\n");
+          newline = true;
+          tp = p;
+          limit = 65;
         }
         tvalue = mkc_list_get_by_idx (tlist, lidx);
         p = stpecpy (p, eptr, " ");
+        if (newline) {
+          p = stpecpy (p, eptr, "       ");
+          newline = false;
+        }
         value_to_str (tvalue, tbuff, sizeof (tbuff));
         if (value_is_string_type (tvalue)) {
           p = stpecpy (p, eptr, "'");
