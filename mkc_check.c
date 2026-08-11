@@ -153,7 +153,9 @@ int
 mkc_chk_system_type (mkc_check_t *check, mkc_compiler_t compiler)
 {
   int         rc = MKC_ERR_FAILURE;
+  int         systype = MKC_ERR_FAILURE;
   char        *inc;
+  char        rbuff [MKC_VNAME_MAX];
 
   mkc_log (check->log, MKC_LOG_CHECK, "  == chk: system-type\n");
 
@@ -170,18 +172,23 @@ mkc_chk_system_type (mkc_check_t *check, mkc_compiler_t compiler)
   comptest_set_flags (check->comptest, check->flags, NULL, NULL);
   comptest_usetemplate (check->comptest);
   rc = comptest_test (check->comptest, MKC_COMPILE_RUN, compiler,
-      "int-system", NULL, 0);
+      "int-system", rbuff, sizeof (rbuff));
+  if (rc == 0) {
+    systype = atoi (rbuff);
+  }
   comptest_reset (check->comptest);
   chararr_reset (check->flags, 0);
   free (inc);
-  return rc;
+  return systype;
 }
 
 int
 mkc_chk_system_id (mkc_check_t *check, mkc_compiler_t compiler)
 {
   int         rc = MKC_ERR_FAILURE;
+  int         sysid = MKC_ERR_FAILURE;
   char        *inc;
+  char        rbuff [MKC_VNAME_MAX];
 
   inc = malloc (MKC_PATH_MAX);
   if (inc == NULL) {
@@ -196,11 +203,14 @@ mkc_chk_system_id (mkc_check_t *check, mkc_compiler_t compiler)
   comptest_set_flags (check->comptest, check->flags, NULL, NULL);
   comptest_usetemplate (check->comptest);
   rc = comptest_test (check->comptest, MKC_COMPILE_RUN, compiler,
-      "int-sysid", NULL, 0);
+      "int-sysid", rbuff, sizeof (rbuff));
+  if (rc == 0) {
+    sysid = atoi (rbuff);
+  }
   comptest_reset (check->comptest);
   chararr_reset (check->flags, 0);
   free (inc);
-  return rc;
+  return sysid;
 }
 
 int
@@ -224,7 +234,9 @@ int
 mkc_chk_library_location (mkc_check_t *check, mkc_compiler_t compiler)
 {
   int         rc = MKC_ERR_FAILURE;
+  int         libloc = MKC_ERR_FAILURE;
   char        *inc;
+  char        rbuff [MKC_VNAME_MAX];
 
   inc = malloc (MKC_PATH_MAX);
   if (inc == NULL) {
@@ -239,18 +251,23 @@ mkc_chk_library_location (mkc_check_t *check, mkc_compiler_t compiler)
   comptest_set_flags (check->comptest, check->flags, NULL, NULL);
   comptest_usetemplate (check->comptest);
   rc = comptest_test (check->comptest, MKC_COMPILE_RUN, compiler,
-      "int-libloc", NULL, 0);
+      "int-libloc", rbuff, sizeof (rbuff));
+  if (rc == 0) {
+    libloc = atoi (rbuff);
+  }
   comptest_reset (check->comptest);
   chararr_reset (check->flags, 0);
   free (inc);
-  return rc;
+  return libloc;
 }
 
 int
 mkc_chk_compiler_id (mkc_check_t *check, mkc_compiler_t compiler)
 {
   int         rc = MKC_ERR_FAILURE;
+  int         compid = MKC_ERR_FAILURE;
   char        *inc;
+  char        rbuff [MKC_VNAME_MAX];
 
   inc = malloc (MKC_PATH_MAX);
   if (inc == NULL) {
@@ -265,11 +282,14 @@ mkc_chk_compiler_id (mkc_check_t *check, mkc_compiler_t compiler)
   comptest_set_flags (check->comptest, check->flags, NULL, NULL);
   comptest_usetemplate (check->comptest);
   rc = comptest_test (check->comptest, MKC_COMPILE_RUN, compiler,
-      "int-compid", NULL, 0);
+      "int-compid", rbuff, sizeof (rbuff));
+  if (rc == 0) {
+    compid = atoi (rbuff);
+  }
   comptest_reset (check->comptest);
   chararr_reset (check->flags, 0);
   free (inc);
-  return rc;
+  return compid;
 }
 
 int
@@ -630,11 +650,14 @@ mkc_chk_link_flag (mkc_check_t *check,
   return rc;
 }
 
+/* return a size of 0 when the type is not found */
 int
 mkc_chk_size (mkc_check_t *check,
     mkc_compiler_t compiler, const char *type)
 {
-  int             rc;
+  int       rc;
+  int       sz = 0;
+  char      rbuff [MKC_VNAME_MAX];
 
   mkc_log (check->log, MKC_LOG_CHECK, "== chk: size: %s\n", type);
 
@@ -642,12 +665,12 @@ mkc_chk_size (mkc_check_t *check,
 
   comptest_usetemplate (check->comptest);
   rc = comptest_test (check->comptest, MKC_COMPILE_RUN, compiler,
-      "c-size", NULL, 0);
-  comptest_reset (check->comptest);
-  if (rc < 0) {
-    rc = 0;
+      "c-size", rbuff, sizeof (rbuff));
+  if (rc == 0) {
+    sz = atoi (rbuff);
   }
-  return rc;
+  comptest_reset (check->comptest);
+  return sz;
 }
 
 int

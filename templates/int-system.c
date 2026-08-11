@@ -1,7 +1,9 @@
 /* Copyright 2026 Brad Lanam Pleasant Hill CA */
 
 /* this is a compile and execute test */
+/* the return value is printed to stdout */
 
+#include <stdio.h>
 #include <stddef.h>
 #include <stdlib.h>
 
@@ -17,25 +19,27 @@
 int
 main (void)
 {
+  int       rc = MKC_SYS_UNKNOWN;
+
 #if defined (_AIX)
-  return MKC_SYS_AIX;
+  rc = MKC_SYS_AIX;
 #endif
 #if defined (__ANDROID__)
-  return MKC_SYS_ANDROID;
+  rc = MKC_SYS_ANDROID;
 #endif
 #if defined (__linux__) && ! defined (__ANDROID__)
-  return MKC_SYS_LINUX;
+  rc = MKC_SYS_LINUX;
 #endif
 #if defined (_WIN32) || defined (__CYGWIN__)
-  return MKC_SYS_WINDOWS;
+  rc = MKC_SYS_WINDOWS;
 #endif
 #if defined (__APPLE__) && defined (__MACH__)
 # if TARGET_IPHONE_SIMULATOR == 1
-   return MKC_SYS_IOS;
+   rc = MKC_SYS_IOS;
 # elif TARGET_OS_IPHONE == 1
-   return MKC_SYS_IOS;
+   rc = MKC_SYS_IOS;
 # elif TARGET_OS_MAC == 1
-   return MKC_SYS_MACOS;
+   rc = MKC_SYS_MACOS;
 # endif
 #endif
 #if defined (BSD) || \
@@ -43,7 +47,8 @@ main (void)
     defined (__NetBSD__) || \
     defined (__OpenBSD__) || \
     defined (__DragonFly__)
-  return MKC_SYS_BSD;
+  rc = MKC_SYS_BSD;
 #endif
-  return MKC_SYS_UNKNOWN;
+  fprintf (stdout, "%d\n", rc);
+  return 0;
 }

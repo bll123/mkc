@@ -18,5 +18,6 @@ main (void)
   size_t    sz;
 
   sz = sizeof (${MKC_TV_TEST_SIZE});
-  return sz;
+  fprintf (stdout, "%zd\n", sz);
+  return 0;
 }

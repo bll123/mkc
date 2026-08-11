@@ -15,7 +15,7 @@ int
 main (void)
 {
   if (${MKC_TV_TEST_CONSTANT} == 0) {
-    1;
+    return 0;
   }
-  return 0;
+  return 1;
 }

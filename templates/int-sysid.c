@@ -24,22 +24,22 @@ main (void)
 
 
 #if defined (__CYGWIN__)
-  return MKC_SYS_ID_CYGWIN;
+  sysid = MKC_SYS_ID_CYGWIN;
 #endif
 #if defined (__FreeBSD__)
-  return MKC_SYS_ID_FREEBSD;
+  sysid = MKC_SYS_ID_FREEBSD;
 #endif
 #if defined (__NetBSD__)
-  return MKC_SYS_ID_NETBSD;
+  sysid = MKC_SYS_ID_NETBSD;
 #endif
 #if defined (__OpenBSD__)
-  return MKC_SYS_ID_OPENBSD;
+  sysid = MKC_SYS_ID_OPENBSD;
 #endif
 #if defined (__DragonFly__)
-  return MKC_SYS_ID_DRAGONFLYBSD;
+  sysid = MKC_SYS_ID_DRAGONFLYBSD;
 #endif
 #if defined (__SunOS)
-  return MKC_SYS_ID_SOLARIS;
+  sysid = MKC_SYS_ID_SOLARIS;
 #endif
 
   msystem = getenv ("MSYSTEM");
@@ -54,7 +54,8 @@ main (void)
   }
 
   if (sysid != MKC_SYS_ID_NOTSET) {
-    return sysid;
+    fprintf (stdout, "%d\n", sysid);
+    return 0;
   }
 
   /* note that only major linux variants are of concern, */
@@ -68,7 +69,8 @@ main (void)
 
   fh = fopen ("/etc/os-release", "r");
   if (fh == NULL) {
-    return sysid;
+    fprintf (stdout, "%d\n", sysid);
+    return 0;
   }
 
   while (fgets (tbuff, sizeof (tbuff), fh) != NULL) {
@@ -144,5 +146,6 @@ main (void)
 
   fclose (fh);
 
-  return sysid;
+  fprintf (stdout, "%d\n", sysid);
+  return 0;
 }

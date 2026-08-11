@@ -317,20 +317,14 @@ comptest_test (comptest_t *comptest, ct_type_t ctype,
 
     comptest->attr->curralt = alt;
     comptest_create_header_var (comptest);
-// ### need to grab the flags from alt...
     rc = (*func) (comptest, compiler, fname, rbuff, rsz);
 
-    /* check doesn't really have the knowledge as to how */
-    /* the return code should be processed */
-    /* assume for the moment that a return code > 0 */
-    /* is a valid test */
-    /* this may need to be changed in the future */
-    if (rc >= 0 && alt->name != NULL) {
+    if (rc == 0 && alt->name != NULL) {
       scopedvar_set_integer (comptest->scopedvar, SV_T_SEARCH, alt->name,
-          rc >= 0 ? true : false, MKC_VCTXT_CHECK);
+          rc == 0 ? true : false, MKC_VCTXT_CHECK);
     }
 
-    if (rc >= 0) {
+    if (rc == 0) {
       /* the first alternate that succeeds stops the test */
       break;
     }
@@ -469,11 +463,6 @@ compile_only (comptest_t *comptest, mkc_compiler_t compiler,
   }
   mkc_log (comptest->log, MKC_LOG_CHECK, "  rc: %d\n", rc);
 
-  /* never want the return code to overlap with various enums */
-  if (rc > 0) {
-    rc = - rc;
-  }
-
   free (tbuff);
   free (compstr);
   free (outfile);
@@ -510,9 +499,6 @@ compile_link (comptest_t *comptest, mkc_compiler_t compiler,
   rc = compile_only (comptest, compiler, fname, rbuff, rsz);
   chararr_reset (comptest->targv, 0);
   comptest->preprocess = false;
-  if (rc > 0) {
-    rc = - rc;
-  }
   if (rc != 0) {
     if (rallocated) {
       free (rbuff);
@@ -579,11 +565,6 @@ compile_link (comptest_t *comptest, mkc_compiler_t compiler,
     mkc_log (comptest->log, MKC_LOG_CHECK, "---\n");
   }
 
-  /* never want the return code to overlap with various enums */
-  if (rc > 0) {
-    rc = - rc;
-  }
-
   free (objfile);
   free (outfile);
   free (compstr);
@@ -643,7 +624,7 @@ compile_run (comptest_t *comptest, mkc_compiler_t compiler,
   mkc_log (comptest->log, MKC_LOG_CHECK, "  run: rc: %d\n", rc);
   if (retsz > 0) {
     mkc_log (comptest->log, MKC_LOG_CHECK, "--- run log\n");
-    mkc_log (comptest->log, MKC_LOG_CHECK, "%s\n", rbuff);
+    mkc_log (comptest->log, MKC_LOG_CHECK, "%s", rbuff);
     mkc_log (comptest->log, MKC_LOG_CHECK, "---\n");
   }
 
