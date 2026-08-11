@@ -197,10 +197,10 @@ path_realpath (char *path, size_t sz)
 }
 
 /* path must be normalized */
-char *
+/* given a path, returns a pointer to the filename portion */
+const char *
 path_filename (const char *path)
 {
-  char        *rp;
   const char  *tp;
 
   if (path == NULL) {
@@ -213,8 +213,7 @@ path_filename (const char *path)
   } else {
     tp += 1;
   }
-  rp = (char *) tp;
-  return rp;
+  return tp;
 }
 
 /* internal routines */

@@ -242,7 +242,7 @@ target_get_dependencies (target_t *target,
   p = str_token (rbuff, dependency_delim, &tokstr);
 
   while (p != NULL) {
-    char    *tp;
+    const char  *tfn;
 
     if (mkc_error_chk_err (target->mkcerr)) {
       break;
@@ -265,12 +265,14 @@ target_get_dependencies (target_t *target,
       }
     }
 
-    tp = path_filename (p);
-    if (strcmp (filename, tp) != 0) {
+    tfn = path_filename (p);
+    if (strcmp (filename, tfn) != 0) {
       mkc_log (target->log, MKC_LOG_TARGET, "  %s", p);
       scopedvar_append_str_list (target->scopedvar, SV_T_DEPENDENCY,
           filename, p, MKC_VCTXT_MKC);
     }
+fprintf (stderr, "gd: %s %s\n", tfn, p);
+    scopedvar_set_str (target->scopedvar, SV_T_PATHS, tfn, p, MKC_VCTXT_MKC);
     p = str_token (NULL, dependency_delim, &tokstr);
   }
 
@@ -435,7 +437,7 @@ target_iter_includes (target_t *target, mkc_list_t *hlist,
   while ((hidx = mkc_list_iter_next (hlist, hiteridx)) != MKC_ITER_FINISH) {
     value_t     *tvalue;
     char        hdr [MKC_VNAME_MAX];
-    char        *p;
+    const char  *p;
 
     tvalue = mkc_list_get_by_idx (hlist, hidx);
     scopedvar_value_get_str (target->scopedvar, tvalue, hdr, sizeof (hdr));
@@ -540,17 +542,18 @@ fprintf (stderr, "object-file: %s %s\n", objnm, srcname);
 
   value_iter_start (valdeplist, &diteridx);
   while ((didx = value_iter_next (valdeplist, &tvalue, &diteridx)) != MKC_ITER_FINISH) {
-    char    dep [MKC_VNAME_MAX];
-    char    *p;
+    char        dep [MKC_VNAME_MAX];
+    const char  *p;
 
     scopedvar_value_get_str (target->scopedvar, &tvalue, dep, sizeof (dep));
     mkc_log (target->log, MKC_LOG_TARGET, "  %s\n", dep);
     p = path_filename (dep);
 
-fprintf (stderr, "     obj-src: dep %s\n", dep);
+fprintf (stderr, "     obj-src: dep %s %s\n", dep, p);
+    scopedvar_set_str (target->scopedvar, SV_T_PATHS, p, dep, MKC_VCTXT_MKC);
     scopedvar_append_str_list (target->scopedvar, SV_T_DEPENDENCY,
         objnm, dep, MKC_VCTXT_MKC);
-    target_process_timestamp (target, dep);
+    target_process_timestamp (target, p);
   }
 
   return;

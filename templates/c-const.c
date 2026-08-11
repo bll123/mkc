@@ -1,7 +1,7 @@
 /* Copyright 2026 Brad Lanam Pleasant Hill CA */
 
 /* this is a compilation test */
-/* if the compilation fails, the constant does not exist */
+/* if the compilation fails, the constant does not exist or is not numeric */
 
 #include <stdio.h>
 #include <stdint.h>

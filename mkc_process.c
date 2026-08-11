@@ -3286,8 +3286,8 @@ mkc_process_topo_add_deps (mkc_process_t *process,
 
   value_iter_start (valdeplist, &diteridx);
   while ((didx = value_iter_next (valdeplist, &tvalue, &diteridx)) != MKC_ITER_FINISH) {
-    char    dep [MKC_VNAME_MAX];
-    char    *p;
+    char        dep [MKC_VNAME_MAX];
+    const char  *p;
 
     scopedvar_value_get_str (process->scopedvar, &tvalue, dep, sizeof (dep));
     mkc_log (process->log, MKC_LOG_CHECK, "  %s", dep);

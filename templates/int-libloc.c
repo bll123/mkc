@@ -1,6 +1,8 @@
 /* Copyright 2026 Brad Lanam Pleasant Hill CA */
 
 /* this is a compile and execute test */
+/* the return value is printed to stdout */
+/* the library location is only valid for Linux */
 
 #include <stdio.h>
 #include <stddef.h>
