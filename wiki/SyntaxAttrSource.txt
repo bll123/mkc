@@ -1,0 +1,14 @@
+[Wiki Home](Home)
+<br>[Syntax](Syntax)
+
+### source (attribute)
+
+    source 'file.c' ['file2.c' ...];
+
+The __source__ attribute is used with a [executable](SyntaxStmtExecutable)
+statement or with an [library](SyntaxStmtLibrary) statement.
+
+Repeatable: __yes__
+
+[Wiki Home](Home)
+<br>[Syntax](Syntax)

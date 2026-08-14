@@ -15,6 +15,7 @@ static char const * const compnames [MKC_COMPILER_MAX] = {
   [MKC_COMPILER_BISON] = "bison",
   [MKC_COMPILER_C] = "c",
   [MKC_COMPILER_CXX] = "c++",
+  [MKC_COMPILER_D] = "d",
   [MKC_COMPILER_FLEX] = "flex",
   [MKC_COMPILER_GENERAL] = "general",
   [MKC_COMPILER_OBJC] = "objc",
@@ -25,6 +26,7 @@ static char const * const compsuffix [MKC_COMPILER_MAX] = {
   [MKC_COMPILER_BISON] = ".y",
   [MKC_COMPILER_C] = ".c",
   [MKC_COMPILER_CXX] = ".cpp",
+  [MKC_COMPILER_D] = ".d",
   [MKC_COMPILER_FLEX] = ".l",
   [MKC_COMPILER_GENERAL] = ".c",
   [MKC_COMPILER_OBJC] = ".m",
@@ -34,6 +36,7 @@ static char const * const compsuffix [MKC_COMPILER_MAX] = {
 static char const * const compenv [MKC_COMPILER_MAX] = {
   [MKC_COMPILER_BISON] = "BISON",
   [MKC_COMPILER_C] = "CC",
+  [MKC_COMPILER_D] = "DC",
   [MKC_COMPILER_CXX] = "CXX",
   [MKC_COMPILER_FLEX] = "FLEX",
   [MKC_COMPILER_GENERAL] = "CC",
@@ -91,6 +94,9 @@ compiler_get_id (const char *compiler)
   /* the default is MKC_COMPILER_GENERAL */
   if (strcmp (compiler, "C") == 0) {
     cid = MKC_COMPILER_C;
+  }
+  if (strcmp (compiler, "D") == 0) {
+    cid = MKC_COMPILER_D;
   }
   if (strcmp (compiler, "C++") == 0 ||
       strcmp (compiler, "cpp") == 0 ||

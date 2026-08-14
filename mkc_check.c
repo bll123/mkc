@@ -220,7 +220,7 @@ mkc_chk_variadic_macro (mkc_check_t *check, mkc_compiler_t compiler)
 
   mkc_log (check->log, MKC_LOG_CHECK, "  == chk: variadic-macro\n");
   comptest_usetemplate (check->comptest);
-  rc = comptest_test (check->comptest, MKC_COMPILE_RUN, compiler,
+  rc = comptest_test (check->comptest, MKC_COMPILE_ONLY, compiler,
       "int-variadic-macro", NULL, 0);
   comptest_reset (check->comptest);
   return rc;

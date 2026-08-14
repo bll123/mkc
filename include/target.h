@@ -17,6 +17,7 @@
 #include "mkc_log.h"
 #include "mkc_regex.h"
 #include "scopedvar.h"
+#include "toposort.h"
 
 #if defined (__cplusplus) || defined (c_plusplus)
 extern "C" {
@@ -38,6 +39,9 @@ typedef struct target_t target_t;
 target_t * target_init (scopedvar_t *scopedvar, comptest_t *comptest, mkc_attribute_t *attr, mkc_log_t *log, mkc_error_t *mkcerr);
 void target_free (target_t *target);
 chararr_t *target_get_flags (target_t *target, const char *flagname);
+
+void target_topo_add_items (target_t *target, toposort_t *topo, mkc_list_t *hlist);
+void target_topo_add_deps (target_t *target, toposort_t *topo, const char *filename, const char *filepath);
 
 int target_check_dependency_timestamp (target_t *target, const char *filename, const char *filepath);
 void target_get_dependencies (target_t *target, mkc_compiler_t compiler, const char *filename, const char *filepath, target_flag_t flags);

@@ -645,9 +645,9 @@ stmt_function[v]:
 // statements
 
 stmt_build[v]:
-    T_STMT_BUILD stmtblock[a]
+    T_STMT_BUILD valuelist[l] T_SEMICOLON
     {
-      $v = mkc_ast_mk_stmt_stmtblock (ast, $a, MKC_T_STMT_BUILD,
+      $v = mkc_ast_mk_stmt_val (ast, $l, MKC_T_STMT_BUILD,
           yylloc.first_line, yylloc.first_column);
     }
   ;
@@ -719,7 +719,7 @@ stmt_include:
 stmt_mark[v]:
     T_STMT_MARK varname[a] varname[b] T_SEMICOLON
     {
-      $v = mkc_ast_mk_val_val (ast, $a, $b, MKC_T_STMT_MARK,
+      $v = mkc_ast_mk_stmt_val_val (ast, $a, $b, MKC_T_STMT_MARK,
           yylloc.first_line, yylloc.first_column);
     }
   ;
@@ -727,7 +727,7 @@ stmt_mark[v]:
 stmt_print[v]:
     T_STMT_PRINT varvalue[a] T_SEMICOLON
     {
-      $v = mkc_ast_mk_print (ast, $a,
+      $v = mkc_ast_mk_stmt_val (ast, $a, MKC_T_STMT_PRINT,
           yylloc.first_line, yylloc.first_column);
     }
   ;
@@ -774,12 +774,12 @@ stmt_loadcache[v]:
 directive[v]:
     T_STMT_DEBUG varname[a] T_SEMICOLON
     {
-      $v = mkc_ast_mk_val_val (ast, $a, NULL, MKC_T_STMT_DEBUG,
+      $v = mkc_ast_mk_stmt_val_val (ast, $a, NULL, MKC_T_STMT_DEBUG,
           yylloc.first_line, yylloc.first_column);
     }
   | T_STMT_DEBUG varname[a] varname[b] T_SEMICOLON
     {
-      $v = mkc_ast_mk_val_val (ast, $a, $b, MKC_T_STMT_DEBUG,
+      $v = mkc_ast_mk_stmt_val_val (ast, $a, $b, MKC_T_STMT_DEBUG,
           yylloc.first_line, yylloc.first_column);
     }
   | T_STMT_OPTION varname[a] varany[b] T_SEMICOLON
@@ -902,7 +902,7 @@ chk_shellcmc[v]:
 attr_alternate[v]:
     T_ATTR_ALTERNATE stmtblock[a]
     {
-      $v = mkc_ast_mk_attr_alternate (ast, $a,
+      $v = mkc_ast_mk_attr_stmtblock (ast, $a, MKC_T_ATTR_ALTERNATE,
           yylloc.first_line, yylloc.first_column);
     }
   ;
@@ -911,7 +911,7 @@ attr_alternate[v]:
 attr_compilerflags[v]:
     T_ATTR_COMP_FLAGS valuelist[l] T_SEMICOLON
     {
-      $v = mkc_ast_mk_attr_compflags (ast, $l,
+      $v = mkc_ast_mk_attr_nodelist (ast, $l, MKC_T_ATTR_COMP_FLAGS,
           yylloc.first_line, yylloc.first_column);
     }
   ;
@@ -945,7 +945,7 @@ attr_define_zero[v]:
 attr_failure[v]:
     T_ATTR_FAILURE stmtblock[a]
     {
-      $v = mkc_ast_mk_attr_success_fail (ast, $a, MKC_T_ATTR_FAILURE,
+      $v = mkc_ast_mk_attr_stmtblock (ast, $a, MKC_T_ATTR_FAILURE,
           yylloc.first_line, yylloc.first_column);
     }
   ;
@@ -954,7 +954,7 @@ attr_failure[v]:
 attr_header[v]:
     T_ATTR_HEADER pathlist[l] T_SEMICOLON
     {
-      $v = mkc_ast_mk_attr_header (ast, $l,
+      $v = mkc_ast_mk_attr_nodelist (ast, $l, MKC_T_ATTR_HEADER,
           yylloc.first_line, yylloc.first_column);
     }
   ;
@@ -979,7 +979,7 @@ attr_libversion[v]:
 attr_linkflags[v]:
     T_ATTR_LINK_FLAGS valuelist[l] T_SEMICOLON
     {
-      $v = mkc_ast_mk_attr_linkflags (ast, $l,
+      $v = mkc_ast_mk_attr_nodelist (ast, $l, MKC_T_ATTR_LINK_FLAGS,
           yylloc.first_line, yylloc.first_column);
     }
   ;
@@ -1056,7 +1056,7 @@ attr_replace[v]:
 attr_source[v]:
     T_ATTR_SOURCE pathlist[l] T_SEMICOLON
     {
-      $v = mkc_ast_mk_attr_source (ast, $l,
+      $v = mkc_ast_mk_attr_nodelist (ast, $l, MKC_T_ATTR_SOURCE,
           yylloc.first_line, yylloc.first_column);
     }
   ;
@@ -1064,7 +1064,7 @@ attr_source[v]:
 attr_success[v]:
     T_ATTR_SUCCESS stmtblock[a]
     {
-      $v = mkc_ast_mk_attr_success_fail (ast, $a, MKC_T_ATTR_SUCCESS,
+      $v = mkc_ast_mk_attr_stmtblock (ast, $a, MKC_T_ATTR_SUCCESS,
           yylloc.first_line, yylloc.first_column);
     }
   ;

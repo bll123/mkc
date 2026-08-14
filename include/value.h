@@ -33,13 +33,15 @@ typedef enum {
 /* variable context, used to determine if the variable should be output */
 typedef enum {
   MKC_VCTXT_CHECK,
-  MKC_VCTXT_DELETED,      /* not yet implemented */
   MKC_VCTXT_ENV,
   MKC_VCTXT_FLAG,
-  MKC_VCTXT_MKC,
+  MKC_VCTXT_MKC,          // general internal variable
+  MKC_VCTXT_MKC_BASE,     // internal variable, cache invalidation on change
   MKC_VCTXT_TEMP,
   MKC_VCTXT_USER_DISABLE,
   MKC_VCTXT_USER_ENABLE,
+  MKC_VCTXT_UNKNOWN,
+  MKC_VCTXT_MAX,
 } value_ctxt_t;
 
 typedef struct range_t {
@@ -77,6 +79,7 @@ bool value_is_string_type (const value_t *value);
 
 const char * value_disp_type (value_t *value);
 const char * value_ctxt_str (value_ctxt_t vctxt);
+value_ctxt_t value_ctxt_value (const char *vctxtstr);
 int value_str_compare (void *tvala, void *tvalb);
 
 #if defined (__cplusplus) || defined (c_plusplus)

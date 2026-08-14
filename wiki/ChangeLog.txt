@@ -11,6 +11,9 @@
     * file timestamps at millisecond resolution.
 * Changes:
     * cache invalidation is more particular.
+* New Features:
+    * executable
+    * build
 
 -->
 

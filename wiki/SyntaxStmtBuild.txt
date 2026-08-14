@@ -1,0 +1,11 @@
+[Wiki Home](Home)
+<br>[Syntax](Syntax)
+
+### Syntax: build
+
+__build__ builds the specified executables and libraries.
+
+    build helloworld;
+
+[Wiki Home](Home)
+<br>[Syntax](Syntax)

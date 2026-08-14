@@ -224,11 +224,11 @@ MKCOBJECTS = \
 	comptest.o \
 	dirmatch.o \
 	mkc_util.o \
+	toposort.o \
 	asttoken.o \
 	mkc_check.o \
 	mkc_context.o \
 	target.o \
-	toposort.o \
 	mkc_process.o \
 	mkc_lex.o \
 	mkc_ast.o \
@@ -395,7 +395,7 @@ mkc_process.o: include/mkc_check.h include/mkc_const.h include/mkc_context.h
 mkc_process.o: include/mkc_def.h  include/dirmatch.h
 mkc_process.o: include/mkc_regex.h include/mkc_process.h include/strutil.h
 mkc_process.o: include/mkc_util.h include/pathutil.h include/target.h
-mkc_process.o: include/tmutil.h include/toposort.h
+mkc_process.o: include/toposort.h include/tmutil.h
 mkc_regex_pcre.o:  include/mkc_def.h
 mkc_regex_pcre.o:  include/mkc_error.h
 mkc_regex_pcre.o: include/mkc_nodiscard.h include/mkc_regex.h
@@ -431,7 +431,8 @@ target.o: include/mkc_option.h include/mkc_var.h include/value.h
 target.o: include/dirmatch.h include/mkc_regex.h include/fileop.h
 target.o: include/mkc_const.h include/mkc_def.h 
 target.o:  include/mkc_util.h include/os_process.h
-target.o: include/strutil.h include/target.h include/tmutil.h
+target.o: include/pathutil.h include/strutil.h include/target.h
+target.o: include/toposort.h include/tmutil.h
 tmutil.o:   include/tmutil.h
 topochk.o:   include/mkc_def.h
 topochk.o:   include/mkc_error.h

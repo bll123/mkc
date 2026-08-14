@@ -1,0 +1,36 @@
+[Wiki Home](Home)
+<br>[Syntax](Syntax)
+
+### Syntax: executable
+
+__executable__ defines an executable to be built.  This is not an
+imperative statement.  The build is started with the
+[build](SyntaxStmtBuild) statement.
+
+    executable helloworld {
+      source helloworld.c;
+    }
+
+##### Examples
+
+    executable helloworld {
+      source 'helloworld.c';
+    }
+
+    executable helloworld {
+      source 'helloworld.c';
+      compiler_flags '-g';
+    }
+
+    executable helloworld {
+      source hello.c world.c;
+    }
+
+##### Attributes
+
+* [compiler_flags](SyntaxAttrCompileFlag)
+* [link_flags](SyntaxAttrLinkFlag)
+* [source](SyntaxAttrSource)
+
+[Wiki Home](Home)
+<br>[Syntax](Syntax)

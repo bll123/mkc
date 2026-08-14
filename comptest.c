@@ -252,7 +252,7 @@ comptest_file_sub_copy (comptest_t *comptest,
   }
   ndata = scopedvar_substitute (comptest->scopedvar, data, SV_NO_ESCAPE, 0);
   mkc_log (comptest->log, MKC_LOG_CHECK, "--- code:\n");
-  mkc_log (comptest->log, MKC_LOG_CHECK, "%s\n", ndata);
+  mkc_log (comptest->log, MKC_LOG_CHECK, "%s", ndata);
   mkc_log (comptest->log, MKC_LOG_CHECK, "---\n");
   free (data);
 

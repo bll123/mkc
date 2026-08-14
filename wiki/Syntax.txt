@@ -14,9 +14,11 @@
   * [Values and Variables](SyntaxVariable)
   * [Expressions](SyntaxExpression)
   * Statements
+      * [build](SyntaxStmtBuild)
       * [check_include_compile](SyntaxStmtCheckIncCompile)
       * [check_include_dependencies](SyntaxStmtCheckIncDeps)
       * [check_include_guards](SyntaxStmtCheckIncGuards)
+      * [executable](SyntaxStmtExecutable)
       * [Flow Control Statements](SyntaxControl)
         if, exit, while, foreach
       * [function and Function Calls](SyntaxFunction)
@@ -53,6 +55,7 @@
       * [name](SyntaxAttrName)
       * [output](SyntaxAttrOutput)
       * [path](SyntaxAttrPath)
+      * [source](SyntaxAttrSource)
       * [success](SyntaxAttrSuccessFail)
 
 [Wiki Home](Home)

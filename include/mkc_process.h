@@ -41,6 +41,7 @@ void mkc_process_stmt_foreach_finish (mkc_process_t *process, mkc_foreach_t *pro
 int mkc_process_stmt_chk_inc_compile (mkc_process_t *process);
 int mkc_process_stmt_chk_inc_deps (mkc_process_t *process);
 int mkc_process_stmt_chk_inc_guards (mkc_process_t *process);
+void mkc_process_stmt_build (mkc_process_t *process, value_t *vallist);
 void mkc_process_stmt_configure (mkc_process_t *process);
 int mkc_process_stmt_debug (mkc_process_t *process, value_t *value, value_t *subvalue);
 void mkc_process_stmt_executable (mkc_process_t *process, value_t *valnm);

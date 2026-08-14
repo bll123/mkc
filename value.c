@@ -27,14 +27,16 @@ static char const * const valuetypenames [] = {
   [MKC_VT_ENV_VARIABLE] = "env_variable",
 };
 
-static char const * const valuectxtnames [] = {
+static char const * const valuectxtnames [MKC_VCTXT_MAX] = {
   [MKC_VCTXT_CHECK] = "check",
   [MKC_VCTXT_ENV] = "env",
   [MKC_VCTXT_FLAG] = "flag",
   [MKC_VCTXT_MKC] = "mkc",
+  [MKC_VCTXT_MKC_BASE] = "mkc_base",
   [MKC_VCTXT_TEMP] = "temp",
   [MKC_VCTXT_USER_DISABLE] = "disable",
   [MKC_VCTXT_USER_ENABLE] = "enable",
+  [MKC_VCTXT_UNKNOWN] = "unknown",
 };
 
 void
@@ -256,6 +258,21 @@ value_ctxt_str (value_ctxt_t vctxt)
 
   vctxtstr = valuectxtnames [vctxt];
   return vctxtstr;
+}
+
+value_ctxt_t
+value_ctxt_value (const char *vctxtstr)
+{
+  value_ctxt_t    vctxt = MKC_VCTXT_UNKNOWN;
+
+  for (int i = 0; i < MKC_VCTXT_MAX; ++i) {
+    if (strcmp (valuectxtnames [i], vctxtstr) == 0) {
+      vctxt = i;
+      return vctxt;
+    }
+  }
+
+  return vctxt;
 }
 
 
