@@ -20,6 +20,7 @@ int toposort_add_pair (toposort_t *topo, const char *item_a, const char *item_b)
 int toposort (toposort_t *topo);
 void toposort_iter_start (toposort_t *topo);
 const char *toposort_iter_next (toposort_t *topo);
+const char *toposort_iter_next_reverse (toposort_t *topo);
 void toposort_disp_cycle (toposort_t *topo, char *buff, size_t sz);
 
 #if defined (__cplusplus) || defined (c_plusplus)

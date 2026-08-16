@@ -43,6 +43,7 @@ static void copyargs (argcopy_t *argcopy, int argc, char *argv [], mkc_error_t *
 static void cleanargs (argcopy_t *argcopy);
 static mkc_err_code_t mkc_cleanup (mkc_astmain_t *astmain, argcopy_t *argcopy, mkc_log_t *log, mkc_option_t *mkcoptions, mkc_error_t *error);
 void mkc_main_set_home (void);
+void mkc_main_set_prefix (mkc_error_t *mkcerr);
 void mkc_main_set_exec_path (argcopy_t *argcopy);
 static void mkc_main_print_version (void);
 
@@ -101,8 +102,9 @@ main (int argc, char *argv [])
     return rc;
   }
 
-  mkc_main_set_home ();
   mkc_main_set_exec_path (&argcopy);
+  mkc_main_set_home ();
+  mkc_main_set_prefix (mkcerr);
 
   while ((c = getopt_long_only (argcopy.nargc, argcopy.utf8argv,
       "p:rvV", mkc_cli_opts, &option_index)) != -1) {
@@ -110,7 +112,7 @@ main (int argc, char *argv [])
       case 'p': {
         if (optarg != NULL) {
           datafree (mkcoptions.currprofile);
-          mkcoptions.currprofile = strdup (argcopy.utf8argv [optind - 1]);
+          mkcoptions.currprofile = strdup (optarg);
         }
         break;
       }
@@ -141,11 +143,14 @@ main (int argc, char *argv [])
       }
       case 5: {
         if (optarg != NULL) {
-          path_set_dir (MKC_DIR_MKC_FILES, argcopy.utf8argv [optind - 1]);
+          path_set_dir (MKC_DIR_MKC_FILES, optarg);
         }
         break;
       }
       case 6: {
+        if (optarg != NULL) {
+          path_set_dir (MKC_DIR_PREFIX, optarg);
+        }
         break;
       }
       default: {
@@ -162,6 +167,12 @@ main (int argc, char *argv [])
     return rc;
   }
   path_build (MKC_PATH_MKCF_OBJECTS, tbuff, sizeof (tbuff), NULL, mkcerr);
+  rc = dirop_make (tbuff, mkcerr);
+  if (rc != 0) {
+    rc = mkc_cleanup (astmain, &argcopy, log, &mkcoptions, mkcerr);
+    return rc;
+  }
+  path_build (MKC_PATH_MKCF_STAGE, tbuff, sizeof (tbuff), NULL, mkcerr);
   rc = dirop_make (tbuff, mkcerr);
   if (rc != 0) {
     rc = mkc_cleanup (astmain, &argcopy, log, &mkcoptions, mkcerr);
@@ -331,6 +342,7 @@ mkc_main_set_home (void)
 {
   char    tbuff [MKC_PATH_MAX];
 
+  *tbuff = '\0';
 #if MKC_SYS_WIN
   env_get ("USERPROFILE", tbuff, sizeof (tbuff));
   fileop_normalize_path (tbuff, sizeof (tbuff));
@@ -338,6 +350,22 @@ mkc_main_set_home (void)
   env_get ("HOME", tbuff, sizeof (tbuff));
 #endif
   path_set_dir (MKC_DIR_HOME, tbuff);
+}
+
+void
+mkc_main_set_prefix (mkc_error_t *mkcerr)
+{
+  char    tbuff [MKC_PATH_MAX];
+  char    *p;
+
+  *tbuff = '\0';
+  env_get ("PREFIX", tbuff, sizeof (tbuff));
+  if (! *tbuff) {
+    path_build (MKC_PATH_HOME, tbuff, sizeof (tbuff), NULL, mkcerr);
+    p = tbuff + strlen (tbuff);
+    stpecpy (p, tbuff + sizeof (tbuff), "/local");
+  }
+  path_set_dir (MKC_DIR_PREFIX, tbuff);
 }
 
 void

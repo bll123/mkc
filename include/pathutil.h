@@ -18,30 +18,35 @@ extern "C" {
 typedef enum {
   MKC_PATH_CONFIG,              /* $HOME/.config/mkc/ or */
                                 /* $USERPROFILE/AppData/Roaming/mkc */
+  MKC_PATH_CWD,
   MKC_PATH_EXEC_PATH,
   MKC_PATH_EXEC_PREFIX,
   MKC_PATH_HOME,
   MKC_PATH_MKCFILES,            /* mkc_files */
   MKC_PATH_MKCF_OBJECTS,        /* mkc_files/objects */
+  MKC_PATH_MKCF_STAGE,          /* mkc_files/stage */
   MKC_PATH_MKCF_TMP,            /* mkc_files/tmp */
-  MKC_PATH_MKC_SHR_INCLUDE,         /* .../share/mkc/include */
+  MKC_PATH_MKC_SHR_INCLUDE,     /* .../share/mkc/include */
+  MKC_PATH_MKC_SHR_UNITS,       /* .../share/mkc/units */
   MKC_PATH_MKC_TEMPLATES,       /* .../share/mkc/templates */
-  MKC_PATH_MKC_SHR_UNITS,           /* .../share/mkc/units */
-  MKC_PATH_MKC_USER_UNITS,      /* <config>/units */
   MKC_PATH_ORIG_CWD,
-  MKC_PATH_CWD,
+  MKC_PATH_PREFIX,
   MKC_PATH_SHARE,               /* .../share */
+  MKC_PATH_STAGE_BIN,           /* mkcf-stage/prefix/bin */
+  MKC_PATH_STAGE_INCLUDE,       /* mkcf-stage/prefix/include */
+  MKC_PATH_STAGE_LIB,           /* mkcf-stage/prefix/lib */
   MKC_PATH_BUILD_MAX,
 } mkc_path_t;
 
 typedef enum {
   MKC_DIR_CWD,
   MKC_DIR_EXEC,
+  MKC_DIR_EXEC_PREFIX,
   MKC_DIR_HOME,
   MKC_DIR_MKC_FILES,
-  MKC_DIR_SHARE,
   MKC_DIR_ORIG_CWD,
-  MKC_DIR_EXEC_PREFIX,
+  MKC_DIR_PREFIX,
+  MKC_DIR_SHARE,
   MKC_DIR_MAX,
 } mkc_dir_t;
 

@@ -1089,7 +1089,7 @@ mkc_ast_mk_attr_stmtblock (mkc_astmain_t *astmain,
   mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
       "ast-mk: %s\n", typenames [asttype]);
 
-  astnode = mkc_astnode_init (astmain, MKC_T_ATTR_ALTERNATE, lineno, colno);
+  astnode = mkc_astnode_init (astmain, asttype, lineno, colno);
   if (astnode == NULL) {
     return NULL;
   }

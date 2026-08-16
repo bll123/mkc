@@ -18,6 +18,7 @@
 #include "chararr.h"
 #include "comptest.h"
 #include "dirmatch.h"
+#include "dirop.h"
 #include "fileop.h"
 #include "mkc_compiler.h"
 #include "mkc_const.h"
@@ -181,7 +182,7 @@ target_topo_add_items (target_t *target, toposort_t *topo, mkc_list_t *hlist)
 
 void
 target_topo_add_deps (target_t *target,
-    toposort_t *topo, const char *filename, const char *filepath)
+    toposort_t *topo, const char *filename)
 {
   value_t         * valdeplist;
   mkc_listidx_t   diteridx;
@@ -547,8 +548,9 @@ fprintf (stderr, "exec-obj: %s %s\n", execnm, objnm);
   }
 
   mkc_log (target->log, MKC_LOG_TARGET, "exec-file: %s %s\n", execnm, objnm);
-// ### this is incorrect...but can be fixed later
-  path_build (MKC_PATH_MKCF_OBJECTS, path, MKC_PATH_MAX, execnm, target->mkcerr);
+  path_build (MKC_PATH_STAGE_BIN, path, MKC_PATH_MAX, NULL, target->mkcerr);
+  dirop_make (path, target->mkcerr);
+  path_build (MKC_PATH_STAGE_BIN, path, MKC_PATH_MAX, execnm, target->mkcerr);
   scopedvar_set_str (target->scopedvar, SV_T_PATHS, execnm, path, MKC_VCTXT_MKC);
   fts = fileop_modtime (path);
   scopedvar_set_timestamp (target->scopedvar, SV_T_TIMESTAMP, execnm, fts, MKC_VCTXT_MKC);
@@ -604,6 +606,61 @@ fprintf (stderr, "object-file: %s %s\n", objnm, srcname);
   }
 
   free (path);
+  return;
+}
+
+void
+target_build (target_t *target, mkc_list_t *blist)
+{
+  mkc_listidx_t   iteridx;
+  mkc_listidx_t   bidx;
+  char            bitem [MKC_VNAME_MAX];
+  toposort_t      *topo;
+  const char      *builditem;
+  int             rc;
+
+  topo = toposort_init (target->mkcerr);
+
+  target_topo_add_items (target, topo, blist);
+
+  mkc_list_iter_start (blist, &iteridx);
+  while ((bidx = mkc_list_iter_next (blist, &iteridx)) != MKC_ITER_FINISH) {
+    value_t   *value;
+    value_t   *valdeplist;
+
+    if (mkc_error_chk_err (target->mkcerr)) {
+      break;
+    }
+
+    value = mkc_list_get_by_idx (blist, bidx);
+    scopedvar_value_get_str (target->scopedvar, value, bitem, sizeof (bitem));
+
+    valdeplist = scopedvar_get_value (target->scopedvar, SV_T_DEPENDENCY, bitem);
+    if (valdeplist == NULL) {
+      continue;
+    }
+
+    target_topo_add_items (target, topo, valdeplist->list);
+    target_topo_add_deps (target, topo, bitem);
+  }
+
+  rc = toposort (topo);
+  if (rc == MKC_ERR_FAILURE) {
+    toposort_free (topo);
+    return;
+  }
+
+  toposort_iter_start (topo);
+  while ((builditem = toposort_iter_next_reverse (topo)) != NULL) {
+fprintf (stderr, "== build %s\n", builditem);
+  }
+
+// ### for each item in the list...
+//     - get dependencies
+//     - add to toposort
+//     - toposort
+//     - build in the toposort order
+  toposort_free (topo);
   return;
 }
 

@@ -1,0 +1,59 @@
+[Wiki Home](Home)
+
+[TOC]
+
+### Units
+
+Units are pre-packaged _.mkc_ files that perform common tasks.  To use
+a unit, specify the full unit name in an [include](SyntaxInclude)
+statement.
+
+    include commonpaths.mkc;
+
+##### commonpaths.mkc
+
+Auto-Run: Yes
+
+__commonpaths__ checks the system for common (non-system) paths where
+packages are installed.  If a path is found, the _include_ path is
+added to the compiler flags, and the _library_ path is added to the
+link flags.
+
+Also sets MKC_COMMON_INCLUDE and MKC_COMMON_LIB.
+
+Paths checked:
+
+* MacOS
+    * /opt/homebrew/bin
+    * /opt/local/bin
+    * /usr/local/bin
+    * /opt/pkg/bin
+* FreeBSD
+    * /usr/local/bin
+* NetBSD
+    * /usr/pkg/bin
+
+##### libintl.mkc
+
+Auto-Run: Yes
+
+__libintl__ checks for the correct linkage for _libintl_, and sets
+_libintl_LIBS_ as appropriate.
+
+Sets: _package_libintl, libintl_LIBS, _function_bindtextdomain,
+_function_textdomain, _function_gettext.
+
+##### sanitize_flags.mkc
+
+Auto-Run: No
+
+    include sanitize_flags.mkc;
+    sanitize_flags <profile-name>;
+
+__sanitize_flags__ checks for and sets the sanitizer flags when
+the specified profile is active.
+
+Sets the MKC_FORTIFY variable to false if the sanitizer flags are
+active, and to true if the sanitizer flags are not active.
+
+[Wiki Home](Home)

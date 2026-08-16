@@ -37,6 +37,7 @@ static char const * const mkcerrormsg [] = {
   [MKC_ERR_INVALID_ARGUMENT] = "invalid argument",
   [MKC_ERR_INVALID_OP] = "invalid operation",
   [MKC_ERR_INVALID_PROFILE] = "invalid profile",
+  [MKC_ERR_ITEM_NOT_FOUND] = "item not found",
   [MKC_ERR_LOOP_LIMIT_EXCEEDED] = "loop limit exceeded",
   [MKC_ERR_MISMATCHED_ARGUMENT_TYPE] = "mismatched argument type",
   [MKC_ERR_MISSING_ATTRIBUTE] = "missing attribute",

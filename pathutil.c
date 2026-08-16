@@ -42,13 +42,17 @@ const char * const pathdesc [MKC_PATH_BUILD_MAX] = {
   [MKC_PATH_HOME] = "home",
   [MKC_PATH_MKC_TEMPLATES] = "mkc_templates",
   [MKC_PATH_MKCFILES] = "mkc_files",
-  [MKC_PATH_MKCF_OBJECTS] = "mkc_obj",
-  [MKC_PATH_MKCF_TMP] = "mkc_tmp",
+  [MKC_PATH_MKCF_OBJECTS] = "mkcf_obj",
+  [MKC_PATH_MKCF_STAGE] = "mkcf_stage",
+  [MKC_PATH_MKCF_TMP] = "mkcf_tmp",
   [MKC_PATH_MKC_SHR_INCLUDE] = "mkc_include",
   [MKC_PATH_MKC_SHR_UNITS] = "mkc_units",
-  [MKC_PATH_MKC_USER_UNITS] = "mkc_user_units",
   [MKC_PATH_ORIG_CWD] = "mkc_orig_cwd",
+  [MKC_PATH_PREFIX] = "prefix",
   [MKC_PATH_SHARE] = "share",
+  [MKC_PATH_STAGE_BIN] = "stage-bin",
+  [MKC_PATH_STAGE_INCLUDE] = "stage-include",
+  [MKC_PATH_STAGE_LIB] = "stage-lib",
 };
 
 static bool gmkcpathinit = false;
@@ -94,6 +98,12 @@ path_build (mkc_path_t pathtype, char *buff, size_t sz,
       p = stpecpy (p, buff + sz, "/obj");
       break;
     }
+    case MKC_PATH_MKCF_STAGE: {
+      /* the stage/ directory in mkc_files/ */
+      p = stpecpy (buff, buff + sz, mkc_dirs [MKC_DIR_MKC_FILES]);
+      p = stpecpy (p, buff + sz, "/stage");
+      break;
+    }
     case MKC_PATH_MKCF_TMP: {
       /* the tmp/ directory in mkc_files/ */
       p = stpecpy (buff, buff + sz, mkc_dirs [MKC_DIR_MKC_FILES]);
@@ -119,14 +129,12 @@ path_build (mkc_path_t pathtype, char *buff, size_t sz,
       p = stpecpy (p, buff + sz, "/units");
       break;
     }
-    case MKC_PATH_MKC_USER_UNITS: {
-      /* this directory contains the user's .mkc unit files */
-      p = path_config (buff, sz);
-      p = stpecpy (p, buff + sz, "/units");
-      break;
-    }
     case MKC_PATH_ORIG_CWD: {
       p = stpecpy (buff, buff + sz, mkc_dirs [MKC_DIR_ORIG_CWD]);
+      break;
+    }
+    case MKC_PATH_PREFIX: {
+      p = stpecpy (buff, buff + sz, mkc_dirs [MKC_DIR_PREFIX]);
       break;
     }
     case MKC_PATH_EXEC_PREFIX: {
@@ -136,6 +144,27 @@ path_build (mkc_path_t pathtype, char *buff, size_t sz,
     case MKC_PATH_SHARE: {
       /* the system share directory */
       p = stpecpy (buff, buff + sz, mkc_dirs [MKC_DIR_SHARE]);
+      break;
+    }
+    case MKC_PATH_STAGE_BIN: {
+      p = stpecpy (buff, buff + sz, mkc_dirs [MKC_DIR_MKC_FILES]);
+      p = stpecpy (p, buff + sz, "/stage");
+      p = stpecpy (p, buff + sz, mkc_dirs [MKC_DIR_PREFIX]);
+      p = stpecpy (p, buff + sz, "/bin");
+      break;
+    }
+    case MKC_PATH_STAGE_INCLUDE: {
+      p = stpecpy (buff, buff + sz, mkc_dirs [MKC_DIR_MKC_FILES]);
+      p = stpecpy (p, buff + sz, "/stage");
+      p = stpecpy (p, buff + sz, mkc_dirs [MKC_DIR_PREFIX]);
+      p = stpecpy (p, buff + sz, "/include");
+      break;
+    }
+    case MKC_PATH_STAGE_LIB: {
+      p = stpecpy (buff, buff + sz, mkc_dirs [MKC_DIR_MKC_FILES]);
+      p = stpecpy (p, buff + sz, "/stage");
+      p = stpecpy (p, buff + sz, mkc_dirs [MKC_DIR_PREFIX]);
+      p = stpecpy (p, buff + sz, "/lib");
       break;
     }
     case MKC_PATH_BUILD_MAX: {

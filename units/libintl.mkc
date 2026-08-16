@@ -7,7 +7,7 @@
 #     _function_textdomain
 #     _function_gettext
 #     libintl_LIBS
-#     libintl_FOUND       (boolean)
+#     _package_libintl
 #
 # Checks for the 'libintl' library and determines the correct
 # compiler flags.
@@ -30,7 +30,7 @@
       set MKC_COMMON_LIB '';
     }
 
-    set libintl_FOUND false;
+    set _package_libintl false;
     set libintl_LIBS [];
 
     set local mkc_libintl_rc false;
@@ -90,7 +90,7 @@
     }
 
     if (${mkc_libintl_rc}) {
-      set libintl_FOUND true;
+      set _package_libintl true;
       if (${mkc_libintl_intl} ne '') {
         set libintl_LIBS [ '-lintl' ];
       }

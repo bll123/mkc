@@ -41,12 +41,13 @@ void target_free (target_t *target);
 chararr_t *target_get_flags (target_t *target, const char *flagname);
 
 void target_topo_add_items (target_t *target, toposort_t *topo, mkc_list_t *hlist);
-void target_topo_add_deps (target_t *target, toposort_t *topo, const char *filename, const char *filepath);
+void target_topo_add_deps (target_t *target, toposort_t *topo, const char *filename);
 
 int target_check_dependency_timestamp (target_t *target, const char *filename, const char *filepath);
 void target_get_dependencies (target_t *target, mkc_compiler_t compiler, const char *filename, const char *filepath, target_flag_t flags);
 void target_executable_object (target_t *target, const char *execnm, const char *objnm);
 void target_object_source (target_t *target, const char *objnm, const char *srcname);
+void target_build (target_t *target, mkc_list_t *blist);
 
 mkc_list_t * target_get_include_list (target_t *target, mkc_regex_t *rx, int64_t *ts);
 const char * target_iter_includes (target_t *target, mkc_list_t *hlist, mkc_listidx_t *hiteridx, char *hdr, size_t hsz);

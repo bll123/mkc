@@ -108,13 +108,13 @@ toposort_add_pair (toposort_t *topo,
   titem.name = (char *) item_a;
   tpair.itemidx = mkc_list_find (topo->items, &titem);
   if (tpair.itemidx == MKC_LIST_NOTFOUND) {
-    mkc_error_set (topo->mkcerr, MKC_ERR_FILE_NOT_FOUND, 0, item_a);
+    mkc_error_set (topo->mkcerr, MKC_ERR_ITEM_NOT_FOUND, 0, item_a);
     return MKC_ERR_FAILURE;
   }
   titem.name = (char *) item_b;
   tpair.dependson = mkc_list_find (topo->items, &titem);
   if (tpair.dependson == MKC_LIST_NOTFOUND) {
-    mkc_error_set (topo->mkcerr, MKC_ERR_FILE_NOT_FOUND, 0, item_b);
+    mkc_error_set (topo->mkcerr, MKC_ERR_ITEM_NOT_FOUND, 0, item_b);
     return MKC_ERR_FAILURE;
   }
 
@@ -191,6 +191,13 @@ toposort (toposort_t *topo)
     }
   }
 
+  if (rc == MKC_ERR_FAILURE) {
+    char    tbuff [MKC_VNAME_MAX];
+
+    toposort_disp_cycle (topo, tbuff, sizeof (tbuff));
+    mkc_error_set (topo->mkcerr, MKC_ERR_DEPENDENCY_CYCLE, 0, tbuff);
+  }
+
   return rc;
 }
 
@@ -209,6 +216,27 @@ toposort_iter_next (toposort_t *topo)
   mkc_topoitem_t  *item;
 
   ridx = mkc_list_iter_next (topo->results, &topo->riteridx);
+  if (ridx == MKC_ITER_FINISH) {
+    return NULL;
+  }
+
+  iptr = mkc_list_get_by_idx (topo->results, ridx);
+  iidx = *iptr;
+  item = mkc_list_get_by_idx (topo->items, iidx);
+
+
+  return item->name;
+}
+
+const char *
+toposort_iter_next_reverse (toposort_t *topo)
+{
+  mkc_listidx_t   ridx;
+  mkc_listidx_t   *iptr;
+  mkc_listidx_t   iidx;
+  mkc_topoitem_t  *item;
+
+  ridx = mkc_list_iter_next_reverse (topo->results, &topo->riteridx);
   if (ridx == MKC_ITER_FINISH) {
     return NULL;
   }

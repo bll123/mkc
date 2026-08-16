@@ -354,6 +354,35 @@ mkc_list_iter_next (mkc_list_t *list, mkc_listidx_t *iteridx)
   return list->idxsort [*iteridx];
 }
 
+mkc_listidx_t
+mkc_list_iter_next_reverse (mkc_list_t *list, mkc_listidx_t *iteridx)
+{
+  if (list == NULL || iteridx == NULL) {
+    return MKC_ITER_FINISH;
+  }
+
+  if (*iteridx == MKC_ITER_FINISH) {
+    if (list->type == MKC_LIST_UNSORTED) {
+      *iteridx = list->sz - 1;
+    }
+    if (list->type == MKC_LIST_SORTED) {
+      *iteridx = list->idxsz - 1;
+    }
+    return *iteridx;
+  }
+
+  *iteridx -= 1;
+  if (*iteridx < 0) {
+    *iteridx = MKC_ITER_FINISH;
+    return MKC_ITER_FINISH;
+  }
+  if (list->type == MKC_LIST_UNSORTED) {
+    return *iteridx;
+  }
+
+  return list->idxsort [*iteridx];
+}
+
 void
 mkc_list_ind_free (void *tdata)
 {

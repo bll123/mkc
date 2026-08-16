@@ -212,7 +212,7 @@ static int mkc_process_user_regex_comp (void *turxa, void *turxb);
 
 static char * mkc_process_configure_substitute (mkc_process_t *process, char *data);
 static void mkc_process_alternate_free (void *talt);
-static void mkc_process_attr_flags (mkc_process_t *process, value_t *value, mkc_list_t *flags, mkc_list_t *libs, bool inlist);
+static void mkc_process_value_list (mkc_process_t *process, value_t *value, mkc_list_t *flags, mkc_list_t *libs, bool inlist);
 
 static void mkc_process_dbg_print_var (mkc_process_t *process, const char *pname);
 static void mkc_process_dbg_print_prof (mkc_process_t *process, sv_iter_flag_t sviterflag);
@@ -723,11 +723,6 @@ mkc_process_include (mkc_process_t *process,
     path_build (MKC_PATH_MKC_SHR_UNITS, tbuff, MKC_PATH_MAX, fname, process->mkcerr);
     if (fileop_exists (tbuff)) {
       p = stpecpy (buff, buff + sz, tbuff);
-    } else {
-      path_build (MKC_PATH_MKC_USER_UNITS, tbuff, MKC_PATH_MAX, fname, process->mkcerr);
-      if (fileop_exists (tbuff)) {
-        p = stpecpy (buff, buff + sz, tbuff);
-      }
     }
   }
 
@@ -994,20 +989,16 @@ mkc_process_stmt_chk_inc_deps (mkc_process_t *process)
           process->attr.currcompiler, hdr, hdrpath, tgtflags);
     }
 
-    target_topo_add_deps (process->target, topo, hdr, hdrpath);
+    target_topo_add_deps (process->target, topo, hdr);
   }
 
   rc = toposort (topo);
-  if (rc == MKC_ERR_FAILURE) {
-    char    tbuff [MKC_VNAME_MAX];
 
-    toposort_disp_cycle (topo, tbuff, sizeof (tbuff));
-    mkc_error_set (process->mkcerr, MKC_ERR_DEPENDENCY_CYCLE, 0, tbuff);
+  if (rc == MKC_OK) {
+    ts = mstime ();
+    scopedvar_set_timestamp (process->scopedvar, SV_T_INTERNAL,
+        MKC_C_CHK_INC_DEPS_TS, ts, MKC_VCTXT_MKC);
   }
-
-  ts = mstime ();
-  scopedvar_set_timestamp (process->scopedvar, SV_T_INTERNAL,
-      MKC_C_CHK_INC_DEPS_TS, ts, MKC_VCTXT_MKC);
 
   mkc_message ("-- check_include_dependencies - %s\n", mkc_success_msg (rc));
   mkc_log (process->log, MKC_LOG_CHECK, "-- check_include_dependencies - %s\n",
@@ -1162,7 +1153,9 @@ mkc_process_stmt_build (mkc_process_t *process, value_t *vallist)
   mkc_list_t      * blist;
 
   blist = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, process->mkcerr);
-  mkc_process_attr_flags (process, vallist, blist, NULL, false);
+  mkc_process_value_list (process, vallist, blist, NULL, false);
+
+  target_build (process->target, blist);
 
   mkc_list_free (blist);
   return;
@@ -1804,7 +1797,7 @@ mkc_process_attr_comp_flags (mkc_process_t *process, value_t *value)
   }
 
   clist = process->attr.curralt->compflags;
-  mkc_process_attr_flags (process, value, clist, NULL, false);
+  mkc_process_value_list (process, value, clist, NULL, false);
 }
 
 void
@@ -1859,7 +1852,7 @@ mkc_process_attr_link_flags (mkc_process_t *process, value_t *value)
 
   llist = process->attr.curralt->linkflags;
   libs = process->attr.curralt->libs;
-  mkc_process_attr_flags (process, value, llist, libs, false);
+  mkc_process_value_list (process, value, llist, libs, false);
 }
 
 void
@@ -3098,7 +3091,7 @@ mkc_process_alternate_free (void *tchkcontext)
 }
 
 static void
-mkc_process_attr_flags (mkc_process_t *process, value_t *value,
+mkc_process_value_list (mkc_process_t *process, value_t *value,
     mkc_list_t *flags, mkc_list_t *libs, bool inlist)
 {
   mkc_listidx_t   iteridx;
@@ -3117,7 +3110,7 @@ mkc_process_attr_flags (mkc_process_t *process, value_t *value,
     lvalue = mkc_list_get_by_idx (value->list, lidx);
     tvalue = scopedvar_value_get_value (process->scopedvar, lvalue);
     if (tvalue->vtype == MKC_VT_LIST) {
-      mkc_process_attr_flags (process, tvalue, flags, libs, true);
+      mkc_process_value_list (process, tvalue, flags, libs, true);
       if (! inlist) {
         scopedvar_temp_value_free (tvalue);
       }
@@ -3292,12 +3285,10 @@ mkc_process_dbg_print_var (mkc_process_t *process, const char *profname)
       itertype = SV_ITER_PROFILES;
     } else if (strcmp (profname, "hierarchy") == 0) {
       profname = NULL;
-      intest = true;
       itertype = SV_ITER_HIERARCHY;
     } else if (strcmp (profname, "profiles") == 0) {
       profname = NULL;
       itertype = SV_ITER_PROFILES;
-      intest = true;
     }
   }
 
