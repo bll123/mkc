@@ -22,7 +22,7 @@
 #include "asttoken.h"
 #include "attribute.h"
 #include "chararr.h"
-#include "comptest.h"
+#include "compile.h"
 #include "envutil.h"
 #include "fileop.h"
 #include "mkc_check.h"
@@ -72,7 +72,7 @@ typedef struct mkc_foreach_t {
 
 typedef struct mkc_process_t {
   scopedvar_t       * scopedvar;
-  comptest_t        * comptest;
+  compile_t         * compile;
   mkc_check_t       * check;
   mkc_context_t     * context;
   target_t          * target;
@@ -284,21 +284,21 @@ mkc_process_init (scopedvar_t *scopedvar,
   path_build (MKC_PATH_EXEC_PATH, tbuff, sizeof (tbuff), mkcoptions->file_mkc, mkcerr);
   process->mkc_ts = fileop_modtime (tbuff);
 
-  process->comptest = comptest_init (process->scopedvar,
+  process->compile = compile_init (process->scopedvar,
       &process->attr, log, mkcerr);
-  if (process->comptest == NULL) {
+  if (process->compile == NULL) {
     mkc_process_free (process);
     return NULL;
   }
 
-  process->check = mkc_check_init (process->scopedvar, process->comptest,
+  process->check = mkc_check_init (process->scopedvar, process->compile,
       &process->attr, log, mkcerr);
   if (process->check == NULL) {
     mkc_process_free (process);
     return NULL;
   }
 
-  process->target = target_init (process->scopedvar, process->comptest,
+  process->target = target_init (process->scopedvar, process->compile,
       &process->attr, log, mkcerr);
   if (process->target == NULL) {
     mkc_process_free (process);
@@ -342,8 +342,8 @@ mkc_process_free (mkc_process_t *process)
   if (process->check != NULL) {
     mkc_check_free (process->check);
   }
-  if (process->comptest != NULL) {
-    comptest_free (process->comptest);
+  if (process->compile != NULL) {
+    compile_free (process->compile);
   }
   if (process->target != NULL) {
     target_free (process->target);

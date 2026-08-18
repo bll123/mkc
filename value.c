@@ -193,6 +193,12 @@ value_range_iter_next (value_t *value, value_t *rval,
 void
 value_iter_start (value_t *value, mkc_listidx_t *iteridx)
 {
+  *iteridx = MKC_ITER_FINISH;
+
+  if (value == NULL) {
+    return;
+  }
+
   if (value->vtype == MKC_VT_LIST) {
     mkc_list_iter_start (value->list, iteridx);
   }
@@ -206,6 +212,10 @@ value_iter_next (value_t *value,
     value_t *rval, mkc_listidx_t *iteridx)
 {
   mkc_listidx_t   rc = MKC_ITER_FINISH;
+
+  if (value == NULL) {
+    return rc;
+  }
 
   if (value->vtype == MKC_VT_LIST) {
     mkc_listidx_t   lidx;

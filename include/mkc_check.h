@@ -9,7 +9,7 @@
 
 #include "attribute.h"
 #include "chararr.h"
-#include "comptest.h"
+#include "compile.h"
 #include "mkc_compiler.h"
 #include "mkc_error.h"
 #include "mkc_list.h"
@@ -23,7 +23,7 @@ extern "C" {
 
 typedef struct mkc_check_t mkc_check_t;
 
-MKC_NODISCARD mkc_check_t *mkc_check_init (scopedvar_t *scopedvar, comptest_t *comptest, mkc_attribute_t *attr, mkc_log_t *log, mkc_error_t *mkcerr);
+MKC_NODISCARD mkc_check_t *mkc_check_init (scopedvar_t *scopedvar, compile_t *compile, mkc_attribute_t *attr, mkc_log_t *log, mkc_error_t *mkcerr);
 void mkc_check_free (mkc_check_t *check);
 
 mkc_err_code_t mkc_chk_compiler_env (mkc_check_t *check);

@@ -112,7 +112,7 @@ r_mkc_error_set (mkc_error_t *mkcerr, mkc_err_code_t err,
   }
 
   if (mkcerr->err != MKC_OK) {
-    /* don't override and existing error */
+    /* don't override an existing error */
     return;
   }
 

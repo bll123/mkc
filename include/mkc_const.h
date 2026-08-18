@@ -8,6 +8,7 @@
 extern "C" {
 #endif
 
+extern char const * const MKC_C_PROF_NAME_BUILD;
 extern char const * const MKC_C_PROF_NAME_DEFAULT;
 extern char const * const MKC_C_PROF_NAME_DEPENDENCY;
 extern char const * const MKC_C_PROF_NAME_INTERNAL;

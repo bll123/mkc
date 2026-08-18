@@ -11,7 +11,7 @@
 
 #include "alternate.h"
 #include "attribute.h"
-#include "comptest.h"
+#include "compile.h"
 #include "fileop.h"
 #include "mkc_const.h"
 #include "mkc_error.h"
@@ -20,7 +20,7 @@
 #include "pathutil.h"
 #include "strutil.h"
 
-typedef struct comptest_t {
+typedef struct compile_t {
   scopedvar_t       * scopedvar;
   mkc_attribute_t   * attr;
   mkc_error_t       * mkcerr;
@@ -35,25 +35,25 @@ typedef struct comptest_t {
   mkc_compiler_t    compiler;
   bool              preprocess;
   bool              usetemplate;
-} comptest_t;
+} compile_t;
 
 static char const * const MKC_C_TEST_HDR_LIST = "MKC_TV_TEST_HEADER_LIST";
 
-typedef int (*test_func_t)(comptest_t *comptest, mkc_compiler_t compiler, const char *fname, char *rbuff, size_t rsz);
+typedef int (*test_func_t)(compile_t *comptest, mkc_compiler_t compiler, const char *fname, char *rbuff, size_t rsz);
 
-static int compile_only (comptest_t *comptest, mkc_compiler_t compiler, const char *fname, char *rbuff, size_t rsz);
-static int compile_link (comptest_t *comptest, mkc_compiler_t compiler, const char *fname, char *rbuff, size_t rsz);
-static int compile_run (comptest_t *comptest, mkc_compiler_t compiler, const char *fname, char *rbuff, size_t rsz);
-static void comptest_append_list_arg (comptest_t *comptest, mkc_list_t *list);
-static bool comptest_append_flags (comptest_t *comptest, chararr_t *flags);
+static int compile_only (compile_t *comptest, mkc_compiler_t compiler, const char *fname, char *rbuff, size_t rsz);
+static int compile_link (compile_t *comptest, mkc_compiler_t compiler, const char *fname, char *rbuff, size_t rsz);
+static int compile_link_run (compile_t *comptest, mkc_compiler_t compiler, const char *fname, char *rbuff, size_t rsz);
+static void compile_append_list_arg (compile_t *comptest, mkc_list_t *list);
+static bool compile_append_flags (compile_t *comptest, chararr_t *flags);
 
-comptest_t *
-comptest_init (scopedvar_t *scopedvar,
+compile_t *
+compile_init (scopedvar_t *scopedvar,
     mkc_attribute_t *attr, mkc_log_t *log, mkc_error_t *mkcerr)
 {
-  comptest_t    *comptest;
+  compile_t    *comptest;
 
-  comptest = malloc (sizeof (comptest_t));
+  comptest = malloc (sizeof (compile_t));
   if (comptest == NULL) {
     mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
     return NULL;
@@ -80,13 +80,13 @@ comptest_init (scopedvar_t *scopedvar,
   if (comptest->targv == NULL) {
     return NULL;
   }
-  comptest_reset (comptest);
+  compile_reset (comptest);
 
   return comptest;
 }
 
 void
-comptest_free (comptest_t *comptest)
+compile_free (compile_t *comptest)
 {
   if (comptest == NULL) {
     return;
@@ -100,7 +100,7 @@ comptest_free (comptest_t *comptest)
 }
 
 void
-comptest_set_flags (comptest_t *comptest, chararr_t * compflags,
+compile_set_flags (compile_t *comptest, chararr_t * compflags,
     chararr_t * linkflags, chararr_t * libs)
 {
   if (comptest == NULL) {
@@ -114,7 +114,7 @@ comptest_set_flags (comptest_t *comptest, chararr_t * compflags,
 }
 
 void
-comptest_set_compiler (comptest_t *comptest, mkc_compiler_t compiler)
+compile_set_compiler (compile_t *comptest, mkc_compiler_t compiler)
 {
   if (comptest == NULL) {
     return;
@@ -125,7 +125,7 @@ comptest_set_compiler (comptest_t *comptest, mkc_compiler_t compiler)
 }
 
 void
-comptest_preprocess (comptest_t *comptest)
+compile_preprocess (compile_t *comptest)
 {
   if (comptest == NULL) {
     return;
@@ -136,7 +136,7 @@ comptest_preprocess (comptest_t *comptest)
 }
 
 void
-comptest_usetemplate (comptest_t *comptest)
+compile_usetemplate (compile_t *comptest)
 {
   if (comptest == NULL) {
     return;
@@ -147,7 +147,7 @@ comptest_usetemplate (comptest_t *comptest)
 }
 
 void
-comptest_reset (comptest_t *comptest)
+compile_reset (compile_t *comptest)
 {
   if (comptest == NULL) {
     return;
@@ -166,7 +166,7 @@ comptest_reset (comptest_t *comptest)
 }
 
 void
-comptest_create_header_var (comptest_t *comptest)
+compile_create_header_var (compile_t *comptest)
 {
   mkc_listidx_t   iteridx;
   mkc_listidx_t   lidx;
@@ -212,7 +212,7 @@ comptest_create_header_var (comptest_t *comptest)
 }
 
 const char *
-comptest_get_compstr (comptest_t *comptest, mkc_compiler_t compiler,
+compile_get_compstr (compile_t *comptest, mkc_compiler_t compiler,
     char *buff, size_t sz)
 {
   const char    *envstr;
@@ -225,7 +225,7 @@ comptest_get_compstr (comptest_t *comptest, mkc_compiler_t compiler,
 }
 
 void
-comptest_file_sub_copy (comptest_t *comptest,
+compile_file_sub_copy (compile_t *comptest,
     char *tbuff, size_t sz,
     const char *fname, const char *origsfx, const char *sfx)
 {
@@ -271,7 +271,7 @@ comptest_file_sub_copy (comptest_t *comptest,
 }
 
 int
-comptest_test (comptest_t *comptest, ct_type_t ctype,
+compile_exec (compile_t *comptest, ct_type_t ctype,
     mkc_compiler_t compiler, const char *fname, char *rbuff, size_t rsz)
 {
   int             rc = MKC_ERR_FAILURE;
@@ -299,7 +299,7 @@ comptest_test (comptest_t *comptest, ct_type_t ctype,
       break;
     }
     case MKC_COMPILE_RUN: {
-      func = compile_run;
+      func = compile_link_run;
       break;
     }
   }
@@ -316,7 +316,7 @@ comptest_test (comptest_t *comptest, ct_type_t ctype,
     }
 
     comptest->attr->curralt = alt;
-    comptest_create_header_var (comptest);
+    compile_create_header_var (comptest);
     rc = (*func) (comptest, compiler, fname, rbuff, rsz);
 
     if (rc == 0 && alt->name != NULL) {
@@ -335,7 +335,7 @@ comptest_test (comptest_t *comptest, ct_type_t ctype,
 }
 
 void
-comptest_append_compflag (comptest_t *comptest, const char *flag)
+compile_append_compflag (compile_t *comptest, const char *flag)
 {
   if (comptest == NULL) {
     return;
@@ -345,7 +345,7 @@ comptest_append_compflag (comptest_t *comptest, const char *flag)
 }
 
 void
-comptest_append_linkflag (comptest_t *comptest, const char *flag)
+compile_append_linkflag (compile_t *comptest, const char *flag)
 {
   if (comptest == NULL) {
     return;
@@ -357,7 +357,7 @@ comptest_append_linkflag (comptest_t *comptest, const char *flag)
 /* internal routines */
 
 static int
-compile_only (comptest_t *comptest, mkc_compiler_t compiler,
+compile_only (compile_t *comptest, mkc_compiler_t compiler,
     const char *fname, char *rbuff, size_t rsz)
 {
   int             rc;
@@ -403,22 +403,22 @@ compile_only (comptest_t *comptest, mkc_compiler_t compiler,
     rallocated = true;
   }
 
-  comptest_get_compstr (comptest, compiler, compstr, MKC_PATH_MAX);
+  compile_get_compstr (comptest, compiler, compstr, MKC_PATH_MAX);
   chararr_append (comptest->targv, compstr);
 
   if (comptest->usetemplate) {
     sfx = compiler_get_suffix (compiler);
 // ### will need to be fixed, the original suffix may change
-    comptest_file_sub_copy (comptest, tbuff, MKC_PATH_MAX, fname, ".c", sfx);
+    compile_file_sub_copy (comptest, tbuff, MKC_PATH_MAX, fname, ".c", sfx);
   } else {
     stpecpy (tbuff, tbuff + MKC_PATH_MAX, fname);
   }
 
-  comptest_append_flags (comptest, comptest->addcompflags);
-  cpreprocess = comptest_append_flags (comptest, comptest->compflags);
+  compile_append_flags (comptest, comptest->addcompflags);
+  cpreprocess = compile_append_flags (comptest, comptest->compflags);
 
   alt = comptest->attr->curralt;
-  comptest_append_list_arg (comptest, alt->compflags);
+  compile_append_list_arg (comptest, alt->compflags);
 
   if (comptest->preprocess) {
     chararr_append (comptest->targv, "-E");
@@ -431,7 +431,7 @@ compile_only (comptest_t *comptest, mkc_compiler_t compiler,
     chararr_append (comptest->targv, outfile);
   }
   chararr_append (comptest->targv, tbuff);
-//  comptest_append_list_arg (comptest, alt->linkflags);
+//  compile_append_list_arg (comptest, alt->linkflags);
   if (mkc_error_chk_err (comptest->mkcerr)) {
     free (tbuff);
     free (compstr);
@@ -473,7 +473,7 @@ compile_only (comptest_t *comptest, mkc_compiler_t compiler,
 }
 
 static int
-compile_link (comptest_t *comptest, mkc_compiler_t compiler,
+compile_link (compile_t *comptest, mkc_compiler_t compiler,
     const char *fname, char *rbuff, size_t rsz)
 {
   int               rc;
@@ -525,25 +525,25 @@ compile_link (comptest_t *comptest, mkc_compiler_t compiler,
     return MKC_ERR_FAILURE;
   }
 
-  comptest_get_compstr (comptest, compiler, compstr, MKC_PATH_MAX);
+  compile_get_compstr (comptest, compiler, compstr, MKC_PATH_MAX);
   chararr_append (comptest->targv, compstr);
 
   chararr_append (comptest->targv, "-o");
   path_build (MKC_PATH_MKCF_TMP, outfile, MKC_PATH_MAX, "mkctest.exe", comptest->mkcerr);
   chararr_append (comptest->targv, outfile);
 
-  comptest_append_flags (comptest, comptest->addlinkflags);
-  comptest_append_flags (comptest, comptest->linkflags);
+  compile_append_flags (comptest, comptest->addlinkflags);
+  compile_append_flags (comptest, comptest->linkflags);
 
   alt = comptest->attr->curralt;
-  comptest_append_list_arg (comptest, alt->linkflags);
+  compile_append_list_arg (comptest, alt->linkflags);
 
   path_build (MKC_PATH_MKCF_TMP, objfile, MKC_PATH_MAX, "mkctest.o", comptest->mkcerr);
   chararr_append (comptest->targv, objfile);
 
-  comptest_append_flags (comptest, comptest->addlibs);
-  comptest_append_flags (comptest, comptest->libs);
-  comptest_append_list_arg (comptest, alt->libs);
+  compile_append_flags (comptest, comptest->addlibs);
+  compile_append_flags (comptest, comptest->libs);
+  compile_append_list_arg (comptest, alt->libs);
   chararr_append (comptest->targv, NULL);
 
   if (mkc_error_chk_err (comptest->mkcerr)) {
@@ -576,7 +576,7 @@ compile_link (comptest_t *comptest, mkc_compiler_t compiler,
 }
 
 static int
-compile_run (comptest_t *comptest, mkc_compiler_t compiler,
+compile_link_run (compile_t *comptest, mkc_compiler_t compiler,
     const char *fname, char *rbuff, size_t rsz)
 {
   int         rc;
@@ -637,7 +637,7 @@ compile_run (comptest_t *comptest, mkc_compiler_t compiler,
 }
 
 static void
-comptest_append_list_arg (comptest_t *comptest, mkc_list_t *list)
+compile_append_list_arg (compile_t *comptest, mkc_list_t *list)
 {
   mkc_listidx_t   iteridx;
   mkc_listidx_t   lidx;
@@ -660,7 +660,7 @@ comptest_append_list_arg (comptest_t *comptest, mkc_list_t *list)
 }
 
 static bool
-comptest_append_flags (comptest_t *comptest, chararr_t *flags)
+compile_append_flags (compile_t *comptest, chararr_t *flags)
 {
   bool        cpreprocess = false;
   const char  *p;

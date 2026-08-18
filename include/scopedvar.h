@@ -37,12 +37,13 @@ typedef enum {
   /* for a 'get', only checks the active profile */
   /* for a 'set', only sets in the active profile */
   SV_T_ACTIVE,
-  /* namespace is used for comparison purposes */
-  /* any type following namespaces is not in the hierarchy */
+  /* SV_T_NAMESPACE is used for comparison purposes */
+  /* any type following is not in the hierarchy */
   SV_T_NAMESPACE,
-  SV_T_TIMESTAMP,
+  SV_T_BUILD,
   SV_T_DEPENDENCY,
   SV_T_PATHS,
+  SV_T_TIMESTAMP,
 } sv_type_t;
 
 typedef enum {

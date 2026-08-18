@@ -9,7 +9,7 @@
 #include <stdint.h>
 
 #include "chararr.h"
-#include "comptest.h"
+#include "compile.h"
 #include "attribute.h"
 #include "mkc_compiler.h"
 #include "mkc_error.h"
@@ -36,7 +36,7 @@ enum {
 
 typedef struct target_t target_t;
 
-target_t * target_init (scopedvar_t *scopedvar, comptest_t *comptest, mkc_attribute_t *attr, mkc_log_t *log, mkc_error_t *mkcerr);
+target_t * target_init (scopedvar_t *scopedvar, compile_t *compile, mkc_attribute_t *attr, mkc_log_t *log, mkc_error_t *mkcerr);
 void target_free (target_t *target);
 chararr_t *target_get_flags (target_t *target, const char *flagname);
 

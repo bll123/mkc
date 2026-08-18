@@ -65,18 +65,19 @@ typedef struct sv_iter_t {
 } sv_iter_t;
 
 static char const * const svtypenames [] = {
-  [SV_T_INTERNAL] = "internal",
-  [SV_T_DFLT_PROF] = "dflt_prof",
-  [SV_T_CURR_PROF] = "curr_prof",
-  [SV_T_CURR_PROF_COMPILER] = "curr_prof_compiler",
-  [SV_T_LOCAL] = "local",
-  [SV_T_TARGET] = "target",
-  [SV_T_NOT_IN_USE] = "not_in_use",
-  [SV_T_SEARCH] = "search",
   [SV_T_ACTIVE] = "active",
-  [SV_T_TIMESTAMP] = "timestamp",
+  [SV_T_BUILD] = "build",
+  [SV_T_CURR_PROF_COMPILER] = "curr_prof_compiler",
+  [SV_T_CURR_PROF] = "curr_prof",
   [SV_T_DEPENDENCY] = "dependency",
+  [SV_T_DFLT_PROF] = "dflt_prof",
+  [SV_T_INTERNAL] = "internal",
+  [SV_T_LOCAL] = "local",
+  [SV_T_NOT_IN_USE] = "not_in_use",
   [SV_T_PATHS] = "paths",
+  [SV_T_SEARCH] = "search",
+  [SV_T_TARGET] = "target",
+  [SV_T_TIMESTAMP] = "timestamp",
 };
 
 static void scopedvar_set_current_profile (scopedvar_t *scopedvar, const char *name);
@@ -544,7 +545,6 @@ scopedvar_get_value (scopedvar_t *scopedvar, sv_type_t svtype,
     }
 
     if (idx == -1) {
-      mkc_error_set (scopedvar->mkcerr, MKC_ERR_FATAL_ERROR, 0, NULL);
       return NULL;
     }
 
@@ -1691,9 +1691,10 @@ scopedvar_init_vars (scopedvar_t *scopedvar, mkc_option_t *mkcoptions)
   }
 
   /* namespaces */
-  scopedvar_create (scopedvar, SV_T_TIMESTAMP, MKC_C_PROF_NAME_TIMESTAMP, false);
+  scopedvar_create (scopedvar, SV_T_BUILD, MKC_C_PROF_NAME_BUILD, false);
   scopedvar_create (scopedvar, SV_T_DEPENDENCY, MKC_C_PROF_NAME_DEPENDENCY, false);
   scopedvar_create (scopedvar, SV_T_PATHS, MKC_C_PROF_NAME_PATHS, false);
+  scopedvar_create (scopedvar, SV_T_TIMESTAMP, MKC_C_PROF_NAME_TIMESTAMP, false);
 
   scopedvar_set_current_profile (scopedvar, scopedvar->current_profile);
   scopedvar_set_comp_profile (scopedvar, MKC_C_PROF_NAME_DEFAULT, scopedvar->currcompiler);
