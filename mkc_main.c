@@ -52,24 +52,25 @@ main (int argc, char *argv [])
 {
   argcopy_t       argcopy;
   mkc_option_t    mkcoptions;
-  int             c;
-  int             option_index;
-  int             fnidx;
   mkc_parse_t     * parse = NULL;
   FILE            * fh = NULL;
   mkc_astmain_t   * astmain = NULL;
   mkc_error_t     * mkcerr = NULL;
   mkc_log_t       * log = NULL;
-  mstime_t        starttm;
-  mstime_t        proctm;
-  int64_t          etm;
-  bool            loadcache = true;
-  bool            debug = false;
-  int             rc = 0;
   char            tbuff [MKC_PATH_MAX];
   char            cachename [MKC_PATH_MAX];
+  mstime_t        starttm;
+  mstime_t        proctm;
+  int64_t         etm;
+  int             rc = 0;
+  int             c;
+  int             option_index;
+  int             fnidx;
+  bool            loadcache = true;
+  bool            parsedebug = false;
 
   static struct option mkc_cli_opts [] = {
+    { "loglevel",             required_argument,  NULL, 3   },
     { "mkc-dir",              required_argument,  NULL, 5   },
     { "no-cache",             no_argument,        NULL, 1   },
     { "parsedebug",           no_argument,        NULL, 2   },
@@ -87,6 +88,7 @@ main (int argc, char *argv [])
   mkcoptions.prefix = NULL;
   mkcoptions.verbose = 1;
   mkcoptions.retest = false;
+  mkcoptions.loglevel = MKC_LOG_NORMAL;
 
   mkcerr = mkc_error_init ();
   copyargs (&argcopy, argc, argv, mkcerr);
@@ -133,7 +135,13 @@ main (int argc, char *argv [])
         break;
       }
       case 2: {
-        debug = 1;
+        parsedebug = true;
+        break;
+      }
+      case 3: {
+        if (optarg != NULL) {
+          mkcoptions.loglevel = atol (optarg);
+        }
         break;
       }
       case 'V': {
@@ -181,8 +189,8 @@ main (int argc, char *argv [])
 
   log = mkc_log_init (mkcerr);
   path_build (MKC_PATH_MKCFILES, tbuff, sizeof (tbuff),
-      "log-mkc.txt", mkcerr);
-  mkc_log_open (log, tbuff, MKC_LOG_NORMAL);
+      "log-mkc-int.txt", mkcerr);
+  mkc_log_open (log, tbuff, mkcoptions.loglevel);
 
   fnidx = optind;
   if (fnidx >= argcopy.nargc) {
@@ -207,7 +215,7 @@ main (int argc, char *argv [])
 
   mstimestart (&starttm);
   parse = mkc_parse_init (astmain, log, mkcerr);
-  mkc_parse_debug (parse, debug);
+  mkc_parse_debug (parse, parsedebug);
 
   if (! loadcache) {
     mkc_message ("-- cache disabled by user\n");

@@ -126,11 +126,11 @@ mkc_chk_compiler_works (mkc_check_t *check, mkc_compiler_t compiler)
   /* clang prints the deprecated error when compiling C with */
   /* c++ or objective-c */
 
-  mkc_log (check->log, MKC_LOG_CHECK, "  == chk: compiler-works\n");
+  mkc_log (check->log, MKC_LOG_CHECK, "== chk: compiler-works\n");
   compile_usetemplate (check->compile);
   compile_append_compflag (check->compile, "-Wno-deprecated");
   compile_append_compflag (check->compile, NULL);
-  rc = compile_exec (check->compile, MKC_COMPILE_ONLY, compiler,
+  rc = compile_exec (check->compile, COMPILE_COMPILE, compiler,
       "int-main", NULL, 0);
   compile_reset (check->compile);
   return rc;
@@ -141,9 +141,9 @@ mkc_chk_header_modern (mkc_check_t *check, mkc_compiler_t compiler)
 {
   int         rc;
 
-  mkc_log (check->log, MKC_LOG_CHECK, "  == chk: header-modern\n");
+  mkc_log (check->log, MKC_LOG_CHECK, "== chk: header-modern\n");
   compile_usetemplate (check->compile);
-  rc = compile_exec (check->compile, MKC_COMPILE_ONLY, compiler,
+  rc = compile_exec (check->compile, COMPILE_COMPILE, compiler,
       "int-header-modern", NULL, 0);
   compile_reset (check->compile);
   return rc;
@@ -157,7 +157,7 @@ mkc_chk_system_type (mkc_check_t *check, mkc_compiler_t compiler)
   char        *inc;
   char        rbuff [MKC_VNAME_MAX];
 
-  mkc_log (check->log, MKC_LOG_CHECK, "  == chk: system-type\n");
+  mkc_log (check->log, MKC_LOG_CHECK, "== chk: system-type\n");
 
   inc = malloc (MKC_PATH_MAX);
   if (inc == NULL) {
@@ -171,7 +171,7 @@ mkc_chk_system_type (mkc_check_t *check, mkc_compiler_t compiler)
   chararr_append (check->flags, NULL);
   compile_set_flags (check->compile, check->flags, NULL, NULL);
   compile_usetemplate (check->compile);
-  rc = compile_exec (check->compile, MKC_COMPILE_RUN, compiler,
+  rc = compile_exec (check->compile, COMPILE_COMPILE_LINK_RUN, compiler,
       "int-system", rbuff, sizeof (rbuff));
   if (rc == 0) {
     systype = atoi (rbuff);
@@ -195,14 +195,14 @@ mkc_chk_system_id (mkc_check_t *check, mkc_compiler_t compiler)
     mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
     return MKC_SYS_ID_NOTSET;
   }
-  mkc_log (check->log, MKC_LOG_CHECK, "  == chk: system-id\n");
+  mkc_log (check->log, MKC_LOG_CHECK, "== chk: system-id\n");
   path_build (MKC_PATH_MKC_SHR_INCLUDE, inc, MKC_PATH_MAX, NULL, check->mkcerr);
   chararr_append (check->flags, "-I");
   chararr_append (check->flags, inc);
   chararr_append (check->flags, NULL);
   compile_set_flags (check->compile, check->flags, NULL, NULL);
   compile_usetemplate (check->compile);
-  rc = compile_exec (check->compile, MKC_COMPILE_RUN, compiler,
+  rc = compile_exec (check->compile, COMPILE_COMPILE_LINK_RUN, compiler,
       "int-sysid", rbuff, sizeof (rbuff));
   if (rc == 0) {
     sysid = atoi (rbuff);
@@ -218,9 +218,9 @@ mkc_chk_variadic_macro (mkc_check_t *check, mkc_compiler_t compiler)
 {
   int         rc;
 
-  mkc_log (check->log, MKC_LOG_CHECK, "  == chk: variadic-macro\n");
+  mkc_log (check->log, MKC_LOG_CHECK, "== chk: variadic-macro\n");
   compile_usetemplate (check->compile);
-  rc = compile_exec (check->compile, MKC_COMPILE_ONLY, compiler,
+  rc = compile_exec (check->compile, COMPILE_COMPILE, compiler,
       "int-variadic-macro", NULL, 0);
   compile_reset (check->compile);
   return rc;
@@ -243,14 +243,14 @@ mkc_chk_library_location (mkc_check_t *check, mkc_compiler_t compiler)
     mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
     return rc;
   }
-  mkc_log (check->log, MKC_LOG_CHECK, "  == chk: lib-location\n");
+  mkc_log (check->log, MKC_LOG_CHECK, "== chk: lib-location\n");
   path_build (MKC_PATH_MKC_SHR_INCLUDE, inc, MKC_PATH_MAX, NULL, check->mkcerr);
   chararr_append (check->flags, "-I");
   chararr_append (check->flags, inc);
   chararr_append (check->flags, NULL);
   compile_set_flags (check->compile, check->flags, NULL, NULL);
   compile_usetemplate (check->compile);
-  rc = compile_exec (check->compile, MKC_COMPILE_RUN, compiler,
+  rc = compile_exec (check->compile, COMPILE_COMPILE_LINK_RUN, compiler,
       "int-libloc", rbuff, sizeof (rbuff));
   if (rc == 0) {
     libloc = atoi (rbuff);
@@ -274,14 +274,14 @@ mkc_chk_compiler_id (mkc_check_t *check, mkc_compiler_t compiler)
     mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
     return rc;
   }
-  mkc_log (check->log, MKC_LOG_CHECK, "  == chk: compiler-id\n");
+  mkc_log (check->log, MKC_LOG_CHECK, "== chk: compiler-id\n");
   path_build (MKC_PATH_MKC_SHR_INCLUDE, inc, MKC_PATH_MAX, NULL, check->mkcerr);
   chararr_append (check->flags, "-I");
   chararr_append (check->flags, inc);
   chararr_append (check->flags, NULL);
   compile_set_flags (check->compile, check->flags, NULL, NULL);
   compile_usetemplate (check->compile);
-  rc = compile_exec (check->compile, MKC_COMPILE_RUN, compiler,
+  rc = compile_exec (check->compile, COMPILE_COMPILE_LINK_RUN, compiler,
       "int-compid", rbuff, sizeof (rbuff));
   if (rc == 0) {
     compid = atoi (rbuff);
@@ -356,7 +356,7 @@ mkc_chk_arg_count (mkc_check_t *check, mkc_compiler_t compiler,
 
   compile_preprocess (check->compile);
   compile_usetemplate (check->compile);
-  rc = compile_exec (check->compile, MKC_COMPILE_ONLY, compiler,
+  rc = compile_exec (check->compile, COMPILE_COMPILE, compiler,
       "c-argcount", rbuff, rsz);
   compile_reset (check->compile);
 
@@ -440,7 +440,7 @@ mkc_chk_compiler_flag (mkc_check_t *check,
   compile_usetemplate (check->compile);
   compile_append_compflag (check->compile, tbuff);
   compile_append_compflag (check->compile, NULL);
-  rc = compile_exec (check->compile, MKC_COMPILE_ONLY, compiler,
+  rc = compile_exec (check->compile, COMPILE_COMPILE, compiler,
       "c-main", rbuff, rsz);
   compile_reset (check->compile);
   if (rc == 0) {
@@ -465,7 +465,7 @@ mkc_chk_const (mkc_check_t *check,
   scopedvar_set_str (check->scopedvar, SV_T_LOCAL, "MKC_TV_TEST_CONSTANT", consttxt, MKC_VCTXT_TEMP);
 
   compile_usetemplate (check->compile);
-  rc = compile_exec (check->compile, MKC_COMPILE_ONLY, compiler,
+  rc = compile_exec (check->compile, COMPILE_COMPILE, compiler,
       "c-const", NULL, 0);
   compile_reset (check->compile);
   return rc;
@@ -482,7 +482,7 @@ mkc_chk_define (mkc_check_t *check,
   scopedvar_set_str (check->scopedvar, SV_T_LOCAL, "MKC_TV_TEST_DEFINE", def, MKC_VCTXT_TEMP);
 
   compile_usetemplate (check->compile);
-  rc = compile_exec (check->compile, MKC_COMPILE_ONLY, compiler,
+  rc = compile_exec (check->compile, COMPILE_COMPILE, compiler,
       "c-define", NULL, 0);
   compile_reset (check->compile);
   return rc;
@@ -637,7 +637,7 @@ mkc_chk_link_flag (mkc_check_t *check,
   compile_append_linkflag (check->compile, flag);
   compile_append_linkflag (check->compile, NULL);
   compile_usetemplate (check->compile);
-  rc = compile_exec (check->compile, MKC_COMPILE_LINK, compiler,
+  rc = compile_exec (check->compile, COMPILE_COMPILE_LINK, compiler,
       "c-main", rbuff, MKC_PATH_MAX);
   compile_reset (check->compile);
   if (rc == 0) {
@@ -664,7 +664,7 @@ mkc_chk_size (mkc_check_t *check,
   scopedvar_set_str (check->scopedvar, SV_T_LOCAL, "MKC_TV_TEST_SIZE", type, MKC_VCTXT_TEMP);
 
   compile_usetemplate (check->compile);
-  rc = compile_exec (check->compile, MKC_COMPILE_RUN, compiler,
+  rc = compile_exec (check->compile, COMPILE_COMPILE_LINK_RUN, compiler,
       "c-size", rbuff, sizeof (rbuff));
   if (rc == 0) {
     sz = atoi (rbuff);
@@ -684,7 +684,7 @@ mkc_chk_type (mkc_check_t *check,
   scopedvar_set_str (check->scopedvar, SV_T_LOCAL, "MKC_TV_TEST_TYPE", type, MKC_VCTXT_TEMP);
 
   compile_usetemplate (check->compile);
-  rc = compile_exec (check->compile, MKC_COMPILE_ONLY, compiler,
+  rc = compile_exec (check->compile, COMPILE_COMPILE, compiler,
       "c-type", NULL, 0);
   compile_reset (check->compile);
   return rc;
@@ -704,7 +704,7 @@ mkc_chk_struct_member (mkc_check_t *check,
   scopedvar_set_str (check->scopedvar, SV_T_LOCAL, "MKC_TV_TEST_STRUCT_MEMBER", membername, MKC_VCTXT_TEMP);
 
   compile_usetemplate (check->compile);
-  rc = compile_exec (check->compile, MKC_COMPILE_ONLY, compiler,
+  rc = compile_exec (check->compile, COMPILE_COMPILE, compiler,
       "c-struct-member", NULL, 0);
   compile_reset (check->compile);
   return rc;
@@ -722,7 +722,7 @@ mkc_chk_function (mkc_check_t *check, mkc_compiler_t compiler,
   scopedvar_set_str (check->scopedvar, SV_T_LOCAL, "MKC_TV_TEST_FUNCTION_NAME", funcname, MKC_VCTXT_TEMP);
 
   compile_usetemplate (check->compile);
-  rc = compile_exec (check->compile, MKC_COMPILE_LINK, compiler,
+  rc = compile_exec (check->compile, COMPILE_COMPILE_LINK, compiler,
       "c-function", NULL, 0);
   compile_reset (check->compile);
   return rc;
@@ -750,7 +750,7 @@ mkc_chk_header (mkc_check_t *check, mkc_compiler_t compiler,
 
   compile_set_flags (check->compile, compflags, ldflags, NULL);
   compile_usetemplate (check->compile);
-  rc = compile_exec (check->compile, MKC_COMPILE_ONLY, compiler,
+  rc = compile_exec (check->compile, COMPILE_COMPILE, compiler,
       "c-header", NULL, 0);
   compile_reset (check->compile);
   return rc;

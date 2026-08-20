@@ -14,6 +14,9 @@ To do list (major tasks):
 - fix 'return' statement (local scopes).
 - the difficult process of handling targets and building the software.
 
+2026-8-20: progress is very slow right now, but I have been able to
+build a very simple executable.
+
 ##### Testing
 
 _mkc_ is developed on Linux, and tested on Linux, Windows, MacOS and

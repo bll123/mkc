@@ -15,6 +15,7 @@ typedef struct mkc_option_t {
   const char  * file_mkc;
   const char  * stage;
   const char  * prefix;
+  int32_t     loglevel;
   int         verbose;
   bool        retest;
 } mkc_option_t;

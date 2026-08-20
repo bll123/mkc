@@ -32,6 +32,10 @@ typedef enum {
 enum {
   TARGET_CURRENT,
   TARGET_OUT_OF_DATE,
+  TGT_T_EXEC,
+  TGT_T_OBJECT,
+  TGT_T_SOURCE,
+  TGT_T_FILE,
 };
 
 typedef struct target_t target_t;

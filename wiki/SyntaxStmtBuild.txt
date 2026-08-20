@@ -5,6 +5,10 @@
 
 __build__ builds the specified executables and libraries.
 
+    build <name> [<name> ...];
+
+##### Examples
+
     build helloworld;
 
 [Wiki Home](Home)

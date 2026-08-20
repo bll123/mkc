@@ -328,6 +328,9 @@ mkc_process_init (scopedvar_t *scopedvar,
   }
 
   mkc_log (process->log, MKC_LOG_CHECK, "== end internal checks\n");
+  path_build (MKC_PATH_MKCFILES, tbuff, sizeof (tbuff),
+      "log-mkc.txt", mkcerr);
+  mkc_log_open (log, tbuff, process->mkcoptions->loglevel);
 
   return process;
 }

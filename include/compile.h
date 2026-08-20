@@ -19,9 +19,10 @@ extern "C" {
 #endif
 
 typedef enum {
-  MKC_COMPILE_ONLY,
-  MKC_COMPILE_LINK,
-  MKC_COMPILE_RUN,
+  COMPILE_COMPILE,
+  COMPILE_COMPILE_LINK,
+  COMPILE_COMPILE_LINK_RUN,
+  COMPILE_LINK,
 } ct_type_t;
 
 typedef struct compile_t compile_t;
@@ -30,9 +31,11 @@ compile_t * compile_init (scopedvar_t *scopedvar, mkc_attribute_t *attr, mkc_log
 void compile_free (compile_t *compile);
 void compile_set_flags (compile_t *compile, chararr_t *compflags, chararr_t *ldflags, chararr_t *libs);
 void compile_set_compiler (compile_t *compile, mkc_compiler_t compiler);
+void compile_set_output (compile_t *compile, const char *outpath);
 void compile_preprocess (compile_t *compile);
 void compile_usetemplate (compile_t *compile);
 void compile_reset (compile_t *compile);
+void compile_append_object (compile_t *compile, const char *objpath);
 void compile_append_compflag (compile_t *compile, const char *flag);
 void compile_append_linkflag (compile_t *compile, const char *flag);
 

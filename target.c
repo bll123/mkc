@@ -191,7 +191,7 @@ target_topo_add_deps (target_t *target,
   value_t         tvalue;
   char            * dep;
 
-  mkc_log (target->log, MKC_LOG_CHECK, "  %s : ", filename);
+  mkc_log (target->log, MKC_LOG_CHECK, "add-dep %s :\n", filename);
   valdeplist = scopedvar_get_value (target->scopedvar, SV_T_DEPENDENCY, filename);
   if (valdeplist == NULL) {
     fprintf (stderr, "ERR: unable to locate dep list for %s\n", filename);
@@ -210,7 +210,6 @@ target_topo_add_deps (target_t *target,
     mkc_log (target->log, MKC_LOG_CHECK, "  %s\n", dep);
     toposort_add_pair (topo, filename, dep);
   }
-  mkc_log (target->log, MKC_LOG_CHECK, "\n");
 
   free (dep);
 }
@@ -274,7 +273,7 @@ target_get_dependencies (target_t *target,
   compile_append_compflag (target->compile, NULL);
   compile_preprocess (target->compile);
   compile_set_flags (target->compile, cflags, NULL, NULL);
-  rc = compile_exec (target->compile, MKC_COMPILE_ONLY, compiler,
+  rc = compile_exec (target->compile, COMPILE_COMPILE, compiler,
       filepath, rbuff, rsz);
   compile_reset (target->compile);
   if (rc != MKC_OK) {
@@ -547,7 +546,6 @@ target_executable_object (target_t *target, const char *execnm,
   int64_t     fts = 0;
   scopedvar_t *scopedvar = target->scopedvar;
 
-fprintf (stderr, "exec-obj: %s %s\n", execnm, objnm);
   path = malloc (MKC_PATH_MAX);
   if (path == NULL) {
     mkc_error_set (target->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
@@ -561,13 +559,13 @@ fprintf (stderr, "exec-obj: %s %s\n", execnm, objnm);
   scopedvar_set_str (scopedvar, SV_T_PATHS, execnm, path, MKC_VCTXT_MKC);
   fts = fileop_modtime (path);
   scopedvar_set_timestamp (scopedvar, SV_T_TIMESTAMP, execnm, fts, MKC_VCTXT_MKC);
-  scopedvar_set_integer (scopedvar, SV_T_BUILD, execnm, MKC_COMPILE_LINK, MKC_VCTXT_MKC);
+  scopedvar_set_integer (scopedvar, SV_T_BUILD, execnm, TGT_T_EXEC, MKC_VCTXT_MKC);
 
   path_build (MKC_PATH_MKCF_OBJECTS, path, MKC_PATH_MAX, objnm, target->mkcerr);
   scopedvar_set_str (scopedvar, SV_T_PATHS, objnm, path, MKC_VCTXT_MKC);
   fts = fileop_modtime (path);
   scopedvar_set_timestamp (scopedvar, SV_T_TIMESTAMP, objnm, fts, MKC_VCTXT_MKC);
-  scopedvar_set_integer (scopedvar, SV_T_BUILD, objnm, MKC_COMPILE_ONLY, MKC_VCTXT_MKC);
+  scopedvar_set_integer (scopedvar, SV_T_BUILD, objnm, TGT_T_OBJECT, MKC_VCTXT_MKC);
 
   mkc_log (target->log, MKC_LOG_TARGET, "  %s\n", objnm);
   scopedvar_append_str_list (scopedvar, SV_T_DEPENDENCY,
@@ -588,7 +586,6 @@ target_object_source (target_t *target, const char *objnm,
   mkc_listidx_t   didx;
   char            *path;
 
-fprintf (stderr, "object-file: %s %s\n", objnm, srcname);
   mkc_log (target->log, MKC_LOG_TARGET, "object-file: %s %s\n", objnm, srcname);
   target_get_dependencies (target,
       target->attr->currcompiler, objnm, srcname, tgtflags);
@@ -605,14 +602,13 @@ fprintf (stderr, "object-file: %s %s\n", objnm, srcname);
     return;
   }
 
-  scopedvar_set_integer (target->scopedvar, SV_T_BUILD, srcname, MKC_COMPILE_ONLY, MKC_VCTXT_MKC);
+  scopedvar_set_integer (target->scopedvar, SV_T_BUILD, srcname, TGT_T_SOURCE, MKC_VCTXT_MKC);
 
   value_iter_start (valdeplist, &diteridx);
   while ((didx = value_iter_next (valdeplist, &tvalue, &diteridx)) != MKC_ITER_FINISH) {
     char        dep [MKC_VNAME_MAX];
 
     scopedvar_value_get_str (target->scopedvar, &tvalue, dep, sizeof (dep));
-    mkc_log (target->log, MKC_LOG_TARGET, "  %s\n", dep);
     target_process_timestamp (target, path, MKC_PATH_MAX, dep);
   }
 
@@ -626,6 +622,7 @@ target_build (target_t *target, mkc_list_t *blist)
   toposort_t      * topo;
   const char      * builditem;
   char            * dep;
+  char            * source;
   int             rc;
 
   topo = toposort_init (target->mkcerr);
@@ -648,26 +645,56 @@ target_build (target_t *target, mkc_list_t *blist)
     return;
   }
 
+  source = malloc (MKC_PATH_MAX);
+  if (source == NULL) {
+    mkc_error_set (target->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    free (dep);
+    toposort_free (topo);
+    return;
+  }
+
   toposort_iter_start (topo);
   while ((builditem = toposort_iter_next_reverse (topo)) != NULL) {
+    value_t         *value;
     value_t         * valdeplist;
     value_t         tvalue;
     mkc_listidx_t   diteridx;
     mkc_listidx_t   didx;
+    int             tgttype;
+    ct_type_t       comptype = COMPILE_COMPILE;
 
     if (mkc_error_chk_err (target->mkcerr)) {
       break;
     }
 
-    if (! scopedvar_is_defined (target->scopedvar, SV_T_BUILD, builditem)) {
+    value = scopedvar_get_value (target->scopedvar, SV_T_BUILD, builditem);
+    if (value == NULL) {
       continue;
+    }
+
+    tgttype = scopedvar_value_get_integer (target->scopedvar, value);
+    switch (tgttype) {
+      case TGT_T_EXEC: {
+        compile_set_output (target->compile, builditem);
+        comptype = COMPILE_LINK;
+        break;
+      }
+      case TGT_T_FILE: {
+        break;
+      }
+      case TGT_T_OBJECT: {
+        compile_set_output (target->compile, builditem);
+        break;
+      }
+      case TGT_T_SOURCE: {
+        break;
+      }
     }
 
     valdeplist = scopedvar_get_value (target->scopedvar, SV_T_DEPENDENCY, builditem);
     value_iter_start (valdeplist, &diteridx);
     while ((didx = value_iter_next (valdeplist, &tvalue, &diteridx)) != MKC_ITER_FINISH) {
-      value_t   *value;
-      int       comptype;
+      int       ttgttype;
 
       scopedvar_value_get_str (target->scopedvar, &tvalue, dep, MKC_PATH_MAX);
       value = scopedvar_get_value (target->scopedvar, SV_T_BUILD, dep);
@@ -676,18 +703,28 @@ target_build (target_t *target, mkc_list_t *blist)
         continue;
       }
 
-      comptype = scopedvar_value_get_integer (target->scopedvar, value);
-// ### comptype could be compile, link, file creation, other
-// ### the compiler depends on the source type...
+      ttgttype = scopedvar_value_get_integer (target->scopedvar, value);
+      if (tgttype == TGT_T_EXEC && ttgttype == TGT_T_OBJECT) {
+fprintf (stderr, "-- build %s %s\n", builditem, dep);
+        compile_append_object (target->compile, dep);
+      }
+      if (tgttype == TGT_T_OBJECT && ttgttype == TGT_T_SOURCE) {
+fprintf (stderr, "-- build %s %s\n", builditem, dep);
+        stpecpy (source, source + MKC_PATH_MAX, dep);
+      }
+    }
+
+    if (tgttype == TGT_T_EXEC || tgttype == TGT_T_OBJECT) {
+fprintf (stderr, "== build %d %s\n", tgttype, builditem);
       compile_exec (target->compile, comptype, target->attr->currcompiler,
-          dep, NULL, 0);
+          source, NULL, 0);
       compile_reset (target->compile);
-fprintf (stderr, "== build %s %s\n", builditem, dep);
     }
   }
 
   toposort_free (topo);
   free (dep);
+  free (source);
 fprintf (stderr, "build-fin\n");
   return;
 }
@@ -767,7 +804,7 @@ target_topo_add_items_deps (target_t *target, toposort_t *topo,
       continue;
     }
 
-    target_topo_add_items_deps (target, topo, valdeplist->list);
+    target_topo_add_items (target, topo, valdeplist->list);
 
     if (! scopedvar_is_defined (target->scopedvar, SV_T_DEPENDENCY, itemnm)) {
       continue;

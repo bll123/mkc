@@ -56,6 +56,12 @@ mkc_log_open (mkc_log_t *log, const char *fname, int32_t logflag)
     return;
   }
 
+  /* close any open log */
+  datafree (log->fname);
+  if (log->fh != NULL) {
+    fclose (log->fh);
+  }
+
   log->fname = strdup (fname);
   if (log->fname == NULL) {
     mkc_error_set (log->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
