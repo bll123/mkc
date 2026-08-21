@@ -980,6 +980,13 @@ mkc_process_stmt_chk_inc_deps (mkc_process_t *process)
   mkc_list_iter_start (hlist, &hiteridx);
   while ((hdr = target_iter_includes (process->target, hlist, &hiteridx,
       hdrpath, MKC_PATH_MAX)) != NULL) {
+    if (mkc_error_chk_err (process->mkcerr)) {
+      mkc_process_attr_clear (process);
+      toposort_free (topo);
+      free (hdrpath);
+      return rc;
+    }
+
     if (target_check_dependency_timestamp (
         process->target, hdr, hdrpath) == TARGET_OUT_OF_DATE) {
       target_flag_t   tgtflags = TARGET_IGNORE_SYS_INC;
@@ -989,10 +996,10 @@ mkc_process_stmt_chk_inc_deps (mkc_process_t *process)
       }
 
       target_get_dependencies (process->target,
-          process->attr.currcompiler, hdr, hdrpath, tgtflags);
+          process->attr.currcompiler, hdrpath, hdrpath, tgtflags);
     }
 
-    target_topo_add_deps (process->target, topo, hdr);
+    target_topo_add_deps (process->target, topo, hdrpath);
   }
 
   rc = toposort (topo);
@@ -1269,8 +1276,6 @@ mkc_process_stmt_executable (mkc_process_t *process, value_t *valnm)
     return;
   }
 
-  scopedvar_delete (process->scopedvar, SV_T_DEPENDENCY, execnm);
-
   mkc_list_iter_start (process->attr.sourcelist, &siteridx);
   while ((sidx = mkc_list_iter_next (process->attr.sourcelist, &siteridx)) != MKC_ITER_FINISH) {
     value_t     *src;
@@ -1291,7 +1296,6 @@ mkc_process_stmt_executable (mkc_process_t *process, value_t *valnm)
     stpecpy (p, objnm + sizeof (objnm), process->objext);
 
     target_executable_object (process->target, execnm, objnm);
-    scopedvar_delete (process->scopedvar, SV_T_DEPENDENCY, objnm);
     target_object_source (process->target, objnm, srcbuff);
   }
 
@@ -1605,6 +1609,7 @@ mkc_process_stmt_set (mkc_process_t *process,
     }
   }
 
+// ### need to handle prefix change
   trc = scopedvar_set (process->scopedvar, svtype, nm, tvalue, vctxt);
   if (trc == MKC_OK_CHANGE &&
      (vctxt == MKC_VCTXT_ENV || vctxt == MKC_VCTXT_MKC_BASE)) {

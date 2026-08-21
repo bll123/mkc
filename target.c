@@ -183,7 +183,7 @@ target_topo_add_items (target_t *target, toposort_t *topo, mkc_list_t *hlist)
 
 void
 target_topo_add_deps (target_t *target,
-    toposort_t *topo, const char *filename)
+    toposort_t *topo, const char *tgtname)
 {
   value_t         * valdeplist;
   mkc_listidx_t   diteridx;
@@ -191,10 +191,11 @@ target_topo_add_deps (target_t *target,
   value_t         tvalue;
   char            * dep;
 
-  mkc_log (target->log, MKC_LOG_CHECK, "add-dep %s :\n", filename);
-  valdeplist = scopedvar_get_value (target->scopedvar, SV_T_DEPENDENCY, filename);
+  mkc_log (target->log, MKC_LOG_CHECK, "add-dep %s :\n", tgtname);
+  valdeplist = scopedvar_get_value (target->scopedvar, SV_T_DEPENDENCY, tgtname);
   if (valdeplist == NULL) {
-    fprintf (stderr, "ERR: unable to locate dep list for %s\n", filename);
+    mkc_error_set (target->mkcerr, MKC_ERR_FATAL_ERROR, 0, tgtname);
+    fprintf (stderr, "ERR: unable to locate dep list for %s\n", tgtname);
     return;
   }
 
@@ -208,7 +209,7 @@ target_topo_add_deps (target_t *target,
   while ((didx = value_iter_next (valdeplist, &tvalue, &diteridx)) != MKC_ITER_FINISH) {
     scopedvar_value_get_str (target->scopedvar, &tvalue, dep, MKC_PATH_MAX);
     mkc_log (target->log, MKC_LOG_CHECK, "  %s\n", dep);
-    toposort_add_pair (topo, filename, dep);
+    toposort_add_pair (topo, tgtname, dep);
   }
 
   free (dep);
@@ -243,7 +244,7 @@ target_check_dependency_timestamp (target_t *target,
 
 void
 target_get_dependencies (target_t *target,
-    mkc_compiler_t compiler, const char *filename, const char *filepath,
+    mkc_compiler_t compiler, const char *tgtname, const char *filepath,
     target_flag_t flags)
 {
   int             rc;
@@ -282,22 +283,20 @@ target_get_dependencies (target_t *target,
     return;
   }
 
-  scopedvar_delete (target->scopedvar, SV_T_DEPENDENCY, filename);
+  scopedvar_delete (target->scopedvar, SV_T_DEPENDENCY, tgtname);
 
   /* the dependency list must exist */
   elist = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, target->mkcerr);
   evalue.vtype = MKC_VT_LIST;
   evalue.list = elist;
-  scopedvar_set (target->scopedvar, SV_T_DEPENDENCY, filename, &evalue, MKC_VCTXT_MKC);
+  scopedvar_set (target->scopedvar, SV_T_DEPENDENCY, tgtname, &evalue, MKC_VCTXT_MKC);
   mkc_list_free (elist);
 
-  mkc_log (target->log, MKC_LOG_TARGET, "get-dep: %s\n", filename);
+  mkc_log (target->log, MKC_LOG_TARGET, "get-dep: %s\n", filepath);
 
   p = str_token (rbuff, dependency_delim, &tokstr);
 
   while (p != NULL) {
-    const char  *tfn;
-
     if (mkc_error_chk_err (target->mkcerr)) {
       break;
     }
@@ -319,12 +318,11 @@ target_get_dependencies (target_t *target,
       }
     }
 
-    tfn = path_filename (p);
-    if (strcmp (filename, tfn) != 0) {
+    if (strcmp (tgtname, p) != 0) {
       /* do not add self as a dependency */
       mkc_log (target->log, MKC_LOG_TARGET, "  %s\n", p);
       scopedvar_append_str_list (target->scopedvar, SV_T_DEPENDENCY,
-          filename, p, MKC_VCTXT_MKC);
+          tgtname, p, MKC_VCTXT_MKC);
     }
     p = str_token (NULL, dependency_delim, &tokstr);
   }
@@ -336,6 +334,8 @@ target_get_dependencies (target_t *target,
 /* creates a list of include files given the paths and match regex */
 /* the timestamp argument is set to the latest timestamp */
 /* the timestamps in the timestamp namespace are updated */
+/* used for check_include_dependencies, check_include_guards, */
+/*   check_include_compile */
 mkc_list_t *
 target_get_include_list (target_t *target, mkc_regex_t *rx,
     int64_t *ts)
@@ -345,7 +345,7 @@ target_get_include_list (target_t *target, mkc_regex_t *rx,
 #if _have_regex
   mkc_listidx_t   piteridx;
   mkc_listidx_t   pathidx;
-  char            *tbuff = NULL;
+  char            *hdrpath = NULL;
   char            *tname = NULL;
   char            *tend = NULL;
   char            *path = NULL;
@@ -366,6 +366,8 @@ target_get_include_list (target_t *target, mkc_regex_t *rx,
     return NULL;
   }
   *path = '\0';
+
+  /* messy stuff to cache the include timestamps and include list */
 
   /* tname is only used internally, there is no need to "clean" the */
   /* variable name, and cleaning it makes it much less specific */
@@ -401,12 +403,12 @@ target_get_include_list (target_t *target, mkc_regex_t *rx,
     scopedvar_delete (target->scopedvar, SV_T_LOCAL, tname);
   }
 
-  tbuff = malloc (MKC_PATH_MAX);
-  if (tbuff == NULL) {
+  hdrpath = malloc (MKC_PATH_MAX);
+  if (hdrpath == NULL) {
     mkc_error_set (target->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
     return NULL;
   }
-  *tbuff = '\0';
+  *hdrpath = '\0';
 
   mkc_list_iter_start (target->attr->pathlist, &piteridx);
   while ((pathidx = mkc_list_iter_next (target->attr->pathlist, &piteridx)) != MKC_ITER_FINISH) {
@@ -434,28 +436,28 @@ target_get_include_list (target_t *target, mkc_regex_t *rx,
       temp = mkc_list_get_by_idx (tlist, idx);
       hdr = *temp;
 
-      snprintf (tbuff, MKC_PATH_MAX, "%s/%s", path, hdr);
-      scopedvar_set_str (target->scopedvar, SV_T_PATHS, hdr, tbuff, MKC_VCTXT_MKC);
-      tts = fileop_modtime (tbuff);
+      snprintf (hdrpath, MKC_PATH_MAX, "%s/%s", path, hdr);
+      scopedvar_set_str (target->scopedvar, SV_T_PATHS, hdr, hdrpath, MKC_VCTXT_MKC);
+      tts = fileop_modtime (hdrpath);
 
       /* cache invalidation check */
       /* if the timestamp of the file is newer than the cached timestamp */
       /* for the header, then the list of dependencies for the header */
       /* is out of date and must be cleared */
       /* header dependencies are used for the 'check_include_...' tests */
-      if (scopedvar_is_defined (target->scopedvar, SV_T_TIMESTAMP, hdr)) {
+      if (scopedvar_is_defined (target->scopedvar, SV_T_TIMESTAMP, hdrpath)) {
         int64_t     cachedts;
 
-        cachedts = scopedvar_get_timestamp (target->scopedvar, SV_T_TIMESTAMP, hdr);
+        cachedts = scopedvar_get_timestamp (target->scopedvar, SV_T_TIMESTAMP, hdrpath);
         if (tts > cachedts) {
-          scopedvar_delete (target->scopedvar, SV_T_DEPENDENCY, hdr);
+          scopedvar_delete (target->scopedvar, SV_T_DEPENDENCY, hdrpath);
         }
       }
 
-      scopedvar_set_timestamp (target->scopedvar, SV_T_TIMESTAMP, hdr, tts, MKC_VCTXT_MKC);
+      scopedvar_set_timestamp (target->scopedvar, SV_T_TIMESTAMP, hdrpath, tts, MKC_VCTXT_MKC);
       if (tts > *ts) {
         scopedvar_append_str_list (target->scopedvar, SV_T_LOCAL,
-            tname, hdr, MKC_VCTXT_MKC);
+            tname, hdrpath, MKC_VCTXT_MKC);
       }
       if (tts > newts) {
         newts = tts;
@@ -475,12 +477,14 @@ target_get_include_list (target_t *target, mkc_regex_t *rx,
   scopedvar_set_timestamp (target->scopedvar, SV_T_LOCAL, tname, newts, MKC_VCTXT_MKC);
 
   free (path);
-  free (tbuff);
+  free (hdrpath);
   free (tname);
 #endif
   return hlist;
 }
 
+/* used for check_include_dependencies, check_include_guards, */
+/*   check_include_compile */
 const char *
 target_iter_includes (target_t *target, mkc_list_t *hlist,
     mkc_listidx_t *hiteridx, char *hdrpath, size_t hpsz)
@@ -489,12 +493,9 @@ target_iter_includes (target_t *target, mkc_list_t *hlist,
 
   while ((hidx = mkc_list_iter_next (hlist, hiteridx)) != MKC_ITER_FINISH) {
     value_t     *tvalue;
-    char        hdr [MKC_VNAME_MAX];
     const char  *p;
 
     tvalue = mkc_list_get_by_idx (hlist, hidx);
-    scopedvar_value_get_str (target->scopedvar, tvalue, hdr, sizeof (hdr));
-    tvalue = scopedvar_get_value (target->scopedvar, SV_T_PATHS, hdr);
     scopedvar_value_get_str (target->scopedvar, tvalue, hdrpath, hpsz);
     p = path_filename (hdrpath);
     return p;
@@ -542,36 +543,45 @@ void
 target_executable_object (target_t *target, const char *execnm,
     const char *objnm)
 {
-  char        *path;
+  char        *epath;
+  char        *opath;
   int64_t     fts = 0;
   scopedvar_t *scopedvar = target->scopedvar;
 
-  path = malloc (MKC_PATH_MAX);
-  if (path == NULL) {
+  epath = malloc (MKC_PATH_MAX);
+  if (epath == NULL) {
     mkc_error_set (target->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
     return;
   }
 
-  mkc_log (target->log, MKC_LOG_TARGET, "exec-file: %s %s\n", execnm, objnm);
-  path_build (MKC_PATH_STAGE_BIN, path, MKC_PATH_MAX, NULL, target->mkcerr);
-  dirop_make (path, target->mkcerr);
-  path_build (MKC_PATH_STAGE_BIN, path, MKC_PATH_MAX, execnm, target->mkcerr);
-  scopedvar_set_str (scopedvar, SV_T_PATHS, execnm, path, MKC_VCTXT_MKC);
-  fts = fileop_modtime (path);
-  scopedvar_set_timestamp (scopedvar, SV_T_TIMESTAMP, execnm, fts, MKC_VCTXT_MKC);
-  scopedvar_set_integer (scopedvar, SV_T_BUILD, execnm, TGT_T_EXEC, MKC_VCTXT_MKC);
+  opath = malloc (MKC_PATH_MAX);
+  if (opath == NULL) {
+    mkc_error_set (target->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    free (epath);
+    return;
+  }
 
-  path_build (MKC_PATH_MKCF_OBJECTS, path, MKC_PATH_MAX, objnm, target->mkcerr);
-  scopedvar_set_str (scopedvar, SV_T_PATHS, objnm, path, MKC_VCTXT_MKC);
-  fts = fileop_modtime (path);
-  scopedvar_set_timestamp (scopedvar, SV_T_TIMESTAMP, objnm, fts, MKC_VCTXT_MKC);
-  scopedvar_set_integer (scopedvar, SV_T_BUILD, objnm, TGT_T_OBJECT, MKC_VCTXT_MKC);
+  mkc_log (target->log, MKC_LOG_TARGET, "exec-file: %s %s\n", execnm, objnm);
+  path_build (MKC_PATH_STAGE_BIN, epath, MKC_PATH_MAX, NULL, target->mkcerr);
+  dirop_make (epath, target->mkcerr);
+  path_build (MKC_PATH_STAGE_BIN, epath, MKC_PATH_MAX, execnm, target->mkcerr);
+  scopedvar_set_str (scopedvar, SV_T_PATHS, execnm, epath, MKC_VCTXT_MKC);
+  fts = fileop_modtime (epath);
+  scopedvar_set_timestamp (scopedvar, SV_T_TIMESTAMP, epath, fts, MKC_VCTXT_MKC);
+  scopedvar_set_integer (scopedvar, SV_T_BUILD, epath, TGT_T_EXEC, MKC_VCTXT_MKC);
+
+  path_build (MKC_PATH_MKCF_OBJECTS, opath, MKC_PATH_MAX, objnm, target->mkcerr);
+  scopedvar_set_str (scopedvar, SV_T_PATHS, objnm, opath, MKC_VCTXT_MKC);
+  fts = fileop_modtime (opath);
+  scopedvar_set_timestamp (scopedvar, SV_T_TIMESTAMP, opath, fts, MKC_VCTXT_MKC);
+  scopedvar_set_integer (scopedvar, SV_T_BUILD, opath, TGT_T_OBJECT, MKC_VCTXT_MKC);
 
   mkc_log (target->log, MKC_LOG_TARGET, "  %s\n", objnm);
   scopedvar_append_str_list (scopedvar, SV_T_DEPENDENCY,
-      execnm, objnm, MKC_VCTXT_MKC);
+      epath, opath, MKC_VCTXT_MKC);
 
-  free (path);
+  free (epath);
+  free (opath);
   return;
 }
 
@@ -580,25 +590,39 @@ target_object_source (target_t *target, const char *objnm,
     const char *srcname)
 {
   target_flag_t   tgtflags = TARGET_NONE;
+  value_t         * value;
   value_t         tvalue;
-  value_t         *valdeplist;
+  value_t         * valdeplist;
   mkc_listidx_t   diteridx;
   mkc_listidx_t   didx;
-  char            *path;
+  char            * path;
+  char            * opath;
+
+  opath = malloc (MKC_PATH_MAX);
+  if (opath == NULL) {
+    mkc_error_set (target->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return;
+  }
+
+  value = scopedvar_get_value (target->scopedvar, SV_T_PATHS, objnm);
+  scopedvar_value_get_str (target->scopedvar, value, opath, MKC_PATH_MAX);
 
   mkc_log (target->log, MKC_LOG_TARGET, "object-file: %s %s\n", objnm, srcname);
   target_get_dependencies (target,
-      target->attr->currcompiler, objnm, srcname, tgtflags);
+      target->attr->currcompiler, opath, srcname, tgtflags);
 
-  valdeplist = scopedvar_get_value (target->scopedvar, SV_T_DEPENDENCY, objnm);
+  valdeplist = scopedvar_get_value (target->scopedvar, SV_T_DEPENDENCY, opath);
   if (valdeplist == NULL) {
-    mkc_log (target->log, MKC_LOG_ERROR, "ERR: %s dependency list not found\n", srcname);
+    mkc_error_set (target->mkcerr, MKC_ERR_FATAL_ERROR, 0, NULL);
+    mkc_log (target->log, MKC_LOG_ERROR, "ERR: %s dependency list not found\n", opath);
+    free (opath);
     return;
   }
 
   path = malloc (MKC_PATH_MAX);
   if (path == NULL) {
     mkc_error_set (target->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    free (opath);
     return;
   }
 
@@ -613,6 +637,7 @@ target_object_source (target_t *target, const char *objnm,
   }
 
   free (path);
+  free (opath);
   return;
 }
 
@@ -777,7 +802,8 @@ target_topo_add_items_deps (target_t *target, toposort_t *topo,
 {
   mkc_listidx_t   iteridx;
   mkc_listidx_t   idx;
-  char            *itemnm;
+  char            * itemnm;
+  mkc_list_t      * ilist;
 
   itemnm = malloc (MKC_PATH_MAX);
   if (itemnm == NULL) {
@@ -785,12 +811,12 @@ target_topo_add_items_deps (target_t *target, toposort_t *topo,
     return;
   }
 
-  target_topo_add_items (target, topo, itemlist);
+  ilist = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, target->mkcerr);
 
   mkc_list_iter_start (itemlist, &iteridx);
   while ((idx = mkc_list_iter_next (itemlist, &iteridx)) != MKC_ITER_FINISH) {
-    value_t   *value;
-    value_t   *valdeplist;
+    value_t   * value;
+    value_t   * tvalue;
 
     if (mkc_error_chk_err (target->mkcerr)) {
       break;
@@ -799,12 +825,33 @@ target_topo_add_items_deps (target_t *target, toposort_t *topo,
     value = mkc_list_get_by_idx (itemlist, idx);
     scopedvar_value_get_str (target->scopedvar, value, itemnm, MKC_PATH_MAX);
 
+    tvalue = scopedvar_get_value (target->scopedvar, SV_T_PATHS, itemnm);
+    if (tvalue == NULL) {
+      tvalue = value;
+    }
+    mkc_list_set (ilist, tvalue, sizeof (value_t));
+  }
+  target_topo_add_items (target, topo, ilist);
+
+  mkc_list_iter_start (ilist, &iteridx);
+  while ((idx = mkc_list_iter_next (ilist, &iteridx)) != MKC_ITER_FINISH) {
+    value_t   *value;
+    value_t   *valdeplist;
+
+    if (mkc_error_chk_err (target->mkcerr)) {
+      break;
+    }
+
+    value = mkc_list_get_by_idx (ilist, idx);
+    scopedvar_value_get_str (target->scopedvar, value, itemnm, MKC_PATH_MAX);
+
     valdeplist = scopedvar_get_value (target->scopedvar, SV_T_DEPENDENCY, itemnm);
     if (valdeplist == NULL) {
+      /* items without dependency lists are include files */
       continue;
     }
 
-    target_topo_add_items (target, topo, valdeplist->list);
+    target_topo_add_items_deps (target, topo, valdeplist->list);
 
     if (! scopedvar_is_defined (target->scopedvar, SV_T_DEPENDENCY, itemnm)) {
       continue;
@@ -812,6 +859,7 @@ target_topo_add_items_deps (target_t *target, toposort_t *topo,
     target_topo_add_deps (target, topo, itemnm);
   }
 
+  mkc_list_free (ilist);
   free (itemnm);
 }
 

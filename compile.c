@@ -468,7 +468,6 @@ compile_compile (compile_t *compile, mkc_compiler_t compiler,
     }
   }
   chararr_append (compile->targv, tbuff);
-//  compile_append_list_arg (compile, alt->linkflags);
   if (mkc_error_chk_err (compile->mkcerr)) {
     free (tbuff);
     free (compstr);

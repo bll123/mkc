@@ -30,9 +30,17 @@ test -d ${MKCTMP} || mkdir -p ${MKCTMP}
 test -d ${odir} || mkdir -p ${odir}
 
 target=""
+start=""
+START=F
 STOPONFAIL=F
 while test $# -gt 0; do
   case $1 in
+    --start)
+      START=T
+      shift
+      start=$1
+      shift
+      ;;
     --stoponfail)
       STOPONFAIL=T
       shift
@@ -66,6 +74,17 @@ for tnm in ${tdir}/${pattern}; do
       args=""
       ;;
   esac
+
+  if [ $START = T ]; then
+    case ${tnm} in
+      */${start}-*)
+        START=F
+        ;;
+      *)
+        continue
+        ;;
+    esac
+  fi
 
   echo "== $tnm"
   echo "== $tnm" >> ${LOG}

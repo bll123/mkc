@@ -189,7 +189,7 @@ main (int argc, char *argv [])
 
   log = mkc_log_init (mkcerr);
   path_build (MKC_PATH_MKCFILES, tbuff, sizeof (tbuff),
-      "log-mkc-int.txt", mkcerr);
+      "log-internal.txt", mkcerr);
   mkc_log_open (log, tbuff, mkcoptions.loglevel);
 
   fnidx = optind;
