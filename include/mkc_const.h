@@ -26,6 +26,7 @@ extern char const * const MKC_C_LIBS;
 extern char const * const MKC_C_SUPPORTS_MM;
 extern char const * const MKC_C_MKC_TS;
 extern char const * const MKC_C_MKC_CHANGED;
+extern char const * const MKC_C_PREFIX;
 
 #if defined (__cplusplus) || defined (c_plusplus)
 }

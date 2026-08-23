@@ -11,7 +11,8 @@ LANG=C
 MKCTMP=tests/tmp
 LOG=${MKCTMP}/log-runtests.txt
 MKCLOG=mkc_files
-mkclog=${MKCLOG}/log-mkc.txt
+mkclog=${MKCLOG}/mkc-log.txt
+mkcintlog=${MKCLOG}/internal-log.txt
 
 MKC=${MKC:-./mkc}
 
@@ -26,18 +27,22 @@ dotest () {
     args=""
   fi
 
-  ${prog} ${args} ${tfile} > ${odir}/$bnm.out 2>>${LOG}
+  ${prog} ${cachearg} ${args} ${tfile} > ${odir}/$bnm.out 2>>${LOG}
   trc=$?
+  cachedisp=""
+  if [ "${cachearg}" = "" ]; then
+    cachedisp="(cached)"
+  fi
   if [ $expfail = T ]; then
     if [ $trc -eq 0 ]; then
-      echo "   fail: test: $tfile"
+      echo "   fail: test: ${cachedisp} $tfile"
       trc=1
     else
       trc=0
     fi
   else
     if [ $trc -ne 0 ]; then
-      echo "   fail: test: $tfile"
+      echo "   fail: test: ${cachedisp} $tfile"
     fi
   fi
 
@@ -80,7 +85,14 @@ dodiff () {
 }
 
 testfin () {
+  if [ -f ${mkcintlog} ]; then
+    echo "log-int: ${cachearg} ${tnm}" >> ${LOG}
+    cat ${mkcintlog} | sed 's,^,  ,' >> ${LOG}
+    rm -f ${mkcintlog}
+  fi
   if [ -f ${mkclog} ]; then
-    mv ${mkclog} ${MKCTMP}/${bnm}-log.txt
+    echo "log: ${cachearg} ${tnm}" >> ${LOG}
+    cat ${mkclog} | sed 's,^,  ,' >> ${LOG}
+    rm -f ${mkclog}
   fi
 }

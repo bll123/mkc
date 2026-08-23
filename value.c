@@ -104,16 +104,23 @@ value_to_str (value_t *value, char *buff, size_t sz)
       char          tbuff [MKC_PATH_MAX];
       char          *p;
       char          *eptr;
-      char          *tp;
+      int           lsz;
 
-      tp = buff;
       eptr = buff + sz;
-      p = stpecpy (buff, eptr, "[\n");
       tlist = value->list;
+      lsz = mkc_list_size (tlist);
+      p = stpecpy (buff, eptr, "[");
+      if (lsz > 1) {
+        p = stpecpy (p, eptr, "\n");
+      }
       mkc_list_iter_start (tlist, &iteridx);
       while ((lidx = mkc_list_iter_next (tlist, &iteridx)) != MKC_ITER_FINISH) {
         tvalue = mkc_list_get_by_idx (tlist, lidx);
-        p = stpecpy (p, eptr, "       ");
+        if (lsz > 1) {
+          p = stpecpy (p, eptr, "       ");
+        } else {
+          p = stpecpy (p, eptr, " ");
+        }
         value_to_str (tvalue, tbuff, sizeof (tbuff));
         if (value_is_string_type (tvalue)) {
           p = stpecpy (p, eptr, "'");
@@ -122,9 +129,15 @@ value_to_str (value_t *value, char *buff, size_t sz)
         if (value_is_string_type (tvalue)) {
           p = stpecpy (p, eptr, "'");
         }
-        p = stpecpy (p, eptr, "\n");
+        if (lsz > 1) {
+          p = stpecpy (p, eptr, "\n");
+        }
       }
-      p = stpecpy (p, eptr, "       ]");
+      if (lsz > 1) {
+        p = stpecpy (p, eptr, "       ]");
+      } else {
+        p = stpecpy (p, eptr, " ]");
+      }
       break;
     }
     case MKC_VT_STRING:

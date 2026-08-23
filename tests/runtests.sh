@@ -61,13 +61,16 @@ case $target in
 esac
 
 for tnm in ${tdir}/${pattern}; do
+  cache=F
+  cachearg=""
   case ${tnm} in
     *~)
       continue
       ;;
     *.mkc)
       ttype=mkc
-      args="--no-cache --profile default"
+      args="--profile default"
+      cache=T
       ;;
     *.sh)
       ttype=sh
@@ -97,6 +100,9 @@ for tnm in ${tdir}/${pattern}; do
   esac
 
   ottype=${ttype}
+  if [ $cache = T ]; then
+    cachearg="--no-cache"
+  fi
   dotest ${tnm}
   rc=$?
   if [ \( $STOPONFAIL = T \) -a \( $rc -ne 0 \) ]; then
@@ -113,24 +119,26 @@ for tnm in ${tdir}/${pattern}; do
   fi
   testfin
 
-  if [ $ottype = mkc ]; then
-    if [ -f ${ddir}/${bnm}.cache ]; then
-      args=""
-      echo "== $tnm (cache)"
-      echo "== $tnm (cache)" >> ${LOG}
-      dotest ${tnm}
-      rc=$?
-      if [ \( $STOPONFAIL = T \) -a \( $rc -ne 0 \) ]; then
-        exit $rc
-      fi
-      if [ $rc -ne 0 ]; then continue; fi
+  if [ -f ${ddir}/${bnm}.nocache ]; then
+    cache=F
+  fi
+  if [ \( $cache = T \) -a \( $expfail = F \) ]; then
+    cachearg=""
+    dotest ${tnm}
+    rc=$?
+    if [ \( $STOPONFAIL = T \) -a \( $rc -ne 0 \) ]; then
+      exit $rc
+    fi
+    if [ $rc -ne 0 ]; then continue; fi
+    if [ $ottype = mkc ]; then
+      # shell scripts run their own diff...
       dodiff
       rc=$?
       if [ \( $STOPONFAIL = T \) -a \( $rc -ne 0 \) ]; then
         exit $rc
       fi
-      testfin
     fi
+    testfin
   fi
 done
 

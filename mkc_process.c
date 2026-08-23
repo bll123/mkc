@@ -329,7 +329,7 @@ mkc_process_init (scopedvar_t *scopedvar,
 
   mkc_log (process->log, MKC_LOG_CHECK, "== end internal checks\n");
   path_build (MKC_PATH_MKCFILES, tbuff, sizeof (tbuff),
-      "log-mkc.txt", mkcerr);
+      "mkc-log.txt", mkcerr);
   mkc_log_open (log, tbuff, process->mkcoptions->loglevel);
 
   return process;
@@ -960,7 +960,6 @@ mkc_process_stmt_chk_inc_deps (mkc_process_t *process)
       mkc_message ("-- cached: check_include_dependencies\n");
       mkc_log (process->log, MKC_LOG_CHECK, "-- cached: check_include_dependencies\n");
 
-      mkc_list_free (hlist);
       mkc_process_attr_clear (process);
       return rc;
     }
@@ -1090,7 +1089,6 @@ mkc_process_stmt_chk_inc_guards (mkc_process_t *process)
       mkc_log (process->log, MKC_LOG_CHECK, "-- cached: check_include_guards\n");
 
       mkc_list_free (guardlist);
-      mkc_list_free (hlist);
       mkc_process_attr_clear (process);
       return rc;
     }
@@ -1609,11 +1607,20 @@ mkc_process_stmt_set (mkc_process_t *process,
     }
   }
 
-// ### need to handle prefix change
   trc = scopedvar_set (process->scopedvar, svtype, nm, tvalue, vctxt);
+if (trc == MKC_OK_CHANGE) {
+fprintf (stderr, "%s changed\n", nm);
+}
   if (trc == MKC_OK_CHANGE &&
      (vctxt == MKC_VCTXT_ENV || vctxt == MKC_VCTXT_MKC_BASE)) {
     process->cacheinvalidated = true;
+  } else if (trc == MKC_OK_CHANGE && strcmp (nm, MKC_C_PREFIX) == 0) {
+fprintf (stderr, "prefix changed\n");
+    scopedvar_set_integer (process->scopedvar, SV_T_INTERNAL,
+          MKC_C_MKC_CHANGED, true, MKC_VCTXT_MKC);
+// ### need to remove stage dir and re-create
+// if user specifies stage dir, should it be removed? probably not.
+    trc = MKC_OK;
   } else {
     trc = MKC_OK;
   }
@@ -1940,7 +1947,7 @@ mkc_process_check (mkc_process_t *process, value_t *valconst,
   char        tnm [MKC_VNAME_MAX];
   char        txt [MKC_VNAME_MAX];
   char        pfx [MKC_VNAME_MAX];
-  scopedvar_t     *scope;
+  scopedvar_t * scope;
   int         iasttype = asttype;
   bool        successtype = false;
   bool        valtype = false;
@@ -1955,6 +1962,24 @@ mkc_process_check (mkc_process_t *process, value_t *valconst,
   mkc_process_create_name (process, asttype, tnm, sizeof (tnm), pfx, txt, NULL);
 
   if (mkc_process_chk_cache (process, txt, tnm)) {
+    value_t   * value;
+
+    value = scopedvar_get_value (scope, SV_T_SEARCH, tnm);
+    rc = scopedvar_value_get_integer (scope, value);
+    switch (iasttype) {
+      case MKC_T_CHK_ARG_COUNT:
+      case MKC_T_CHK_SIZE: {
+        break;
+      }
+      default: {
+        if (rc == 0) {
+          rc = MKC_ERR_FAILURE;
+        } else {
+          rc = MKC_OK;
+        }
+        break;
+      }
+    }
     mkc_process_attr_clear (process);
     return rc;
   }
@@ -2060,7 +2085,7 @@ mkc_process_check_flag (mkc_process_t *process,
 
   if (mkc_process_chk_cache (process, flag, tnm)) {
     mkc_process_attr_clear (process);
-    return rc;
+    return MKC_OK;
   }
 
   if (addchk == MKC_CHK) {
@@ -2126,7 +2151,7 @@ mkc_process_chk_struct_member (mkc_process_t *process,
   char        tnm [MKC_VNAME_MAX];
   char        structname [MKC_VNAME_MAX];
   char        membername [MKC_VNAME_MAX];
-  scopedvar_t     *scope;
+  scopedvar_t * scope;
   char        tmpdisp [MKC_VNAME_MAX * 2];
 
   if (process == NULL) {
@@ -2141,6 +2166,15 @@ mkc_process_chk_struct_member (mkc_process_t *process,
 
   snprintf (tmpdisp, sizeof (tmpdisp), "%s.%s", structname, membername);
   if (mkc_process_chk_cache (process, tmpdisp, tnm)) {
+    value_t   * value;
+
+    value = scopedvar_get_value (scope, SV_T_SEARCH, tnm);
+    rc = scopedvar_value_get_integer (scope, value);
+    if (rc == 0) {
+      rc = MKC_ERR_FAILURE;
+    } else {
+      rc = MKC_OK;
+    }
     mkc_process_attr_clear (process);
     return rc;
   }
@@ -2477,6 +2511,7 @@ mkc_process_initial_checks (mkc_process_t *process)
 {
   int       rc;
   int       isystype;
+  char    tbuff [MKC_PATH_MAX];
 
   mkc_log (process->log, MKC_LOG_CHECK, "== internal checks\n");
 
@@ -2637,6 +2672,10 @@ mkc_process_initial_checks (mkc_process_t *process)
         MKC_C_MKC_TS, 0, MKC_VCTXT_MKC);
   scopedvar_set_integer (process->scopedvar, SV_T_INTERNAL,
         MKC_C_MKC_CHANGED, false, MKC_VCTXT_MKC);
+
+  path_build (MKC_PATH_PREFIX, tbuff, sizeof (tbuff), NULL, process->mkcerr);
+  scopedvar_set_str (process->scopedvar, SV_T_INTERNAL,
+      MKC_C_PREFIX, tbuff, MKC_VCTXT_MKC);
 
   return MKC_OK;
 }
@@ -3346,6 +3385,7 @@ mkc_process_dbg_print_var (mkc_process_t *process, const char *profname)
             strcmp (nm, "DC") == 0 ||
             strcmp (nm, "FLEX") == 0 ||
             strcmp (nm, "OBJC") == 0 ||
+            strcmp (nm, "PREFIX") == 0 ||
             strcmp (nm, MKC_C_IVARMACRO) == 0) {
           continue;
         }

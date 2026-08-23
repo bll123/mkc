@@ -11,6 +11,4 @@
   cf_unreachable_code '-Wunreachable-code'
 == default c
   C_CF_G '-g'
-  MKC_CFLAGS [
-       '-g'
-       ]
+  MKC_CFLAGS [ '-g' ]

@@ -21,3 +21,4 @@ char const * const MKC_C_LIBS = "MKC_LIBS";
 char const * const MKC_C_SUPPORTS_MM = "MKC_COMPILER_SUPPORTS_MM";
 char const * const MKC_C_MKC_TS = "MKC_MKC_TIMESTAMP";
 char const * const MKC_C_MKC_CHANGED = "MKC_MKC_CHANGED";
+char const * const MKC_C_PREFIX = "MKC_PREFIX";
