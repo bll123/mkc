@@ -322,7 +322,7 @@ mkc_process_init (scopedvar_t *scopedvar,
 
     etm = mstimeend (&starttm);
     mkc_elapsed_disp (etm, tbuff, sizeof (tbuff));
-    mkc_message ("-- mkc internal setup: %s\n", tbuff);
+    mkc_message (MKC_V_BASIC, "-- mkc internal setup: %s\n", tbuff);
     mkc_log (process->log, MKC_LOG_STATISTICS,
         "-- mkc internal setup: %s\n", tbuff);
   }
@@ -889,14 +889,14 @@ mkc_process_stmt_chk_inc_compile (mkc_process_t *process)
   }
 
   if (count == 0) {
-    mkc_message ("-- cached: check_include_compile\n");
+    mkc_message (MKC_V_BASIC, "-- cached: check_include_compile\n");
     mkc_log (process->log, MKC_LOG_CHECK, "-- cached: check_include_compile\n");
   } else {
     ts = mstime ();
     scopedvar_set_timestamp (process->scopedvar, SV_T_INTERNAL,
         MKC_C_CHK_INC_COMPILE_TS, ts, MKC_VCTXT_MKC);
 
-    mkc_message ("-- check_include_compile - %s (%d)\n",
+    mkc_message (MKC_V_BASIC, "-- check_include_compile - %s (%d)\n",
         mkc_success_msg (rc), count);
     mkc_log (process->log, MKC_LOG_CHECK, "-- check_include_compile - %s (%d)\n",
         mkc_success_msg (rc), count);
@@ -957,7 +957,7 @@ mkc_process_stmt_chk_inc_deps (mkc_process_t *process)
         MKC_C_CHK_INC_DEPS_TS);
 
     if (cachedts > ts) {
-      mkc_message ("-- cached: check_include_dependencies\n");
+      mkc_message (MKC_V_BASIC, "-- cached: check_include_dependencies\n");
       mkc_log (process->log, MKC_LOG_CHECK, "-- cached: check_include_dependencies\n");
 
       mkc_process_attr_clear (process);
@@ -1009,7 +1009,7 @@ mkc_process_stmt_chk_inc_deps (mkc_process_t *process)
         MKC_C_CHK_INC_DEPS_TS, ts, MKC_VCTXT_MKC);
   }
 
-  mkc_message ("-- check_include_dependencies - %s\n", mkc_success_msg (rc));
+  mkc_message (MKC_V_BASIC, "-- check_include_dependencies - %s\n", mkc_success_msg (rc));
   mkc_log (process->log, MKC_LOG_CHECK, "-- check_include_dependencies - %s\n",
       mkc_success_msg (rc));
 
@@ -1085,7 +1085,7 @@ mkc_process_stmt_chk_inc_guards (mkc_process_t *process)
         MKC_C_CHK_INC_GUARDS_TS);
 
     if (cachedts > ts) {
-      mkc_message ("-- cached: check_include_guards\n");
+      mkc_message (MKC_V_BASIC, "-- cached: check_include_guards\n");
       mkc_log (process->log, MKC_LOG_CHECK, "-- cached: check_include_guards\n");
 
       mkc_list_free (guardlist);
@@ -1143,7 +1143,7 @@ mkc_process_stmt_chk_inc_guards (mkc_process_t *process)
   scopedvar_set_timestamp (process->scopedvar, SV_T_INTERNAL,
       MKC_C_CHK_INC_GUARDS_TS, ts, MKC_VCTXT_MKC);
 
-  mkc_message ("-- check_include_guards - %s (%d)\n",
+  mkc_message (MKC_V_BASIC, "-- check_include_guards - %s (%d)\n",
       mkc_success_msg (rc), count);
   mkc_log (process->log, MKC_LOG_CHECK, "-- check_include_guards - %s (%d)\n",
       mkc_success_msg (rc), count);
@@ -1369,7 +1369,7 @@ mkc_process_stmt_loadcache (mkc_process_t *process, value_t *valvers)
 
   version = scopedvar_value_get_integer (process->scopedvar, valvers);
   if (version != 1) {
-    mkc_message ("-- cache version mismatch\n");
+    mkc_message (MKC_V_BASIC, "-- cache version mismatch\n");
     mkc_process_attr_clear (process);
     return;
   }
@@ -1390,7 +1390,7 @@ mkc_process_stmt_loadcache_post (mkc_process_t *process)
   if (process->cacheloaded && process->cacheinvalidated) {
     scopedvar_reset (process->scopedvar, process->mkcoptions);
 
-    mkc_message ("-- cache invalidated\n");
+    mkc_message (MKC_V_BASIC, "-- cache invalidated\n");
     mkc_log (process->log, MKC_LOG_GENERAL, "-- cache invalidated\n");
     mkc_process_set_defaults (process);
     mkc_process_initial_checks (process);
@@ -2037,7 +2037,7 @@ mkc_process_check (mkc_process_t *process, value_t *valconst,
     /* convert this to a boolean */
 
     scopedvar_set_integer (scope, SV_T_SEARCH, tnm, rc == 0 ? true : false, MKC_VCTXT_CHECK);
-    mkc_message ("-- check %s: %s : %s - %s\n",
+    mkc_message (MKC_V_BASIC, "-- check %s: %s : %s - %s\n",
         typenames [asttype], txt, tnm, mkc_success_msg (rc));
     mkc_log (process->log, MKC_LOG_CHECK, "-- check %s: %s : %s - %s\n",
         typenames [asttype], txt, tnm, mkc_success_msg (rc));
@@ -2045,7 +2045,7 @@ mkc_process_check (mkc_process_t *process, value_t *valconst,
   if (valtype) {
     /* the check is run, and the return code is a value */
     scopedvar_set_integer (scope, SV_T_SEARCH, tnm, rc, MKC_VCTXT_CHECK);
-    mkc_message ("-- check %s: %s : %s : %d\n", typenames [asttype], txt, tnm, rc);
+    mkc_message (MKC_V_BASIC, "-- check %s: %s : %s : %d\n", typenames [asttype], txt, tnm, rc);
     mkc_log (process->log, MKC_LOG_CHECK,
         "-- check %s: %s : %s : %d\n", typenames [asttype], txt, tnm, rc);
   }
@@ -2128,12 +2128,12 @@ mkc_process_check_flag (mkc_process_t *process,
   }
 
   if (addchk == MKC_ADD) {
-    mkc_message ("-- add %s: %s\n", typenames [asttype], flag);
+    mkc_message (MKC_V_BASIC, "-- add %s: %s\n", typenames [asttype], flag);
     mkc_log (process->log, MKC_LOG_CHECK,
         "-- add %s: %s\n", typenames [asttype], flag);
   }
   if (addchk == MKC_CHK) {
-    mkc_message ("-- check %s: %s - %s\n",
+    mkc_message (MKC_V_BASIC, "-- check %s: %s - %s\n",
         typenames [asttype], flag, mkc_success_msg (rc));
     mkc_log (process->log, MKC_LOG_CHECK, "-- check %s: %s - %s\n",
         typenames [asttype], flag, mkc_success_msg (rc));
@@ -2184,7 +2184,7 @@ mkc_process_chk_struct_member (mkc_process_t *process,
   scopedvar_set_integer (scope, SV_T_SEARCH,
       tnm, rc == 0 ? true : false, MKC_VCTXT_CHECK);
 
-  mkc_message ("-- check struct member: %s.%s - %s\n",
+  mkc_message (MKC_V_BASIC, "-- check struct member: %s.%s - %s\n",
       structname, membername, mkc_success_msg (rc));
   mkc_log (process->log, MKC_LOG_CHECK, "-- check struct member: %s.%s - %s\n",
       structname, membername, mkc_success_msg (rc));
@@ -2291,7 +2291,7 @@ mkc_process_chk_shell_extract (mkc_process_t *process, value_t *valpath)
 
     scopedvar_set_str (process->scopedvar, SV_T_SEARCH, varname, tvalue, MKC_VCTXT_CHECK);
 
-    mkc_message ("-- shell extract %s %s\n", varname, tvalue);
+    mkc_message (MKC_V_BASIC, "-- shell extract %s %s\n", varname, tvalue);
     mkc_log (process->log, MKC_LOG_CHECK, "-- shell extract %s %s\n",
         varname, tvalue);
 
@@ -2909,7 +2909,7 @@ mkc_process_chk_cache (mkc_process_t *process,
       }
     }
 
-    mkc_message ("-- cached: %s : %s\n", disp, nm);
+    mkc_message (MKC_V_BASIC, "-- cached: %s : %s\n", disp, nm);
     mkc_log (process->log, MKC_LOG_CHECK, "-- cached: %s : %s\n", disp, nm);
     rc = true;
   }

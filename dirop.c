@@ -197,7 +197,7 @@ dirop_delete (const char *dirname, int flags, mkc_error_t *mkcerr)
   char            *fname;
   char            temp [MKC_PATH_MAX];
 
-  if (fileop_is_directory (dirname)) {
+  if (! fileop_exists (dirname)) {
     /* not an error */
     return MKC_OK;
   }

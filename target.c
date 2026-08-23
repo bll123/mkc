@@ -223,17 +223,19 @@ target_check_dependency_timestamp (target_t *target,
   int64_t       ts;
   mkc_listidx_t iteridx;
 
-  if (! scopedvar_is_defined (target->scopedvar, SV_T_DEPENDENCY, filename)) {
+  if (! scopedvar_is_defined (target->scopedvar, SV_T_DEPENDENCY, filepath)) {
     return TARGET_OUT_OF_DATE;
   }
 
   fts = 0;
-  if (scopedvar_is_defined (target->scopedvar, SV_T_TIMESTAMP, filename)) {
-    fts = scopedvar_get_timestamp (target->scopedvar, SV_T_TIMESTAMP, filename);
+  if (scopedvar_is_defined (target->scopedvar, SV_T_TIMESTAMP, filepath)) {
+    fts = scopedvar_get_timestamp (target->scopedvar, SV_T_TIMESTAMP, filepath);
   }
+fprintf (stderr, "dep-ts: %zd %s\n", fts, filepath);
 
-  target_iter_dependency_ts_start (target, filename, &iteridx);
-  while ((ts = target_iter_dependency_ts (target, filename, &iteridx)) != MKC_ITER_FINISH) {
+  target_iter_dependency_ts_start (target, filepath, &iteridx);
+  while ((ts = target_iter_dependency_ts (target, filepath, &iteridx)) != MKC_ITER_FINISH) {
+fprintf (stderr, "   ts: %zd\n", ts);
     if (ts > fts) {
       return TARGET_OUT_OF_DATE;
     }
@@ -687,6 +689,7 @@ target_build (target_t *target, mkc_list_t *blist)
     mkc_listidx_t   didx;
     int             tgttype;
     ct_type_t       comptype = COMPILE_COMPILE;
+    const char      *buildtag = "";
 
     if (mkc_error_chk_err (target->mkcerr)) {
       break;
@@ -702,18 +705,31 @@ target_build (target_t *target, mkc_list_t *blist)
       case TGT_T_EXEC: {
         compile_set_output (target->compile, builditem);
         comptype = COMPILE_LINK;
+        buildtag = "link";
         break;
       }
       case TGT_T_FILE: {
+        buildtag = "create";
         break;
       }
       case TGT_T_OBJECT: {
         compile_set_output (target->compile, builditem);
+        buildtag = "compile";
         break;
       }
       case TGT_T_SOURCE: {
         break;
       }
+    }
+
+    if (tgttype != TGT_T_SOURCE) {
+      if (target_check_dependency_timestamp (
+          target, builditem, builditem) == TARGET_CURRENT) {
+        mkc_message (MKC_V_BASIC, "-- cached: %s: %s\n", buildtag, builditem);
+        continue;
+      }
+
+      mkc_message (MKC_V_BASIC, "-- %s: %s\n", buildtag, builditem);
     }
 
     valdeplist = scopedvar_get_value (target->scopedvar, SV_T_DEPENDENCY, builditem);
@@ -730,27 +746,28 @@ target_build (target_t *target, mkc_list_t *blist)
 
       ttgttype = scopedvar_value_get_integer (target->scopedvar, value);
       if (tgttype == TGT_T_EXEC && ttgttype == TGT_T_OBJECT) {
-fprintf (stderr, "-- build %s %s\n", builditem, dep);
         compile_append_object (target->compile, dep);
       }
       if (tgttype == TGT_T_OBJECT && ttgttype == TGT_T_SOURCE) {
-fprintf (stderr, "-- build %s %s\n", builditem, dep);
         stpecpy (source, source + MKC_PATH_MAX, dep);
       }
     }
 
     if (tgttype == TGT_T_EXEC || tgttype == TGT_T_OBJECT) {
-fprintf (stderr, "== build %d %s\n", tgttype, builditem);
+      int64_t   tts;
+
       compile_exec (target->compile, comptype, target->attr->currcompiler,
           source, NULL, 0);
       compile_reset (target->compile);
+
+      tts = fileop_modtime (builditem);
+      scopedvar_set_timestamp (target->scopedvar, SV_T_TIMESTAMP, builditem, tts, MKC_VCTXT_MKC);
     }
   }
 
   toposort_free (topo);
   free (dep);
   free (source);
-fprintf (stderr, "build-fin\n");
   return;
 }
 

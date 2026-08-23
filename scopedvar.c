@@ -66,7 +66,7 @@ typedef struct sv_iter_t {
 
 static char const * const svtypenames [] = {
   [SV_T_ACTIVE] = "active",
-  [SV_T_BUILD] = "build",
+  [SV_T_BUILD] = "builditems",
   [SV_T_CURR_PROF_COMPILER] = "curr_prof_compiler",
   [SV_T_CURR_PROF] = "curr_prof",
   [SV_T_DEPENDENCY] = "dependency",
@@ -76,7 +76,7 @@ static char const * const svtypenames [] = {
   [SV_T_NOT_IN_USE] = "not_in_use",
   [SV_T_PATHS] = "paths",
   [SV_T_SEARCH] = "search",
-  [SV_T_TARGET] = "target",
+  [SV_T_TARGET] = "targetitems",
   [SV_T_TIMESTAMP] = "timestamp",
 };
 
@@ -152,6 +152,7 @@ scopedvar_reset (scopedvar_t *scopedvar, mkc_option_t *mkcoptions)
     return;
   }
   scopedvar_free_vars (scopedvar);
+  scopedvar_free_variables (&scopedvar->hierarchy, true);
   scopedvar_init_vars (scopedvar, mkcoptions);
 }
 

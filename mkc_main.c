@@ -68,8 +68,10 @@ main (int argc, char *argv [])
   int             fnidx;
   bool            loadcache = true;
   bool            parsedebug = false;
+  bool            clean = false;
 
   static struct option mkc_cli_opts [] = {
+    { "clean",                no_argument,        NULL, 4   },
     { "loglevel",             required_argument,  NULL, 3   },
     { "mkc-dir",              required_argument,  NULL, 5   },
     { "no-cache",             no_argument,        NULL, 1   },
@@ -86,7 +88,7 @@ main (int argc, char *argv [])
   mkcoptions.currprofile = strdup (MKC_C_PROF_NAME_DEFAULT);
   mkcoptions.stage = NULL;
   mkcoptions.prefix = NULL;
-  mkcoptions.verbose = 1;
+  mkcoptions.verbose = MKC_V_STATS;
   mkcoptions.retest = false;
   mkcoptions.loglevel = MKC_LOG_NORMAL;
 
@@ -144,6 +146,10 @@ main (int argc, char *argv [])
         }
         break;
       }
+      case 4: {
+        clean = true;
+        break;
+      }
       case 'V': {
         mkc_main_print_version ();
         exit (0);
@@ -167,6 +173,14 @@ main (int argc, char *argv [])
     }
   }
 
+  if (clean) {
+    /* clean out the obj/ and stage/ directory trees */
+    path_build (MKC_PATH_MKCF_OBJECTS, tbuff, sizeof (tbuff), NULL, mkcerr);
+    dirop_delete (tbuff, DIROP_ALL, mkcerr);
+    path_build (MKC_PATH_MKCF_STAGE, tbuff, sizeof (tbuff), NULL, mkcerr);
+    dirop_delete (tbuff, DIROP_ALL, mkcerr);
+  }
+
   /* create the mkc_files temporary directory tree */
   path_build (MKC_PATH_MKCF_TMP, tbuff, sizeof (tbuff), NULL, mkcerr);
   rc = dirop_make (tbuff, mkcerr);
@@ -187,6 +201,7 @@ main (int argc, char *argv [])
     return rc;
   }
 
+  mkc_msg_set_level (mkcoptions.verbose);
   log = mkc_log_init (mkcerr);
   path_build (MKC_PATH_MKCFILES, tbuff, sizeof (tbuff),
       "internal-log.txt", mkcerr);
@@ -218,7 +233,7 @@ main (int argc, char *argv [])
   mkc_parse_debug (parse, parsedebug);
 
   if (! loadcache) {
-    mkc_message ("-- cache disabled by user\n");
+    mkc_message (MKC_V_BASIC, "-- cache disabled by user\n");
   }
 
   path_build (MKC_PATH_MKCFILES, cachename, sizeof (cachename), "cache.mkc", mkcerr);
@@ -234,7 +249,7 @@ main (int argc, char *argv [])
 
     cfh = fileop_open (cachename, "r");
     if (cfh != NULL) {
-      mkc_message ("-- loading cache\n");
+      mkc_message (MKC_V_BASIC, "-- loading cache\n");
       mkc_parse_set_filename (parse, cachename);
       mkc_parse_start (parse, cfh);
     }
@@ -252,7 +267,7 @@ main (int argc, char *argv [])
 
   etm = mstimeend (&starttm);
   mkc_elapsed_disp (etm, tbuff, sizeof (tbuff));
-  mkc_message ("-- parse: %s\n", tbuff);
+  mkc_message (MKC_V_STATS, "-- parse: %s\n", tbuff);
   mkc_log (log, MKC_LOG_STATISTICS, "-- parse: %s\n", tbuff);
   mstimestart (&proctm);
 
@@ -268,11 +283,11 @@ main (int argc, char *argv [])
 
   etm = mstimeend (&proctm);
   mkc_elapsed_disp (etm, tbuff, sizeof (tbuff));
-  mkc_message ("-- process: %s\n", tbuff);
+  mkc_message (MKC_V_STATS, "-- process: %s\n", tbuff);
   mkc_log (log, MKC_LOG_STATISTICS, "-- process: %s\n", tbuff);
   etm = mstimeend (&starttm);
   mkc_elapsed_disp (etm, tbuff, sizeof (tbuff));
-  mkc_message ("-- total time: %s\n", tbuff);
+  mkc_message (MKC_V_STATS, "-- total time: %s\n", tbuff);
   mkc_log (log, MKC_LOG_STATISTICS, "-- total time: %s\n", tbuff);
 
   rc = mkc_cleanup (astmain, &argcopy, log, &mkcoptions, mkcerr);

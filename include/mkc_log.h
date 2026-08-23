@@ -41,13 +41,22 @@ enum {
   MKC_LOG_ALL           = (~ 0),
 };
 
+typedef enum {
+  MKC_V_QUIET     = 0,
+  MKC_V_BASIC     = 1,
+  MKC_V_STATS     = 2,
+  MKC_V_INFO      = 3,
+} log_verbose_lvl_t;
+
 typedef struct mkc_log_t mkc_log_t;
 
 MKC_NODISCARD mkc_log_t * mkc_log_init (mkc_error_t *mkcerr);
 void mkc_log_open (mkc_log_t *log, const char *fname, int32_t logflag);
 void mkc_log_free (mkc_log_t *log);
 
-void mkc_message (const char *fmt, ...);
+void mkc_msg_set_level (int vlevel);
+void mkc_message (int vlevel, const char *fmt, ...);
+
 const char * mkc_success_msg (int rc);
 const char * mkc_elapsed_disp (int64_t etm, char *buff, size_t sz);
 void mkc_log (mkc_log_t *log, int32_t logflag, const char *fmt, ...);

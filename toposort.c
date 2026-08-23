@@ -19,7 +19,7 @@ enum {
 };
 
 typedef struct mkc_topoitem_t {
-  char  *name;
+  const char  * name;
 } mkc_topoitem_t;
 
 typedef struct mkc_topopair_t {
@@ -44,7 +44,6 @@ typedef struct toposort_t {
 static int mkc_topo_item_compare (void *ta, void *tb);
 static int mkc_topo_count_compare (void *ta, void *tb);
 static void mkc_topo_update_counts (toposort_t *topo, mkc_listidx_t idx);
-static void mkc_topo_item_free (void *titem);
 
 toposort_t *
 toposort_init (mkc_error_t *mkcerr)
@@ -57,7 +56,7 @@ toposort_init (mkc_error_t *mkcerr)
   }
 
   topo->mkcerr = mkcerr;
-  topo->items = mkc_list_init (MKC_LIST_SORTED, mkc_topo_item_free, mkc_topo_item_compare, mkcerr);
+  topo->items = mkc_list_init (MKC_LIST_SORTED, NULL, mkc_topo_item_compare, mkcerr);
   topo->pairs = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, mkcerr);
   topo->counts = mkc_list_init (MKC_LIST_SORTED, NULL, mkc_topo_count_compare, mkcerr);
   topo->results = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, mkcerr);
@@ -88,7 +87,7 @@ toposort_add_item (toposort_t *topo, const char *item)
     return;
   }
 
-  titem.name = strdup (item);
+  titem.name = item;
   mkc_list_set (topo->items, &titem, sizeof (mkc_topoitem_t));
 
   return;
@@ -105,13 +104,13 @@ toposort_add_pair (toposort_t *topo,
     return MKC_ERR_FAILURE;
   }
 
-  titem.name = (char *) item_a;
+  titem.name = item_a;
   tpair.itemidx = mkc_list_find (topo->items, &titem);
   if (tpair.itemidx == MKC_LIST_NOTFOUND) {
     mkc_error_set (topo->mkcerr, MKC_ERR_ITEM_NOT_FOUND, 0, item_a);
     return MKC_ERR_FAILURE;
   }
-  titem.name = (char *) item_b;
+  titem.name = item_b;
   tpair.dependson = mkc_list_find (topo->items, &titem);
   if (tpair.dependson == MKC_LIST_NOTFOUND) {
     mkc_error_set (topo->mkcerr, MKC_ERR_ITEM_NOT_FOUND, 0, item_b);
@@ -319,12 +318,4 @@ mkc_topo_update_counts (toposort_t *topo, mkc_listidx_t idx)
       count->count -= 1;
     }
   }
-}
-
-static void
-mkc_topo_item_free (void *titem)
-{
-  mkc_topoitem_t    *item = titem;
-
-  free (item->name);
 }

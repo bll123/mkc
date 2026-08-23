@@ -2,7 +2,7 @@
  * Copyright 2026 Brad Lanam Pleasant Hill CA
  */
 
-char const * const MKC_C_PROF_NAME_BUILD = "build";
+char const * const MKC_C_PROF_NAME_BUILD = "builditems";
 char const * const MKC_C_PROF_NAME_DEFAULT = "default";
 char const * const MKC_C_PROF_NAME_DEPENDENCY = "dependency";
 char const * const MKC_C_PROF_NAME_INTERNAL = "internal";

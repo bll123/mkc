@@ -25,6 +25,8 @@ typedef struct mkc_log_t {
   int32_t     logflag;
 } mkc_log_t;
 
+static int gmkcverbose = MKC_V_STATS;
+
 MKC_NODISCARD
 mkc_log_t *
 mkc_log_init (mkc_error_t *mkcerr)
@@ -94,9 +96,19 @@ mkc_log_free (mkc_log_t *log)
 }
 
 void
-mkc_message (const char *fmt, ...)
+mkc_msg_set_level (int vlevel)
+{
+  gmkcverbose = vlevel;
+}
+
+void
+mkc_message (int vlevel, const char *fmt, ...)
 {
   va_list   vap;
+
+  if (vlevel > gmkcverbose) {
+    return;
+  }
 
   va_start (vap, fmt);
   vfprintf (stderr, fmt, vap);
