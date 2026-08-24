@@ -168,6 +168,7 @@
 %token T_ATTR_FAILURE         "failure"
 %token T_ATTR_HEADER          "header"
 %token T_ATTR_INPUT           "input"
+%token T_ATTR_LIBRARIES       "libraries"
 %token T_ATTR_LIBRARY_VERSION "library_version"
 %token T_ATTR_LINK_FLAGS      "link_flags"
 %token T_ATTR_MATCH           "match"
@@ -226,8 +227,8 @@
 // attributes
 %type <astnode> attr attr_alternate attr_compiler attr_compilerflags
 %type <astnode> attr_context attr_define_zero attr_failure attr_header
-%type <astnode> attr_input attr_libversion attr_linkflags attr_match
-%type <astnode> attr_method attr_name attr_namespace attr_negate
+%type <astnode> attr_input attr_libraries attr_libversion attr_linkflags
+%type <astnode> attr_match attr_method attr_name attr_namespace attr_negate
 %type <astnode> attr_output attr_path attr_replace attr_source
 %type <astnode> attr_success attr_version
 
@@ -395,6 +396,10 @@ attr[v]:
       $v = $a;
     }
   | attr_input[a]
+    {
+      $v = $a;
+    }
+  | attr_libraries[a]
     {
       $v = $a;
     }
@@ -963,6 +968,15 @@ attr_input[v]:
     T_ATTR_INPUT varvalue[a] T_SEMICOLON
     {
       $v = mkc_ast_mk_attribute (ast, $a, MKC_T_ATTR_INPUT,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+/* a list of library locations and libraries */
+attr_libraries[v]:
+    T_ATTR_LIBRARIES valuelist[l] T_SEMICOLON
+    {
+      $v = mkc_ast_mk_attr_nodelist (ast, $l, MKC_T_ATTR_LIBRARIES,
           yylloc.first_line, yylloc.first_column);
     }
   ;

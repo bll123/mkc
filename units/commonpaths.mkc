@@ -3,7 +3,7 @@
 # Autorun: true
 #
 # Sets:
-#   If a known path is found, and both the matching
+#   If a known common path is found, and both the matching
 #     .../include and .../lib exist,
 #   then the include path is added to the compiler flags, and
 #   the lib path is added to the link flags.
@@ -100,7 +100,7 @@ function check_common_paths {
 
 profile mkc_test_commonpaths {
   check_common_paths;
-  mkcdebug printvar mkc_test_commonpaths;
+  mkcdebug printvar test;
   exit 0;
 }
 

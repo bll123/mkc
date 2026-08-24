@@ -28,9 +28,10 @@ imperative statement.  The build is started with the
 
 ##### Attributes
 
+* [source](SyntaxAttrSource)
 * [compiler_flags](SyntaxAttrCompileFlag)
 * [link_flags](SyntaxAttrLinkFlag)
-* [source](SyntaxAttrSource)
+* [libraries](SyntaxAttrLibraries)
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

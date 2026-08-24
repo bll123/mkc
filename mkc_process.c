@@ -212,7 +212,7 @@ static int mkc_process_user_regex_comp (void *turxa, void *turxb);
 
 static char * mkc_process_configure_substitute (mkc_process_t *process, char *data);
 static void mkc_process_alternate_free (void *talt);
-static void mkc_process_value_list (mkc_process_t *process, value_t *value, mkc_list_t *flags, mkc_list_t *libs, bool inlist);
+static void mkc_process_value_list (mkc_process_t *process, value_t *value, mkc_list_t *flags, bool inlist);
 
 static void mkc_process_dbg_print_var (mkc_process_t *process, const char *pname);
 static void mkc_process_dbg_print_prof (mkc_process_t *process, sv_iter_flag_t sviterflag);
@@ -1161,7 +1161,7 @@ mkc_process_stmt_build (mkc_process_t *process, value_t *vallist)
   mkc_list_t      * blist;
 
   blist = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, process->mkcerr);
-  mkc_process_value_list (process, vallist, blist, NULL, false);
+  mkc_process_value_list (process, vallist, blist, false);
 
   target_build (process->target, blist);
 
@@ -1598,12 +1598,14 @@ mkc_process_stmt_set (mkc_process_t *process,
     const char    *tns;
 
     tns = process->attr.str [MKC_ATTR_NAMESPACE];
-    if (strcmp (tns, "timestamp") == 0) {
+    if (strcmp (tns, scopedvar_type_disp (SV_T_TIMESTAMP)) == 0) {
       svtype = SV_T_TIMESTAMP;
-    } else if (strcmp (tns, "dependency") == 0) {
+    } else if (strcmp (tns, scopedvar_type_disp (SV_T_DEPENDENCY)) == 0) {
       svtype = SV_T_DEPENDENCY;
-    } else if (strcmp (tns, "paths") == 0) {
+    } else if (strcmp (tns, scopedvar_type_disp (SV_T_PATHS)) == 0) {
       svtype = SV_T_PATHS;
+    } else if (strcmp (tns, scopedvar_type_disp (SV_T_BUILD)) == 0) {
+      svtype = SV_T_BUILD;
     }
   }
 
@@ -1812,7 +1814,7 @@ mkc_process_attr_comp_flags (mkc_process_t *process, value_t *value)
   }
 
   clist = process->attr.curralt->compflags;
-  mkc_process_value_list (process, value, clist, NULL, false);
+  mkc_process_value_list (process, value, clist, false);
 }
 
 void
@@ -1853,7 +1855,6 @@ void
 mkc_process_attr_link_flags (mkc_process_t *process, value_t *value)
 {
   mkc_list_t      * llist;
-  mkc_list_t      * libs;
 
   if (process == NULL) {
     return;
@@ -1866,8 +1867,26 @@ mkc_process_attr_link_flags (mkc_process_t *process, value_t *value)
   }
 
   llist = process->attr.curralt->linkflags;
+  mkc_process_value_list (process, value, llist, false);
+}
+
+void
+mkc_process_attr_libraries (mkc_process_t *process, value_t *value)
+{
+  mkc_list_t      * libs;
+
+  if (process == NULL) {
+    return;
+  }
+
+  if (! mkc_context_check (process->context,
+      MKC_CONTEXT_CHECK | MKC_CONTEXT_ALTERNATE | MKC_CONTEXT_EXECUTABLE)) {
+    mkc_error_set (process->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
+    return;
+  }
+
   libs = process->attr.curralt->libs;
-  mkc_process_value_list (process, value, llist, libs, false);
+  mkc_process_value_list (process, value, libs, false);
 }
 
 void
@@ -3139,7 +3158,7 @@ mkc_process_alternate_free (void *tchkcontext)
 
 static void
 mkc_process_value_list (mkc_process_t *process, value_t *value,
-    mkc_list_t *flags, mkc_list_t *libs, bool inlist)
+    mkc_list_t *flags, bool inlist)
 {
   mkc_listidx_t   iteridx;
   mkc_listidx_t   lidx;
@@ -3157,7 +3176,7 @@ mkc_process_value_list (mkc_process_t *process, value_t *value,
     lvalue = mkc_list_get_by_idx (value->list, lidx);
     tvalue = scopedvar_value_get_value (process->scopedvar, lvalue);
     if (tvalue->vtype == MKC_VT_LIST) {
-      mkc_process_value_list (process, tvalue, flags, libs, true);
+      mkc_process_value_list (process, tvalue, flags, true);
       if (! inlist) {
         scopedvar_temp_value_free (tvalue);
       }
@@ -3173,16 +3192,7 @@ mkc_process_value_list (mkc_process_t *process, value_t *value,
     }
 
     scopedvar_value_get_str (process->scopedvar, tvalue, flag, sizeof (flag));
-    if (libs != NULL) {
-      if (mkc_flag_is_libloc (flag) ||
-          strncmp (flag, "-l", 2) == 0) {
-        mkc_list_set (libs, tvalue, sizeof (value_t));
-      } else {
-        mkc_list_set (flags, tvalue, sizeof (value_t));
-      }
-    } else {
-      mkc_list_set (flags, tvalue, sizeof (value_t));
-    }
+    mkc_list_set (flags, tvalue, sizeof (value_t));
     if (! inlist) {
       scopedvar_temp_value_free (tvalue);
     }

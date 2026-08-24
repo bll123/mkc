@@ -1265,7 +1265,7 @@ scopedvar_substitute (scopedvar_t *scopedvar, const char *data,
         value_t   *value;
 
         value = scopedvar_get_value (scopedvar, SV_T_SEARCH, tstr);
-//fprintf (stderr, "%*svalue-null %d\n", depth * 2, "", value == NULL ? 1 : 0);
+//fprintf (stderr, "%*svalue-null? %d\n", depth * 2, "", value == NULL ? 1 : 0);
         if (value != NULL && value->vtype == MKC_VT_INTEGER) {
           snprintf (tbuff, sizeof (tbuff), "%" PRId32, value->ival);
           tval = tbuff;
@@ -1273,6 +1273,7 @@ scopedvar_substitute (scopedvar_t *scopedvar, const char *data,
         if (value != NULL && value->vtype == MKC_VT_STRING) {
           tval = value->sval;
         }
+//fprintf (stderr, "%*s got %s\n", depth * 2, "", tval);
       }
       free (tstr);
 //fprintf (stderr, "%*stval: %s\n", depth * 2, "", tbuff);
@@ -1735,6 +1736,7 @@ scopedvar_get_active_name (scopedvar_t *scopedvar)
   return scopedvar->active_prof->name;
 }
 
+/* used for scopedvar_set() */
 static mkc_varlist_t *
 scopedvar_get_varlist (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname)
 {
@@ -1781,8 +1783,6 @@ scopedvar_get_varlist (scopedvar_t *scopedvar, sv_type_t svtype, const char *vna
         }
 
         if (svprof->svtype == SV_T_LOCAL) {
-          mkc_varlist_t   *varlist;
-
           varlist = svprof->varlist;
           if (mkc_var_is_defined (varlist, vname)) {
             idx = i;

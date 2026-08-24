@@ -13,6 +13,7 @@ char const * const typenames [MKC_T_MAX] = {
   [MKC_T_ATTR_FAILURE] = "attr_failure",
   [MKC_T_ATTR_HEADER] = "attr_header",
   [MKC_T_ATTR_INPUT] = "attr_input",
+  [MKC_T_ATTR_LIBRARIES] = "attr_libraries",
   [MKC_T_ATTR_LIBRARY_VERSION] = "attr_library_version",
   [MKC_T_ATTR_LINK_FLAGS] = "attr_link_flags",
   [MKC_T_ATTR_MATCH] = "attr_match",

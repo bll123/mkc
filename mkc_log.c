@@ -10,6 +10,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <errno.h>
+#include <time.h>
 
 #include "chararr.h"
 #include "mkc_error.h"
@@ -50,6 +51,8 @@ mkc_log_init (mkc_error_t *mkcerr)
 void
 mkc_log_open (mkc_log_t *log, const char *fname, int32_t logflag)
 {
+  const time_t  t = time (NULL);
+
   if (log == NULL) {
     return;
   }
@@ -61,6 +64,7 @@ mkc_log_open (mkc_log_t *log, const char *fname, int32_t logflag)
   /* close any open log */
   datafree (log->fname);
   if (log->fh != NULL) {
+    mkc_log (log, MKC_LOG_GENERAL, "== log end: %s\n", ctime (&t));
     fclose (log->fh);
   }
 
@@ -76,6 +80,7 @@ mkc_log_open (mkc_log_t *log, const char *fname, int32_t logflag)
   }
 
   log->logflag = logflag;
+  mkc_log (log, MKC_LOG_GENERAL, "== log start: %s\n", ctime (&t));
 
   return;
 }
@@ -88,6 +93,9 @@ mkc_log_free (mkc_log_t *log)
   }
 
   if (log->fh != NULL) {
+    const time_t  t = time (NULL);
+
+    mkc_log (log, MKC_LOG_GENERAL, "== log end: %s\n", ctime (&t));
     fclose (log->fh);
   }
   datafree (log->fname);

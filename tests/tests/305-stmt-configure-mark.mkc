@@ -13,7 +13,7 @@ check_function fstat {
 }
 check_function sqrt {
   header math.h;
-  link_flags '-lm';
+  libraries '-lm';
 }
 check_function other;
 

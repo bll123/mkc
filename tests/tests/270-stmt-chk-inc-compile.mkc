@@ -12,7 +12,7 @@ profile default {
 mkcdebug printvar test;
 
 check_include_compile {
-  compiler_flags  '-Itests/data/258-stmt-chk-inc-compile';
-  path  'tests/data/258-stmt-chk-inc-compile';
+  compiler_flags  '-Itests/data/270-stmt-chk-inc-compile';
+  path  'tests/data/270-stmt-chk-inc-compile';
   match '\.h$';
 }

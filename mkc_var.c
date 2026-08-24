@@ -315,8 +315,12 @@ mkc_var_is_defined (mkc_varlist_t *varlist, const char *vname)
   mkc_varidx_t    vidx;
   bool            rc = false;
 
+  if (varlist == NULL) {
+    return rc;
+  }
+
   vidx = mkc_var_find (varlist, vname);
-  if (vidx != MKC_VAR_NOTFOUND) {
+  if (vidx != MKC_ERR_FAILURE && vidx != MKC_VAR_NOTFOUND) {
     rc = true;
   }
 

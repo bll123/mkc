@@ -1686,6 +1686,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
     case MKC_T_ATTR_HEADER:
     case MKC_T_ATTR_COMP_FLAGS:
     case MKC_T_ATTR_LINK_FLAGS:
+    case MKC_T_ATTR_LIBRARIES:
     case MKC_T_ATTR_SOURCE: {
       value_t   *val;
 
@@ -1705,6 +1706,10 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
         }
         case MKC_T_ATTR_LINK_FLAGS: {
           mkc_process_attr_link_flags (astmain->process, val);
+          break;
+        }
+        case MKC_T_ATTR_LIBRARIES: {
+          mkc_process_attr_libraries (astmain->process, val);
           break;
         }
         case MKC_T_ATTR_SOURCE: {

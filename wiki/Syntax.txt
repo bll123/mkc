@@ -46,10 +46,11 @@
   * Attributes
       * [alternate](SyntaxAttrAlternate)
       * [compiler_flags](SyntaxAttrCompileFlag)
-      * [failure](SyntaxAttrSuccessFail)
       * [compiler](SyntaxAttrCompiler)
+      * [failure](SyntaxAttrSuccessFail)
       * [header](SyntaxAttrHeader)
       * [input](SyntaxAttrInput)
+      * [libraries](SyntaxAttrLibraries)
       * [link_flags](SyntaxAttrLinkFlag)
       * [method](SyntaxAttrMethod)
       * [name](SyntaxAttrName)

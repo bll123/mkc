@@ -36,7 +36,7 @@ if (${MKC_SYS_WINDOWS}) {
 
 check_function sqrt {
   header math.h;
-  link_flags '-lm';
+  libraries '-lm';
 }
 
 if (${_function_malloc} == 1) {

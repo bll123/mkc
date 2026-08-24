@@ -181,6 +181,7 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 "failure"                   { return T_ATTR_FAILURE; }
 "header"                    { return T_ATTR_HEADER; }
 "input"                     { return T_ATTR_INPUT; }
+"libraries"                 { return T_ATTR_LIBRARIES; }
 "library_version"           { return T_ATTR_LIBRARY_VERSION; }
 "link_flags"                { return T_ATTR_LINK_FLAGS; }
 "match"                     { return T_ATTR_MATCH; }
