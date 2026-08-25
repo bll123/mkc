@@ -8,7 +8,7 @@ check_function fstat {
 }
 check_function sqrt {
   header math.h;
-  libraries '-lm';
+  library_flags '-lm';
 }
 check_function other;
 

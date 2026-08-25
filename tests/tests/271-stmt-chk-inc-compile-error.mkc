@@ -9,8 +9,8 @@ profile default {
   add_compile_flag '-UMKCTEST';
 }
 
+add_compile_flag '-Itests/data/271-stmt-chk-inc-compile-error';
+
 check_include_compile {
-  compiler_flags  '-Itests/data/271-stmt-chk-inc-compile-error';
-  path  'tests/data/271-stmt-chk-inc-compile-error';
   match '\.h$';
 }

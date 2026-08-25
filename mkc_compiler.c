@@ -44,6 +44,28 @@ static char const * const compenv [MKC_COMPILER_MAX] = {
   [MKC_COMPILER_UNKNOWN] = "CC",
 };
 
+typedef struct mkc_compflag_t {
+  const char  * name;
+  size_t      len;
+} mkc_compflag_t;
+
+static mkc_compflag_t compflags [MKC_COMP_FLAG_TYPE_MAX][MKC_COMP_FLAG_MAX] = {
+  [MKC_COMP_FLAG_TYPE_DEFAULT] = {
+      [MKC_COMP_FLAG_COMPILE]           = { "-c",   2 },
+      [MKC_COMP_FLAG_DEPS]              = { "-M",   2 },
+      [MKC_COMP_FLAG_DEPS_USER]         = { "-MM",  3 },
+      [MKC_COMP_FLAG_INCLUDE]           = { "-I",   2 },
+      [MKC_COMP_FLAG_LIB]               = { "-l",   2 },
+      [MKC_COMP_FLAG_LIBPATH]           = { "-L",   2 },
+      [MKC_COMP_FLAG_LINKPREFIX]        = { "-Wl,", 4 },
+      [MKC_COMP_FLAG_OUTPUT]            = { "-o",   2 },
+      [MKC_COMP_FLAG_PREPROCESS]        = { "-E",   2 },
+      [MKC_COMP_FLAG_WARN_PREFIX]       = { "-W",   2 },
+      [MKC_COMP_FLAG_WARN_NEGATE]       = { "-Wno-", 5 },
+      [MKC_COMP_FLAG_WARN_NO_DEPRECATE] = { "-Wno-deprecated", 15 },
+      },
+};
+
 const char *
 compiler_get_name (mkc_compiler_t comp)
 {
@@ -109,3 +131,38 @@ compiler_get_id (const char *compiler)
 
   return cid;
 }
+
+const char *
+compiler_get_flag (mkc_compiler_id_t compid, mkc_compiler_flag_t flag)
+{
+  mkc_compiler_flag_type_t  flagtype = MKC_COMP_FLAG_TYPE_DEFAULT;
+  const char                * flagstr;
+
+  switch (compid) {
+    default: {
+      flagtype = MKC_COMP_FLAG_TYPE_DEFAULT;
+      break;
+    }
+  }
+
+  flagstr = compflags [flagtype][flag].name;
+  return flagstr;
+}
+
+size_t
+compiler_get_flag_len (mkc_compiler_id_t compid, mkc_compiler_flag_t flag)
+{
+  mkc_compiler_flag_type_t  flagtype = MKC_COMP_FLAG_TYPE_DEFAULT;
+  size_t                    len;
+
+  switch (compid) {
+    default: {
+      flagtype = MKC_COMP_FLAG_TYPE_DEFAULT;
+      break;
+    }
+  }
+
+  len = compflags [flagtype][flag].len;
+  return len;
+}
+

@@ -171,6 +171,7 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 "check_shell_extract"       { return T_CHK_SHELL_EXTRACT; }
 
 "add_compile_flag"          { return T_ADD_COMP_FLAG; }
+"add_library"               { return T_ADD_LIBRARY; }
 "add_link_flag"             { return T_ADD_LINK_FLAG; }
 
 "alternate"                 { return T_ATTR_ALTERNATE; }
@@ -181,7 +182,7 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 "failure"                   { return T_ATTR_FAILURE; }
 "header"                    { return T_ATTR_HEADER; }
 "input"                     { return T_ATTR_INPUT; }
-"libraries"                 { return T_ATTR_LIBRARIES; }
+"library_flags"             { return T_ATTR_LIB_FLAGS; }
 "library_version"           { return T_ATTR_LIBRARY_VERSION; }
 "link_flags"                { return T_ATTR_LINK_FLAGS; }
 "match"                     { return T_ATTR_MATCH; }

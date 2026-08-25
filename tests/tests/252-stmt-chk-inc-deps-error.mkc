@@ -1,6 +1,7 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
+add_compile_flag '-Itests/data/252-stmt-chk-inc-deps-err';
+
 check_include_dependencies {
-  path 'tests/data/252-stmt-chk-inc-deps-err';
   match '\.h$';
 }

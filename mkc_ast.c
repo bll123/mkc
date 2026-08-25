@@ -1686,7 +1686,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
     case MKC_T_ATTR_HEADER:
     case MKC_T_ATTR_COMP_FLAGS:
     case MKC_T_ATTR_LINK_FLAGS:
-    case MKC_T_ATTR_LIBRARIES:
+    case MKC_T_ATTR_LIB_FLAGS:
     case MKC_T_ATTR_SOURCE: {
       value_t   *val;
 
@@ -1708,8 +1708,8 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
           mkc_process_attr_link_flags (astmain->process, val);
           break;
         }
-        case MKC_T_ATTR_LIBRARIES: {
-          mkc_process_attr_libraries (astmain->process, val);
+        case MKC_T_ATTR_LIB_FLAGS: {
+          mkc_process_attr_lib_flags (astmain->process, val);
           break;
         }
         case MKC_T_ATTR_SOURCE: {
@@ -1814,6 +1814,7 @@ mkc_ast_process (mkc_astmain_t *astmain, mkc_astnode_t *astnode,
     /* checks */
 
     case MKC_T_CHK_COMP_FLAG:
+    case MKC_T_CHK_LIBRARY:
     case MKC_T_CHK_LINK_FLAG: {
       value_t     *val;
       mkc_ctxt_val_t  ctxt = MKC_CONTEXT_CHECK;

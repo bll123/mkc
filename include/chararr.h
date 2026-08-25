@@ -20,7 +20,7 @@ void chararr_free (chararr_t *carr);
 int chararr_size (chararr_t *carr);
 void chararr_reset (chararr_t *carr, int idx);
 void chararr_append (chararr_t *carr, const char *txt);
-void chararr_freeinternals (chararr_t *carr);
+void chararr_set_freeinternals (chararr_t *carr);
 const char ** chararr_get_arr (chararr_t *carr);
 
 #if defined (__cplusplus) || defined (c_plusplus)

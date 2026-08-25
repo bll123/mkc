@@ -110,7 +110,7 @@ chararr_append (chararr_t *carr, const char *txt)
 }
 
 void
-chararr_freeinternals (chararr_t *carr)
+chararr_set_freeinternals (chararr_t *carr)
 {
   if (carr == NULL) {
     return;
@@ -123,10 +123,6 @@ const char **
 chararr_get_arr (chararr_t *carr)
 {
   if (carr == NULL) {
-    return NULL;
-  }
-
-  if (carr->sz == 0) {
     return NULL;
   }
 

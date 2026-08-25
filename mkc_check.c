@@ -122,13 +122,18 @@ int
 mkc_chk_compiler_works (mkc_check_t *check, mkc_compiler_t compiler)
 {
   int         rc;
+  const char  * nodeprecateflag;
 
   /* clang prints the deprecated error when compiling C with */
   /* c++ or objective-c */
 
   mkc_log (check->log, MKC_LOG_CHECK, "== chk: compiler-works\n");
   compile_usetemplate (check->compile);
-  compile_append_compflag (check->compile, "-Wno-deprecated");
+  nodeprecateflag =
+      compiler_get_flag (check->attr->compid, MKC_COMP_FLAG_WARN_NO_DEPRECATE);
+  if (*nodeprecateflag) {
+    compile_append_compflag (check->compile, nodeprecateflag);
+  }
   compile_append_compflag (check->compile, NULL);
   rc = compile_exec (check->compile, COMPILE_COMPILE, compiler,
       "int-main", NULL, 0);
@@ -166,7 +171,9 @@ mkc_chk_system_type (mkc_check_t *check, mkc_compiler_t compiler)
   }
   path_build (MKC_PATH_MKC_SHR_INCLUDE, inc, MKC_PATH_MAX, NULL, check->mkcerr);
 
-  chararr_append (check->flags, "-I");
+
+  chararr_append (check->flags,
+      compiler_get_flag (check->attr->compid, MKC_COMP_FLAG_INCLUDE));
   chararr_append (check->flags, inc);
   chararr_append (check->flags, NULL);
   compile_set_flags (check->compile, check->flags, NULL, NULL);
@@ -197,7 +204,8 @@ mkc_chk_system_id (mkc_check_t *check, mkc_compiler_t compiler)
   }
   mkc_log (check->log, MKC_LOG_CHECK, "== chk: system-id\n");
   path_build (MKC_PATH_MKC_SHR_INCLUDE, inc, MKC_PATH_MAX, NULL, check->mkcerr);
-  chararr_append (check->flags, "-I");
+  chararr_append (check->flags,
+      compiler_get_flag (check->attr->compid, MKC_COMP_FLAG_INCLUDE));
   chararr_append (check->flags, inc);
   chararr_append (check->flags, NULL);
   compile_set_flags (check->compile, check->flags, NULL, NULL);
@@ -245,7 +253,8 @@ mkc_chk_library_location (mkc_check_t *check, mkc_compiler_t compiler)
   }
   mkc_log (check->log, MKC_LOG_CHECK, "== chk: lib-location\n");
   path_build (MKC_PATH_MKC_SHR_INCLUDE, inc, MKC_PATH_MAX, NULL, check->mkcerr);
-  chararr_append (check->flags, "-I");
+  chararr_append (check->flags,
+      compiler_get_flag (check->attr->compid, MKC_COMP_FLAG_INCLUDE));
   chararr_append (check->flags, inc);
   chararr_append (check->flags, NULL);
   compile_set_flags (check->compile, check->flags, NULL, NULL);
@@ -276,7 +285,8 @@ mkc_chk_compiler_id (mkc_check_t *check, mkc_compiler_t compiler)
   }
   mkc_log (check->log, MKC_LOG_CHECK, "== chk: compiler-id\n");
   path_build (MKC_PATH_MKC_SHR_INCLUDE, inc, MKC_PATH_MAX, NULL, check->mkcerr);
-  chararr_append (check->flags, "-I");
+  chararr_append (check->flags,
+      compiler_get_flag (check->attr->compid, MKC_COMP_FLAG_INCLUDE));
   chararr_append (check->flags, inc);
   chararr_append (check->flags, NULL);
   compile_set_flags (check->compile, check->flags, NULL, NULL);
@@ -414,8 +424,13 @@ mkc_chk_compiler_flag (mkc_check_t *check,
   char              tbuff [MKC_VNAME_MAX];
   char              *rbuff;
   size_t            rsz;
-  static const char *negprefix = "-Wno-";
-  static size_t     neglen = 5;
+  static const char *negprefix;
+  static const char *warnprefix;
+  static size_t     neglen;
+
+  negprefix = compiler_get_flag (check->attr->compid, MKC_COMP_FLAG_WARN_NEGATE);
+  neglen = compiler_get_flag_len (check->attr->compid, MKC_COMP_FLAG_WARN_NEGATE);
+  warnprefix = compiler_get_flag (check->attr->compid, MKC_COMP_FLAG_WARN_PREFIX);
 
   rsz = MKC_SMALL_BUFF_SZ;
   rbuff = malloc (rsz);
@@ -431,7 +446,7 @@ mkc_chk_compiler_flag (mkc_check_t *check,
     char    *p;
 
     if (strncmp (flag, negprefix, neglen) == 0) {
-      p = stpecpy (tbuff, tbuff + sizeof (tbuff), "-W");
+      p = stpecpy (tbuff, tbuff + sizeof (tbuff), warnprefix);
       p = stpecpy (p, tbuff + sizeof (tbuff), flag + neglen);
     }
   }
@@ -730,7 +745,7 @@ mkc_chk_function (mkc_check_t *check, mkc_compiler_t compiler,
 
 int
 mkc_chk_header (mkc_check_t *check, mkc_compiler_t compiler,
-    const char *header, chararr_t * compflags, chararr_t * ldflags)
+    const char *header, chararr_t * compflags)
 {
   int             rc;
   char            tbuff [MKC_VNAME_MAX];
@@ -748,7 +763,7 @@ mkc_chk_header (mkc_check_t *check, mkc_compiler_t compiler,
   snprintf (tbuff, sizeof (tbuff), "%c%s%c", bc, header, ec);
   scopedvar_set_str (check->scopedvar, SV_T_LOCAL, "MKC_TV_TEST_HEADER", tbuff, MKC_VCTXT_TEMP);
 
-  compile_set_flags (check->compile, compflags, ldflags, NULL);
+  compile_set_flags (check->compile, compflags, NULL, NULL);
   compile_usetemplate (check->compile);
   rc = compile_exec (check->compile, COMPILE_COMPILE, compiler,
       "c-header", NULL, 0);

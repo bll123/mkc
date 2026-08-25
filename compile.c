@@ -454,12 +454,15 @@ compile_compile (compile_t *compile, mkc_compiler_t compiler,
   compile_append_list_arg (compile, alt->compflags);
 
   if (compile->preprocess) {
-    chararr_append (compile->targv, "-E");
+    chararr_append (compile->targv,
+        compiler_get_flag (compile->attr->compid, MKC_COMP_FLAG_PREPROCESS));
     cpreprocess = true;
   }
   if (! cpreprocess) {
-    chararr_append (compile->targv, "-c");
-    chararr_append (compile->targv, "-o");
+    chararr_append (compile->targv,
+        compiler_get_flag (compile->attr->compid, MKC_COMP_FLAG_COMPILE));
+    chararr_append (compile->targv,
+        compiler_get_flag (compile->attr->compid, MKC_COMP_FLAG_OUTPUT));
     if (compile->output == NULL) {
       path_build (MKC_PATH_MKCF_TMP, outfile, MKC_PATH_MAX, "mkctest.o", compile->mkcerr);
       chararr_append (compile->targv, outfile);
@@ -566,7 +569,8 @@ compile_link (compile_t *compile, mkc_compiler_t compiler,
   compile_get_compstr (compile, compiler, compstr, MKC_PATH_MAX);
   chararr_append (compile->targv, compstr);
 
-  chararr_append (compile->targv, "-o");
+  chararr_append (compile->targv,
+      compiler_get_flag (compile->attr->compid, MKC_COMP_FLAG_OUTPUT));
   if (compile->output == NULL) {
     path_build (MKC_PATH_MKCF_TMP, outfile, MKC_PATH_MAX, "mkctest.exe", compile->mkcerr);
     chararr_append (compile->targv, outfile);
@@ -709,9 +713,10 @@ static bool
 compile_append_chararr (compile_t *compile, chararr_t *flags)
 {
   bool        cpreprocess = false;
-  const char  *p;
-  const char  **flagarr;
+  const char  * p;
+  const char  ** flagarr;
   int         count = 0;
+  const char  * preprocess;
 
   if (flags == NULL) {
     return false;
@@ -722,8 +727,10 @@ compile_append_chararr (compile_t *compile, chararr_t *flags)
     return false;
   }
 
+  preprocess = compiler_get_flag (compile->attr->compid, MKC_COMP_FLAG_PREPROCESS);
+
   while ((p = flagarr [count++]) != NULL) {
-    if (strcmp (p, "-E") == 0) {
+    if (strcmp (p, preprocess) == 0) {
       cpreprocess = true;
     }
     chararr_append (compile->targv, p);

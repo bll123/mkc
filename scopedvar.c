@@ -381,6 +381,8 @@ scopedvar_iter_start (scopedvar_t *scopedvar, sv_iter_flag_t flags)
 const char *
 scopedvar_iter_next (scopedvar_t *scopedvar, sv_iter_t *sviter)
 {
+  sv_profile_t    * svprof;
+
   if (sviter->idx == MKC_ITER_FINISH) {
     sviter->idx = 0;
   } else {
@@ -395,7 +397,21 @@ scopedvar_iter_next (scopedvar_t *scopedvar, sv_iter_t *sviter)
     return scopedvar_iter_next (scopedvar, sviter);
   }
 
-  return sviter->profiles->variables [sviter->idx].name;
+  svprof = &sviter->profiles->variables [sviter->idx];
+  if ((sviter->flags & SV_ITER_HIERARCHY) == SV_ITER_HIERARCHY) {
+    if (sviter->idx == scopedvar->currprof_idx) {
+      if (svprof->svtype == SV_T_DFLT_PROF) {
+        return scopedvar_iter_next (scopedvar, sviter);
+      }
+    }
+    if (sviter->idx == scopedvar->comp_idx) {
+      if (svprof->compiler == MKC_COMPILER_GENERAL) {
+        return scopedvar_iter_next (scopedvar, sviter);
+      }
+    }
+  }
+
+  return svprof->name;
 }
 
 void

@@ -157,6 +157,7 @@
 %token T_CHK_SHELL_EXTRACT    "shell_extract"
 
 %token T_ADD_COMP_FLAG        "add_compile_flag"
+%token T_ADD_LIBRARY          "add_library"
 %token T_ADD_LINK_FLAG        "add_link_flag"
 
 // attributes
@@ -168,7 +169,7 @@
 %token T_ATTR_FAILURE         "failure"
 %token T_ATTR_HEADER          "header"
 %token T_ATTR_INPUT           "input"
-%token T_ATTR_LIBRARIES       "libraries"
+%token T_ATTR_LIB_FLAGS       "library_flags"
 %token T_ATTR_LIBRARY_VERSION "library_version"
 %token T_ATTR_LINK_FLAGS      "link_flags"
 %token T_ATTR_MATCH           "match"
@@ -222,12 +223,12 @@
 %type <astnode> directive stmt_loadcache
 // checks
 %type <astnode> checkcommand chk_argcount chk_compflag chk_const
-%type <astnode> chk_define chk_function chk_header chk_linkflag
+%type <astnode> chk_define chk_function chk_header chk_library chk_linkflag
 %type <astnode> chk_member chk_package chk_shellcmc chk_size chk_type
 // attributes
 %type <astnode> attr attr_alternate attr_compiler attr_compilerflags
 %type <astnode> attr_context attr_define_zero attr_failure attr_header
-%type <astnode> attr_input attr_libraries attr_libversion attr_linkflags
+%type <astnode> attr_input attr_lib_flags attr_libversion attr_linkflags
 %type <astnode> attr_match attr_method attr_name attr_namespace attr_negate
 %type <astnode> attr_output attr_path attr_replace attr_source
 %type <astnode> attr_success attr_version
@@ -399,7 +400,7 @@ attr[v]:
     {
       $v = $a;
     }
-  | attr_libraries[a]
+  | attr_lib_flags[a]
     {
       $v = $a;
     }
@@ -500,6 +501,10 @@ checkcommand[v]:
       $v = $a;
     }
   | chk_function[a]
+    {
+      $v = $a;
+    }
+  | chk_library[a]
     {
       $v = $a;
     }
@@ -841,6 +846,14 @@ chk_header[v]:
     }
   ;
 
+chk_library[v]:
+    T_ADD_LIBRARY varvalue[a] stmtblock_or_semi[b]
+    {
+      $v = mkc_ast_mk_check_flag (ast, $a, $b, MKC_ADD, MKC_T_CHK_LIBRARY,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
 chk_linkflag[v]:
     T_ADD_LINK_FLAG varvalue[a] stmtblock_or_semi[b]
     {
@@ -972,11 +985,11 @@ attr_input[v]:
     }
   ;
 
-/* a list of library locations and libraries */
-attr_libraries[v]:
-    T_ATTR_LIBRARIES valuelist[l] T_SEMICOLON
+/* a list of library locations and lib_flags */
+attr_lib_flags[v]:
+    T_ATTR_LIB_FLAGS valuelist[l] T_SEMICOLON
     {
-      $v = mkc_ast_mk_attr_nodelist (ast, $l, MKC_T_ATTR_LIBRARIES,
+      $v = mkc_ast_mk_attr_nodelist (ast, $l, MKC_T_ATTR_LIB_FLAGS,
           yylloc.first_line, yylloc.first_column);
     }
   ;

@@ -251,6 +251,7 @@ mkc_process_init (scopedvar_t *scopedvar,
   process->user_rx_list = mkc_list_init (MKC_LIST_SORTED,
       mkc_process_user_regex_free, mkc_process_user_regex_comp, mkcerr);
 
+  process->attr.compid = process->compid;
   process->attr.currcompiler = process->dfltcompiler;
   process->attr.headertype = process->headertype;
   process->attr.alternates = mkc_list_init (MKC_LIST_UNSORTED, mkc_process_alternate_free, NULL, mkcerr);
@@ -291,14 +292,16 @@ mkc_process_init (scopedvar_t *scopedvar,
     return NULL;
   }
 
-  process->check = mkc_check_init (process->scopedvar, process->compile,
+  process->check = mkc_check_init (process->scopedvar,
+      process->compile,
       &process->attr, log, mkcerr);
   if (process->check == NULL) {
     mkc_process_free (process);
     return NULL;
   }
 
-  process->target = target_init (process->scopedvar, process->compile,
+  process->target = target_init (process->scopedvar,
+      process->compile,
       &process->attr, log, mkcerr);
   if (process->target == NULL) {
     mkc_process_free (process);
@@ -827,19 +830,13 @@ mkc_process_stmt_chk_inc_compile (mkc_process_t *process)
   char              * hdrpath;
   const char        * hdr;
   chararr_t         * cflags = NULL;
-  chararr_t         * ldflags = NULL;
+  chararr_t         * include_paths = NULL;
   int64_t           ts;
   int               count = 0;
   mkc_user_regex_t  *urx;
 
   if (process->attr.str [MKC_ATTR_MATCH] == NULL) {
     mkc_error_set (process->mkcerr, MKC_ERR_MISSING_ATTRIBUTE, 0, "match");
-    mkc_process_attr_clear (process);
-    return rc;
-  }
-
-  if (mkc_list_size (process->attr.pathlist) == 0) {
-    mkc_error_set (process->mkcerr, MKC_ERR_MISSING_ATTRIBUTE, 0, "path");
     mkc_process_attr_clear (process);
     return rc;
   }
@@ -861,11 +858,14 @@ mkc_process_stmt_chk_inc_compile (mkc_process_t *process)
 
   process->attr.localheader = true;
   process->attr.printerrors = true;
-  cflags = target_get_flags (process->target, MKC_C_CFLAGS);
-  ldflags = target_get_flags (process->target, MKC_C_LDFLAGS);
+
+fprintf (stderr, "chk-inc-compile\n");
+  include_paths = chararr_init (process->mkcerr);
+  chararr_set_freeinternals (include_paths);
+  cflags = target_get_flags (process->target, MKC_C_CFLAGS, include_paths);
 
   ts = 0;
-  hlist = target_get_include_list (process->target, urx->rx, &ts);
+  hlist = target_get_include_list (process->target, include_paths, urx->rx, &ts);
 
   mkc_list_iter_start (hlist, &hiteridx);
   while ((hdr = target_iter_includes (process->target, hlist,
@@ -881,7 +881,7 @@ mkc_process_stmt_chk_inc_compile (mkc_process_t *process)
 
     count += 1;
     rc = mkc_chk_header (process->check, process->attr.currcompiler, hdr,
-        cflags, ldflags);
+        cflags);
     if (rc != MKC_OK) {
       mkc_error_set (process->mkcerr, MKC_ERR_INCLUDE_COMPILE_FAIL, 0, hdrpath);
       break;
@@ -903,7 +903,7 @@ mkc_process_stmt_chk_inc_compile (mkc_process_t *process)
   }
 
   chararr_free (cflags);
-  chararr_free (ldflags);
+  chararr_free (include_paths);
   free (hdrpath);
 #endif
   mkc_process_attr_clear (process);
@@ -920,16 +920,12 @@ mkc_process_stmt_chk_inc_deps (mkc_process_t *process)
   char              * hdrpath = NULL;
   const char        * hdr;
   int64_t           ts;
-  mkc_user_regex_t  *urx;
+  mkc_user_regex_t  * urx;
+  chararr_t         * cflags;
+  chararr_t         * include_paths;
 
   if (process->attr.str [MKC_ATTR_MATCH] == NULL) {
     mkc_error_set (process->mkcerr, MKC_ERR_MISSING_ATTRIBUTE, 0, "match");
-    mkc_process_attr_clear (process);
-    return rc;
-  }
-
-  if (mkc_list_size (process->attr.pathlist) == 0) {
-    mkc_error_set (process->mkcerr, MKC_ERR_MISSING_ATTRIBUTE, 0, "path");
     mkc_process_attr_clear (process);
     return rc;
   }
@@ -942,11 +938,18 @@ mkc_process_stmt_chk_inc_deps (mkc_process_t *process)
     return rc;
   }
 
+fprintf (stderr, "chk-inc-deps\n");
+mkc_process_dbg_print_prof (process, SV_ITER_HIERARCHY);
+fflush (stdout);
+  include_paths = chararr_init (process->mkcerr);
+  chararr_set_freeinternals (include_paths);
+  cflags = target_get_flags (process->target, MKC_C_CFLAGS, include_paths);
+
   /* the returned timestamp will be used to determine */
   /* if a check needs to be made */
   /* target_get_include_list will update the saved timestamps */
   ts = 0;
-  hlist = target_get_include_list (process->target, urx->rx, &ts);
+  hlist = target_get_include_list (process->target, include_paths, urx->rx, &ts);
   /* ts now holds the timestamp of the latest modification time in ms */
 
   if (scopedvar_is_defined (process->scopedvar, SV_T_INTERNAL,
@@ -957,9 +960,10 @@ mkc_process_stmt_chk_inc_deps (mkc_process_t *process)
         MKC_C_CHK_INC_DEPS_TS);
 
     if (cachedts > ts) {
+      chararr_free (cflags);
+      chararr_free (include_paths);
       mkc_message (MKC_V_BASIC, "-- cached: check_include_dependencies\n");
       mkc_log (process->log, MKC_LOG_CHECK, "-- cached: check_include_dependencies\n");
-
       mkc_process_attr_clear (process);
       return rc;
     }
@@ -968,6 +972,8 @@ mkc_process_stmt_chk_inc_deps (mkc_process_t *process)
   hdrpath = malloc (MKC_PATH_MAX);
   if (hdrpath == NULL) {
     mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    chararr_free (cflags);
+    chararr_free (include_paths);
     mkc_process_attr_clear (process);
     return rc;
   }
@@ -980,6 +986,8 @@ mkc_process_stmt_chk_inc_deps (mkc_process_t *process)
   while ((hdr = target_iter_includes (process->target, hlist, &hiteridx,
       hdrpath, MKC_PATH_MAX)) != NULL) {
     if (mkc_error_chk_err (process->mkcerr)) {
+      chararr_free (cflags);
+      chararr_free (include_paths);
       mkc_process_attr_clear (process);
       toposort_free (topo);
       free (hdrpath);
@@ -995,7 +1003,7 @@ mkc_process_stmt_chk_inc_deps (mkc_process_t *process)
       }
 
       target_get_dependencies (process->target,
-          process->attr.currcompiler, hdrpath, hdrpath, tgtflags);
+          process->attr.currcompiler, hdrpath, hdrpath, tgtflags, cflags);
     }
 
     target_topo_add_deps (process->target, topo, hdrpath);
@@ -1013,6 +1021,8 @@ mkc_process_stmt_chk_inc_deps (mkc_process_t *process)
   mkc_log (process->log, MKC_LOG_CHECK, "-- check_include_dependencies - %s\n",
       mkc_success_msg (rc));
 
+  chararr_free (cflags);
+  chararr_free (include_paths);
   toposort_free (topo);
   free (hdrpath);
   mkc_process_attr_clear (process);
@@ -1032,18 +1042,14 @@ mkc_process_stmt_chk_inc_guards (mkc_process_t *process)
   char              ** match = NULL;
   int               matchcount;
   mkc_list_t        * guardlist = NULL;
-  int64_t          ts;
+  int64_t           ts;
   int               count = 0;
-  mkc_user_regex_t  *urx;
+  mkc_user_regex_t  * urx;
+  chararr_t         * cflags;
+  chararr_t         * include_paths;
 
   if (process->attr.str [MKC_ATTR_MATCH] == NULL) {
     mkc_error_set (process->mkcerr, MKC_ERR_MISSING_ATTRIBUTE, 0, "match");
-    mkc_process_attr_clear (process);
-    return rc;
-  }
-
-  if (mkc_list_size (process->attr.pathlist) == 0) {
-    mkc_error_set (process->mkcerr, MKC_ERR_MISSING_ATTRIBUTE, 0, "path");
     mkc_process_attr_clear (process);
     return rc;
   }
@@ -1070,12 +1076,17 @@ mkc_process_stmt_chk_inc_guards (mkc_process_t *process)
     return rc;
   }
 
+fprintf (stderr, "chk-inc-guards\n");
+  include_paths = chararr_init (process->mkcerr);
+  chararr_set_freeinternals (include_paths);
+  cflags = target_get_flags (process->target, MKC_C_CFLAGS, include_paths);
+
   rc = MKC_OK;
   ts = 0;
   /* as chk-inc-guards compares all guards to check for duplicates */
   /* the returned timestamp will be used to determine */
   /* if a check needs to be made */
-  hlist = target_get_include_list (process->target, urx->rx, &ts);
+  hlist = target_get_include_list (process->target, include_paths, urx->rx, &ts);
 
   if (scopedvar_is_defined (process->scopedvar, SV_T_INTERNAL,
       MKC_C_CHK_INC_GUARDS_TS)) {
@@ -1090,6 +1101,8 @@ mkc_process_stmt_chk_inc_guards (mkc_process_t *process)
 
       mkc_list_free (guardlist);
       mkc_process_attr_clear (process);
+      chararr_free (cflags);
+      chararr_free (include_paths);
       return rc;
     }
   }
@@ -1098,6 +1111,8 @@ mkc_process_stmt_chk_inc_guards (mkc_process_t *process)
   if (hdrpath == NULL) {
     mkc_list_free (hlist);
     mkc_list_free (guardlist);
+    chararr_free (cflags);
+    chararr_free (include_paths);
     mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
     mkc_process_attr_clear (process);
     return rc;
@@ -1148,6 +1163,8 @@ mkc_process_stmt_chk_inc_guards (mkc_process_t *process)
   mkc_log (process->log, MKC_LOG_CHECK, "-- check_include_guards - %s (%d)\n",
       mkc_success_msg (rc), count);
 
+  chararr_free (cflags);
+  chararr_free (include_paths);
   mkc_list_free (guardlist);
   free (hdrpath);
 #endif
@@ -1871,7 +1888,7 @@ mkc_process_attr_link_flags (mkc_process_t *process, value_t *value)
 }
 
 void
-mkc_process_attr_libraries (mkc_process_t *process, value_t *value)
+mkc_process_attr_lib_flags (mkc_process_t *process, value_t *value)
 {
   mkc_list_t      * libs;
 
@@ -2026,7 +2043,7 @@ mkc_process_check (mkc_process_t *process, value_t *valconst,
     }
     case MKC_T_CHK_HEADER: {
       successtype = true;
-      rc = mkc_chk_header (process->check, process->attr.currcompiler, txt, NULL, NULL);
+      rc = mkc_chk_header (process->check, process->attr.currcompiler, txt, NULL);
       break;
     }
     case MKC_T_CHK_PACKAGE: {
@@ -2099,6 +2116,7 @@ mkc_process_check_flag (mkc_process_t *process,
   switch (iasttype) {
     case MKC_T_CHK_COMP_FLAG: { pfx = "cf_"; break; }
     case MKC_T_CHK_LINK_FLAG: { pfx = "lf_"; break; }
+    case MKC_T_CHK_LIBRARY: { pfx = "lib_"; break; }
   }
   mkc_process_create_name (process, asttype, tnm, sizeof (tnm), pfx, flag, NULL);
 
@@ -2132,11 +2150,18 @@ mkc_process_check_flag (mkc_process_t *process,
             MKC_C_CFLAGS, flag, MKC_VCTXT_MKC);
         break;
       }
+      case MKC_T_CHK_LIBRARY: {
+        scopedvar_append_str_list (process->scopedvar, SV_T_ACTIVE,
+            MKC_C_LIBS, flag, MKC_VCTXT_MKC);
+        break;
+      }
       case MKC_T_CHK_LINK_FLAG: {
         const char    *nm = MKC_C_LDFLAGS;
 
-        if (mkc_flag_is_libloc (flag) ||
-            strncmp (flag, "-l", 2) == 0) {
+        if (mkc_flag_is_libloc (process->compid, flag) ||
+            strncmp (flag,
+            compiler_get_flag (process->compid, MKC_COMP_FLAG_LIB),
+            compiler_get_flag_len (process->compid, MKC_COMP_FLAG_LIB)) == 0) {
           nm = MKC_C_LIBS;
         }
         scopedvar_append_str_list (process->scopedvar, SV_T_ACTIVE,
@@ -2664,7 +2689,8 @@ mkc_process_initial_checks (mkc_process_t *process)
   /* check if compiler supports the -MM flag */
 
   rc = mkc_chk_compiler_flag (process->check,
-      process->attr.currcompiler, "-MM", false);
+      process->attr.currcompiler,
+      compiler_get_flag (process->compid, MKC_COMP_FLAG_DEPS_USER), false);
   if (rc == MKC_OK) {
     mkc_log (process->log, MKC_LOG_GENERAL, "%s: %d\n", MKC_C_SUPPORTS_MM, process->libloc);
     process->compiler_mm = true;

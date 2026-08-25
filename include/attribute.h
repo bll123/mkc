@@ -28,19 +28,20 @@ typedef enum {
 } mkc_attr_type_t;
 
 typedef struct mkc_attribute_t {
-  mkc_list_t      * alternates;
-  mkc_alternate_t * curralt;
-  char            * currname;
-  char            * str [MKC_ATTR_MAX];
-  mkc_list_t      * pathlist;
-  mkc_list_t      * replacelist;
-  mkc_list_t      * sourcelist;
-  mkc_compiler_t  currcompiler;
-  int             define_zero;
-  int             headertype;
-  bool            localheader;
-  bool            negate;
-  bool            printerrors;
+  mkc_list_t        * alternates;
+  mkc_alternate_t   * curralt;
+  char              * currname;
+  char              * str [MKC_ATTR_MAX];
+  mkc_list_t        * pathlist;
+  mkc_list_t        * replacelist;
+  mkc_list_t        * sourcelist;
+  mkc_compiler_t    currcompiler;
+  mkc_compiler_id_t compid;
+  int               define_zero;
+  int               headertype;
+  bool              localheader;
+  bool              negate;
+  bool              printerrors;
 } mkc_attribute_t;
 
 #if defined (__cplusplus) || defined (c_plusplus)

@@ -1,6 +1,7 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
+add_compile_flag '-Itests/data/254-stmt-chk-inc-guards-ng-a';
+
 check_include_guards {
-  path 'tests/data/254-stmt-chk-inc-guards-ng-a';
   match '\.h$';
 }

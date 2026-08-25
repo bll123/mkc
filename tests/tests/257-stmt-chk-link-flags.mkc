@@ -4,8 +4,8 @@ project mkctest {
   compiler c;
 }
 
-check_link_flag    '-fPIC';
-check_link_flag    '-lm';
+check_link_flag '-fPIC';
+add_library '-lm';
 
 profile default {
   compiler c;

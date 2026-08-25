@@ -42,18 +42,18 @@ typedef struct target_t target_t;
 
 target_t * target_init (scopedvar_t *scopedvar, compile_t *compile, mkc_attribute_t *attr, mkc_log_t *log, mkc_error_t *mkcerr);
 void target_free (target_t *target);
-chararr_t *target_get_flags (target_t *target, const char *flagname);
+chararr_t *target_get_flags (target_t *target, const char *flagname, chararr_t *include_paths);
 
 void target_topo_add_items (target_t *target, toposort_t *topo, mkc_list_t *hlist);
 void target_topo_add_deps (target_t *target, toposort_t *topo, const char *filename);
 
 int target_check_dependency_timestamp (target_t *target, const char *filename, const char *filepath);
-void target_get_dependencies (target_t *target, mkc_compiler_t compiler, const char *tgtname, const char *filepath, target_flag_t flags);
+void target_get_dependencies (target_t *target, mkc_compiler_t compiler, const char *tgtname, const char *filepath, target_flag_t flags, chararr_t *cflags);
 void target_executable_object (target_t *target, const char *execnm, const char *objnm);
 void target_object_source (target_t *target, const char *objnm, const char *srcname);
 void target_build (target_t *target, mkc_list_t *blist);
 
-mkc_list_t * target_get_include_list (target_t *target, mkc_regex_t *rx, int64_t *ts);
+mkc_list_t * target_get_include_list (target_t *target, chararr_t * include_paths, mkc_regex_t *rx, int64_t *ts);
 const char * target_iter_includes (target_t *target, mkc_list_t *hlist, mkc_listidx_t *hiteridx, char *hdr, size_t hsz);
 
 void target_iter_dependency_ts_start (target_t *target, const char *filename, mkc_listidx_t *iteridx);

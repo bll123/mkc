@@ -37,16 +37,16 @@
 #include "value.h"
 
 typedef struct target_t {
-  scopedvar_t     * scopedvar;
-  compile_t       * compile;
-  mkc_attribute_t * attr;
-  mkc_log_t       * log;
-  mkc_error_t     * mkcerr;
+  scopedvar_t         * scopedvar;
+  compile_t           * compile;
+  mkc_attribute_t     * attr;
+  mkc_log_t           * log;
+  mkc_error_t         * mkcerr;
 } target_t;
 
 static const char * const dependency_delim = " \n\r\\";
 
-static bool target_chk_last_libloc (char *lastlibloc, size_t sz, const char *str);
+static bool target_chk_last_libloc (mkc_compiler_id_t compid, char *lastlibloc, size_t sz, const char *str);
 static void target_process_timestamp (target_t *target, char *path, size_t psz, const char *filename);
 static void target_topo_add_items_deps (target_t *target, toposort_t *topo, mkc_list_t *itemlist);
 
@@ -81,8 +81,10 @@ target_free (target_t *target)
   free (target);
 }
 
+MKC_NODISCARD
 chararr_t *
-target_get_flags (target_t *target, const char *flagname)
+target_get_flags (target_t *target, const char *flagname,
+    chararr_t *include_paths)
 {
   mkc_list_t      * tlist;
   char            * lastlibloc;
@@ -114,7 +116,7 @@ target_get_flags (target_t *target, const char *flagname)
   if (flags == NULL) {
     return NULL;
   }
-  chararr_freeinternals (flags);
+  chararr_set_freeinternals (flags);
 
   sviter = scopedvar_iter_start (scopedvar, SV_ITER_HIERARCHY);
   while ((profnm = scopedvar_iter_next (scopedvar, sviter)) != NULL) {
@@ -122,6 +124,7 @@ target_get_flags (target_t *target, const char *flagname)
     mkc_listidx_t   fiter;
     mkc_listidx_t   fidx;
     sv_type_t       svtype;
+    bool            append_next = false;
 
     if (mkc_error_chk_err (target->mkcerr)) {
       break;
@@ -133,6 +136,7 @@ target_get_flags (target_t *target, const char *flagname)
       continue;
     }
 
+fprintf (stderr, "gf: %s\n", scopedvar_type_disp (svtype));
     mkc_list_iter_start (value->list, &fiter);
     while ((fidx = mkc_list_iter_next (value->list, &fiter)) != MKC_ITER_FINISH) {
       value_t   *fval;
@@ -146,9 +150,34 @@ target_get_flags (target_t *target, const char *flagname)
       if (! *str) {
         continue;
       }
-      if (target_chk_last_libloc (lastlibloc, MKC_PATH_MAX, str)) {
+      if (target_chk_last_libloc (target->attr->compid,
+          lastlibloc, MKC_PATH_MAX, str)) {
         /* de-duplication check */
         continue;
+      }
+fprintf (stderr, "flag: %s\n", str);
+
+      if (include_paths != NULL) {
+        size_t      len;
+
+        if (append_next) {
+fprintf (stderr, "ip: %s\n", str);
+          chararr_append (include_paths, strdup (str));
+          append_next = false;
+        }
+        len = compiler_get_flag_len (target->attr->compid, MKC_COMP_FLAG_INCLUDE);
+        if (strncmp (str,
+            compiler_get_flag (target->attr->compid, MKC_COMP_FLAG_INCLUDE),
+            len) == 0) {
+fprintf (stderr, "ip: %s\n", str);
+          if (strcmp (str,
+              compiler_get_flag (target->attr->compid, MKC_COMP_FLAG_INCLUDE)) == 0) {
+            append_next = true;
+          } else {
+fprintf (stderr, "ip: %s\n", str + len);
+            chararr_append (include_paths, strdup (str + len));
+          }
+        }
       }
 
       chararr_append (flags, strdup (str));
@@ -165,19 +194,20 @@ target_get_flags (target_t *target, const char *flagname)
 }
 
 void
-target_topo_add_items (target_t *target, toposort_t *topo, mkc_list_t *hlist)
+target_topo_add_items (target_t *target, toposort_t *topo, mkc_list_t *itemlist)
 {
   mkc_listidx_t   hiteridx;
   mkc_listidx_t   hidx;
 
-  mkc_list_iter_start (hlist, &hiteridx);
-  while ((hidx = mkc_list_iter_next (hlist, &hiteridx)) != MKC_ITER_FINISH) {
+  mkc_list_iter_start (itemlist, &hiteridx);
+  while ((hidx = mkc_list_iter_next (itemlist, &hiteridx)) != MKC_ITER_FINISH) {
     char        **temp;
-    const char  *hdr;
+    const char  *item;
 
-    temp = mkc_list_get_by_idx (hlist, hidx);
-    hdr = *temp;
-    toposort_add_item (topo, hdr);
+    temp = mkc_list_get_by_idx (itemlist, hidx);
+    item = *temp;
+fprintf (stderr, "item: %s\n", item);
+    toposort_add_item (topo, item);
   }
 }
 
@@ -209,6 +239,7 @@ target_topo_add_deps (target_t *target,
   while ((didx = value_iter_next (valdeplist, &tvalue, &diteridx)) != MKC_ITER_FINISH) {
     scopedvar_value_get_str (target->scopedvar, &tvalue, dep, MKC_PATH_MAX);
     mkc_log (target->log, MKC_LOG_CHECK, "  %s\n", dep);
+fprintf (stderr, "   dep: %s %s\n", tgtname, dep);
     toposort_add_pair (topo, tgtname, dep);
   }
 
@@ -247,12 +278,11 @@ fprintf (stderr, "   ts: %zd\n", ts);
 void
 target_get_dependencies (target_t *target,
     mkc_compiler_t compiler, const char *tgtname, const char *filepath,
-    target_flag_t flags)
+    target_flag_t flags, chararr_t *cflags)
 {
   int             rc;
   char            * rbuff;
   size_t          rsz;
-  chararr_t       * cflags;
   char            * tokstr;
   mkc_list_t      * elist;
   value_t         evalue;
@@ -267,11 +297,12 @@ target_get_dependencies (target_t *target,
   }
   *rbuff = '\0';
 
-  cflags = target_get_flags (target, MKC_C_CFLAGS);
   if ((flags & TARGET_USE_MM) == TARGET_USE_MM) {
-    compile_append_compflag (target->compile, "-MM");
+    compile_append_compflag (target->compile,
+        compiler_get_flag (target->attr->compid, MKC_COMP_FLAG_DEPS_USER));
   } else {
-    compile_append_compflag (target->compile, "-M");
+    compile_append_compflag (target->compile,
+        compiler_get_flag (target->attr->compid, MKC_COMP_FLAG_DEPS));
   }
   compile_append_compflag (target->compile, NULL);
   compile_preprocess (target->compile);
@@ -281,7 +312,6 @@ target_get_dependencies (target_t *target,
   compile_reset (target->compile);
   if (rc != MKC_OK) {
     free (rbuff);
-    chararr_free (cflags);
     return;
   }
 
@@ -312,7 +342,7 @@ target_get_dependencies (target_t *target,
     /* if the compilers supports -MM, then it is much easier to ignore */
     /* system include files */
     if ((flags & TARGET_IGNORE_SYS_INC) == TARGET_IGNORE_SYS_INC &&
-      (flags & TARGET_USE_MM) != TARGET_USE_MM) {
+        (flags & TARGET_USE_MM) != TARGET_USE_MM) {
       /* a big assumption */
       if (*p == '/') {
         p = str_token (NULL, dependency_delim, &tokstr);
@@ -330,7 +360,6 @@ target_get_dependencies (target_t *target,
   }
 
   free (rbuff);
-  chararr_free (cflags);
 }
 
 /* creates a list of include files given the paths and match regex */
@@ -339,20 +368,20 @@ target_get_dependencies (target_t *target,
 /* used for check_include_dependencies, check_include_guards, */
 /*   check_include_compile */
 mkc_list_t *
-target_get_include_list (target_t *target, mkc_regex_t *rx,
-    int64_t *ts)
+target_get_include_list (target_t *target, chararr_t * include_paths,
+    mkc_regex_t *rx, int64_t *ts)
 {
   value_t         *valhdr = NULL;
   mkc_list_t      *hlist;
 #if _have_regex
-  mkc_listidx_t   piteridx;
-  mkc_listidx_t   pathidx;
   char            *hdrpath = NULL;
   char            *tname = NULL;
   char            *tend = NULL;
-  char            *path = NULL;
+  const char      ** patharr;
+  const char      * path = NULL;
   int64_t         newts = 0;
-  char            *p;
+  char            * p;
+  int             count;
 
   tname = malloc (MKC_SMALL_BUFF_SZ);
   if (tname == NULL) {
@@ -361,31 +390,23 @@ target_get_include_list (target_t *target, mkc_regex_t *rx,
   }
   *tname = '\0';
 
-  path = malloc (MKC_PATH_MAX);
-  if (path == NULL) {
-    mkc_error_set (target->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    free (tname);
-    return NULL;
-  }
-  *path = '\0';
-
   /* messy stuff to cache the include timestamps and include list */
+  /* this cache is used for the check_include_* statements */
 
   /* tname is only used internally, there is no need to "clean" the */
   /* variable name, and cleaning it makes it much less specific */
   p = tname;
   tend = tname + MKC_SMALL_BUFF_SZ;
   p = stpecpy (p, tend, "matchts_");
-  mkc_list_iter_start (target->attr->pathlist, &piteridx);
-  while ((pathidx = mkc_list_iter_next (target->attr->pathlist, &piteridx)) != MKC_ITER_FINISH) {
-    value_t   *valpath = NULL;
 
-    valpath = mkc_list_get_by_idx (target->attr->pathlist, pathidx);
-    scopedvar_value_get_str (target->scopedvar, valpath, path, MKC_PATH_MAX);
+  patharr = chararr_get_arr (include_paths);
+  count = 0;
+  while ((path = patharr [count++]) != NULL) {
     p = stpecpy (p, tend, path);
     p = stpecpy (p, tend, "_");
   }
   p = stpecpy (p, tend, target->attr->str [MKC_ATTR_MATCH]);
+fprintf (stderr, "tname: %s\n", tname);
 
   memcpy (tname, "matchil_", 8);
   if (scopedvar_is_defined (target->scopedvar, SV_T_LOCAL, tname)) {
@@ -397,7 +418,6 @@ target_get_include_list (target_t *target, mkc_regex_t *rx,
 
       cachedts = scopedvar_get_timestamp (target->scopedvar, SV_T_LOCAL, tname);
       *ts = cachedts;
-      free (path);
       free (tname);
       return hlist;
     }
@@ -408,13 +428,13 @@ target_get_include_list (target_t *target, mkc_regex_t *rx,
   hdrpath = malloc (MKC_PATH_MAX);
   if (hdrpath == NULL) {
     mkc_error_set (target->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    free (tname);
     return NULL;
   }
   *hdrpath = '\0';
 
-  mkc_list_iter_start (target->attr->pathlist, &piteridx);
-  while ((pathidx = mkc_list_iter_next (target->attr->pathlist, &piteridx)) != MKC_ITER_FINISH) {
-    value_t   *valpath = NULL;
+  count = 0;
+  while ((path = patharr [count++]) != NULL) {
     mkc_list_t    *tlist = NULL;
     mkc_listidx_t iteridx;
     mkc_listidx_t idx;
@@ -422,9 +442,6 @@ target_get_include_list (target_t *target, mkc_regex_t *rx,
     if (mkc_error_chk_err (target->mkcerr)) {
       break;
     }
-
-    valpath = mkc_list_get_by_idx (target->attr->pathlist, pathidx);
-    scopedvar_value_get_str (target->scopedvar, valpath, path, MKC_PATH_MAX);
 
     /* all of the header files for this path */
     tlist = dir_match (path, rx, target->mkcerr);
@@ -438,7 +455,11 @@ target_get_include_list (target_t *target, mkc_regex_t *rx,
       temp = mkc_list_get_by_idx (tlist, idx);
       hdr = *temp;
 
-      snprintf (hdrpath, MKC_PATH_MAX, "%s/%s", path, hdr);
+      if (strcmp (path, ".") == 0) {
+        stpecpy (hdrpath, hdrpath + MKC_PATH_MAX, hdr);
+      } else {
+        snprintf (hdrpath, MKC_PATH_MAX, "%s/%s", path, hdr);
+      }
       scopedvar_set_str (target->scopedvar, SV_T_PATHS, hdr, hdrpath, MKC_VCTXT_MKC);
       tts = fileop_modtime (hdrpath);
 
@@ -478,7 +499,6 @@ target_get_include_list (target_t *target, mkc_regex_t *rx,
   *ts = newts;
   scopedvar_set_timestamp (target->scopedvar, SV_T_LOCAL, tname, newts, MKC_VCTXT_MKC);
 
-  free (path);
   free (hdrpath);
   free (tname);
 #endif
@@ -599,6 +619,7 @@ target_object_source (target_t *target, const char *objnm,
   mkc_listidx_t   didx;
   char            * path;
   char            * opath;
+  chararr_t       * cflags;
 
   opath = malloc (MKC_PATH_MAX);
   if (opath == NULL) {
@@ -610,8 +631,11 @@ target_object_source (target_t *target, const char *objnm,
   scopedvar_value_get_str (target->scopedvar, value, opath, MKC_PATH_MAX);
 
   mkc_log (target->log, MKC_LOG_TARGET, "object-file: %s %s\n", objnm, srcname);
+fprintf (stderr, "obj-src\n");
+  cflags = target_get_flags (target, MKC_C_CFLAGS, NULL);
   target_get_dependencies (target,
-      target->attr->currcompiler, opath, srcname, tgtflags);
+      target->attr->currcompiler, opath, srcname, tgtflags, cflags);
+  chararr_free (cflags);
 
   valdeplist = scopedvar_get_value (target->scopedvar, SV_T_DEPENDENCY, opath);
   if (valdeplist == NULL) {
@@ -651,6 +675,9 @@ target_build (target_t *target, mkc_list_t *blist)
   char            * dep;
   char            * source;
   int             rc;
+  chararr_t       * cflags;
+  chararr_t       * ldflags;
+  chararr_t       * libs;
 
   topo = toposort_init (target->mkcerr);
 
@@ -679,6 +706,11 @@ target_build (target_t *target, mkc_list_t *blist)
     toposort_free (topo);
     return;
   }
+
+fprintf (stderr, "build\n");
+  cflags = target_get_flags (target, MKC_C_CFLAGS, NULL);
+  ldflags = target_get_flags (target, MKC_C_LDFLAGS, NULL);
+  libs = target_get_flags (target, MKC_C_LIBS, NULL);
 
   toposort_iter_start (topo);
   while ((builditem = toposort_iter_next_reverse (topo)) != NULL) {
@@ -756,6 +788,7 @@ target_build (target_t *target, mkc_list_t *blist)
     if (tgttype == TGT_T_EXEC || tgttype == TGT_T_OBJECT) {
       int64_t   tts;
 
+      compile_set_flags (target->compile, cflags, ldflags, libs);
       compile_exec (target->compile, comptype, target->attr->currcompiler,
           source, NULL, 0);
       compile_reset (target->compile);
@@ -774,9 +807,10 @@ target_build (target_t *target, mkc_list_t *blist)
 /* internal routines */
 
 static bool
-target_chk_last_libloc (char *lastlibloc, size_t sz, const char *str)
+target_chk_last_libloc (mkc_compiler_id_t compid,
+    char *lastlibloc, size_t sz, const char *str)
 {
-  if (! mkc_flag_is_libloc (str)) {
+  if (! mkc_flag_is_libloc (compid, str)) {
     return false;
   }
 

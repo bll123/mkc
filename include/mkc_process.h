@@ -62,7 +62,7 @@ void mkc_process_attr_comp_flags (mkc_process_t *process, value_t *value);
 void mkc_process_attr_compiler (mkc_process_t *process, value_t *name);
 void mkc_process_attr_header (mkc_process_t *process, value_t *value);
 void mkc_process_attr_link_flags (mkc_process_t *process, value_t *value);
-void mkc_process_attr_libraries (mkc_process_t *process, value_t *value);
+void mkc_process_attr_lib_flags (mkc_process_t *process, value_t *value);
 void mkc_process_attr_path (mkc_process_t *process, value_t *path);
 void mkc_process_attr_replace (mkc_process_t *process, value_t *str, value_t *name);
 void mkc_process_attr_source (mkc_process_t *process, value_t *value);

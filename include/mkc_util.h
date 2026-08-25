@@ -6,11 +6,13 @@
 
 #include <stdbool.h>
 
+#include "mkc_compiler.h"
+
 #if defined (__cplusplus) || defined (c_plusplus)
 extern "C" {
 #endif
 
-bool mkc_flag_is_libloc (const char *str);
+bool mkc_flag_is_libloc (mkc_compiler_id_t compid, const char *str);
 void mkc_chararr_free (char **flags);
 
 #if defined (__cplusplus) || defined (c_plusplus)

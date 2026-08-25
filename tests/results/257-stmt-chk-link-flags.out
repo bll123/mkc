@@ -4,7 +4,7 @@
   MKC_LDFLAGS [ '-fPIC' ]
   MKC_LIBS [ '-lm' ]
   lf_fPIC '-fPIC'
-  lf_lm '-lm'
+  lib_lm '-lm'
 == default c
   MKC_LDFLAGS [ '-g' ]
   lf_g '-g'
