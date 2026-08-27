@@ -245,6 +245,23 @@ path_filename (const char *path)
   return tp;
 }
 
+/* given a path, returns a pointer to the extension */
+const char *
+path_extension (const char *path)
+{
+  const char  *tp;
+
+  if (path == NULL) {
+    return NULL;
+  }
+
+  tp = strrchr (path, '.');
+  if (tp == NULL) {
+    tp = NULL;
+  }
+  return tp;
+}
+
 /* internal routines */
 
 static void

@@ -12,6 +12,7 @@
 #include "mkc_compiler.h"
 #include "mkc_error.h"
 #include "mkc_log.h"
+#include "mkc_option.h"
 #include "scopedvar.h"
 
 #if defined (__cplusplus) || defined (c_plusplus)
@@ -27,7 +28,7 @@ typedef enum {
 
 typedef struct compile_t compile_t;
 
-compile_t * compile_init (scopedvar_t *scopedvar, mkc_attribute_t *attr, mkc_log_t *log, mkc_error_t *mkcerr);
+compile_t * compile_init (scopedvar_t *scopedvar, mkc_attribute_t *attr, mkc_log_t *log, mkc_option_t *mkcoptions, mkc_error_t *mkcerr);
 void compile_free (compile_t *compile);
 void compile_set_flags (compile_t *compile, chararr_t *compflags, chararr_t *ldflags, chararr_t *libs);
 void compile_set_compiler (compile_t *compile, mkc_compiler_t compiler);

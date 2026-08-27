@@ -23,6 +23,7 @@
 typedef struct compile_t {
   scopedvar_t       * scopedvar;
   mkc_attribute_t   * attr;
+  mkc_option_t      * mkcoptions;
   mkc_error_t       * mkcerr;
   mkc_log_t         * log;
   chararr_t         * objects;
@@ -48,10 +49,12 @@ static int compile_link (compile_t *compile, mkc_compiler_t compiler, const char
 static int compile_link_run (compile_t *compile, mkc_compiler_t compiler, const char *fname, char *rbuff, size_t rsz, ct_type_t ctype);
 static void compile_append_list_arg (compile_t *compile, mkc_list_t *list);
 static bool compile_append_chararr (compile_t *compile, chararr_t *flags);
+static void compile_display_output (compile_t *compile, const char *rbuff, size_t retsz, const char *tag, int rc);
 
 compile_t *
 compile_init (scopedvar_t *scopedvar,
-    mkc_attribute_t *attr, mkc_log_t *log, mkc_error_t *mkcerr)
+    mkc_attribute_t *attr, mkc_log_t *log,
+    mkc_option_t *mkcoptions, mkc_error_t *mkcerr)
 {
   compile_t    *compile;
 
@@ -64,11 +67,15 @@ compile_init (scopedvar_t *scopedvar,
   compile->scopedvar = scopedvar;
   compile->attr = attr;
   compile->log = log;
+  compile->mkcoptions = mkcoptions;
   compile->mkcerr = mkcerr;
+
   compile->objects = chararr_init (mkcerr);
   if (compile->objects == NULL) {
     return NULL;
   }
+  chararr_set_freeinternals (compile->objects);
+
   compile->addcompflags = chararr_init (mkcerr);
   if (compile->addcompflags == NULL) {
     return NULL;
@@ -263,16 +270,16 @@ compile_file_sub_copy (compile_t *compile,
 
   snprintf (tfn, sizeof (tfn), "%s%s", fname, origsfx);
   path_build (MKC_PATH_MKC_TEMPLATES, fbuff, MKC_PATH_MAX, tfn, compile->mkcerr);
-  mkc_log (compile->log, MKC_LOG_CHECK, "filename: %s\n", fbuff);
+  mkc_log (compile->log, MKC_LOG_GENERAL, "filename: %s\n", fbuff);
   data = fileop_read_file (fbuff, &fsz, compile->mkcerr);
   if (mkc_error_chk_err (compile->mkcerr)) {
     free (fbuff);
     return;
   }
   ndata = scopedvar_substitute (compile->scopedvar, data, SV_NO_ESCAPE, 0);
-  mkc_log (compile->log, MKC_LOG_CHECK, "--- code:\n");
-  mkc_log (compile->log, MKC_LOG_CHECK, "%s", ndata);
-  mkc_log (compile->log, MKC_LOG_CHECK, "---\n");
+  mkc_log (compile->log, MKC_LOG_GENERAL, "--- code:\n");
+  mkc_log (compile->log, MKC_LOG_GENERAL, "%s", ndata);
+  mkc_log (compile->log, MKC_LOG_GENERAL, "---\n");
   free (data);
 
   snprintf (tfn, sizeof (tfn), "%s%s", fname, sfx);
@@ -441,7 +448,6 @@ compile_compile (compile_t *compile, mkc_compiler_t compiler,
 
   if (compile->usetemplate) {
     sfx = compiler_get_suffix (compiler);
-// ### will need to be fixed, the original suffix may change
     compile_file_sub_copy (compile, tbuff, MKC_PATH_MAX, fname, ".c", sfx);
   } else {
     stpecpy (tbuff, tbuff + MKC_PATH_MAX, fname);
@@ -483,24 +489,14 @@ compile_compile (compile_t *compile, mkc_compiler_t compiler,
   chararr_append (compile->targv, NULL);
 
   mkc_log_chararr (compile->log, "comp-only: cmd:", compile->targv);
+  if (compile->attr->display) {
+    mkc_message_chararr (MKC_V_INFO, NULL, compile->targv);
+  }
 
   rc = os_process_pipe (chararr_get_arr (compile->targv),
       OS_PROC_WAIT | OS_PROC_NOWINDOW, rbuff, rsz, &retsz);
 
-  if (retsz > 0) {
-    mkc_log (compile->log, MKC_LOG_CHECK, "--- compile log (%zd)\n", retsz);
-    if (retsz < 2000) {
-      mkc_log (compile->log, MKC_LOG_CHECK, "%s", rbuff);
-    } else {
-      mkc_log (compile->log, MKC_LOG_CHECK_VERBOSE, "%s\n", rbuff);
-    }
-    mkc_log (compile->log, MKC_LOG_CHECK, "---\n");
-
-    if (compile->attr->printerrors) {
-      fprintf (stderr, "%s", rbuff);
-    }
-  }
-  mkc_log (compile->log, MKC_LOG_CHECK, "  rc: %d\n", rc);
+  compile_display_output (compile, rbuff, retsz, "compile log", rc);
 
   free (tbuff);
   free (compstr);
@@ -604,16 +600,14 @@ compile_link (compile_t *compile, mkc_compiler_t compiler,
   }
 
   mkc_log_chararr (compile->log, "link: cmd:", compile->targv);
+  if (compile->attr->display) {
+    mkc_message_chararr (MKC_V_INFO, NULL, compile->targv);
+  }
 
   rc = os_process_pipe (chararr_get_arr (compile->targv),
       OS_PROC_WAIT | OS_PROC_NOWINDOW, rbuff, rsz, &retsz);
 
-  mkc_log (compile->log, MKC_LOG_CHECK, "  rc: %d\n", rc);
-  if (retsz > 0) {
-    mkc_log (compile->log, MKC_LOG_CHECK, "--- link log\n");
-    mkc_log (compile->log, MKC_LOG_CHECK, "%s\n", rbuff);
-    mkc_log (compile->log, MKC_LOG_CHECK, "---\n");
-  }
+  compile_display_output (compile, rbuff, retsz, "link log", rc);
 
   free (objfile);
   free (outfile);
@@ -657,6 +651,9 @@ compile_link_run (compile_t *compile, mkc_compiler_t compiler,
   chararr_append (compile->targv, NULL);
 
   mkc_log_chararr (compile->log, "run: cmd:", compile->targv);
+  if (compile->attr->display) {
+    mkc_message_chararr (MKC_V_INFO, NULL, compile->targv);
+  }
 
   if (rbuff == NULL) {
     rsz = MKC_SMALL_BUFF_SZ;
@@ -671,12 +668,7 @@ compile_link_run (compile_t *compile, mkc_compiler_t compiler,
   rc = os_process_pipe (chararr_get_arr (compile->targv),
       OS_PROC_WAIT | OS_PROC_NOWINDOW, rbuff, rsz, &retsz);
 
-  mkc_log (compile->log, MKC_LOG_CHECK, "  run: rc: %d\n", rc);
-  if (retsz > 0) {
-    mkc_log (compile->log, MKC_LOG_CHECK, "--- run log\n");
-    mkc_log (compile->log, MKC_LOG_CHECK, "%s", rbuff);
-    mkc_log (compile->log, MKC_LOG_CHECK, "---\n");
-  }
+  compile_display_output (compile, rbuff, retsz, "run log", rc);
 
   free (exefile);
   if (rallocated) {
@@ -737,4 +729,26 @@ compile_append_chararr (compile_t *compile, chararr_t *flags)
   }
 
   return cpreprocess;
+}
+
+static void
+compile_display_output (compile_t *compile,
+    const char *rbuff, size_t retsz, const char *tag, int rc)
+{
+  mkc_log (compile->log, MKC_LOG_GENERAL, "  rc: %d\n", rc);
+
+  if (retsz == 0) {
+    return;
+  }
+
+  mkc_log (compile->log, MKC_LOG_GENERAL, "--- %s (%zd)\n", tag, retsz);
+  if (rc != 0 ||
+      (retsz < 5000 && compile->mkcoptions->verbose >= MKC_V_OUTPUT)) {
+    mkc_log (compile->log, MKC_LOG_GENERAL, "%s", rbuff);
+  }
+  mkc_log (compile->log, MKC_LOG_GENERAL, "---\n");
+
+  if (rc != 0 && compile->attr->printerrors) {
+    fprintf (stderr, "%s", rbuff);
+  }
 }

@@ -56,6 +56,7 @@ void path_build (mkc_path_t pathtype, char *buff, size_t sz, const char *filenam
 void path_set_dir (mkc_dir_t dir, const char *path);
 void path_realpath (char *path, size_t sz);
 const char * path_filename (const char *path);
+const char * path_extension (const char *path);
 
 #if defined (__cplusplus) || defined (c_plusplus)
 }

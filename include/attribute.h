@@ -39,6 +39,7 @@ typedef struct mkc_attribute_t {
   mkc_compiler_id_t compid;
   int               define_zero;
   int               headertype;
+  bool              display;
   bool              localheader;
   bool              negate;
   bool              printerrors;

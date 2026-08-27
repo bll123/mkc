@@ -4,6 +4,8 @@
 #ifndef INC_MKC_COMPILER_H
 #define INC_MKC_COMPILER_H
 
+#include <stddef.h>
+
 #if defined (__cplusplus) || defined (c_plusplus)
 extern "C" {
 #endif

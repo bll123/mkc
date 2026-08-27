@@ -123,6 +123,28 @@ mkc_message (int vlevel, const char *fmt, ...)
   va_end (vap);
 }
 
+void
+mkc_message_chararr (int vlevel, const char *tag, chararr_t *carr)
+{
+  int           count = 0;
+  const char    ** targv;
+
+  if (vlevel > gmkcverbose) {
+    return;
+  }
+
+  if (tag != NULL) {
+    fprintf (stderr, "%s ", tag);
+  }
+
+  targv = chararr_get_arr (carr);
+  while (targv [count] != NULL) {
+    fprintf (stderr, "%s ", targv [count]);
+    ++count;
+  }
+  fprintf (stderr, "\n");
+}
+
 const char *
 mkc_success_msg (int rc)
 {

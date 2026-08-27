@@ -22,7 +22,7 @@ enum {
   MKC_LOG_AST_PROCESS   = (1 << 1),
   MKC_LOG_CACHE         = (1 << 2),
   MKC_LOG_CHECK         = (1 << 3),
-  MKC_LOG_CHECK_VERBOSE = (1 << 4),
+  MKC_LOG_UNUSED        = (1 << 4),
   MKC_LOG_ERROR         = (1 << 5),
   MKC_LOG_GENERAL       = (1 << 6),
   MKC_LOG_PROCESS       = (1 << 7),
@@ -46,6 +46,7 @@ typedef enum {
   MKC_V_BASIC     = 1,
   MKC_V_STATS     = 2,
   MKC_V_INFO      = 3,
+  MKC_V_OUTPUT    = 4,
 } log_verbose_lvl_t;
 
 typedef struct mkc_log_t mkc_log_t;
@@ -56,6 +57,7 @@ void mkc_log_free (mkc_log_t *log);
 
 void mkc_msg_set_level (int vlevel);
 void mkc_message (int vlevel, const char *fmt, ...);
+void mkc_message_chararr (int vlevel, const char *tag, chararr_t *targv);
 
 const char * mkc_success_msg (int rc);
 const char * mkc_elapsed_disp (int64_t etm, char *buff, size_t sz);
