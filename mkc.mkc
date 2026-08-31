@@ -120,10 +120,10 @@ mark _have_regex enable-output;
 
 # configure
 
-configure {
-  method auto;
-  define_zero;
-}
+#configure {
+#  method auto;
+#  define_zero;
+#}
 
 if (bootstrap) {
   # any configuration after this point is not needed
@@ -174,17 +174,15 @@ if (${MKC_FORTIFY}) {
 add_compile_flag '-Iinclude';
 add_compile_flag '-I.';
 
-# more checks
+# include file checks
 
+check_include_compile {
+  match '\.h$';
+}
 check_include_dependencies {
   match '\.h$';
 }
-
 check_include_guards {
-  match '\.h$';
-}
-
-check_include_compile {
   match '\.h$';
 }
 

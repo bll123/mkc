@@ -31,6 +31,7 @@ static char mkc_dirs [MKC_DIR_MAX][MKC_PATH_MAX] = {
   [MKC_DIR_HOME] = "",
   [MKC_DIR_MKC_FILES] = "",
   [MKC_DIR_ORIG_CWD] = "",
+  [MKC_DIR_PROJECT] = "default",
   [MKC_DIR_SHARE] = "",
 };
 
@@ -60,6 +61,7 @@ static bool gmkcpathinit = false;
 static void path_getcwd (char *buff, size_t sz);
 static void path_init (void);
 static char * path_config (char *buff, size_t sz);
+static char * path_build_stage (char *buff, size_t sz);
 
 void
 path_build (mkc_path_t pathtype, char *buff, size_t sz,
@@ -93,15 +95,16 @@ path_build (mkc_path_t pathtype, char *buff, size_t sz,
       break;
     }
     case MKC_PATH_MKCF_OBJECTS: {
-      /* the obj/ directory in mkc_files/ */
+      /* the project/obj/ directory in mkc_files/ */
       p = stpecpy (buff, buff + sz, mkc_dirs [MKC_DIR_MKC_FILES]);
+      p = stpecpy (p, buff + sz, "/");
+      p = stpecpy (p, buff + sz, mkc_dirs [MKC_DIR_PROJECT]);
       p = stpecpy (p, buff + sz, "/obj");
       break;
     }
     case MKC_PATH_MKCF_STAGE: {
-      /* the stage/ directory in mkc_files/ */
-      p = stpecpy (buff, buff + sz, mkc_dirs [MKC_DIR_MKC_FILES]);
-      p = stpecpy (p, buff + sz, "/stage");
+      /* the project/stage/ directory in mkc_files/ */
+      p = path_build_stage (buff, sz);
       break;
     }
     case MKC_PATH_MKCF_TMP: {
@@ -147,22 +150,19 @@ path_build (mkc_path_t pathtype, char *buff, size_t sz,
       break;
     }
     case MKC_PATH_STAGE_BIN: {
-      p = stpecpy (buff, buff + sz, mkc_dirs [MKC_DIR_MKC_FILES]);
-      p = stpecpy (p, buff + sz, "/stage");
+      p = path_build_stage (buff, sz);
       p = stpecpy (p, buff + sz, mkc_dirs [MKC_DIR_PREFIX]);
       p = stpecpy (p, buff + sz, "/bin");
       break;
     }
     case MKC_PATH_STAGE_INCLUDE: {
-      p = stpecpy (buff, buff + sz, mkc_dirs [MKC_DIR_MKC_FILES]);
-      p = stpecpy (p, buff + sz, "/stage");
+      p = path_build_stage (buff, sz);
       p = stpecpy (p, buff + sz, mkc_dirs [MKC_DIR_PREFIX]);
       p = stpecpy (p, buff + sz, "/include");
       break;
     }
     case MKC_PATH_STAGE_LIB: {
-      p = stpecpy (buff, buff + sz, mkc_dirs [MKC_DIR_MKC_FILES]);
-      p = stpecpy (p, buff + sz, "/stage");
+      p = path_build_stage (buff, sz);
       p = stpecpy (p, buff + sz, mkc_dirs [MKC_DIR_PREFIX]);
       p = stpecpy (p, buff + sz, "/lib");
       break;
@@ -182,11 +182,19 @@ path_build (mkc_path_t pathtype, char *buff, size_t sz,
 void
 path_set_dir (mkc_dir_t dir, const char *path)
 {
-  stpecpy (mkc_dirs [dir], mkc_dirs [dir] + MKC_PATH_MAX, path);
-  fileop_normalize_path (mkc_dirs [dir], MKC_PATH_MAX);
+  path_set_dir_relative (dir, path);
   path_realpath (mkc_dirs [dir], MKC_PATH_MAX);
 }
 
+void
+path_set_dir_relative (mkc_dir_t dir, const char *path)
+{
+  stpecpy (mkc_dirs [dir], mkc_dirs [dir] + MKC_PATH_MAX, path);
+  fileop_normalize_path (mkc_dirs [dir], MKC_PATH_MAX);
+}
+
+// ### the path may not exist, does realpath function correctly
+//  in those instances?
 void
 path_realpath (char *path, size_t sz)
 {
@@ -359,6 +367,19 @@ path_config (char *buff, size_t sz)
 #else
   p = stpecpy (p, buff + sz, "/.config/mkc");
 #endif
+
+  return p;
+}
+
+static char *
+path_build_stage (char *buff, size_t sz)
+{
+  char    *p;
+
+  p = stpecpy (buff, buff + sz, mkc_dirs [MKC_DIR_MKC_FILES]);
+  p = stpecpy (p, buff + sz, "/");
+  p = stpecpy (p, buff + sz, mkc_dirs [MKC_DIR_PROJECT]);
+  p = stpecpy (p, buff + sz, "/stage");
 
   return p;
 }

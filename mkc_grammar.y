@@ -124,7 +124,8 @@
 %token T_RANGE                "range"
 %token T_RETURN               "return"
 
-// directives
+// statements and directives
+%token T_STMT_AUTOBUILD       "auto_build"
 %token T_STMT_BUILD           "build"
 %token T_STMT_CHK_INC_COMPILE "check_include_compile"
 %token T_STMT_CHK_INC_DEPS    "check_include_dependencies"
@@ -209,15 +210,16 @@
 /* a pathname may be a path, a string or ${variable} */
 %type <astnode> pathname pathlist
 %type <astnode> expr
-
 %type <astnode> stmtblock_or_semi stmtblock stmtlist stmt
+
 // program control
 %type <astnode> ifexpr stmt_if elseif elseclause loopcontrol
 %type <astnode> stmt_foreach stmt_function funcreturn stmt_while
 %type <astnode> stmt_function_call
 // statements
-%type <astnode> stmt_build stmt_chk_inc_compile stmt_chk_inc_deps
-%type <astnode> stmt_chk_inc_guards stmt_config stmt_executable
+%type <astnode> stmt_autobuild stmt_build stmt_chk_inc_compile
+%type <astnode> stmt_chk_inc_deps stmt_chk_inc_guards
+%type <astnode> stmt_config stmt_executable
 %type <astnode> stmt_mark stmt_print stmt_profile stmt_project stmt_set
 // other statements
 %type <astnode> directive stmt_loadcache
@@ -295,6 +297,10 @@ stmt[v]:
       $v = $a;
     }
 // statements
+  | stmt_autobuild[a]
+    {
+      $v = $a;
+    }
   | stmt_build[a]
     {
       $v = $a;
@@ -653,6 +659,14 @@ stmt_function[v]:
   ;
 
 // statements
+
+stmt_autobuild[v]:
+    T_STMT_AUTOBUILD T_SEMICOLON
+    {
+      // not yet implemented
+      $v = NULL;
+    }
+    ;
 
 stmt_build[v]:
     T_STMT_BUILD valuelist[l] T_SEMICOLON

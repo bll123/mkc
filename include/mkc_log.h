@@ -47,6 +47,7 @@ typedef enum {
   MKC_V_STATS     = 2,
   MKC_V_INFO      = 3,
   MKC_V_OUTPUT    = 4,
+  MKC_V_TMI       = 5,    // too much information, always last
 } log_verbose_lvl_t;
 
 typedef struct mkc_log_t mkc_log_t;

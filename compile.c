@@ -402,6 +402,7 @@ compile_compile (compile_t *compile, mkc_compiler_t compiler,
 {
   int             rc;
   char            * tbuff;
+  size_t          tsz = MKC_PATH_MAX;
   char            * compstr;
   char            * outfile;
   size_t          retsz;
@@ -410,7 +411,7 @@ compile_compile (compile_t *compile, mkc_compiler_t compiler,
   bool            cpreprocess = false;
   mkc_alternate_t * alt;
 
-  tbuff = malloc (MKC_PATH_MAX);
+  tbuff = malloc (tsz);
   if (tbuff == NULL) {
     mkc_error_set (compile->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
     return MKC_ERR_FAILURE;
@@ -448,9 +449,9 @@ compile_compile (compile_t *compile, mkc_compiler_t compiler,
 
   if (compile->usetemplate) {
     sfx = compiler_get_suffix (compiler);
-    compile_file_sub_copy (compile, tbuff, MKC_PATH_MAX, fname, ".c", sfx);
+    compile_file_sub_copy (compile, tbuff, tsz, fname, ".c", sfx);
   } else {
-    stpecpy (tbuff, tbuff + MKC_PATH_MAX, fname);
+    stpecpy (tbuff, tbuff + tsz, fname);
   }
 
   compile_append_chararr (compile, compile->addcompflags);

@@ -42,6 +42,7 @@ typedef struct target_t {
   mkc_attribute_t     * attr;
   mkc_log_t           * log;
   mkc_error_t         * mkcerr;
+  bool                create_stage_bin;
 } target_t;
 
 static const char * const dependency_delim = " \n\r\\";
@@ -49,6 +50,7 @@ static const char * const dependency_delim = " \n\r\\";
 static bool target_chk_last_libloc (mkc_compiler_id_t compid, char *lastlibloc, size_t sz, const char *str);
 static void target_process_timestamp (target_t *target, char *path, size_t psz, const char *filename);
 static void target_topo_add_items_deps (target_t *target, toposort_t *topo, mkc_list_t *itemlist);
+static void target_create_stage_bin (target_t *target);
 
 target_t *
 target_init (scopedvar_t *scopedvar, compile_t *compile,
@@ -67,6 +69,7 @@ target_init (scopedvar_t *scopedvar, compile_t *compile,
   target->attr = attr;
   target->log = log;
   target->mkcerr = mkcerr;
+  target->create_stage_bin = false;
 
   return target;
 }
@@ -255,7 +258,10 @@ target_check_dependency_timestamp (target_t *target,
   int64_t       ts;
   mkc_listidx_t iteridx;
 
+  mkc_message (MKC_V_TMI, "   chk-dep-ts: %s ", filepath);
+
   if (! scopedvar_is_defined (target->scopedvar, SV_T_DEPENDENCY, filepath)) {
+fprintf (stderr, "no dep entry, ood\n");
     return TARGET_OUT_OF_DATE;
   }
 
@@ -263,14 +269,17 @@ target_check_dependency_timestamp (target_t *target,
   if (scopedvar_is_defined (target->scopedvar, SV_T_TIMESTAMP, filepath)) {
     fts = scopedvar_get_timestamp (target->scopedvar, SV_T_TIMESTAMP, filepath);
   }
+fprintf (stderr, "fts: %zd ", fts);
 
   target_iter_dependency_ts_start (target, filepath, &iteridx);
   while ((ts = target_iter_dependency_ts (target, filepath, &iteridx)) != MKC_ITER_FINISH) {
     if (ts > fts) {
+fprintf (stderr, "ood\n");
       return TARGET_OUT_OF_DATE;
     }
   }
 
+fprintf (stderr, "curr\n");
   return TARGET_CURRENT;
 }
 
@@ -287,6 +296,8 @@ target_get_dependencies (target_t *target,
   value_t         evalue;
   char            * p;
   bool            first = true;
+
+  mkc_message (MKC_V_TMI, "   get-deps: %s\n", filepath);
 
   rsz = MKC_LARGE_BUFF_SZ;
   rbuff = malloc (rsz);
@@ -572,6 +583,12 @@ target_executable_object (target_t *target, const char *execnm,
   char        *opath;
   int64_t     fts = 0;
   scopedvar_t *scopedvar = target->scopedvar;
+  value_t     * value;
+  bool        changed;
+
+  value = scopedvar_get_value (target->scopedvar, SV_T_INTERNAL,
+      MKC_C_MKC_CHANGED);
+  changed = scopedvar_value_get_integer (target->scopedvar, value);
 
   epath = malloc (MKC_PATH_MAX);
   if (epath == NULL) {
@@ -587,8 +604,7 @@ target_executable_object (target_t *target, const char *execnm,
   }
 
   mkc_log (target->log, MKC_LOG_TARGET, "exec-file: %s %s\n", execnm, objnm);
-  path_build (MKC_PATH_STAGE_BIN, epath, MKC_PATH_MAX, NULL, target->mkcerr);
-  dirop_make (epath, target->mkcerr);
+
   path_build (MKC_PATH_STAGE_BIN, epath, MKC_PATH_MAX, execnm, target->mkcerr);
   scopedvar_set_str (scopedvar, SV_T_PATHS, execnm, epath, MKC_VCTXT_MKC);
   fts = fileop_modtime (epath);
@@ -598,12 +614,15 @@ target_executable_object (target_t *target, const char *execnm,
   path_build (MKC_PATH_MKCF_OBJECTS, opath, MKC_PATH_MAX, objnm, target->mkcerr);
   scopedvar_set_str (scopedvar, SV_T_PATHS, objnm, opath, MKC_VCTXT_MKC);
   fts = fileop_modtime (opath);
+fprintf (stderr, "   e-obj: set ts %s %zd\n", opath, fts);
   scopedvar_set_timestamp (scopedvar, SV_T_TIMESTAMP, opath, fts, MKC_VCTXT_MKC);
   scopedvar_set_integer (scopedvar, SV_T_BUILD, opath, TGT_T_OBJECT, MKC_VCTXT_MKC);
 
   mkc_log (target->log, MKC_LOG_TARGET, "  %s\n", objnm);
-  scopedvar_append_str_list (scopedvar, SV_T_DEPENDENCY,
-      epath, opath, MKC_VCTXT_MKC);
+  if (changed) {
+    scopedvar_append_str_list (scopedvar, SV_T_DEPENDENCY,
+        epath, opath, MKC_VCTXT_MKC);
+  }
 
   free (epath);
   free (opath);
@@ -633,13 +652,16 @@ target_object_source (target_t *target, const char *objnm,
   value = scopedvar_get_value (target->scopedvar, SV_T_PATHS, objnm);
   scopedvar_value_get_str (target->scopedvar, value, opath, MKC_PATH_MAX);
 
-  mkc_message (MKC_V_INFO, "-- getting dependencies for %s\n", objnm);
-
   mkc_log (target->log, MKC_LOG_TARGET, "object-file: %s %s\n", objnm, srcname);
-  cflags = target_get_flags (target, MKC_C_CFLAGS, NULL);
-  target_get_dependencies (target,
-      target->attr->currcompiler, opath, srcname, tgtflags, cflags);
-  chararr_free (cflags);
+
+  if (target_check_dependency_timestamp (
+      target, opath, srcname) == TARGET_OUT_OF_DATE) {
+    mkc_message (MKC_V_INFO, "-- getting dependencies for %s\n", objnm);
+    cflags = target_get_flags (target, MKC_C_CFLAGS, NULL);
+    target_get_dependencies (target,
+        target->attr->currcompiler, opath, srcname, tgtflags, cflags);
+    chararr_free (cflags);
+  }
 
   valdeplist = scopedvar_get_value (target->scopedvar, SV_T_DEPENDENCY, opath);
   if (valdeplist == NULL) {
@@ -738,6 +760,7 @@ target_build (target_t *target, mkc_list_t *blist)
     tgttype = scopedvar_value_get_integer (target->scopedvar, value);
     switch (tgttype) {
       case TGT_T_EXEC: {
+        target_create_stage_bin (target);
         compile_set_output (target->compile, builditem);
         comptype = COMPILE_LINK;
         buildtag = "link";
@@ -812,6 +835,7 @@ target_build (target_t *target, mkc_list_t *blist)
       }
 
       tts = fileop_modtime (builditem);
+fprintf (stderr, "   build: set ts %s\n", builditem);
       scopedvar_set_timestamp (target->scopedvar, SV_T_TIMESTAMP, builditem, tts, MKC_VCTXT_MKC);
     }
   }
@@ -866,6 +890,7 @@ target_process_timestamp (target_t *target,
   }
 
   ts = fileop_modtime (path);
+fprintf (stderr, "   proc-ts: set ts %s\n", filename);
   scopedvar_set_timestamp (target->scopedvar, SV_T_TIMESTAMP, filename, ts, MKC_VCTXT_MKC);
 }
 
@@ -947,3 +972,23 @@ target_topo_add_items_deps (target_t *target, toposort_t *topo,
   free (itemnm);
 }
 
+static void
+target_create_stage_bin (target_t *target)
+{
+  char    *epath;
+
+  if (target->create_stage_bin) {
+    return;
+  }
+
+  epath = malloc (MKC_PATH_MAX);
+  if (epath == NULL) {
+    mkc_error_set (target->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return;
+  }
+
+  path_build (MKC_PATH_STAGE_BIN, epath, MKC_PATH_MAX, NULL, target->mkcerr);
+  dirop_make (epath, target->mkcerr);
+  free (epath);
+  target->create_stage_bin = true;
+}

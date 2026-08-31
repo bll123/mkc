@@ -5,6 +5,7 @@
 #define INC_MKC_OPTION_H
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #if defined (__cplusplus) || defined (c_plusplus)
 extern "C" {
@@ -12,11 +13,12 @@ extern "C" {
 
 typedef struct mkc_option_t {
   char        * currprofile;
-  const char  * file_mkc;
+  const char  * mkc_filename;
   const char  * stage;
   const char  * prefix;
   int32_t     loglevel;
   int         verbose;
+  bool        clean;
   bool        retest;
 } mkc_option_t;
 

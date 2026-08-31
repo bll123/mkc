@@ -30,6 +30,7 @@
 #include "fileop.h"
 #include "mkc_log.h"
 #include "mkc_parse.h"
+#include "mkc_util.h"
 #include "pathutil.h"
 #include "strutil.h"
 #include "tmutil.h"
@@ -58,7 +59,6 @@ main (int argc, char *argv [])
   mkc_error_t     * mkcerr = NULL;
   mkc_log_t       * log = NULL;
   char            tbuff [MKC_PATH_MAX];
-  char            cachename [MKC_PATH_MAX];
   mstime_t        starttm;
   mstime_t        proctm;
   int64_t         etm;
@@ -68,7 +68,6 @@ main (int argc, char *argv [])
   int             fnidx;
   bool            loadcache = true;
   bool            parsedebug = false;
-  bool            clean = false;
 
   static struct option mkc_cli_opts [] = {
     { "clean",                no_argument,        NULL, 4   },
@@ -89,6 +88,7 @@ main (int argc, char *argv [])
   mkcoptions.stage = NULL;
   mkcoptions.prefix = NULL;
   mkcoptions.verbose = MKC_V_STATS;
+  mkcoptions.clean = false;
   mkcoptions.retest = false;
   mkcoptions.loglevel = MKC_LOG_NORMAL;
 
@@ -97,7 +97,14 @@ main (int argc, char *argv [])
 
 #if _function_geteuid
   if (geteuid () == 0) {
-    mkc_error_set (mkcerr, MKC_ERR_ROOT_EXEC, 0, NULL);
+    uid_t   uid;
+
+    /* do not run this process with privileges */
+    uid = getuid ();
+    if (uid == 0) {
+      mkc_error_set (mkcerr, MKC_ERR_ROOT_EXEC, 0, NULL);
+    }
+    setuid (uid);
   }
 #endif
 
@@ -147,7 +154,7 @@ main (int argc, char *argv [])
         break;
       }
       case 4: {
-        clean = true;
+        mkcoptions.clean = true;
         break;
       }
       case 'V': {
@@ -173,29 +180,7 @@ main (int argc, char *argv [])
     }
   }
 
-  if (clean) {
-    /* clean out the obj/ and stage/ directory trees */
-    path_build (MKC_PATH_MKCF_OBJECTS, tbuff, sizeof (tbuff), NULL, mkcerr);
-    dirop_delete (tbuff, DIROP_ALL, mkcerr);
-    path_build (MKC_PATH_MKCF_STAGE, tbuff, sizeof (tbuff), NULL, mkcerr);
-    dirop_delete (tbuff, DIROP_ALL, mkcerr);
-  }
-
-  /* create the mkc_files temporary directory tree */
-  path_build (MKC_PATH_MKCF_TMP, tbuff, sizeof (tbuff), NULL, mkcerr);
-  rc = dirop_make (tbuff, mkcerr);
-  if (rc != 0) {
-    rc = mkc_cleanup (astmain, &argcopy, log, &mkcoptions, mkcerr);
-    return rc;
-  }
-  path_build (MKC_PATH_MKCF_OBJECTS, tbuff, sizeof (tbuff), NULL, mkcerr);
-  rc = dirop_make (tbuff, mkcerr);
-  if (rc != 0) {
-    rc = mkc_cleanup (astmain, &argcopy, log, &mkcoptions, mkcerr);
-    return rc;
-  }
-  path_build (MKC_PATH_MKCF_STAGE, tbuff, sizeof (tbuff), NULL, mkcerr);
-  rc = dirop_make (tbuff, mkcerr);
+  rc = mkc_create_mkcfiles_tmp (tbuff, sizeof (tbuff), mkcerr);
   if (rc != 0) {
     rc = mkc_cleanup (astmain, &argcopy, log, &mkcoptions, mkcerr);
     return rc;
@@ -214,7 +199,7 @@ main (int argc, char *argv [])
     return rc;
   }
 
-  mkcoptions.file_mkc = argcopy.utf8argv [fnidx];
+  mkcoptions.mkc_filename = argcopy.utf8argv [fnidx];
   fh = fileop_open (argcopy.utf8argv [fnidx], "r");
   if (fh == NULL) {
     mkc_error_set (mkcerr, MKC_ERR_FILE_NOT_FOUND, errno, argcopy.utf8argv [fnidx]);
@@ -236,8 +221,6 @@ main (int argc, char *argv [])
     mkc_message (MKC_V_BASIC, "-- cache disabled by user\n");
   }
 
-  path_build (MKC_PATH_MKCFILES, cachename, sizeof (cachename), "cache.mkc", mkcerr);
-
   mkc_parse_start (parse, fh);
   if (mkc_error_chk_err (mkcerr)) {
     rc = mkc_cleanup (astmain, &argcopy, log, &mkcoptions, mkcerr);
@@ -245,8 +228,10 @@ main (int argc, char *argv [])
   }
 
   if (loadcache) {
+    char    cachename [MKC_PATH_MAX];
     FILE    *cfh;
 
+    path_build (MKC_PATH_MKCFILES, cachename, sizeof (cachename), "cache.mkc", mkcerr);
     cfh = fileop_open (cachename, "r");
     if (cfh != NULL) {
       mkc_message (MKC_V_BASIC, "-- loading cache\n");
