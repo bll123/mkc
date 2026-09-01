@@ -73,7 +73,7 @@ static char const * const svtypenames [] = {
   [SV_T_DFLT_PROF] = "dflt_prof",
   [SV_T_INTERNAL] = "internal",
   [SV_T_LOCAL] = "local",
-  [SV_T_NOT_IN_USE] = "not_in_use",
+  [SV_T_NOT_SET] = "not_in_use",
   [SV_T_PATHS] = "paths",
   [SV_T_SEARCH] = "search",
   [SV_T_TARGET] = "targetitems",
@@ -201,11 +201,11 @@ scopedvar_pop (scopedvar_t *scopedvar)
   datafree (svprof->name);
   mkc_varlist_free (svprof->varlist);
   svprof->varlist = NULL;
-  svprof->svtype = SV_T_NOT_IN_USE;
+  svprof->svtype = SV_T_NOT_SET;
 
   proflist = &scopedvar->hierarchy;
   svprof = &proflist->variables [proflist->sz - 1];
-  svprof->svtype = SV_T_NOT_IN_USE;
+  svprof->svtype = SV_T_NOT_SET;
   proflist->sz -= 1;
 }
 
@@ -429,7 +429,7 @@ scopedvar_iter_get_type (scopedvar_t *scopedvar, sv_iter_t *sviter)
 {
   if (sviter->idx < 0 || sviter->idx >= sviter->profiles->sz) {
     mkc_error_set (scopedvar->mkcerr, MKC_ERR_OUT_OF_RANGE, 0, NULL);
-    return SV_T_NOT_IN_USE;
+    return SV_T_NOT_SET;
   }
 
   return sviter->profiles->variables [sviter->idx].svtype;
@@ -1467,7 +1467,7 @@ scopedvar_create_profile (scopedvar_t *scopedvar,
 
       svprof->name = NULL;
       svprof->varlist = NULL;
-      svprof->svtype = SV_T_NOT_IN_USE;
+      svprof->svtype = SV_T_NOT_SET;
       svprof->compiler = MKC_COMPILER_GENERAL;
       svprof->local_id = scopedvar->local_id;
     }
@@ -1735,7 +1735,7 @@ scopedvar_push_hierarchy (scopedvar_t *scopedvar, sv_profile_t *svprof)
 
       hsvprof->name = NULL;
       hsvprof->varlist = NULL;
-      hsvprof->svtype = SV_T_NOT_IN_USE;
+      hsvprof->svtype = SV_T_NOT_SET;
       hsvprof->compiler = MKC_COMPILER_GENERAL;
       hsvprof->local_id = scopedvar->local_id;
     }

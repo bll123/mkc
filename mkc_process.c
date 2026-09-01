@@ -1325,10 +1325,8 @@ mkc_process_stmt_executable (mkc_process_t *process, value_t *valnm)
   *srcbuff = '\0';
 
   changed = process->mkc_changed;
-fprintf (stderr, "chg:%d %s chk in-cache\n", changed, execnm);
 
   if (process->cacheloaded == false) {
-fprintf (stderr, "no-cache: chg,reset\n");
     changed = true;
     scopedvar_set_integer (process->scopedvar, SV_T_INTERNAL,
         MKC_C_MKC_CHANGED, true, MKC_VCTXT_MKC);
@@ -1339,7 +1337,6 @@ fprintf (stderr, "no-cache: chg,reset\n");
 
   if (! changed &&
       scopedvar_is_defined (process->scopedvar, SV_T_DEPENDENCY, execnm)) {
-fprintf (stderr, "%s already in-cache\n", execnm);
     /* already in cache */
     mkc_process_attr_clear (process);
     return;
@@ -1440,7 +1437,7 @@ mkc_process_stmt_loadcache (mkc_process_t *process, value_t *valvers)
   int     version;
 
   version = scopedvar_value_get_integer (process->scopedvar, valvers);
-  if (version != 1) {
+  if (version != MKC_CACHE_VERS_1) {
     mkc_message (MKC_V_BASIC, "-- cache version mismatch\n");
     mkc_process_attr_clear (process);
     return;
@@ -1475,7 +1472,6 @@ mkc_process_stmt_loadcache_post (mkc_process_t *process)
     changed = true;
     process->mkc_changed = true;
     process->reset_stage = true;
-fprintf (stderr, "cache-invalidate: chg,reset\n");
   }
 
   mkc_process_check_mkc_timestamp (process);
@@ -1681,9 +1677,6 @@ mkc_process_stmt_set (mkc_process_t *process,
   }
 
   trc = scopedvar_set (process->scopedvar, svtype, nm, tvalue, vctxt);
-if (trc == MKC_OK_CHANGE) {
-fprintf (stderr, "%s changed\n", nm);
-}
   if (trc == MKC_OK_CHANGE &&
      (vctxt == MKC_VCTXT_ENV || vctxt == MKC_VCTXT_MKC_BASE)) {
     process->cacheinvalidated = true;
@@ -1691,7 +1684,6 @@ fprintf (stderr, "%s changed\n", nm);
     changed = true;
     process->mkc_changed = true;
   } else if (trc == MKC_OK_CHANGE && strcmp (nm, MKC_C_PREFIX) == 0) {
-fprintf (stderr, "prefix changed\n");
     changed = true;
     process->mkc_changed = true;
     process->reset_stage = true;
@@ -3421,8 +3413,6 @@ mkc_process_check_mkc_timestamp (mkc_process_t *process)
 
   if (process->mkc_ts > cachedts) {
     mkc_message (MKC_V_TMI, "   .mkc ts: changed: true\n");
-fprintf (stderr, ".mkc: mkc-ts: %zd cachedts: %zd %s\n", process->mkc_ts, cachedts, process->mkcoptions->mkc_filename);
-fprintf (stderr, ".mkc changed: chg,reset\n");
     changed = true;
     process->mkc_changed = true;
     process->reset_stage = true;
@@ -3435,7 +3425,6 @@ fprintf (stderr, ".mkc changed: chg,reset\n");
         MKC_C_MKC_CHANGED, changed, MKC_VCTXT_MKC);
   }
 
-fprintf (stderr, ".mkc set ts %zd\n", process->mkc_ts);
   scopedvar_set_timestamp (process->scopedvar, SV_T_TIMESTAMP,
       process->mkcoptions->mkc_filename, process->mkc_ts, MKC_VCTXT_MKC);
 }
@@ -3454,11 +3443,13 @@ mkc_process_clean_check (mkc_process_t *process)
     return;
   }
 
-  if (process->reset_stage || process->mkcoptions->clean) {
-    mkc_message (MKC_V_BASIC, "-- cleaning\n");
-    mkc_clean_mkcfiles (tbuff, MKC_PATH_MAX, process->mkcerr);
-    process->cleaned = true;
+  if (! process->reset_stage && ! process->mkcoptions->clean) {
+    return;
   }
+
+  mkc_message (MKC_V_BASIC, "-- cleaning\n");
+  mkc_clean_mkcfiles (tbuff, MKC_PATH_MAX, process->mkcerr);
+  process->cleaned = true;
 
   sviter = scopedvar_iter_start (scopedvar, SV_ITER_PROFILES);
   while ((profname = scopedvar_iter_next (scopedvar, sviter)) != NULL) {

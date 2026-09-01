@@ -261,7 +261,6 @@ target_check_dependency_timestamp (target_t *target,
   mkc_message (MKC_V_TMI, "   chk-dep-ts: %s ", filepath);
 
   if (! scopedvar_is_defined (target->scopedvar, SV_T_DEPENDENCY, filepath)) {
-fprintf (stderr, "no dep entry, ood\n");
     return TARGET_OUT_OF_DATE;
   }
 
@@ -269,17 +268,14 @@ fprintf (stderr, "no dep entry, ood\n");
   if (scopedvar_is_defined (target->scopedvar, SV_T_TIMESTAMP, filepath)) {
     fts = scopedvar_get_timestamp (target->scopedvar, SV_T_TIMESTAMP, filepath);
   }
-fprintf (stderr, "fts: %zd ", fts);
 
   target_iter_dependency_ts_start (target, filepath, &iteridx);
   while ((ts = target_iter_dependency_ts (target, filepath, &iteridx)) != MKC_ITER_FINISH) {
     if (ts > fts) {
-fprintf (stderr, "ood\n");
       return TARGET_OUT_OF_DATE;
     }
   }
 
-fprintf (stderr, "curr\n");
   return TARGET_CURRENT;
 }
 
@@ -614,7 +610,6 @@ target_executable_object (target_t *target, const char *execnm,
   path_build (MKC_PATH_MKCF_OBJECTS, opath, MKC_PATH_MAX, objnm, target->mkcerr);
   scopedvar_set_str (scopedvar, SV_T_PATHS, objnm, opath, MKC_VCTXT_MKC);
   fts = fileop_modtime (opath);
-fprintf (stderr, "   e-obj: set ts %s %zd\n", opath, fts);
   scopedvar_set_timestamp (scopedvar, SV_T_TIMESTAMP, opath, fts, MKC_VCTXT_MKC);
   scopedvar_set_integer (scopedvar, SV_T_BUILD, opath, TGT_T_OBJECT, MKC_VCTXT_MKC);
 
@@ -655,7 +650,7 @@ target_object_source (target_t *target, const char *objnm,
   mkc_log (target->log, MKC_LOG_TARGET, "object-file: %s %s\n", objnm, srcname);
 
   if (target_check_dependency_timestamp (
-      target, opath, srcname) == TARGET_OUT_OF_DATE) {
+      target, objnm, opath) == TARGET_OUT_OF_DATE) {
     mkc_message (MKC_V_INFO, "-- getting dependencies for %s\n", objnm);
     cflags = target_get_flags (target, MKC_C_CFLAGS, NULL);
     target_get_dependencies (target,
@@ -835,7 +830,6 @@ target_build (target_t *target, mkc_list_t *blist)
       }
 
       tts = fileop_modtime (builditem);
-fprintf (stderr, "   build: set ts %s\n", builditem);
       scopedvar_set_timestamp (target->scopedvar, SV_T_TIMESTAMP, builditem, tts, MKC_VCTXT_MKC);
     }
   }
@@ -890,7 +884,6 @@ target_process_timestamp (target_t *target,
   }
 
   ts = fileop_modtime (path);
-fprintf (stderr, "   proc-ts: set ts %s\n", filename);
   scopedvar_set_timestamp (target->scopedvar, SV_T_TIMESTAMP, filename, ts, MKC_VCTXT_MKC);
 }
 

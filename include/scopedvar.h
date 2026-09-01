@@ -29,7 +29,7 @@ typedef enum {
   SV_T_CURR_PROF_COMPILER,
   SV_T_LOCAL,
   SV_T_TARGET,
-  SV_T_NOT_IN_USE,
+  SV_T_NOT_SET,
   /* for a 'get', checks the hierarchy until the active profile is found */
   /* for a 'set', searches any local profiles, */
   /* then then uses the active profile */
