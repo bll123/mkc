@@ -12,10 +12,10 @@
 #include "fileop.h"
 #include "mkc_lex.h"
 #include "mkc_log.h"
-#include "mkc_parse.h"
+#include "parse.h"
 #include "strutil.h"
 
-typedef struct mkc_parse_t {
+typedef struct parse_t {
   /* temporary buffer variable */
   YY_BUFFER_STATE     buffer;
   /* temporary for string scanning */
@@ -25,16 +25,16 @@ typedef struct mkc_parse_t {
   mkc_error_t         *mkcerr;
   mkc_log_t           *log;
   char                *filename;
-} mkc_parse_t;
+} parse_t;
 
 MKC_NODISCARD
-mkc_parse_t *
-mkc_parse_init (astmain_t *astmain, mkc_log_t *log,
+parse_t *
+parse_init (astmain_t *astmain, mkc_log_t *log,
     mkc_error_t *mkcerr)
 {
-  mkc_parse_t   *parse;
+  parse_t   *parse;
 
-  parse = malloc (sizeof (mkc_parse_t));
+  parse = malloc (sizeof (parse_t));
   if (parse == NULL) {
     mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
     return NULL;
@@ -52,7 +52,7 @@ mkc_parse_init (astmain_t *astmain, mkc_log_t *log,
 }
 
 void
-mkc_parse_free (mkc_parse_t *parse)
+parse_free (parse_t *parse)
 {
   if (parse == NULL) {
     return;
@@ -64,7 +64,7 @@ mkc_parse_free (mkc_parse_t *parse)
 }
 
 int
-mkc_parse_start (mkc_parse_t *parse, FILE *fh)
+parse_start (parse_t *parse, FILE *fh)
 {
   if (parse == NULL) {
     return MKC_ERR_FAILURE;
@@ -81,7 +81,7 @@ mkc_parse_start (mkc_parse_t *parse, FILE *fh)
 }
 
 void *
-mkc_parse_get_scanner (mkc_parse_t *parse)
+parse_get_scanner (parse_t *parse)
 {
   if (parse == NULL) {
     return NULL;
@@ -91,7 +91,7 @@ mkc_parse_get_scanner (mkc_parse_t *parse)
 }
 
 void
-mkc_parse_set_filename (mkc_parse_t *parse, const char *fname)
+parse_set_filename (parse_t *parse, const char *fname)
 {
   const char    *p;
 
@@ -111,7 +111,7 @@ mkc_parse_set_filename (mkc_parse_t *parse, const char *fname)
 }
 
 const char *
-mkc_parse_get_filename (mkc_parse_t *parse)
+parse_get_filename (parse_t *parse)
 {
   if (parse == NULL) {
     return NULL;

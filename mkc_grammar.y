@@ -25,7 +25,7 @@
 #  include "mkc_error.h"
 #  include "fileop.h"
 #  include "mkc_list.h"
-#  include "mkc_parse.h"
+#  include "parse.h"
 
   typedef void *mkcyyscan_t;
 
@@ -39,14 +39,14 @@
 %code {
   /* mkc_lex.h could be included, but it introduces a dependency loop */
 
-  void mkcyyerror (MKCYYLTYPE* mkcyyllocp, mkcyyscan_t unused, mkc_parse_t *parse, astmain_t *ast, mkc_error_t *mkcerr, const char* msg);
+  void mkcyyerror (MKCYYLTYPE* mkcyyllocp, mkcyyscan_t unused, parse_t *parse, astmain_t *ast, mkc_error_t *mkcerr, const char* msg);
   int mkcyylex (MKCYYSTYPE* mkcyylvalp, MKCYYLTYPE* mkcyyllocp, mkcyyscan_t yyscanner);
   typedef struct yy_buffer_state *YY_BUFFER_STATE;
   YY_BUFFER_STATE mkcyy_create_buffer ( FILE *file, int size , mkcyyscan_t yyscanner );
   void mkcyypush_buffer_state ( YY_BUFFER_STATE new_buffer , mkcyyscan_t yyscanner );
   void mkcyypop_buffer_state ( mkcyyscan_t yyscanner );
 
-  static void mkc_parse_process_include (MKCYYLTYPE* mkcyyllocp, mkc_parse_t *parse, astmain_t *ast, astnode_t *path, astnode_t *node);
+  static void parse_process_include (MKCYYLTYPE* mkcyyllocp, parse_t *parse, astmain_t *ast, astnode_t *path, astnode_t *node);
 }
 
 %union {
@@ -56,7 +56,7 @@
 }
 
 %lex-param {void *scanner}
-%parse-param {void *scanner} {mkc_parse_t * parse} {astmain_t * ast} {mkc_error_t * mkcerr}
+%parse-param {void *scanner} {parse_t * parse} {astmain_t * ast} {mkc_error_t * mkcerr}
 
 %start mkc
 
@@ -732,11 +732,11 @@ stmt_function_call[v]:
 stmt_include:
     T_STMT_INCLUDE pathname[a] pathname[b] T_SEMICOLON
     {
-      mkc_parse_process_include (&yyloc, parse, ast, $a, $b);
+      parse_process_include (&yyloc, parse, ast, $a, $b);
     }
   | T_STMT_INCLUDE pathname[a] T_SEMICOLON
     {
-      mkc_parse_process_include (&yyloc, parse, ast, NULL, $a);
+      parse_process_include (&yyloc, parse, ast, NULL, $a);
     }
   ;
 
@@ -1484,18 +1484,18 @@ integer[v]:
 
 void
 mkcyyerror (MKCYYLTYPE* mkcyyllocp, mkcyyscan_t unused,
-    mkc_parse_t *parse, astmain_t *ast, mkc_error_t *mkcerr,
+    parse_t *parse, astmain_t *ast, mkc_error_t *mkcerr,
     const char * msg)
 {
   char    tmp [40];
 
-  fprintf (stderr, "%s:", mkc_parse_get_filename (parse));
+  fprintf (stderr, "%s:", parse_get_filename (parse));
   mkc_error_line_disp (tmp, sizeof (tmp), mkcyyllocp->first_line, mkcyyllocp->first_column);
   fprintf (stderr, "%s\n", msg);
 }
 
 int
-mkc_parse (mkc_parse_t *parse, void *scanner,
+parse_process (parse_t *parse, void *scanner,
     astmain_t *astmain, mkc_error_t *mkcerr)
 {
   int     rc;
@@ -1511,7 +1511,7 @@ mkc_parse (mkc_parse_t *parse, void *scanner,
 }
 
 void
-mkc_parse_debug (mkc_parse_t *parse, bool debug)
+parse_debug (parse_t *parse, bool debug)
 {
   if (parse == NULL) {
     return;
@@ -1521,7 +1521,7 @@ mkc_parse_debug (mkc_parse_t *parse, bool debug)
 }
 
 static void
-mkc_parse_process_include (MKCYYLTYPE* mkcyyllocp, mkc_parse_t *parse,
+parse_process_include (MKCYYLTYPE* mkcyyllocp, parse_t *parse,
     astmain_t *ast, astnode_t *path, astnode_t *node)
 {
   char    fn [MKC_PATH_MAX];
@@ -1533,10 +1533,10 @@ mkc_parse_process_include (MKCYYLTYPE* mkcyyllocp, mkc_parse_t *parse,
   if (*fn) {
     FILE    *fh;
 
-    mkc_parse_set_filename (parse, fn);
+    parse_set_filename (parse, fn);
     fh = fileop_open (fn, "r");
     if (fh != NULL) {
-      mkc_parse_start (parse, fh);
+      parse_start (parse, fh);
     }
   }
 }
