@@ -105,7 +105,7 @@ void sv_delete (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname);
 
 bool sv_is_defined (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname);
 bool sv_var_is_list (scopedvar_t *scopedvar, const char *vname);
-void scopedvar_temp_value_free (void *tvalue);
+void sv_temp_value_free (void *tvalue);
 char * sv_substitute (scopedvar_t *scopedvar, const char *data, sv_escape_t subescapeflag, int depth);
 
 const char * scopedvar_type_disp (sv_type_t svtype);

@@ -776,7 +776,7 @@ sv_value_get_str (scopedvar_t *sv, value_t *value,
 
 /* get the actual value of a value */
 /* this is only an issue for env-variables, quoted strings and lists */
-/* the caller is responsible for calling scopedvar_temp_value_free() */
+/* the caller is responsible for calling sv_temp_value_free() */
 value_t *
 sv_value_get_value (scopedvar_t *sv, value_t *value)
 {
@@ -839,7 +839,8 @@ sv_value_get_value (scopedvar_t *sv, value_t *value)
       /* the list may not need substitution, but just create a new list */
       /* in all cases */
 
-      nlist = mkc_list_init (MKC_LIST_UNSORTED, scopedvar_temp_value_free, NULL, sv->mkcerr);
+      nlist = mkc_list_init (MKC_LIST_UNSORTED, sv_temp_value_free, NULL, sv->mkcerr);
+
       mkc_list_iter_start (value->list, &iteridx);
       while ((lidx = mkc_list_iter_next (value->list, &iteridx)) != MKC_ITER_FINISH) {
         value_t   *lvalue;
@@ -850,7 +851,10 @@ sv_value_get_value (scopedvar_t *sv, value_t *value)
         }
 
         lvalue = mkc_list_get_by_idx (value->list, lidx);
-        tmpvalue = sv_value_get_value (sv, lvalue);
+        tmpvalue = lvalue;
+        if (lvalue->vtype != MKC_VT_LIST) {
+          tmpvalue = sv_value_get_value (sv, lvalue);
+        }
         mkc_list_set (nlist, tmpvalue, sizeof (value_t));
       }
 
@@ -859,6 +863,7 @@ sv_value_get_value (scopedvar_t *sv, value_t *value)
         mkc_error_set (sv->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
         return nvalue;
       }
+
       value_init (tvalue);
       tvalue->tempallocated = true;
       tvalue->vtype = MKC_VT_LIST;
@@ -1136,7 +1141,7 @@ sv_var_is_list (scopedvar_t *sv, const char *vname)
 }
 
 void
-scopedvar_temp_value_free (void *tvalue)
+sv_temp_value_free (void *tvalue)
 {
   value_t   *value = tvalue;
 

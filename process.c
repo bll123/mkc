@@ -1719,7 +1719,7 @@ process_stmt_set (process_t *process,
   /* tvalue may have been re-allocated, only call temp-value-free */
   /* if the tvalue was allocated */
   if (istempval) {
-    scopedvar_temp_value_free (tvalue);
+    sv_temp_value_free (tvalue);
   }
 
   process_attr_clear (process);
@@ -3276,7 +3276,7 @@ process_value_list (process_t *process, value_t *value,
     if (tvalue->vtype == MKC_VT_LIST) {
       process_value_list (process, tvalue, flags, true);
       if (! inlist) {
-        scopedvar_temp_value_free (tvalue);
+        sv_temp_value_free (tvalue);
       }
       continue;
     } else if (tvalue->vtype == MKC_VT_STRING ||
@@ -3292,7 +3292,7 @@ process_value_list (process_t *process, value_t *value,
     sv_value_get_str (process->sv, tvalue, flag, sizeof (flag));
     mkc_list_set (flags, tvalue, sizeof (value_t));
     if (! inlist) {
-      scopedvar_temp_value_free (tvalue);
+      sv_temp_value_free (tvalue);
     }
   }
 }
