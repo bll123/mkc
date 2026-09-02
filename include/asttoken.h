@@ -113,7 +113,7 @@ typedef enum {
   MKC_T_VALUE,
   MKC_T_VARIABLE,
   MKC_T_MAX,
-} mkc_astnode_token_t;
+} astnode_token_t;
 
 extern char const * const typenames [MKC_T_MAX];
 

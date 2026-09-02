@@ -37,7 +37,7 @@
 #include "value.h"
 
 typedef struct target_t {
-  scopedvar_t         * scopedvar;
+  scopedvar_t         * sv;
   compile_t           * compile;
   mkc_attribute_t     * attr;
   mkc_log_t           * log;
@@ -53,7 +53,7 @@ static void target_topo_add_items_deps (target_t *target, toposort_t *topo, mkc_
 static void target_create_stage_bin (target_t *target);
 
 target_t *
-target_init (scopedvar_t *scopedvar, compile_t *compile,
+target_init (scopedvar_t *sv, compile_t *compile,
     mkc_attribute_t *attr, mkc_log_t *log, mkc_error_t *mkcerr)
 {
   target_t    *target;
@@ -64,7 +64,7 @@ target_init (scopedvar_t *scopedvar, compile_t *compile,
     return NULL;
   }
 
-  target->scopedvar = scopedvar;
+  target->sv = sv;
   target->compile = compile;
   target->attr = attr;
   target->log = log;
@@ -92,7 +92,7 @@ target_get_flags (target_t *target, const char *flagname,
   mkc_list_t      * tlist;
   char            * lastlibloc;
   char            * str;
-  scopedvar_t     * scopedvar;
+  scopedvar_t     * sv;
   sv_iter_t       * sviter = NULL;
   const char      * profnm;
   chararr_t       * flags;
@@ -113,7 +113,7 @@ target_get_flags (target_t *target, const char *flagname,
 
   tlist = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, target->mkcerr);
 
-  scopedvar = target->scopedvar;
+  sv = target->sv;
 
   flags = chararr_init (target->mkcerr);
   if (flags == NULL) {
@@ -121,8 +121,8 @@ target_get_flags (target_t *target, const char *flagname,
   }
   chararr_set_freeinternals (flags);
 
-  sviter = scopedvar_iter_start (scopedvar, SV_ITER_HIERARCHY);
-  while ((profnm = scopedvar_iter_next (scopedvar, sviter)) != NULL) {
+  sviter = sv_iter_start (sv, SV_ITER_HIERARCHY);
+  while ((profnm = sv_iter_next (sv, sviter)) != NULL) {
     value_t         *value = NULL;
     mkc_listidx_t   fiter;
     mkc_listidx_t   fidx;
@@ -133,8 +133,8 @@ target_get_flags (target_t *target, const char *flagname,
       break;
     }
 
-    svtype = scopedvar_iter_get_type (scopedvar, sviter);
-    value = scopedvar_get_value (scopedvar, svtype, flagname);
+    svtype = sv_iter_get_type (sv, sviter);
+    value = sv_get_value (sv, svtype, flagname);
     if (value == NULL || value->vtype != MKC_VT_LIST) {
       continue;
     }
@@ -148,7 +148,7 @@ target_get_flags (target_t *target, const char *flagname,
       }
 
       fval = mkc_list_get_by_idx (value->list, fidx);
-      scopedvar_value_get_str (scopedvar, fval, str, MKC_PATH_MAX);
+      sv_value_get_str (sv, fval, str, MKC_PATH_MAX);
       if (! *str) {
         continue;
       }
@@ -181,7 +181,7 @@ target_get_flags (target_t *target, const char *flagname,
       chararr_append (flags, strdup (str));
     }
   }
-  scopedvar_iter_finish (sviter);
+  sv_iter_finish (sviter);
   chararr_append (flags, NULL);
 
   mkc_list_free (tlist);
@@ -223,7 +223,7 @@ target_topo_add_deps (target_t *target,
   char            * dep;
 
   mkc_log (target->log, MKC_LOG_CHECK, "add-dep %s :\n", tgtname);
-  valdeplist = scopedvar_get_value (target->scopedvar, SV_T_DEPENDENCY, tgtname);
+  valdeplist = sv_get_value (target->sv, SV_T_DEPENDENCY, tgtname);
   if (valdeplist == NULL) {
     mkc_error_set (target->mkcerr, MKC_ERR_FATAL_ERROR, 0, tgtname);
     fprintf (stderr, "ERR: unable to locate dep list for %s\n", tgtname);
@@ -242,7 +242,7 @@ target_topo_add_deps (target_t *target,
       break;
     }
 
-    scopedvar_value_get_str (target->scopedvar, &tvalue, dep, MKC_PATH_MAX);
+    sv_value_get_str (target->sv, &tvalue, dep, MKC_PATH_MAX);
     mkc_log (target->log, MKC_LOG_CHECK, "  %s\n", dep);
     toposort_add_pair (topo, tgtname, dep);
   }
@@ -260,22 +260,25 @@ target_check_dependency_timestamp (target_t *target,
 
   mkc_message (MKC_V_TMI, "   chk-dep-ts: %s ", filepath);
 
-  if (! scopedvar_is_defined (target->scopedvar, SV_T_DEPENDENCY, filepath)) {
+  if (! sv_is_defined (target->sv, SV_T_DEPENDENCY, filepath)) {
+    mkc_message (MKC_V_TMI, "ood\n");
     return TARGET_OUT_OF_DATE;
   }
 
   fts = 0;
-  if (scopedvar_is_defined (target->scopedvar, SV_T_TIMESTAMP, filepath)) {
-    fts = scopedvar_get_timestamp (target->scopedvar, SV_T_TIMESTAMP, filepath);
+  if (sv_is_defined (target->sv, SV_T_TIMESTAMP, filepath)) {
+    fts = sv_get_timestamp (target->sv, SV_T_TIMESTAMP, filepath);
   }
 
   target_iter_dependency_ts_start (target, filepath, &iteridx);
   while ((ts = target_iter_dependency_ts (target, filepath, &iteridx)) != MKC_ITER_FINISH) {
     if (ts > fts) {
+      mkc_message (MKC_V_TMI, "ood\n");
       return TARGET_OUT_OF_DATE;
     }
   }
 
+  mkc_message (MKC_V_TMI, "curr\n");
   return TARGET_CURRENT;
 }
 
@@ -322,13 +325,13 @@ target_get_dependencies (target_t *target,
     return;
   }
 
-  scopedvar_delete (target->scopedvar, SV_T_DEPENDENCY, tgtname);
+  sv_delete (target->sv, SV_T_DEPENDENCY, tgtname);
 
   /* the dependency list must exist */
   elist = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, target->mkcerr);
   evalue.vtype = MKC_VT_LIST;
   evalue.list = elist;
-  scopedvar_set (target->scopedvar, SV_T_DEPENDENCY, tgtname, &evalue, MKC_VCTXT_MKC);
+  sv_set (target->sv, SV_T_DEPENDENCY, tgtname, &evalue, MKC_VCTXT_MKC);
   mkc_list_free (elist);
 
   mkc_log (target->log, MKC_LOG_TARGET, "get-dep: %s\n", filepath);
@@ -360,7 +363,7 @@ target_get_dependencies (target_t *target,
     if (strcmp (tgtname, p) != 0) {
       /* do not add self as a dependency */
       mkc_log (target->log, MKC_LOG_TARGET, "  %s\n", p);
-      scopedvar_append_str_list (target->scopedvar, SV_T_DEPENDENCY,
+      sv_append_str_list (target->sv, SV_T_DEPENDENCY,
           tgtname, p, MKC_VCTXT_MKC);
     }
     p = str_token (NULL, dependency_delim, &tokstr);
@@ -384,7 +387,7 @@ target_get_include_list (target_t *target, chararr_t * include_paths,
   char            * hdrpath = NULL;
   char            * tname = NULL;
   char            * tend = NULL;
-  scopedvar_t     * scopedvar = NULL;
+  scopedvar_t     * sv = NULL;
   const char      ** patharr;
   const char      * path = NULL;
   int64_t         newts = 0;
@@ -415,23 +418,23 @@ target_get_include_list (target_t *target, chararr_t * include_paths,
   }
   p = stpecpy (p, tend, target->attr->str [MKC_ATTR_MATCH]);
 
-  scopedvar = target->scopedvar;
+  sv = target->sv;
 
   memcpy (tname, "matchil_", 8);
-  if (scopedvar_is_defined (scopedvar, SV_T_LOCAL, tname)) {
-    valhdr = scopedvar_get_value (scopedvar, SV_T_LOCAL, tname);
+  if (sv_is_defined (sv, SV_T_LOCAL, tname)) {
+    valhdr = sv_get_value (sv, SV_T_LOCAL, tname);
     hlist = valhdr->list;
     memcpy (tname, "matchts_", 8);
-    if (scopedvar_is_defined (scopedvar, SV_T_LOCAL, tname)) {
+    if (sv_is_defined (sv, SV_T_LOCAL, tname)) {
       int64_t   cachedts;
 
-      cachedts = scopedvar_get_timestamp (scopedvar, SV_T_LOCAL, tname);
+      cachedts = sv_get_timestamp (sv, SV_T_LOCAL, tname);
       *ts = cachedts;
       free (tname);
       return hlist;
     }
     memcpy (tname, "matchil_", 8);
-    scopedvar_delete (scopedvar, SV_T_LOCAL, tname);
+    sv_delete (sv, SV_T_LOCAL, tname);
   }
 
   hdrpath = malloc (MKC_PATH_MAX);
@@ -469,7 +472,7 @@ target_get_include_list (target_t *target, chararr_t * include_paths,
       } else {
         snprintf (hdrpath, MKC_PATH_MAX, "%s/%s", path, hdr);
       }
-      scopedvar_set_str (scopedvar, SV_T_PATHS, hdr, hdrpath, MKC_VCTXT_MKC);
+      sv_set_str (sv, SV_T_PATHS, hdr, hdrpath, MKC_VCTXT_MKC);
       tts = fileop_modtime (hdrpath);
 
       /* cache invalidation check */
@@ -477,19 +480,19 @@ target_get_include_list (target_t *target, chararr_t * include_paths,
       /* for the header, then the list of dependencies for the header */
       /* is out of date and must be cleared */
       /* header dependencies are used for the 'check_include_...' tests */
-      if (scopedvar_is_defined (scopedvar, SV_T_TIMESTAMP, hdrpath)) {
+      if (sv_is_defined (sv, SV_T_TIMESTAMP, hdrpath)) {
         int64_t     cachedts;
 
-        cachedts = scopedvar_get_timestamp (scopedvar, SV_T_TIMESTAMP, hdrpath);
+        cachedts = sv_get_timestamp (sv, SV_T_TIMESTAMP, hdrpath);
         if (tts > cachedts) {
-          scopedvar_delete (scopedvar, SV_T_DEPENDENCY, hdrpath);
+          sv_delete (sv, SV_T_DEPENDENCY, hdrpath);
         }
       }
 
-      scopedvar_set_timestamp (scopedvar, SV_T_TIMESTAMP, hdrpath, tts, MKC_VCTXT_MKC);
-      scopedvar_set_integer (scopedvar, SV_T_BUILD, hdrpath, TGT_T_INCLUDE, MKC_VCTXT_MKC);
+      sv_set_timestamp (sv, SV_T_TIMESTAMP, hdrpath, tts, MKC_VCTXT_MKC);
+      sv_set_integer (sv, SV_T_BUILD, hdrpath, TGT_T_INCLUDE, MKC_VCTXT_MKC);
       if (tts > *ts) {
-        scopedvar_append_str_list (scopedvar, SV_T_LOCAL,
+        sv_append_str_list (sv, SV_T_LOCAL,
             tname, hdrpath, MKC_VCTXT_MKC);
       }
       if (tts > newts) {
@@ -501,13 +504,13 @@ target_get_include_list (target_t *target, chararr_t * include_paths,
   }
 
   memcpy (tname, "matchil_", 8);
-  valhdr = scopedvar_get_value (scopedvar, SV_T_LOCAL, tname);
+  valhdr = sv_get_value (sv, SV_T_LOCAL, tname);
   hlist = valhdr->list;
 
   memcpy (tname, "matchts_", 8);
   /* return the timestamp of the latest include file */
   *ts = newts;
-  scopedvar_set_timestamp (scopedvar, SV_T_LOCAL, tname, newts, MKC_VCTXT_MKC);
+  sv_set_timestamp (sv, SV_T_LOCAL, tname, newts, MKC_VCTXT_MKC);
 
   free (hdrpath);
   free (tname);
@@ -528,7 +531,7 @@ target_iter_includes (target_t *target, mkc_list_t *hlist,
     const char  *p;
 
     tvalue = mkc_list_get_by_idx (hlist, hidx);
-    scopedvar_value_get_str (target->scopedvar, tvalue, hdrpath, hpsz);
+    sv_value_get_str (target->sv, tvalue, hdrpath, hpsz);
     p = path_filename (hdrpath);
     return p;
   }
@@ -542,7 +545,7 @@ target_iter_dependency_ts_start (target_t *target, const char *filename,
 {
   value_t     *value;
 
-  value = scopedvar_get_value (target->scopedvar, SV_T_DEPENDENCY, filename);
+  value = sv_get_value (target->sv, SV_T_DEPENDENCY, filename);
   value_iter_start (value, iteridx);
 }
 
@@ -556,18 +559,18 @@ target_iter_dependency_ts (target_t *target, const char *filename,
   int64_t       ts;
   char          dep [MKC_VNAME_MAX];
 
-  value = scopedvar_get_value (target->scopedvar, SV_T_DEPENDENCY, filename);
+  value = sv_get_value (target->sv, SV_T_DEPENDENCY, filename);
   didx = value_iter_next (value, &tvalue, iteridx);
   if (didx == MKC_ITER_FINISH) {
     return didx;
   }
 
-  scopedvar_value_get_str (target->scopedvar, &tvalue, dep, sizeof (dep));
-  if (! scopedvar_is_defined (target->scopedvar, SV_T_TIMESTAMP, dep)) {
+  sv_value_get_str (target->sv, &tvalue, dep, sizeof (dep));
+  if (! sv_is_defined (target->sv, SV_T_TIMESTAMP, dep)) {
     return 0;
   }
 
-  ts = scopedvar_get_timestamp (target->scopedvar, SV_T_TIMESTAMP, dep);
+  ts = sv_get_timestamp (target->sv, SV_T_TIMESTAMP, dep);
   return ts;
 }
 
@@ -578,13 +581,13 @@ target_executable_object (target_t *target, const char *execnm,
   char        *epath;
   char        *opath;
   int64_t     fts = 0;
-  scopedvar_t *scopedvar = target->scopedvar;
+  scopedvar_t *sv = target->sv;
   value_t     * value;
   bool        changed;
 
-  value = scopedvar_get_value (target->scopedvar, SV_T_INTERNAL,
+  value = sv_get_value (target->sv, SV_T_INTERNAL,
       MKC_C_MKC_CHANGED);
-  changed = scopedvar_value_get_integer (target->scopedvar, value);
+  changed = sv_value_get_integer (target->sv, value);
 
   epath = malloc (MKC_PATH_MAX);
   if (epath == NULL) {
@@ -602,20 +605,20 @@ target_executable_object (target_t *target, const char *execnm,
   mkc_log (target->log, MKC_LOG_TARGET, "exec-file: %s %s\n", execnm, objnm);
 
   path_build (MKC_PATH_STAGE_BIN, epath, MKC_PATH_MAX, execnm, target->mkcerr);
-  scopedvar_set_str (scopedvar, SV_T_PATHS, execnm, epath, MKC_VCTXT_MKC);
+  sv_set_str (sv, SV_T_PATHS, execnm, epath, MKC_VCTXT_MKC);
   fts = fileop_modtime (epath);
-  scopedvar_set_timestamp (scopedvar, SV_T_TIMESTAMP, epath, fts, MKC_VCTXT_MKC);
-  scopedvar_set_integer (scopedvar, SV_T_BUILD, epath, TGT_T_EXEC, MKC_VCTXT_MKC);
+  sv_set_timestamp (sv, SV_T_TIMESTAMP, epath, fts, MKC_VCTXT_MKC);
+  sv_set_integer (sv, SV_T_BUILD, epath, TGT_T_EXEC, MKC_VCTXT_MKC);
 
   path_build (MKC_PATH_MKCF_OBJECTS, opath, MKC_PATH_MAX, objnm, target->mkcerr);
-  scopedvar_set_str (scopedvar, SV_T_PATHS, objnm, opath, MKC_VCTXT_MKC);
+  sv_set_str (sv, SV_T_PATHS, objnm, opath, MKC_VCTXT_MKC);
   fts = fileop_modtime (opath);
-  scopedvar_set_timestamp (scopedvar, SV_T_TIMESTAMP, opath, fts, MKC_VCTXT_MKC);
-  scopedvar_set_integer (scopedvar, SV_T_BUILD, opath, TGT_T_OBJECT, MKC_VCTXT_MKC);
+  sv_set_timestamp (sv, SV_T_TIMESTAMP, opath, fts, MKC_VCTXT_MKC);
+  sv_set_integer (sv, SV_T_BUILD, opath, TGT_T_OBJECT, MKC_VCTXT_MKC);
 
   mkc_log (target->log, MKC_LOG_TARGET, "  %s\n", objnm);
   if (changed) {
-    scopedvar_append_str_list (scopedvar, SV_T_DEPENDENCY,
+    sv_append_str_list (sv, SV_T_DEPENDENCY,
         epath, opath, MKC_VCTXT_MKC);
   }
 
@@ -644,8 +647,8 @@ target_object_source (target_t *target, const char *objnm,
     return;
   }
 
-  value = scopedvar_get_value (target->scopedvar, SV_T_PATHS, objnm);
-  scopedvar_value_get_str (target->scopedvar, value, opath, MKC_PATH_MAX);
+  value = sv_get_value (target->sv, SV_T_PATHS, objnm);
+  sv_value_get_str (target->sv, value, opath, MKC_PATH_MAX);
 
   mkc_log (target->log, MKC_LOG_TARGET, "object-file: %s %s\n", objnm, srcname);
 
@@ -658,7 +661,7 @@ target_object_source (target_t *target, const char *objnm,
     chararr_free (cflags);
   }
 
-  valdeplist = scopedvar_get_value (target->scopedvar, SV_T_DEPENDENCY, opath);
+  valdeplist = sv_get_value (target->sv, SV_T_DEPENDENCY, opath);
   if (valdeplist == NULL) {
     mkc_error_set (target->mkcerr, MKC_ERR_FATAL_ERROR, 0, NULL);
     mkc_log (target->log, MKC_LOG_ERROR, "ERR: %s dependency list not found\n", opath);
@@ -673,13 +676,13 @@ target_object_source (target_t *target, const char *objnm,
     return;
   }
 
-  scopedvar_set_integer (target->scopedvar, SV_T_BUILD, srcname, TGT_T_SOURCE, MKC_VCTXT_MKC);
+  sv_set_integer (target->sv, SV_T_BUILD, srcname, TGT_T_SOURCE, MKC_VCTXT_MKC);
 
   value_iter_start (valdeplist, &diteridx);
   while ((didx = value_iter_next (valdeplist, &tvalue, &diteridx)) != MKC_ITER_FINISH) {
     char        dep [MKC_VNAME_MAX];
 
-    scopedvar_value_get_str (target->scopedvar, &tvalue, dep, sizeof (dep));
+    sv_value_get_str (target->sv, &tvalue, dep, sizeof (dep));
     target_process_timestamp (target, path, MKC_PATH_MAX, dep);
   }
 
@@ -728,6 +731,8 @@ target_build (target_t *target, mkc_list_t *blist)
     return;
   }
 
+// ### need to set the target profile in the hierarchy
+
   cflags = target_get_flags (target, MKC_C_CFLAGS, NULL);
   ldflags = target_get_flags (target, MKC_C_LDFLAGS, NULL);
   libs = target_get_flags (target, MKC_C_LIBS, NULL);
@@ -747,12 +752,12 @@ target_build (target_t *target, mkc_list_t *blist)
       break;
     }
 
-    value = scopedvar_get_value (target->scopedvar, SV_T_BUILD, builditem);
+    value = sv_get_value (target->sv, SV_T_BUILD, builditem);
     if (value == NULL) {
       continue;
     }
 
-    tgttype = scopedvar_value_get_integer (target->scopedvar, value);
+    tgttype = sv_value_get_integer (target->sv, value);
     switch (tgttype) {
       case TGT_T_EXEC: {
         target_create_stage_bin (target);
@@ -788,7 +793,7 @@ target_build (target_t *target, mkc_list_t *blist)
       mkc_message (MKC_V_BASIC, "-- %s: %s\n", buildtag, builditem);
     }
 
-    valdeplist = scopedvar_get_value (target->scopedvar, SV_T_DEPENDENCY, builditem);
+    valdeplist = sv_get_value (target->sv, SV_T_DEPENDENCY, builditem);
     value_iter_start (valdeplist, &diteridx);
     while ((didx = value_iter_next (valdeplist, &tvalue, &diteridx)) != MKC_ITER_FINISH) {
       int       ttgttype;
@@ -797,14 +802,14 @@ target_build (target_t *target, mkc_list_t *blist)
         break;
       }
 
-      scopedvar_value_get_str (target->scopedvar, &tvalue, dep, MKC_PATH_MAX);
-      value = scopedvar_get_value (target->scopedvar, SV_T_BUILD, dep);
+      sv_value_get_str (target->sv, &tvalue, dep, MKC_PATH_MAX);
+      value = sv_get_value (target->sv, SV_T_BUILD, dep);
 
       if (value == NULL) {
         continue;
       }
 
-      ttgttype = scopedvar_value_get_integer (target->scopedvar, value);
+      ttgttype = sv_value_get_integer (target->sv, value);
       if (tgttype == TGT_T_EXEC && ttgttype == TGT_T_OBJECT) {
         char    *tmp;
 
@@ -830,7 +835,7 @@ target_build (target_t *target, mkc_list_t *blist)
       }
 
       tts = fileop_modtime (builditem);
-      scopedvar_set_timestamp (target->scopedvar, SV_T_TIMESTAMP, builditem, tts, MKC_VCTXT_MKC);
+      sv_set_timestamp (target->sv, SV_T_TIMESTAMP, builditem, tts, MKC_VCTXT_MKC);
     }
   }
 
@@ -869,22 +874,22 @@ target_process_timestamp (target_t *target,
   value_t     *value;
   int64_t     ts = 0;
 
-  if (scopedvar_is_defined (target->scopedvar, SV_T_TIMESTAMP, filename)) {
+  if (sv_is_defined (target->sv, SV_T_TIMESTAMP, filename)) {
     return;
   }
 
   stpecpy (path, path + psz, filename);
   if (*path != '/') {
-    value = scopedvar_get_value (target->scopedvar, SV_T_PATHS, filename);
+    value = sv_get_value (target->sv, SV_T_PATHS, filename);
     if (value == NULL) {
 // ### need the set of paths from cflags
     } else {
-      scopedvar_value_get_str (target->scopedvar, value, path, psz);
+      sv_value_get_str (target->sv, value, path, psz);
     }
   }
 
   ts = fileop_modtime (path);
-  scopedvar_set_timestamp (target->scopedvar, SV_T_TIMESTAMP, filename, ts, MKC_VCTXT_MKC);
+  sv_set_timestamp (target->sv, SV_T_TIMESTAMP, filename, ts, MKC_VCTXT_MKC);
 }
 
 static void
@@ -914,9 +919,9 @@ target_topo_add_items_deps (target_t *target, toposort_t *topo,
     }
 
     value = mkc_list_get_by_idx (itemlist, idx);
-    scopedvar_value_get_str (target->scopedvar, value, itemnm, MKC_PATH_MAX);
+    sv_value_get_str (target->sv, value, itemnm, MKC_PATH_MAX);
 
-    tvalue = scopedvar_get_value (target->scopedvar, SV_T_PATHS, itemnm);
+    tvalue = sv_get_value (target->sv, SV_T_PATHS, itemnm);
     if (tvalue == NULL) {
       tvalue = value;
     }
@@ -934,19 +939,19 @@ target_topo_add_items_deps (target_t *target, toposort_t *topo,
     }
 
     value = mkc_list_get_by_idx (ilist, idx);
-    scopedvar_value_get_str (target->scopedvar, value, itemnm, MKC_PATH_MAX);
+    sv_value_get_str (target->sv, value, itemnm, MKC_PATH_MAX);
 
-    valdeplist = scopedvar_get_value (target->scopedvar, SV_T_DEPENDENCY, itemnm);
+    valdeplist = sv_get_value (target->sv, SV_T_DEPENDENCY, itemnm);
     if (valdeplist == NULL) {
       /* items without dependency lists are include files */
       continue;
     }
 
-    value = scopedvar_get_value (target->scopedvar, SV_T_BUILD, itemnm);
+    value = sv_get_value (target->sv, SV_T_BUILD, itemnm);
     if (value != NULL) {
       int             tgttype;
 
-      tgttype = scopedvar_value_get_integer (target->scopedvar, value);
+      tgttype = sv_value_get_integer (target->sv, value);
       if (tgttype == TGT_T_INCLUDE) {
         continue;
       }
@@ -954,7 +959,7 @@ target_topo_add_items_deps (target_t *target, toposort_t *topo,
 
     target_topo_add_items_deps (target, topo, valdeplist->list);
 
-    if (! scopedvar_is_defined (target->scopedvar, SV_T_DEPENDENCY, itemnm)) {
+    if (! sv_is_defined (target->sv, SV_T_DEPENDENCY, itemnm)) {
       continue;
     }
 

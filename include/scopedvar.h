@@ -49,7 +49,7 @@ typedef enum {
 typedef enum {
   SV_NO_ESCAPE,
   SV_SUB_ESCAPE,
-} scopedvar_escape_t;
+} sv_escape_t;
 
 typedef enum {
   SV_ITER_HIERARCHY   = 0x0001,
@@ -59,54 +59,54 @@ typedef enum {
 typedef struct scopedvar_t scopedvar_t;
 typedef struct sv_iter_t sv_iter_t;
 
-scopedvar_t * scopedvar_init (mkc_log_t *log, mkc_error_t *mkcerr, mkc_option_t *mkcoptions);
-void scopedvar_free (scopedvar_t *scopedvar);
-void scopedvar_reset (scopedvar_t *scopedvar, mkc_option_t *mkcoptions);
-void scopedvar_push (scopedvar_t *scopedvar, sv_type_t svtype, const char *name);
-void scopedvar_pop (scopedvar_t *scopedvar);
-void scopedvar_set_default_compiler (scopedvar_t *scopedvar, mkc_compiler_t compiler);
-void scopedvar_set_current_compiler (scopedvar_t *scopedvar, mkc_compiler_t compiler);
-void scopedvar_reset_profile (scopedvar_t *scopedvar);
-void scopedvar_set_fromcache (scopedvar_t *scopedvar, bool flag);
+scopedvar_t * sv_init (mkc_log_t *log, mkc_error_t *mkcerr, mkc_option_t *mkcoptions);
+void sv_free (scopedvar_t *scopedvar);
+void sv_reset (scopedvar_t *scopedvar, mkc_option_t *mkcoptions);
+void sv_push (scopedvar_t *scopedvar, sv_type_t svtype, const char *name);
+void sv_pop (scopedvar_t *scopedvar);
+void sv_set_default_compiler (scopedvar_t *scopedvar, mkc_compiler_t compiler);
+void sv_set_current_compiler (scopedvar_t *scopedvar, mkc_compiler_t compiler);
+void sv_reset_profile (scopedvar_t *scopedvar);
+void sv_set_fromcache (scopedvar_t *scopedvar, bool flag);
 
-void scopedvar_incr_local_id (scopedvar_t *scopedvar);
-void scopedvar_decr_local_id (scopedvar_t *scopedvar);
-void scopedvar_set_active_profile (scopedvar_t *scopedvar, const char *name);
-const char * scopedvar_get_current_profile (scopedvar_t *scopedvar);
+void sv_incr_local_id (scopedvar_t *scopedvar);
+void sv_decr_local_id (scopedvar_t *scopedvar);
+void sv_set_active_profile (scopedvar_t *scopedvar, const char *name);
+const char * sv_get_current_profile (scopedvar_t *scopedvar);
 
-sv_iter_t *scopedvar_iter_start (scopedvar_t *scopedvar, sv_iter_flag_t flags);
-const char * scopedvar_iter_next (scopedvar_t *scopedvar, sv_iter_t *sviter);
-void scopedvar_iter_finish (sv_iter_t *sviter);
-sv_type_t scopedvar_iter_get_type (scopedvar_t *scopedvar, sv_iter_t *sviter);
-mkc_compiler_t scopedvar_iter_get_compiler (scopedvar_t *scopedvar, sv_iter_t *sviter);
-void scopedvar_var_iter_start (scopedvar_t *scopedvar, sv_iter_t *sviter, mkc_varidx_t *variteridx);
-mkc_varidx_t scopedvar_var_iter_next (scopedvar_t *scopedvar, sv_iter_t *sviter, mkc_varidx_t *variteridx);
-const char *scopedvar_var_iter_get_name (scopedvar_t *scopedvar, sv_iter_t *sviter, mkc_varidx_t vidx);
-value_t *scopedvar_var_iter_get_value (scopedvar_t *scopedvar, sv_iter_t *sviter, mkc_varidx_t vidx);
+sv_iter_t *sv_iter_start (scopedvar_t *scopedvar, sv_iter_flag_t flags);
+const char * sv_iter_next (scopedvar_t *scopedvar, sv_iter_t *sviter);
+void sv_iter_finish (sv_iter_t *sviter);
+sv_type_t sv_iter_get_type (scopedvar_t *scopedvar, sv_iter_t *sviter);
+mkc_compiler_t sv_iter_get_compiler (scopedvar_t *scopedvar, sv_iter_t *sviter);
+void sv_var_iter_start (scopedvar_t *scopedvar, sv_iter_t *sviter, mkc_varidx_t *variteridx);
+mkc_varidx_t sv_var_iter_next (scopedvar_t *scopedvar, sv_iter_t *sviter, mkc_varidx_t *variteridx);
+const char *sv_var_iter_get_name (scopedvar_t *scopedvar, sv_iter_t *sviter, mkc_varidx_t vidx);
+value_t *sv_var_iter_get_value (scopedvar_t *scopedvar, sv_iter_t *sviter, mkc_varidx_t vidx);
 
-int64_t scopedvar_get_timestamp (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname);
-value_t * scopedvar_get_value (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname);
-int32_t scopedvar_value_get_integer (scopedvar_t *scopedvar, value_t *value);
-int64_t scopedvar_value_get_timestamp (scopedvar_t *scopedvar, value_t *value);
-void scopedvar_value_get_str (scopedvar_t *scopedvar, value_t *value, char *buff, size_t sz);
-value_t * scopedvar_value_get_value (scopedvar_t *scopedvar, value_t *value);
-value_t * scopedvar_value_get_list_value (scopedvar_t *scopedvar, value_t *value);
+int64_t sv_get_timestamp (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname);
+value_t * sv_get_value (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname);
+int32_t sv_value_get_integer (scopedvar_t *scopedvar, value_t *value);
+int64_t sv_value_get_timestamp (scopedvar_t *scopedvar, value_t *value);
+void sv_value_get_str (scopedvar_t *scopedvar, value_t *value, char *buff, size_t sz);
+value_t * sv_value_get_value (scopedvar_t *scopedvar, value_t *value);
+value_t * sv_value_get_list_value (scopedvar_t *scopedvar, value_t *value);
 
-void scopedvar_set_context (scopedvar_t *scopedvar, const char *vname, value_ctxt_t vctxt);
-int scopedvar_set (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, value_t *value, value_ctxt_t vctxt);
-int scopedvar_set_integer (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, int32_t ival, value_ctxt_t vctxt);
-int scopedvar_set_timestamp (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, int64_t tmval, value_ctxt_t vctxt);
-int scopedvar_set_str (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, const char *str, value_ctxt_t vctxt);
-int scopedvar_set_list (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, mkc_list_t *list, value_ctxt_t vctxt);
-int scopedvar_set_list_from_str (scopedvar_t *scopedvar, const char *vname, char *str, value_ctxt_t vctxt);
-int scopedvar_append_str_list (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, const char *data, value_ctxt_t vctxt);
+void sv_set_context (scopedvar_t *scopedvar, const char *vname, value_ctxt_t vctxt);
+int sv_set (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, value_t *value, value_ctxt_t vctxt);
+int sv_set_integer (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, int32_t ival, value_ctxt_t vctxt);
+int sv_set_timestamp (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, int64_t tmval, value_ctxt_t vctxt);
+int sv_set_str (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, const char *str, value_ctxt_t vctxt);
+int sv_set_list (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, mkc_list_t *list, value_ctxt_t vctxt);
+int sv_set_list_from_str (scopedvar_t *scopedvar, const char *vname, char *str, value_ctxt_t vctxt);
+int sv_append_str_list (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, const char *data, value_ctxt_t vctxt);
 
-void scopedvar_delete (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname);
+void sv_delete (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname);
 
-bool scopedvar_is_defined (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname);
-bool scopedvar_var_is_list (scopedvar_t *scopedvar, const char *vname);
+bool sv_is_defined (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname);
+bool sv_var_is_list (scopedvar_t *scopedvar, const char *vname);
 void scopedvar_temp_value_free (void *tvalue);
-char * scopedvar_substitute (scopedvar_t *scopedvar, const char *data, scopedvar_escape_t subescapeflag, int depth);
+char * sv_substitute (scopedvar_t *scopedvar, const char *data, sv_escape_t subescapeflag, int depth);
 
 const char * scopedvar_type_disp (sv_type_t svtype);
 

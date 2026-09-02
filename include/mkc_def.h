@@ -51,7 +51,7 @@ typedef enum {
   MKC_SYS_MAX,
 } mkc_system_type_t;
 
-/* update the variable names in mkc_process.c */
+/* update the variable names in process.c */
 typedef enum {
   MKC_SYS_ID_ALPINE,          // linux
   MKC_SYS_ID_ARCH,            // linux

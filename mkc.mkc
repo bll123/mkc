@@ -120,10 +120,10 @@ mark _have_regex enable-output;
 
 # configure
 
-#configure {
-#  method auto;
-#  define_zero;
-#}
+configure {
+  method auto;
+  define_zero;
+}
 
 if (bootstrap) {
   # any configuration after this point is not needed

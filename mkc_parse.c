@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#include "mkc_ast.h"
+#include "ast.h"
 #include "mkc_error.h"
 #include "fileop.h"
 #include "mkc_lex.h"
@@ -21,7 +21,7 @@ typedef struct mkc_parse_t {
   /* temporary for string scanning */
   YY_BUFFER_STATE     obuffer;
   mkcyyscan_t         scanner;
-  mkc_astmain_t       *astmain;
+  astmain_t       *astmain;
   mkc_error_t         *mkcerr;
   mkc_log_t           *log;
   char                *filename;
@@ -29,7 +29,7 @@ typedef struct mkc_parse_t {
 
 MKC_NODISCARD
 mkc_parse_t *
-mkc_parse_init (mkc_astmain_t *astmain, mkc_log_t *log,
+mkc_parse_init (astmain_t *astmain, mkc_log_t *log,
     mkc_error_t *mkcerr)
 {
   mkc_parse_t   *parse;

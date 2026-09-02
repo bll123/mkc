@@ -34,14 +34,15 @@ mkc_flag_is_libloc (mkc_compiler_id_t compid, const char *str)
   return false;
 }
 
-/* only cleans the obj/ and stage/ directories */
+/* only cleans the obj/<name> and stage/<name> directories */
 void
-mkc_clean_mkcfiles (char *tbuff, size_t tsz, mkc_error_t *mkcerr)
+mkc_clean_mkcfiles (const char *project, char *tbuff, size_t tsz,
+    mkc_error_t *mkcerr)
 {
   /* clean out the obj/ and stage/ directory trees */
-  path_build (MKC_PATH_MKCF_OBJECTS, tbuff, tsz, NULL, mkcerr);
+  path_build (MKC_PATH_MKCF_OBJECTS, tbuff, tsz, project, mkcerr);
   dirop_delete (tbuff, DIROP_ALL, mkcerr);
-  path_build (MKC_PATH_MKCF_STAGE, tbuff, tsz, NULL, mkcerr);
+  path_build (MKC_PATH_MKCF_STAGE, tbuff, tsz, project, mkcerr);
   dirop_delete (tbuff, DIROP_ALL, mkcerr);
 }
 

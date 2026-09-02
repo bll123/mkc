@@ -21,7 +21,7 @@
 # include <windows.h>
 #endif
 
-#include "mkc_ast.h"
+#include "ast.h"
 #include "mkc_const.h"
 #include "mkc_def.h"
 #include "dirop.h"
@@ -42,7 +42,7 @@ typedef struct {
 
 static void copyargs (argcopy_t *argcopy, int argc, char *argv [], mkc_error_t *mkcerr);
 static void cleanargs (argcopy_t *argcopy);
-static mkc_err_code_t mkc_cleanup (mkc_astmain_t *astmain, argcopy_t *argcopy, mkc_log_t *log, mkc_option_t *mkcoptions, mkc_error_t *error);
+static mkc_err_code_t mkc_cleanup (astmain_t *astmain, argcopy_t *argcopy, mkc_log_t *log, mkc_option_t *mkcoptions, mkc_error_t *error);
 void mkc_main_set_home (void);
 void mkc_main_set_prefix (mkc_error_t *mkcerr);
 void mkc_main_set_exec_path (argcopy_t *argcopy);
@@ -55,7 +55,7 @@ main (int argc, char *argv [])
   mkc_option_t    mkcoptions;
   mkc_parse_t     * parse = NULL;
   FILE            * fh = NULL;
-  mkc_astmain_t   * astmain = NULL;
+  astmain_t   * astmain = NULL;
   mkc_error_t     * mkcerr = NULL;
   mkc_log_t       * log = NULL;
   char            tbuff [MKC_PATH_MAX];
@@ -207,7 +207,7 @@ main (int argc, char *argv [])
     return rc;
   }
 
-  astmain = mkc_ast_init (log, &mkcoptions, mkcerr);
+  astmain = ast_init (log, &mkcoptions, mkcerr);
   if (mkc_error_chk_err (mkcerr)) {
     rc = mkc_cleanup (astmain, &argcopy, log, &mkcoptions, mkcerr);
     return rc;
@@ -257,7 +257,7 @@ main (int argc, char *argv [])
   mstimestart (&proctm);
 
   if (rc == 0) {
-    rc = mkc_ast_start (astmain);
+    rc = ast_start (astmain);
   } else {
     mkc_error_set (mkcerr, MKC_ERR_PARSE_FAILURE, 0, NULL);
   }
@@ -328,12 +328,12 @@ cleanargs (argcopy_t *argcopy)
 }
 
 static mkc_err_code_t
-mkc_cleanup (mkc_astmain_t *astmain, argcopy_t *argcopy,
+mkc_cleanup (astmain_t *astmain, argcopy_t *argcopy,
     mkc_log_t *log, mkc_option_t *mkcoptions, mkc_error_t *mkcerr)
 {
   mkc_err_code_t  rc;
 
-  mkc_ast_free (astmain);
+  ast_free (astmain);
   cleanargs (argcopy);
   mkc_log_free (log);
   datafree (mkcoptions->currprofile);

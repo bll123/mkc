@@ -21,7 +21,7 @@
 #include "strutil.h"
 
 typedef struct compile_t {
-  scopedvar_t       * scopedvar;
+  scopedvar_t       * sv;
   mkc_attribute_t   * attr;
   mkc_option_t      * mkcoptions;
   mkc_error_t       * mkcerr;
@@ -52,7 +52,7 @@ static bool compile_append_chararr (compile_t *compile, chararr_t *flags);
 static void compile_display_output (compile_t *compile, const char *rbuff, size_t retsz, const char *tag, int rc);
 
 compile_t *
-compile_init (scopedvar_t *scopedvar,
+compile_init (scopedvar_t *sv,
     mkc_attribute_t *attr, mkc_log_t *log,
     mkc_option_t *mkcoptions, mkc_error_t *mkcerr)
 {
@@ -64,7 +64,7 @@ compile_init (scopedvar_t *scopedvar,
     return NULL;
   }
 
-  compile->scopedvar = scopedvar;
+  compile->sv = sv;
   compile->attr = attr;
   compile->log = log;
   compile->mkcoptions = mkcoptions;
@@ -232,7 +232,7 @@ compile_create_header_var (compile_t *compile)
   if (hdrtxt == NULL) {
     tmp = "";
   }
-  scopedvar_set_str (compile->scopedvar, SV_T_LOCAL, MKC_C_TEST_HDR_LIST, tmp, MKC_VCTXT_TEMP);
+  sv_set_str (compile->sv, SV_T_LOCAL, MKC_C_TEST_HDR_LIST, tmp, MKC_VCTXT_TEMP);
 
   free (hdrtxt);
 }
@@ -245,8 +245,8 @@ compile_get_compstr (compile_t *compile, mkc_compiler_t compiler,
   value_t       *value;
 
   envstr = compiler_get_env_name (compiler);
-  value = scopedvar_get_value (compile->scopedvar, SV_T_INTERNAL, envstr);
-  scopedvar_value_get_str (compile->scopedvar, value, buff, sz);
+  value = sv_get_value (compile->sv, SV_T_INTERNAL, envstr);
+  sv_value_get_str (compile->sv, value, buff, sz);
   return buff;
 }
 
@@ -276,7 +276,7 @@ compile_file_sub_copy (compile_t *compile,
     free (fbuff);
     return;
   }
-  ndata = scopedvar_substitute (compile->scopedvar, data, SV_NO_ESCAPE, 0);
+  ndata = sv_substitute (compile->sv, data, SV_NO_ESCAPE, 0);
   mkc_log (compile->log, MKC_LOG_GENERAL, "--- code:\n");
   mkc_log (compile->log, MKC_LOG_GENERAL, "%s", ndata);
   mkc_log (compile->log, MKC_LOG_GENERAL, "---\n");
@@ -350,7 +350,7 @@ compile_exec (compile_t *compile, ct_type_t ctype,
     rc = (*func) (compile, compiler, fname, rbuff, rsz, ctype);
 
     if (rc == 0 && alt->name != NULL) {
-      scopedvar_set_integer (compile->scopedvar, SV_T_SEARCH, alt->name,
+      sv_set_integer (compile->sv, SV_T_SEARCH, alt->name,
           rc == 0 ? true : false, MKC_VCTXT_CHECK);
     }
 
