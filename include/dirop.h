@@ -6,7 +6,7 @@
 #define INC_DIROP_H
 
 #include "mkc_error.h"
-#include "mkc_list.h"
+#include "list.h"
 #include "mkc_nodiscard.h"
 
 #if defined (__cplusplus) || defined (c_plusplus)
@@ -33,8 +33,8 @@ MKC_NODISCARD char * dirop_iterate (mkc_dirhandle_t *dirh, mkc_error_t *mkcerr);
 void dirop_close (mkc_dirhandle_t *dirh);
 int dirop_make (const char *dirname, mkc_error_t *mkcerr);
 int dirop_delete (const char *dir, int flags, mkc_error_t *mkcerr);
-MKC_NODISCARD mkc_list_t * dirop_basic_list (const char *dirname, mkc_error_t *mkcerr);
-MKC_NODISCARD mkc_list_t * dirop_list_recursive (const char *dirname, int flags, mkc_error_t *mkcerr);
+MKC_NODISCARD list_t * dirop_basic_list (const char *dirname, mkc_error_t *mkcerr);
+MKC_NODISCARD list_t * dirop_list_recursive (const char *dirname, int flags, mkc_error_t *mkcerr);
 
 #if defined (__cplusplus) || defined (c_plusplus)
 } /* extern C */

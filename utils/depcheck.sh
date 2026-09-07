@@ -33,6 +33,9 @@ for fn in *.y *.l *.c *.mk include/*.h *.mkc \
     tests/data/*.mkc tests/data/*.txt tests/data/*.h \
     utils/*.mkc templates/*.c; do
   case $fn in
+    hw.c|tt.mkc)
+      continue;
+      ;;
     *000-empty.mkc)
       continue;
       ;;

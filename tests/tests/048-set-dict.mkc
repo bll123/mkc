@@ -1,0 +1,9 @@
+# Copyright 2026 Brad Lanam Pleasant Hill CA
+
+set e [[ ]];
+set a [[ a 1 b 2 c 3 ]];
+set b [[ d 'a' e 'b' f 'c' ]];
+set c ${a};
+set d ${b};
+
+mkcdebug printvar test;

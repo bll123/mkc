@@ -24,7 +24,7 @@
 #  include "mkc_def.h"
 #  include "mkc_error.h"
 #  include "fileop.h"
-#  include "mkc_list.h"
+#  include "list.h"
 #  include "parse.h"
 
   typedef void *mkcyyscan_t;
@@ -50,9 +50,10 @@
 }
 
 %union {
-  char          *sval;
-  astnode_t *astnode;
-  astnode_t *astlist;
+  char      * sval;
+  astnode_t * astnode;
+  astnode_t * astlist;
+  astnode_t * astdict;
 }
 
 %lex-param {void *scanner}
@@ -60,6 +61,8 @@
 
 %start mkc
 
+%token T_DOUBLE_LEFT_BRACKET  "[["
+%token T_DOUBLE_RIGHT_BRACKET "]]"
 %token T_LEFT_BRACE           "{"
 %token T_LEFT_BRACKET         "["
 %token T_LEFT_PAREN           "("
@@ -67,6 +70,7 @@
 %token T_OP_DIVIDE            "/"
 %token T_OP_FILE_EXISTS       "file_exists"
 %token T_OP_IS_DEFINED        "is_defined"
+%token T_OP_IS_DICT           "is_dict"
 %token T_OP_IS_DIRECTORY      "is_directory"
 %token T_OP_IS_LIST           "is_list"
 %token T_OP_MINUS             "-"
@@ -202,11 +206,16 @@
 /* it is used where a name without any quotes can be used */
 %type <astnode> varany
 
-/* a list is a list of values encludes in brackets: [ val ... ] */
+/* a list is a list of values enclosed in brackets: [ val ... ] */
 %type <astlist> list
+/* a dict is a list of paired values enclosed in double brackets: */
+/* [[ name val ... ]] */
+%type <astdict> dict
 
 /* valuelist: a list of varvalues */
 %type <astnode> valuelist
+/* pairedvaluelist: a list of varname/varvalues */
+%type <astnode> pairedvaluelist
 /* a pathname may be a path, a string or ${variable} */
 %type <astnode> pathname pathlist
 %type <astnode> expr
@@ -244,7 +253,7 @@
 %left T_OP_MINUS T_OP_PLUS
 %left T_OP_MULTIPLY T_OP_DIVIDE T_OP_MODULO
 %precedence UNARY
-%nonassoc T_OP_FILE_EXISTS T_OP_IS_DEFINED T_OP_IS_DIRECTORY T_OP_IS_LIST
+%nonassoc T_OP_FILE_EXISTS T_OP_IS_DEFINED T_OP_IS_DICT T_OP_IS_DIRECTORY T_OP_IS_LIST
 
 %%
 mkc:
@@ -1259,6 +1268,11 @@ expr[v]:
       $v = ast_mk_unary_op (ast, $a, MKC_T_OP_IS_DEFINED,
           yylloc.first_line, yylloc.first_column);
     }
+  | T_OP_IS_DICT T_LEFT_PAREN varname[a] T_RIGHT_PAREN
+    {
+      $v = ast_mk_unary_op (ast, $a, MKC_T_OP_IS_DICT,
+          yylloc.first_line, yylloc.first_column);
+    }
   | T_OP_IS_DIRECTORY T_LEFT_PAREN pathname[a] T_RIGHT_PAREN
     {
       $v = ast_mk_unary_op (ast, $a, MKC_T_OP_IS_DIRECTORY,
@@ -1273,6 +1287,10 @@ expr[v]:
 
 varany[v]:
     expr[a] %prec VALUE
+    {
+      $v = $a;
+    }
+  | dict[a]
     {
       $v = $a;
     }
@@ -1291,11 +1309,27 @@ varvalue[v]:
     {
       $v = $a;
     }
+  | dict[a]
+    {
+      $v = $a;
+    }
   | list[a]
     {
       $v = $a;
     }
   | range[a]
+    {
+      $v = $a;
+    }
+  ;
+
+dict[v]:
+    T_DOUBLE_LEFT_BRACKET T_DOUBLE_RIGHT_BRACKET
+    {
+      $v = ast_mk_value_dict (ast, NULL, NULL, NULL,
+          yylloc.first_line, yylloc.first_column);
+    }
+  | T_DOUBLE_LEFT_BRACKET pairedvaluelist[a] T_DOUBLE_RIGHT_BRACKET
     {
       $v = $a;
     }
@@ -1337,6 +1371,19 @@ valuelist[v]:
   | valuelist[l] varvalue[a]
     {
       $v = ast_mk_value_list (ast, $l, $a,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+pairedvaluelist[v]:
+    varname[a] varvalue[b]
+    {
+      $v = ast_mk_value_dict (ast, NULL, $a, $b,
+          yylloc.first_line, yylloc.first_column);
+    }
+  | pairedvaluelist[l] varname[a] varvalue[b]
+    {
+      $v = ast_mk_value_dict (ast, $l, $a, $b,
           yylloc.first_line, yylloc.first_column);
     }
   ;

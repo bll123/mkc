@@ -16,7 +16,7 @@
 #include "mkc_const.h"
 #include "mkc_def.h"
 #include "mkc_error.h"
-#include "mkc_list.h"   // for the iterator enums
+#include "list.h"   // for the iterator enums
 #include "mkc_log.h"
 #include "mkc_var.h"
 #include "scopedvar.h"
@@ -67,11 +67,14 @@ typedef struct sv_iter_t {
 static char const * const svtypenames [] = {
   [SV_T_ACTIVE] = "active",
   [SV_T_BUILD] = "builditems",
+  [SV_T_COMPFLAGS] = "target_compiler_flags",
   [SV_T_CURR_PROF_COMPILER] = "curr_prof_compiler",
   [SV_T_CURR_PROF] = "curr_prof",
   [SV_T_DEPENDENCY] = "dependency",
   [SV_T_DFLT_PROF] = "dflt_prof",
   [SV_T_INTERNAL] = "internal",
+  [SV_T_LIBS] = "target_libraries",
+  [SV_T_LINKFLAGS] = "target_link_flags",
   [SV_T_LOCAL] = "local",
   [SV_T_NOT_SET] = "not_in_use",
   [SV_T_PATHS] = "paths",
@@ -625,6 +628,11 @@ sv_value_get_integer (scopedvar_t *sv, value_t *value)
       ival = 0;
       break;
     }
+    case MKC_VT_DICT: {
+      mkc_error_set (sv->mkcerr, MKC_ERR_UNEXPECTED_VALUE_TYPE, 0, NULL);
+      ival = 0;
+      break;
+    }
     case MKC_VT_ENV_VARIABLE: {
       char    tbuff [MKC_PATH_MAX];
 
@@ -672,6 +680,7 @@ sv_value_get_timestamp (scopedvar_t *sv, value_t *value)
       break;
     }
     case MKC_VT_INTEGER:
+    case MKC_VT_DICT:
     case MKC_VT_LIST: {
       mkc_error_set (sv->mkcerr, MKC_ERR_UNEXPECTED_VALUE_TYPE, 0, NULL);
       tmval = 0;
@@ -757,6 +766,7 @@ sv_value_get_str (scopedvar_t *sv, value_t *value,
       free (tbuff);
       break;
     }
+    case MKC_VT_DICT:
     case MKC_VT_LIST: {
       mkc_error_set (sv->mkcerr, MKC_ERR_UNEXPECTED_VALUE_TYPE, 0, NULL);
       break;
@@ -829,20 +839,59 @@ sv_value_get_value (scopedvar_t *sv, value_t *value)
       nvalue = sv_get_variable_value (sv, value->sval);
       break;
     }
+    case MKC_VT_DICT: {
+      listidx_t     iteridx;
+      dict_t        *ndict;
+      dictitem_t    *ditem;
+
+      /* each value in a dict must be processed */
+
+      ndict = dict_init (sv->log, sv_temp_value_free, sizeof (value_t), sv->mkcerr);
+
+      dict_iter_start (value->dict, &iteridx);
+      while ((ditem = dict_iter_next (value->dict, &iteridx)) != NULL) {
+        const char  * name;
+        value_t     * dvalue;
+        value_t     * tmpvalue;
+
+        if (mkc_error_chk_err (sv->mkcerr)) {
+          break;
+        }
+
+        name = dict_iter_get_name (ditem);
+        dvalue = dict_iter_get_data (ditem);
+        tmpvalue = sv_value_get_value (sv, dvalue);
+        dict_set (ndict, name, tmpvalue);
+      }
+
+      tvalue = malloc (sizeof (value_t));
+      if (tvalue == NULL) {
+        mkc_error_set (sv->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+        return nvalue;
+      }
+
+      value_init (tvalue);
+      tvalue->tempallocated = true;
+      tvalue->vtype = MKC_VT_DICT;
+      tvalue->vctxt = value->vctxt;
+      tvalue->dict = ndict;
+      nvalue = tvalue;
+      break;
+    }
     case MKC_VT_LIST: {
-      mkc_listidx_t     iteridx;
-      mkc_listidx_t     lidx;
-      mkc_list_t        *nlist;
+      listidx_t     iteridx;
+      listidx_t     lidx;
+      list_t        *nlist;
 
       /* each value in a list must be processed, as the value in the list */
       /* may be an env-variable or a quoted string or a list */
       /* the list may not need substitution, but just create a new list */
       /* in all cases */
 
-      nlist = mkc_list_init (MKC_LIST_UNSORTED, sv_temp_value_free, NULL, sv->mkcerr);
+      nlist = list_init (MKC_LIST_UNSORTED, sv_temp_value_free, NULL, sv->mkcerr);
 
-      mkc_list_iter_start (value->list, &iteridx);
-      while ((lidx = mkc_list_iter_next (value->list, &iteridx)) != MKC_ITER_FINISH) {
+      list_iter_start (value->list, &iteridx);
+      while ((lidx = list_iter_next (value->list, &iteridx)) != MKC_ITER_FINISH) {
         value_t   *lvalue;
         value_t   *tmpvalue;
 
@@ -850,12 +899,9 @@ sv_value_get_value (scopedvar_t *sv, value_t *value)
           break;
         }
 
-        lvalue = mkc_list_get_by_idx (value->list, lidx);
-        tmpvalue = lvalue;
-        if (lvalue->vtype != MKC_VT_LIST) {
-          tmpvalue = sv_value_get_value (sv, lvalue);
-        }
-        mkc_list_set (nlist, tmpvalue, sizeof (value_t));
+        lvalue = list_get_by_idx (value->list, lidx);
+        tmpvalue = sv_value_get_value (sv, lvalue);
+        list_set (nlist, tmpvalue, sizeof (value_t));
       }
 
       tvalue = malloc (sizeof (value_t));
@@ -901,6 +947,7 @@ sv_value_get_list_value (scopedvar_t *sv, value_t *value)
       mkc_error_set (sv->mkcerr, MKC_ERR_UNEXPECTED_VALUE_TYPE, 0, NULL);
       break;
     }
+    case MKC_VT_DICT:
     case MKC_VT_LIST: {
       rvalue = value;
       break;
@@ -911,7 +958,8 @@ sv_value_get_list_value (scopedvar_t *sv, value_t *value)
     }
     case MKC_VT_VARIABLE: {
       value = sv_get_variable_value (sv, value->sval);
-      if (value->vtype == MKC_VT_LIST) {
+      if (value->vtype == MKC_VT_DICT ||
+          value->vtype == MKC_VT_LIST) {
         rvalue = value;
       } else {
         mkc_error_set (sv->mkcerr, MKC_ERR_UNEXPECTED_VALUE_TYPE, 0, NULL);
@@ -1015,7 +1063,7 @@ sv_set_str (scopedvar_t *sv, sv_type_t svtype,
 
 int
 sv_set_list (scopedvar_t *sv, sv_type_t svtype,
-    const char *vname, mkc_list_t *list, value_ctxt_t vctxt)
+    const char *vname, list_t *list, value_ctxt_t vctxt)
 {
   int       rc = MKC_ERR_FAILURE;
   value_t   value;
@@ -1059,16 +1107,16 @@ sv_append_str_list (scopedvar_t *sv, sv_type_t svtype,
     const char *vname, const char *data, value_ctxt_t vctxt)
 {
   value_t       *listval;
-  mkc_list_t    *list;
+  list_t    *list;
   value_t       tvalue;
 
 
   listval = sv_get_value (sv, svtype, vname);
   if (listval == NULL) {
-    list = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, sv->mkcerr);
+    list = list_init (MKC_LIST_UNSORTED, value_free, NULL, sv->mkcerr);
     sv_set_list (sv, svtype, vname, list, vctxt);
     listval = sv_get_value (sv, svtype, vname);
-    mkc_list_free (list);
+    list_free (list);
   }
   list = listval->list;
 
@@ -1076,7 +1124,7 @@ sv_append_str_list (scopedvar_t *sv, sv_type_t svtype,
     value_init (&tvalue);
     tvalue.vtype = MKC_VT_STRING;
     tvalue.sval = strdup (data);
-    mkc_list_set (list, &tvalue, sizeof (value_t));
+    list_set (list, &tvalue, sizeof (value_t));
   }
 
   return MKC_OK;
@@ -1117,6 +1165,27 @@ sv_is_defined (scopedvar_t *sv, sv_type_t svtype, const char *vname)
     return false;
   }
   return true;
+}
+
+bool
+sv_var_is_dict (scopedvar_t *sv, const char *vname)
+{
+  value_t     *value;
+  bool        rc = false;
+
+  if (sv == NULL) {
+    return rc;
+  }
+
+  value = sv_get_value (sv, SV_T_SEARCH, vname);
+  if (value == NULL) {
+    return rc;
+  }
+
+  if (value->vtype == MKC_VT_DICT) {
+    rc = true;
+  }
+  return rc;
 }
 
 bool
@@ -1715,7 +1784,10 @@ sv_init_vars (scopedvar_t *sv, mkc_option_t *mkcoptions)
 
   /* namespaces */
   sv_create (sv, SV_T_BUILD, MKC_C_PROF_NAME_BUILD, false);
+  sv_create (sv, SV_T_COMPFLAGS, MKC_C_PROF_NAME_COMPFLAGS, false);
   sv_create (sv, SV_T_DEPENDENCY, MKC_C_PROF_NAME_DEPENDENCY, false);
+  sv_create (sv, SV_T_LINKFLAGS, MKC_C_PROF_NAME_LINKFLAGS, false);
+  sv_create (sv, SV_T_LIBS, MKC_C_PROF_NAME_LIBS, false);
   sv_create (sv, SV_T_PATHS, MKC_C_PROF_NAME_PATHS, false);
   sv_create (sv, SV_T_TIMESTAMP, MKC_C_PROF_NAME_TIMESTAMP, false);
 

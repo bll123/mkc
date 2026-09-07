@@ -9,7 +9,7 @@
 
 #include "alternate.h"
 #include "mkc_compiler.h"
-#include "mkc_list.h"
+#include "list.h"
 
 #if defined (__cplusplus) || defined (c_plusplus)
 extern "C" {
@@ -28,13 +28,13 @@ typedef enum {
 } mkc_attr_type_t;
 
 typedef struct mkc_attribute_t {
-  mkc_list_t        * alternates;
+  list_t        * alternates;
   mkc_alternate_t   * curralt;
   char              * currname;
   char              * str [MKC_ATTR_MAX];
-  mkc_list_t        * pathlist;
-  mkc_list_t        * replacelist;
-  mkc_list_t        * sourcelist;
+  list_t        * pathlist;
+  list_t        * replacelist;
+  list_t        * sourcelist;
   mkc_compiler_t    currcompiler;
   mkc_compiler_id_t compid;
   int               define_zero;

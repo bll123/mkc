@@ -28,7 +28,7 @@
 #include "mkc_def.h"
 #include "dirop.h"
 #include "mkc_error.h"
-#include "mkc_list.h"
+#include "list.h"
 #include "fileop.h"
 #include "mkc_nodiscard.h"
 #include "strutil.h"
@@ -265,12 +265,12 @@ dirop_delete (const char *dirname, int flags, mkc_error_t *mkcerr)
 }
 
 MKC_NODISCARD
-mkc_list_t *
+list_t *
 dirop_basic_list (const char *dirname, mkc_error_t *mkcerr)
 {
   mkc_dirhandle_t *dh;
   char            *fname;
-  mkc_list_t      *filelist;
+  list_t      *filelist;
   char            temp [MKC_PATH_MAX];
 
   if (! fileop_is_directory (dirname)) {
@@ -278,7 +278,7 @@ dirop_basic_list (const char *dirname, mkc_error_t *mkcerr)
     return NULL;
   }
 
-  filelist = mkc_list_init (MKC_LIST_UNSORTED, mkc_list_ind_free, NULL, mkcerr);
+  filelist = list_init (MKC_LIST_UNSORTED, list_ind_free, NULL, mkcerr);
   dh = dirop_open (dirname, mkcerr);
   while ((fname = dirop_iterate (dh, mkcerr)) != NULL) {
     snprintf (temp, sizeof (temp), "%s/%s", dirname, fname);
@@ -287,7 +287,7 @@ dirop_basic_list (const char *dirname, mkc_error_t *mkcerr)
       continue;
     }
 
-    mkc_list_set (filelist, &fname, sizeof (char *));
+    list_set (filelist, &fname, sizeof (char *));
   }
   dirop_close (dh);
 
@@ -295,13 +295,13 @@ dirop_basic_list (const char *dirname, mkc_error_t *mkcerr)
 }
 
 MKC_NODISCARD
-mkc_list_t *
+list_t *
 dirop_list_recursive (const char *dirname, int flags, mkc_error_t *mkcerr)
 {
   mkc_dirhandle_t *dh;
   char            *fname;
-  mkc_list_t      *filelist;
-  mkc_list_t      *dirqueue;
+  list_t      *filelist;
+  list_t      *dirqueue;
   char            temp [MKC_PATH_MAX];
   char            *p;
   int32_t         processed = 0;
@@ -311,15 +311,15 @@ dirop_list_recursive (const char *dirname, int flags, mkc_error_t *mkcerr)
     return NULL;
   }
 
-  filelist = mkc_list_init (MKC_LIST_UNSORTED, mkc_list_ind_free, NULL, mkcerr);
-  dirqueue = mkc_list_init (MKC_LIST_UNSORTED, mkc_list_ind_free, NULL, mkcerr);
+  filelist = list_init (MKC_LIST_UNSORTED, list_ind_free, NULL, mkcerr);
+  dirqueue = list_init (MKC_LIST_UNSORTED, list_ind_free, NULL, mkcerr);
 
   p = strdup (dirname);
-  mkc_list_set (dirqueue, &p, sizeof (char *));
-  while (mkc_list_size (dirqueue) - processed > 0) {
+  list_set (dirqueue, &p, sizeof (char *));
+  while (list_size (dirqueue) - processed > 0) {
     char  *dir;
 
-    dir = mkc_list_get_by_idx (dirqueue, processed);
+    dir = list_get_by_idx (dirqueue, processed);
     processed += 1;
 
     dh = dirop_open (dir, mkcerr);
@@ -338,21 +338,21 @@ dirop_list_recursive (const char *dirname, int flags, mkc_error_t *mkcerr)
         if ((flags & DIRLIST_FILES) == DIRLIST_FILES) {
           // p = temp + dirnamelen + 1;
           tp = strdup (temp);
-          mkc_list_set (filelist, &tp, sizeof (char *));
+          list_set (filelist, &tp, sizeof (char *));
         }
       } else if (fileop_is_directory (temp)) {
         tp = strdup (temp);
-        mkc_list_set (dirqueue, &tp, sizeof (char *));
+        list_set (dirqueue, &tp, sizeof (char *));
         if ((flags & DIRLIST_DIRS) == DIRLIST_DIRS) {
           // p = temp + dirnamelen + 1;
           tp = strdup (temp);
-          mkc_list_set (filelist, &tp, sizeof (char *));
+          list_set (filelist, &tp, sizeof (char *));
         }
       } else if (fileop_exists (temp)) {
         if ((flags & DIRLIST_FILES) == DIRLIST_FILES) {
           // p = temp + dirnamelen + 1;
           tp = strdup (temp);
-          mkc_list_set (filelist, &tp, sizeof (char *));
+          list_set (filelist, &tp, sizeof (char *));
         }
       }
       free (fname);
@@ -361,7 +361,7 @@ dirop_list_recursive (const char *dirname, int flags, mkc_error_t *mkcerr)
     dirop_close (dh);
     free (dir);
   }
-  mkc_list_free (dirqueue);
+  list_free (dirqueue);
 
   return filelist;
 }

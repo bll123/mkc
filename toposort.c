@@ -10,7 +10,7 @@
 
 #include "mkc_def.h"
 #include "mkc_error.h"
-#include "mkc_list.h"
+#include "list.h"
 #include "strutil.h"
 #include "toposort.h"
 
@@ -23,27 +23,27 @@ typedef struct mkc_topoitem_t {
 } mkc_topoitem_t;
 
 typedef struct mkc_topopair_t {
-  mkc_listidx_t itemidx;
-  mkc_listidx_t dependson;
+  listidx_t itemidx;
+  listidx_t dependson;
 } mkc_topopair_t;
 
 typedef struct mkc_topocount_t {
-  mkc_listidx_t idx;
+  listidx_t idx;
   int           count;
 } mkc_topocount_t;
 
 typedef struct toposort_t {
-  mkc_list_t    *items;
-  mkc_list_t    *pairs;
-  mkc_list_t    *counts;
-  mkc_list_t    *results;
+  list_t    *items;
+  list_t    *pairs;
+  list_t    *counts;
+  list_t    *results;
   mkc_error_t   *mkcerr;
-  mkc_listidx_t riteridx;
+  listidx_t riteridx;
 } toposort_t;
 
 static int mkc_topo_item_compare (void *ta, void *tb);
 static int mkc_topo_count_compare (void *ta, void *tb);
-static void mkc_topo_update_counts (toposort_t *topo, mkc_listidx_t idx);
+static void mkc_topo_update_counts (toposort_t *topo, listidx_t idx);
 
 toposort_t *
 toposort_init (mkc_error_t *mkcerr)
@@ -56,10 +56,10 @@ toposort_init (mkc_error_t *mkcerr)
   }
 
   topo->mkcerr = mkcerr;
-  topo->items = mkc_list_init (MKC_LIST_SORTED, NULL, mkc_topo_item_compare, mkcerr);
-  topo->pairs = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, mkcerr);
-  topo->counts = mkc_list_init (MKC_LIST_SORTED, NULL, mkc_topo_count_compare, mkcerr);
-  topo->results = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, mkcerr);
+  topo->items = list_init (MKC_LIST_SORTED, NULL, mkc_topo_item_compare, mkcerr);
+  topo->pairs = list_init (MKC_LIST_UNSORTED, NULL, NULL, mkcerr);
+  topo->counts = list_init (MKC_LIST_SORTED, NULL, mkc_topo_count_compare, mkcerr);
+  topo->results = list_init (MKC_LIST_UNSORTED, NULL, NULL, mkcerr);
 
   return topo;
 }
@@ -71,10 +71,10 @@ toposort_free (toposort_t *topo)
     return;
   }
 
-  mkc_list_free (topo->items);
-  mkc_list_free (topo->pairs);
-  mkc_list_free (topo->counts);
-  mkc_list_free (topo->results);
+  list_free (topo->items);
+  list_free (topo->pairs);
+  list_free (topo->counts);
+  list_free (topo->results);
   free (topo);
 }
 
@@ -88,7 +88,7 @@ toposort_add_item (toposort_t *topo, const char *item)
   }
 
   titem.name = item;
-  mkc_list_set (topo->items, &titem, sizeof (mkc_topoitem_t));
+  list_set (topo->items, &titem, sizeof (mkc_topoitem_t));
 
   return;
 }
@@ -105,19 +105,19 @@ toposort_add_pair (toposort_t *topo,
   }
 
   titem.name = item_a;
-  tpair.itemidx = mkc_list_find (topo->items, &titem);
+  tpair.itemidx = list_find (topo->items, &titem);
   if (tpair.itemidx == MKC_LIST_NOTFOUND) {
     mkc_error_set (topo->mkcerr, MKC_ERR_ITEM_NOT_FOUND, 0, item_a);
     return MKC_ERR_FAILURE;
   }
   titem.name = item_b;
-  tpair.dependson = mkc_list_find (topo->items, &titem);
+  tpair.dependson = list_find (topo->items, &titem);
   if (tpair.dependson == MKC_LIST_NOTFOUND) {
     mkc_error_set (topo->mkcerr, MKC_ERR_ITEM_NOT_FOUND, 0, item_b);
     return MKC_ERR_FAILURE;
   }
 
-  mkc_list_set (topo->pairs, &tpair, sizeof (mkc_topopair_t));
+  list_set (topo->pairs, &tpair, sizeof (mkc_topopair_t));
 
   return MKC_OK;
 }
@@ -126,53 +126,53 @@ toposort_add_pair (toposort_t *topo,
 int
 toposort (toposort_t *topo)
 {
-  mkc_listidx_t   iteridx;
-  mkc_listidx_t   idx;
+  listidx_t   iteridx;
+  listidx_t   idx;
   bool            done = false;
   int32_t         itemcount = 0;
   int             rc = MKC_ERR_FAILURE;
 
-  itemcount = mkc_list_size (topo->items);
+  itemcount = list_size (topo->items);
 
   /* create the initial counts list */
-  mkc_list_iter_start (topo->items, &iteridx);
-  while ((idx = mkc_list_iter_next (topo->items, &iteridx)) != MKC_ITER_FINISH) {
+  list_iter_start (topo->items, &iteridx);
+  while ((idx = list_iter_next (topo->items, &iteridx)) != MKC_ITER_FINISH) {
     mkc_topocount_t   count;
 
     count.idx = idx;
     count.count = 0;
-    mkc_list_set (topo->counts, &count, sizeof (mkc_topocount_t));
+    list_set (topo->counts, &count, sizeof (mkc_topocount_t));
   }
 
   /* each pair is "a depends on b" */
-  mkc_list_iter_start (topo->pairs, &iteridx);
-  while ((idx = mkc_list_iter_next (topo->pairs, &iteridx)) != MKC_ITER_FINISH) {
+  list_iter_start (topo->pairs, &iteridx);
+  while ((idx = list_iter_next (topo->pairs, &iteridx)) != MKC_ITER_FINISH) {
     mkc_topopair_t  *pair;
-    mkc_listidx_t   cidx;
+    listidx_t   cidx;
     mkc_topocount_t *count;
 
-    pair = mkc_list_get_by_idx (topo->pairs, idx);
-    cidx = mkc_list_find (topo->counts, &pair->dependson);
-    count = mkc_list_get_by_idx (topo->counts, cidx);
+    pair = list_get_by_idx (topo->pairs, idx);
+    cidx = list_find (topo->counts, &pair->dependson);
+    count = list_get_by_idx (topo->counts, cidx);
     count->count += 1;
   }
 
   /* overall loop */
   while (! done) {
-    mkc_listidx_t   citeridx;
-    mkc_listidx_t   cidx;
+    listidx_t   citeridx;
+    listidx_t   cidx;
     mkc_topocount_t *count;
     int             found = 0;
 
     /* locate any items with a count of 0, add them to the results */
-    mkc_list_iter_start (topo->counts, &citeridx);
-    while ((cidx = mkc_list_iter_next (topo->counts, &citeridx)) != MKC_ITER_FINISH) {
-      count = mkc_list_get_by_idx (topo->counts, cidx);
+    list_iter_start (topo->counts, &citeridx);
+    while ((cidx = list_iter_next (topo->counts, &citeridx)) != MKC_ITER_FINISH) {
+      count = list_get_by_idx (topo->counts, cidx);
       if (count->count == 0) {
         found += 1;
         count->count = MKC_TOPO_DONE;
 
-        mkc_list_set (topo->results, &count->idx, sizeof (mkc_listidx_t));
+        list_set (topo->results, &count->idx, sizeof (listidx_t));
 
         /* update the edge counts for items that the item depends on */
         mkc_topo_update_counts (topo, count->idx);
@@ -184,7 +184,7 @@ toposort (toposort_t *topo)
       done = true;
     }
 
-    if (mkc_list_size (topo->results) == itemcount) {
+    if (list_size (topo->results) == itemcount) {
       done = true;
       rc = MKC_OK;
     }
@@ -203,25 +203,25 @@ toposort (toposort_t *topo)
 void
 toposort_iter_start (toposort_t *topo)
 {
-  mkc_list_iter_start (topo->results, &topo->riteridx);
+  list_iter_start (topo->results, &topo->riteridx);
 }
 
 const char *
 toposort_iter_next (toposort_t *topo)
 {
-  mkc_listidx_t   ridx;
-  mkc_listidx_t   *iptr;
-  mkc_listidx_t   iidx;
+  listidx_t   ridx;
+  listidx_t   *iptr;
+  listidx_t   iidx;
   mkc_topoitem_t  *item;
 
-  ridx = mkc_list_iter_next (topo->results, &topo->riteridx);
+  ridx = list_iter_next (topo->results, &topo->riteridx);
   if (ridx == MKC_ITER_FINISH) {
     return NULL;
   }
 
-  iptr = mkc_list_get_by_idx (topo->results, ridx);
+  iptr = list_get_by_idx (topo->results, ridx);
   iidx = *iptr;
-  item = mkc_list_get_by_idx (topo->items, iidx);
+  item = list_get_by_idx (topo->items, iidx);
 
 
   return item->name;
@@ -230,19 +230,19 @@ toposort_iter_next (toposort_t *topo)
 const char *
 toposort_iter_next_reverse (toposort_t *topo)
 {
-  mkc_listidx_t   ridx;
-  mkc_listidx_t   *iptr;
-  mkc_listidx_t   iidx;
+  listidx_t   ridx;
+  listidx_t   *iptr;
+  listidx_t   iidx;
   mkc_topoitem_t  *item;
 
-  ridx = mkc_list_iter_next_reverse (topo->results, &topo->riteridx);
+  ridx = list_iter_next_reverse (topo->results, &topo->riteridx);
   if (ridx == MKC_ITER_FINISH) {
     return NULL;
   }
 
-  iptr = mkc_list_get_by_idx (topo->results, ridx);
+  iptr = list_get_by_idx (topo->results, ridx);
   iidx = *iptr;
-  item = mkc_list_get_by_idx (topo->items, iidx);
+  item = list_get_by_idx (topo->items, iidx);
 
   return item->name;
 }
@@ -251,20 +251,20 @@ toposort_iter_next_reverse (toposort_t *topo)
 void
 toposort_disp_cycle (toposort_t *topo, char *buff, size_t sz)
 {
-  mkc_listidx_t   citeridx;
-  mkc_listidx_t   cidx;
+  listidx_t   citeridx;
+  listidx_t   cidx;
   char            *p = buff;
 
   *buff = '\0';
-  mkc_list_iter_start (topo->counts, &citeridx);
-  while ((cidx = mkc_list_iter_next (topo->counts, &citeridx)) != MKC_ITER_FINISH) {
+  list_iter_start (topo->counts, &citeridx);
+  while ((cidx = list_iter_next (topo->counts, &citeridx)) != MKC_ITER_FINISH) {
     mkc_topocount_t   *count;
 
-    count = mkc_list_get_by_idx (topo->counts, cidx);
+    count = list_get_by_idx (topo->counts, cidx);
     if (count->count == 1) {
       mkc_topoitem_t   *item;
 
-      item = mkc_list_get_by_idx (topo->items, count->idx);
+      item = list_get_by_idx (topo->items, count->idx);
       if (*buff) {
         p = stpecpy (p, buff + sz, " : ");
       }
@@ -300,21 +300,21 @@ mkc_topo_count_compare (void *ta, void *tb)
 }
 
 static void
-mkc_topo_update_counts (toposort_t *topo, mkc_listidx_t idx)
+mkc_topo_update_counts (toposort_t *topo, listidx_t idx)
 {
-  mkc_listidx_t   pairiteridx;
-  mkc_listidx_t   pairidx;
+  listidx_t   pairiteridx;
+  listidx_t   pairidx;
 
-  mkc_list_iter_start (topo->pairs, &pairiteridx);
-  while ((pairidx = mkc_list_iter_next (topo->pairs, &pairiteridx)) != MKC_ITER_FINISH) {
+  list_iter_start (topo->pairs, &pairiteridx);
+  while ((pairidx = list_iter_next (topo->pairs, &pairiteridx)) != MKC_ITER_FINISH) {
     mkc_topopair_t    *pair;
-    mkc_listidx_t     cidx;
+    listidx_t     cidx;
     mkc_topocount_t   *count;
 
-    pair = mkc_list_get_by_idx (topo->pairs, pairidx);
+    pair = list_get_by_idx (topo->pairs, pairidx);
     if (pair->itemidx == idx) {
-      cidx = mkc_list_find (topo->counts, &pair->dependson);
-      count = mkc_list_get_by_idx (topo->counts, cidx);
+      cidx = list_find (topo->counts, &pair->dependson);
+      count = list_get_by_idx (topo->counts, cidx);
       count->count -= 1;
     }
   }

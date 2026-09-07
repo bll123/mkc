@@ -10,7 +10,7 @@
 #include <stdbool.h>
 
 #include "mkc_error.h"
-#include "mkc_list.h"
+#include "list.h"
 #include "mkc_log.h"
 #include "mkc_nodiscard.h"
 #include "value.h"
@@ -26,7 +26,7 @@ enum {
 
 typedef struct mkc_var_t mkc_var_t;
 typedef struct mkc_varlist_t mkc_varlist_t;
-typedef mkc_listidx_t mkc_varidx_t;
+typedef listidx_t mkc_varidx_t;
 
 MKC_NODISCARD mkc_varlist_t *mkc_varlist_init (mkc_log_t *log, mkc_error_t *mkcerr);
 void mkc_varlist_free (mkc_varlist_t *varlist);

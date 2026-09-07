@@ -7,7 +7,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 
-#include "mkc_list.h"
+#include "list.h"
 
 #if defined (__cplusplus) || defined (c_plusplus)
 extern "C" {
@@ -18,10 +18,10 @@ extern "C" {
 /* and stores the name for the check */
 typedef struct mkc_alternate_t {
   char            * name;
-  mkc_list_t      * hdrlist;
-  mkc_list_t      * compflags;
-  mkc_list_t      * linkflags;
-  mkc_list_t      * libs;
+  list_t      * hdrlist;
+  list_t      * compflags;
+  list_t      * linkflags;
+  list_t      * libs;
 } mkc_alternate_t;
 
 #if defined (__cplusplus) || defined (c_plusplus)

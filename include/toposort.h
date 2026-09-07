@@ -4,7 +4,7 @@
 #ifndef INC_TOPOSORT_H
 #define INC_TOPOSORT_H
 
-#include "mkc_list.h"
+#include "list.h"
 #include "mkc_nodiscard.h"
 
 #if defined (__cplusplus) || defined (c_plusplus)

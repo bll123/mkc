@@ -9,7 +9,7 @@
 #include "asttoken.h"
 #include "mkc_context.h"
 #include "mkc_error.h"
-#include "mkc_list.h"
+#include "list.h"
 #include "mkc_log.h"
 #include "mkc_nodiscard.h"
 #include "mkc_option.h"

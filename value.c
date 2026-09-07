@@ -10,11 +10,12 @@
 #include <string.h>
 
 #include "mkc_def.h"
-#include "mkc_list.h"
+#include "list.h"
 #include "strutil.h"
 #include "value.h"
 
 static char const * const valuetypenames [] = {
+  [MKC_VT_DICT] = "dict",
   [MKC_VT_INVALID] = "invalid",
   [MKC_VT_INTEGER] = "integer",
   [MKC_VT_STRING] = "string",
@@ -48,6 +49,9 @@ value_init (value_t *value)
   value->tempallocated = false;
 }
 
+list_t * value_list_copy (list_t *list, mkc_error_t *mkcerr);
+dict_t * value_dict_copy (dict_t *dict, mkc_error_t *mkcerr);
+
 void
 value_free (void *tvalue)
 {
@@ -62,7 +66,10 @@ value_free (void *tvalue)
   }
 
   if (value->vtype == MKC_VT_LIST && value->list != NULL) {
-    mkc_list_free (value->list);
+    list_free (value->list);
+  }
+  if (value->vtype == MKC_VT_DICT && value->dict != NULL) {
+    dict_free (value->dict);
   }
   if (value_is_string_type (value) && value->sval != NULL) {
     free (value->sval);
@@ -97,25 +104,25 @@ value_to_str (value_t *value, char *buff, size_t sz)
       break;
     }
     case MKC_VT_LIST: {
-      mkc_list_t    *tlist;
-      mkc_listidx_t iteridx;
-      mkc_listidx_t lidx;
-      value_t       *tvalue;
+      list_t        * tlist;
+      listidx_t     iteridx;
+      listidx_t     lidx;
+      value_t       * tvalue;
       char          tbuff [MKC_PATH_MAX];
-      char          *p;
-      char          *eptr;
+      char          * p;
+      char          * eptr;
       int           lsz;
 
       eptr = buff + sz;
       tlist = value->list;
-      lsz = mkc_list_size (tlist);
+      lsz = list_size (tlist);
       p = stpecpy (buff, eptr, "[");
       if (lsz > 1) {
         p = stpecpy (p, eptr, "\n");
       }
-      mkc_list_iter_start (tlist, &iteridx);
-      while ((lidx = mkc_list_iter_next (tlist, &iteridx)) != MKC_ITER_FINISH) {
-        tvalue = mkc_list_get_by_idx (tlist, lidx);
+      list_iter_start (tlist, &iteridx);
+      while ((lidx = list_iter_next (tlist, &iteridx)) != MKC_ITER_FINISH) {
+        tvalue = list_get_by_idx (tlist, lidx);
         if (lsz > 1) {
           p = stpecpy (p, eptr, "       ");
         } else {
@@ -137,6 +144,57 @@ value_to_str (value_t *value, char *buff, size_t sz)
         p = stpecpy (p, eptr, "       ]");
       } else {
         p = stpecpy (p, eptr, " ]");
+      }
+      break;
+    }
+    case MKC_VT_DICT: {
+      dict_t        * tdict;
+      dictitem_t    * diter;
+      listidx_t     iteridx;
+      value_t       *tvalue = NULL;
+      char          tbuff [MKC_PATH_MAX];
+      char          *p;
+      char          *eptr;
+      int           lsz;
+      const char    * name;
+
+      eptr = buff + sz;
+      tdict = value->dict;
+      lsz = dict_size (tdict);
+      p = stpecpy (buff, eptr, "[[");
+      if (lsz > 1) {
+        p = stpecpy (p, eptr, "\n");
+      }
+      dict_iter_start (tdict, &iteridx);
+      while ((diter = dict_iter_next (tdict, &iteridx)) != NULL) {
+        if (lsz > 1) {
+          p = stpecpy (p, eptr, "       ");
+        } else {
+          p = stpecpy (p, eptr, " ");
+        }
+
+        name = dict_iter_get_name (diter);
+        p = stpecpy (p, eptr, "'");
+        p = stpecpy (p, eptr, name);
+        p = stpecpy (p, eptr, "' ");
+
+        tvalue = dict_iter_get_data (diter);
+        value_to_str (tvalue, tbuff, sizeof (tbuff));
+        if (value_is_string_type (tvalue)) {
+          p = stpecpy (p, eptr, "'");
+        }
+        p = stpecpy (p, eptr, tbuff);
+        if (value_is_string_type (tvalue)) {
+          p = stpecpy (p, eptr, "'");
+        }
+        if (lsz > 1) {
+          p = stpecpy (p, eptr, "\n");
+        }
+      }
+      if (lsz > 1) {
+        p = stpecpy (p, eptr, "       ]]");
+      } else {
+        p = stpecpy (p, eptr, " ]]");
       }
       break;
     }
@@ -169,7 +227,7 @@ value_range_init (value_t *value,
 }
 
 void
-value_range_iter_start (value_t *value, mkc_listidx_t *iteridx)
+value_range_iter_start (value_t *value, listidx_t *iteridx)
 {
   if (value == NULL) {
     return;
@@ -180,7 +238,7 @@ value_range_iter_start (value_t *value, mkc_listidx_t *iteridx)
 
 int
 value_range_iter_next (value_t *value, value_t *rval,
-    mkc_listidx_t *iteridx)
+    listidx_t *iteridx)
 {
   *iteridx += value->range.incr;
   if (*iteridx >= value->range.end) {
@@ -193,7 +251,7 @@ value_range_iter_next (value_t *value, value_t *rval,
 }
 
 void
-value_iter_start (value_t *value, mkc_listidx_t *iteridx)
+value_iter_start (value_t *value, listidx_t *iteridx)
 {
   *iteridx = MKC_ITER_FINISH;
 
@@ -202,7 +260,7 @@ value_iter_start (value_t *value, mkc_listidx_t *iteridx)
   }
 
   if (value->vtype == MKC_VT_LIST) {
-    mkc_list_iter_start (value->list, iteridx);
+    list_iter_start (value->list, iteridx);
   }
   if (value->vtype == MKC_VT_RANGE) {
     value_range_iter_start (value, iteridx);
@@ -211,22 +269,22 @@ value_iter_start (value_t *value, mkc_listidx_t *iteridx)
 
 int
 value_iter_next (value_t *value,
-    value_t *rval, mkc_listidx_t *iteridx)
+    value_t *rval, listidx_t *iteridx)
 {
-  mkc_listidx_t   rc = MKC_ITER_FINISH;
+  listidx_t   rc = MKC_ITER_FINISH;
 
   if (value == NULL) {
     return rc;
   }
 
   if (value->vtype == MKC_VT_LIST) {
-    mkc_listidx_t   lidx;
+    listidx_t   lidx;
     value_t         *tvalue;
 
-    lidx = mkc_list_iter_next (value->list, iteridx);
+    lidx = list_iter_next (value->list, iteridx);
     rc = lidx;
     if (lidx != MKC_ITER_FINISH) {
-      tvalue = mkc_list_get_by_idx (value->list, lidx);
+      tvalue = list_get_by_idx (value->list, lidx);
       memcpy (rval, tvalue, sizeof (value_t));
     }
   }
@@ -235,6 +293,26 @@ value_iter_next (value_t *value,
   }
 
   return rc;
+}
+
+void
+value_copy (value_t * valuecopy, const value_t * value, mkc_error_t * mkcerr)
+{
+  if (valuecopy == NULL || value == NULL) {
+    return;
+  }
+
+  memcpy (valuecopy, value, sizeof (value_t));
+  if (value_is_string_type (value)) {
+    valuecopy->sval = strdup (value->sval);
+  }
+  if (value->vtype == MKC_VT_LIST) {
+    valuecopy->list = value_list_copy (value->list, mkcerr);
+  }
+  if (value->vtype == MKC_VT_DICT) {
+    valuecopy->dict = value_dict_copy (value->dict, mkcerr);
+  }
+  valuecopy->tempallocated = false;
 }
 
 bool
@@ -287,7 +365,6 @@ value_ctxt_value (const char *vctxtstr)
   return vctxt;
 }
 
-
 int
 value_str_compare (void *tvala, void *tvalb)
 {
@@ -306,4 +383,67 @@ value_str_compare (void *tvala, void *tvalb)
   }
 
   return strcmp (vala->sval, valb->sval);
+}
+
+/* internal routines */
+
+list_t *
+value_list_copy (list_t *list, mkc_error_t *mkcerr)
+{
+  list_t      *nlist;
+  listidx_t   iteridx;
+  listidx_t   lidx;
+  value_t         *value;
+  value_t         nvalue;
+
+  /* the values created in this list are copies, */
+  /* so must be freed */
+  /* preserve the original list type */
+  nlist = list_init_copy (list, value_free, mkcerr);
+  if (mkc_error_chk_err (mkcerr)) {
+    return NULL;
+  }
+
+  list_iter_start (list, &iteridx);
+  while ((lidx = list_iter_next (list, &iteridx)) != MKC_ITER_FINISH) {
+    if (mkc_error_chk_err (mkcerr)) {
+      break;
+    }
+
+    value = list_get_by_idx (list, lidx);
+    value_copy (&nvalue, value, mkcerr);
+    list_set (nlist, &nvalue, sizeof (value_t));
+  }
+
+  return nlist;
+}
+
+dict_t *
+value_dict_copy (dict_t *dict, mkc_error_t *mkcerr)
+{
+  dict_t      * ndict;
+  listidx_t   iteridx;
+  dictitem_t  * diter;
+  value_t     * value;
+  value_t     nvalue;
+  const char  * name;
+
+  ndict = dict_init_copy (dict, value_free);
+  if (mkc_error_chk_err (mkcerr)) {
+    return NULL;
+  }
+
+  dict_iter_start (dict, &iteridx);
+  while ((diter = dict_iter_next (dict, &iteridx)) != NULL) {
+    if (mkc_error_chk_err (mkcerr)) {
+      break;
+    }
+
+    name = dict_iter_get_name (diter);
+    value = dict_iter_get_data (diter);
+    value_copy (&nvalue, value, mkcerr);
+    dict_set (ndict, name, &nvalue);
+  }
+
+  return ndict;
 }

@@ -8,7 +8,8 @@
 #include <stdbool.h>
 #include <time.h>
 
-#include "mkc_list.h"
+#include "dict.h"
+#include "list.h"
 
 #if defined (__cplusplus) || defined (c_plusplus)
 extern "C" {
@@ -18,6 +19,7 @@ typedef enum {
   MKC_VT_INVALID,
   /* basic types */
   /* these are present in the variable list */
+  MKC_VT_DICT,
   MKC_VT_INTEGER,
   MKC_VT_LIST,
   MKC_VT_RANGE,
@@ -54,11 +56,12 @@ typedef struct range_t {
 
 typedef struct value_t {
   union {
-    mkc_list_t  * list;
+    dict_t      * dict;
+    list_t  * list;
     char        * sval;
     range_t     range;
     int32_t     ival;
-    int64_t    tmval;
+    int64_t     tmval;
   };
   value_type_t    vtype;
   value_ctxt_t    vctxt;
@@ -69,11 +72,13 @@ void value_init (value_t *value);
 void value_free (void *value);
 const char *value_to_str (value_t *value, char *buff, size_t sz);
 void value_range_init (value_t *value, int32_t beg, int32_t end, int32_t incr);
-void value_range_iter_start (value_t *value, mkc_listidx_t *iteridx);
-int value_range_iter_next (value_t *value, value_t *rval, mkc_listidx_t *iteridx);
+void value_range_iter_start (value_t *value, listidx_t *iteridx);
+int value_range_iter_next (value_t *value, value_t *rval, listidx_t *iteridx);
 
-void value_iter_start (value_t *value, mkc_listidx_t *iteridx);
-int value_iter_next (value_t *value, value_t *rval, mkc_listidx_t *iteridx);
+void value_iter_start (value_t *value, listidx_t *iteridx);
+int value_iter_next (value_t *value, value_t *rval, listidx_t *iteridx);
+
+void value_copy (value_t * valuecopy, const value_t * value, mkc_error_t * mkcerr);
 
 bool value_is_string_type (const value_t *value);
 

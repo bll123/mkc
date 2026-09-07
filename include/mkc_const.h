@@ -9,9 +9,12 @@ extern "C" {
 #endif
 
 extern char const * const MKC_C_PROF_NAME_BUILD;
+extern char const * const MKC_C_PROF_NAME_COMPFLAGS;
 extern char const * const MKC_C_PROF_NAME_DEFAULT;
 extern char const * const MKC_C_PROF_NAME_DEPENDENCY;
 extern char const * const MKC_C_PROF_NAME_INTERNAL;
+extern char const * const MKC_C_PROF_NAME_LIBS;
+extern char const * const MKC_C_PROF_NAME_LINKFLAGS;
 extern char const * const MKC_C_PROF_NAME_PATHS;
 extern char const * const MKC_C_PROF_NAME_TIMESTAMP;
 

@@ -49,7 +49,7 @@ static const char * const dependency_delim = " \n\r\\";
 
 static bool target_chk_last_libloc (mkc_compiler_id_t compid, char *lastlibloc, size_t sz, const char *str);
 static void target_process_timestamp (target_t *target, char *path, size_t psz, const char *filename);
-static void target_topo_add_items_deps (target_t *target, toposort_t *topo, mkc_list_t *itemlist);
+static void target_topo_add_items_deps (target_t *target, toposort_t *topo, list_t *itemlist);
 static void target_create_stage_bin (target_t *target);
 
 target_t *
@@ -89,7 +89,7 @@ chararr_t *
 target_get_flags (target_t *target, const char *flagname,
     chararr_t *include_paths)
 {
-  mkc_list_t      * tlist;
+  list_t      * tlist;
   char            * lastlibloc;
   char            * str;
   scopedvar_t     * sv;
@@ -111,7 +111,7 @@ target_get_flags (target_t *target, const char *flagname,
   }
   *str = '\0';
 
-  tlist = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, target->mkcerr);
+  tlist = list_init (MKC_LIST_UNSORTED, NULL, NULL, target->mkcerr);
 
   sv = target->sv;
 
@@ -124,8 +124,8 @@ target_get_flags (target_t *target, const char *flagname,
   sviter = sv_iter_start (sv, SV_ITER_HIERARCHY);
   while ((profnm = sv_iter_next (sv, sviter)) != NULL) {
     value_t         *value = NULL;
-    mkc_listidx_t   fiter;
-    mkc_listidx_t   fidx;
+    listidx_t   fiter;
+    listidx_t   fidx;
     sv_type_t       svtype;
     bool            append_next = false;
 
@@ -139,15 +139,15 @@ target_get_flags (target_t *target, const char *flagname,
       continue;
     }
 
-    mkc_list_iter_start (value->list, &fiter);
-    while ((fidx = mkc_list_iter_next (value->list, &fiter)) != MKC_ITER_FINISH) {
+    list_iter_start (value->list, &fiter);
+    while ((fidx = list_iter_next (value->list, &fiter)) != MKC_ITER_FINISH) {
       value_t   *fval;
 
       if (mkc_error_chk_err (target->mkcerr)) {
         break;
       }
 
-      fval = mkc_list_get_by_idx (value->list, fidx);
+      fval = list_get_by_idx (value->list, fidx);
       sv_value_get_str (sv, fval, str, MKC_PATH_MAX);
       if (! *str) {
         continue;
@@ -184,7 +184,7 @@ target_get_flags (target_t *target, const char *flagname,
   sv_iter_finish (sviter);
   chararr_append (flags, NULL);
 
-  mkc_list_free (tlist);
+  list_free (tlist);
   free (lastlibloc);
   free (str);
 
@@ -192,13 +192,13 @@ target_get_flags (target_t *target, const char *flagname,
 }
 
 void
-target_topo_add_items (target_t *target, toposort_t *topo, mkc_list_t *itemlist)
+target_topo_add_items (target_t *target, toposort_t *topo, list_t *itemlist)
 {
-  mkc_listidx_t   hiteridx;
-  mkc_listidx_t   hidx;
+  listidx_t   hiteridx;
+  listidx_t   hidx;
 
-  mkc_list_iter_start (itemlist, &hiteridx);
-  while ((hidx = mkc_list_iter_next (itemlist, &hiteridx)) != MKC_ITER_FINISH) {
+  list_iter_start (itemlist, &hiteridx);
+  while ((hidx = list_iter_next (itemlist, &hiteridx)) != MKC_ITER_FINISH) {
     char        **temp;
     const char  *item;
 
@@ -206,7 +206,7 @@ target_topo_add_items (target_t *target, toposort_t *topo, mkc_list_t *itemlist)
       break;
     }
 
-    temp = mkc_list_get_by_idx (itemlist, hidx);
+    temp = list_get_by_idx (itemlist, hidx);
     item = *temp;
     toposort_add_item (topo, item);
   }
@@ -217,8 +217,8 @@ target_topo_add_deps (target_t *target,
     toposort_t *topo, const char *tgtname)
 {
   value_t         * valdeplist;
-  mkc_listidx_t   diteridx;
-  mkc_listidx_t   didx;
+  listidx_t   diteridx;
+  listidx_t   didx;
   value_t         tvalue;
   char            * dep;
 
@@ -256,7 +256,7 @@ target_check_dependency_timestamp (target_t *target,
 {
   int64_t       fts;
   int64_t       ts;
-  mkc_listidx_t iteridx;
+  listidx_t iteridx;
 
   mkc_message (MKC_V_TMI, "   chk-dep-ts: %s ", filepath);
 
@@ -291,7 +291,7 @@ target_get_dependencies (target_t *target,
   char            * rbuff;
   size_t          rsz;
   char            * tokstr;
-  mkc_list_t      * elist;
+  list_t      * elist;
   value_t         evalue;
   char            * p;
   bool            first = true;
@@ -328,11 +328,11 @@ target_get_dependencies (target_t *target,
   sv_delete (target->sv, SV_T_DEPENDENCY, tgtname);
 
   /* the dependency list must exist */
-  elist = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, target->mkcerr);
+  elist = list_init (MKC_LIST_UNSORTED, NULL, NULL, target->mkcerr);
   evalue.vtype = MKC_VT_LIST;
   evalue.list = elist;
   sv_set (target->sv, SV_T_DEPENDENCY, tgtname, &evalue, MKC_VCTXT_MKC);
-  mkc_list_free (elist);
+  list_free (elist);
 
   mkc_log (target->log, MKC_LOG_TARGET, "get-dep: %s\n", filepath);
 
@@ -377,12 +377,12 @@ target_get_dependencies (target_t *target,
 /* the timestamps in the timestamp namespace are updated */
 /* used for check_include_dependencies, check_include_guards, */
 /*   check_include_compile */
-mkc_list_t *
+list_t *
 target_get_include_list (target_t *target, chararr_t * include_paths,
     mkc_regex_t *rx, int64_t *ts)
 {
   value_t         * valhdr = NULL;
-  mkc_list_t      * hlist = NULL;
+  list_t      * hlist = NULL;
 #if _have_regex
   char            * hdrpath = NULL;
   char            * tname = NULL;
@@ -447,9 +447,9 @@ target_get_include_list (target_t *target, chararr_t * include_paths,
 
   count = 0;
   while ((path = patharr [count++]) != NULL) {
-    mkc_list_t    *tlist = NULL;
-    mkc_listidx_t iteridx;
-    mkc_listidx_t idx;
+    list_t    *tlist = NULL;
+    listidx_t iteridx;
+    listidx_t idx;
 
     if (mkc_error_chk_err (target->mkcerr)) {
       break;
@@ -458,13 +458,13 @@ target_get_include_list (target_t *target, chararr_t * include_paths,
     /* all of the header files for this path */
     tlist = dir_match (path, rx, target->mkcerr);
 
-    mkc_list_iter_start (tlist, &iteridx);
-    while ((idx = mkc_list_iter_next (tlist, &iteridx)) != MKC_ITER_FINISH) {
+    list_iter_start (tlist, &iteridx);
+    while ((idx = list_iter_next (tlist, &iteridx)) != MKC_ITER_FINISH) {
       char          **temp;
       char          *hdr;
       int64_t       tts;
 
-      temp = mkc_list_get_by_idx (tlist, idx);
+      temp = list_get_by_idx (tlist, idx);
       hdr = *temp;
 
       if (strcmp (path, ".") == 0) {
@@ -500,7 +500,7 @@ target_get_include_list (target_t *target, chararr_t * include_paths,
       }
     }
 
-    mkc_list_free (tlist);
+    list_free (tlist);
   }
 
   memcpy (tname, "matchil_", 8);
@@ -521,16 +521,16 @@ target_get_include_list (target_t *target, chararr_t * include_paths,
 /* used for check_include_dependencies, check_include_guards, */
 /*   check_include_compile */
 const char *
-target_iter_includes (target_t *target, mkc_list_t *hlist,
-    mkc_listidx_t *hiteridx, char *hdrpath, size_t hpsz)
+target_iter_includes (target_t *target, list_t *hlist,
+    listidx_t *hiteridx, char *hdrpath, size_t hpsz)
 {
-  mkc_listidx_t   hidx;
+  listidx_t   hidx;
 
-  while ((hidx = mkc_list_iter_next (hlist, hiteridx)) != MKC_ITER_FINISH) {
+  while ((hidx = list_iter_next (hlist, hiteridx)) != MKC_ITER_FINISH) {
     value_t     *tvalue;
     const char  *p;
 
-    tvalue = mkc_list_get_by_idx (hlist, hidx);
+    tvalue = list_get_by_idx (hlist, hidx);
     sv_value_get_str (target->sv, tvalue, hdrpath, hpsz);
     p = path_filename (hdrpath);
     return p;
@@ -541,7 +541,7 @@ target_iter_includes (target_t *target, mkc_list_t *hlist,
 
 void
 target_iter_dependency_ts_start (target_t *target, const char *filename,
-    mkc_listidx_t *iteridx)
+    listidx_t *iteridx)
 {
   value_t     *value;
 
@@ -551,11 +551,11 @@ target_iter_dependency_ts_start (target_t *target, const char *filename,
 
 int64_t
 target_iter_dependency_ts (target_t *target, const char *filename,
-    mkc_listidx_t *iteridx)
+    listidx_t *iteridx)
 {
   value_t       *value;
   value_t       tvalue;
-  mkc_listidx_t didx;
+  listidx_t didx;
   int64_t       ts;
   char          dep [MKC_VNAME_MAX];
 
@@ -635,8 +635,8 @@ target_object_source (target_t *target, const char *objnm,
   value_t         * value;
   value_t         tvalue;
   value_t         * valdeplist;
-  mkc_listidx_t   diteridx;
-  mkc_listidx_t   didx;
+  listidx_t   diteridx;
+  listidx_t   didx;
   char            * path;
   char            * opath;
   chararr_t       * cflags;
@@ -692,7 +692,7 @@ target_object_source (target_t *target, const char *objnm,
 }
 
 void
-target_build (target_t *target, mkc_list_t *blist)
+target_build (target_t *target, list_t *blist)
 {
   toposort_t      * topo;
   const char      * builditem;
@@ -742,8 +742,8 @@ target_build (target_t *target, mkc_list_t *blist)
     value_t         *value;
     value_t         * valdeplist;
     value_t         tvalue;
-    mkc_listidx_t   diteridx;
-    mkc_listidx_t   didx;
+    listidx_t   diteridx;
+    listidx_t   didx;
     int             tgttype;
     ct_type_t       comptype = COMPILE_COMPILE;
     const char      *buildtag = "";
@@ -894,12 +894,12 @@ target_process_timestamp (target_t *target,
 
 static void
 target_topo_add_items_deps (target_t *target, toposort_t *topo,
-    mkc_list_t *itemlist)
+    list_t *itemlist)
 {
-  mkc_listidx_t   iteridx;
-  mkc_listidx_t   idx;
+  listidx_t   iteridx;
+  listidx_t   idx;
   char            * itemnm;
-  mkc_list_t      * ilist;
+  list_t      * ilist;
 
   itemnm = malloc (MKC_PATH_MAX);
   if (itemnm == NULL) {
@@ -907,10 +907,10 @@ target_topo_add_items_deps (target_t *target, toposort_t *topo,
     return;
   }
 
-  ilist = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, target->mkcerr);
+  ilist = list_init (MKC_LIST_UNSORTED, NULL, NULL, target->mkcerr);
 
-  mkc_list_iter_start (itemlist, &iteridx);
-  while ((idx = mkc_list_iter_next (itemlist, &iteridx)) != MKC_ITER_FINISH) {
+  list_iter_start (itemlist, &iteridx);
+  while ((idx = list_iter_next (itemlist, &iteridx)) != MKC_ITER_FINISH) {
     value_t   * value;
     value_t   * tvalue;
 
@@ -918,19 +918,19 @@ target_topo_add_items_deps (target_t *target, toposort_t *topo,
       break;
     }
 
-    value = mkc_list_get_by_idx (itemlist, idx);
+    value = list_get_by_idx (itemlist, idx);
     sv_value_get_str (target->sv, value, itemnm, MKC_PATH_MAX);
 
     tvalue = sv_get_value (target->sv, SV_T_PATHS, itemnm);
     if (tvalue == NULL) {
       tvalue = value;
     }
-    mkc_list_set (ilist, tvalue, sizeof (value_t));
+    list_set (ilist, tvalue, sizeof (value_t));
   }
   target_topo_add_items (target, topo, ilist);
 
-  mkc_list_iter_start (ilist, &iteridx);
-  while ((idx = mkc_list_iter_next (ilist, &iteridx)) != MKC_ITER_FINISH) {
+  list_iter_start (ilist, &iteridx);
+  while ((idx = list_iter_next (ilist, &iteridx)) != MKC_ITER_FINISH) {
     value_t     * value;
     value_t     * valdeplist;
 
@@ -938,7 +938,7 @@ target_topo_add_items_deps (target_t *target, toposort_t *topo,
       break;
     }
 
-    value = mkc_list_get_by_idx (ilist, idx);
+    value = list_get_by_idx (ilist, idx);
     sv_value_get_str (target->sv, value, itemnm, MKC_PATH_MAX);
 
     valdeplist = sv_get_value (target->sv, SV_T_DEPENDENCY, itemnm);
@@ -966,7 +966,7 @@ target_topo_add_items_deps (target_t *target, toposort_t *topo,
     target_topo_add_deps (target, topo, itemnm);
   }
 
-  mkc_list_free (ilist);
+  list_free (ilist);
   free (itemnm);
 }
 

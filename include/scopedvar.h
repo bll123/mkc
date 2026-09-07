@@ -41,7 +41,10 @@ typedef enum {
   /* any type following is not in the hierarchy */
   SV_T_NAMESPACE,
   SV_T_BUILD,
+  SV_T_COMPFLAGS,
   SV_T_DEPENDENCY,
+  SV_T_LIBS,
+  SV_T_LINKFLAGS,
   SV_T_PATHS,
   SV_T_TIMESTAMP,
 } sv_type_t;
@@ -97,13 +100,14 @@ int sv_set (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, value_t
 int sv_set_integer (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, int32_t ival, value_ctxt_t vctxt);
 int sv_set_timestamp (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, int64_t tmval, value_ctxt_t vctxt);
 int sv_set_str (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, const char *str, value_ctxt_t vctxt);
-int sv_set_list (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, mkc_list_t *list, value_ctxt_t vctxt);
+int sv_set_list (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, list_t *list, value_ctxt_t vctxt);
 int sv_set_list_from_str (scopedvar_t *scopedvar, const char *vname, char *str, value_ctxt_t vctxt);
 int sv_append_str_list (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, const char *data, value_ctxt_t vctxt);
 
 void sv_delete (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname);
 
 bool sv_is_defined (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname);
+bool sv_var_is_dict (scopedvar_t *scopedvar, const char *vname);
 bool sv_var_is_list (scopedvar_t *scopedvar, const char *vname);
 void sv_temp_value_free (void *tvalue);
 char * sv_substitute (scopedvar_t *scopedvar, const char *data, sv_escape_t subescapeflag, int depth);

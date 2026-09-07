@@ -3,9 +3,12 @@
  */
 
 char const * const MKC_C_PROF_NAME_BUILD = "builditems";
+char const * const MKC_C_PROF_NAME_COMPFLAGS = "target_compiler_flags";
 char const * const MKC_C_PROF_NAME_DEFAULT = "default";
 char const * const MKC_C_PROF_NAME_DEPENDENCY = "dependency";
 char const * const MKC_C_PROF_NAME_INTERNAL = "internal";
+char const * const MKC_C_PROF_NAME_LIBS = "target_libraries";
+char const * const MKC_C_PROF_NAME_LINKFLAGS = "target_link_flags";
 char const * const MKC_C_PROF_NAME_PATHS = "paths";
 char const * const MKC_C_PROF_NAME_TIMESTAMP = "timestamp";
 

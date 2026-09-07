@@ -24,6 +24,7 @@ typedef struct astmain_t astmain_t;
 
 MKC_NODISCARD astnode_t * ast_mk_value (astmain_t *astmain, astnode_token_t asttype, char *str, int32_t lineno, int colno);
 MKC_NODISCARD astnode_t * ast_mk_value_list (astmain_t *astmain, astnode_t *list, astnode_t *vala, int32_t lineno, int colno);
+MKC_NODISCARD astnode_t * ast_mk_value_dict (astmain_t *astmain, astnode_t *dict, astnode_t *name, astnode_t *vala, int32_t lineno, int colno);
 
 MKC_NODISCARD astnode_t * ast_mk_op (astmain_t *astmain, astnode_t *vala, astnode_token_t op, astnode_t *valb, int32_t lineno, int colno);
 MKC_NODISCARD astnode_t * ast_mk_value_range (astmain_t *astmain, astnode_t *beg, astnode_t *end, astnode_t *incr, int32_t lineno, int colno);

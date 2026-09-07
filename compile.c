@@ -47,7 +47,7 @@ typedef int (*test_func_t)(compile_t *compile, mkc_compiler_t compiler, const ch
 static int compile_compile (compile_t *compile, mkc_compiler_t compiler, const char *fname, char *rbuff, size_t rsz, ct_type_t ctype);
 static int compile_link (compile_t *compile, mkc_compiler_t compiler, const char *fname, char *rbuff, size_t rsz, ct_type_t ctype);
 static int compile_link_run (compile_t *compile, mkc_compiler_t compiler, const char *fname, char *rbuff, size_t rsz, ct_type_t ctype);
-static void compile_append_list_arg (compile_t *compile, mkc_list_t *list);
+static void compile_append_list_arg (compile_t *compile, list_t *list);
 static bool compile_append_chararr (compile_t *compile, chararr_t *flags);
 static void compile_display_output (compile_t *compile, const char *rbuff, size_t retsz, const char *tag, int rc);
 
@@ -194,8 +194,8 @@ compile_reset (compile_t *compile)
 void
 compile_create_header_var (compile_t *compile)
 {
-  mkc_listidx_t   iteridx;
-  mkc_listidx_t   lidx;
+  listidx_t   iteridx;
+  listidx_t   lidx;
   char            * hdrtxt = NULL;
   char            * tmp = NULL;
   size_t          hdrtxtlen = 1;
@@ -203,8 +203,8 @@ compile_create_header_var (compile_t *compile)
 
 
   alt = compile->attr->curralt;
-  mkc_list_iter_start (alt->hdrlist, &iteridx);
-  while ((lidx = mkc_list_iter_next (alt->hdrlist, &iteridx)) != MKC_ITER_FINISH) {
+  list_iter_start (alt->hdrlist, &iteridx);
+  while ((lidx = list_iter_next (alt->hdrlist, &iteridx)) != MKC_ITER_FINISH) {
     char        tbuff [MKC_PATH_MAX];
     value_t *lvalue;
     size_t      tlen;
@@ -213,7 +213,7 @@ compile_create_header_var (compile_t *compile)
       break;
     }
 
-    lvalue = mkc_list_get_by_idx (alt->hdrlist, lidx);
+    lvalue = list_get_by_idx (alt->hdrlist, lidx);
     if (compile->attr->headertype == MKC_HEADER_MODERN) {
       snprintf (tbuff, sizeof (tbuff),
           "#if __has_include (<%s>)\n"
@@ -303,15 +303,15 @@ compile_exec (compile_t *compile, ct_type_t ctype,
   int             rc = MKC_ERR_FAILURE;
   int             altsz;
   mkc_alternate_t * oldcurr;
-  mkc_list_t      * alternates;
+  list_t      * alternates;
   mkc_alternate_t * alt;
-  mkc_listidx_t   iteridx;
-  mkc_listidx_t   aidx;
+  listidx_t   iteridx;
+  listidx_t   aidx;
   test_func_t     func = NULL;
   bool            first = true;
 
   alternates = compile->attr->alternates;
-  altsz = mkc_list_size (alternates);
+  altsz = list_size (alternates);
 
   oldcurr = compile->attr->curralt;
 
@@ -334,9 +334,9 @@ compile_exec (compile_t *compile, ct_type_t ctype,
     }
   }
 
-  mkc_list_iter_start (alternates, &iteridx);
-  while ((aidx = mkc_list_iter_next (alternates, &iteridx)) != MKC_ITER_FINISH) {
-    alt = mkc_list_get_by_idx (alternates, aidx);
+  list_iter_start (alternates, &iteridx);
+  while ((aidx = list_iter_next (alternates, &iteridx)) != MKC_ITER_FINISH) {
+    alt = list_get_by_idx (alternates, aidx);
 
     if (first && altsz > 1) {
       /* if any alternates are specified, only test the alternates, */
@@ -431,7 +431,7 @@ compile_compile (compile_t *compile, mkc_compiler_t compiler,
   }
 
   if (rbuff == NULL) {
-    rsz = MKC_SMALL_BUFF_SZ;
+    rsz = MKC_LARGE_BUFF_SZ;
     rbuff = malloc (rsz);
     if (rbuff == NULL) {
       mkc_error_set (compile->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
@@ -497,6 +497,7 @@ compile_compile (compile_t *compile, mkc_compiler_t compiler,
   rc = os_process_pipe (chararr_get_arr (compile->targv),
       OS_PROC_WAIT | OS_PROC_NOWINDOW, rbuff, rsz, &retsz);
 
+  rbuff [retsz] = '\0';
   compile_display_output (compile, rbuff, retsz, "compile log", rc);
 
   free (tbuff);
@@ -522,7 +523,7 @@ compile_link (compile_t *compile, mkc_compiler_t compiler,
 
 
   if (rbuff == NULL) {
-    rsz = MKC_SMALL_BUFF_SZ;
+    rsz = MKC_LARGE_BUFF_SZ;
     rbuff = malloc (rsz);
     if (rbuff == NULL) {
       mkc_error_set (compile->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
@@ -657,7 +658,7 @@ compile_link_run (compile_t *compile, mkc_compiler_t compiler,
   }
 
   if (rbuff == NULL) {
-    rsz = MKC_SMALL_BUFF_SZ;
+    rsz = MKC_LARGE_BUFF_SZ;
     rbuff = malloc (rsz);
     if (rbuff == NULL) {
       mkc_error_set (compile->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
@@ -669,6 +670,7 @@ compile_link_run (compile_t *compile, mkc_compiler_t compiler,
   rc = os_process_pipe (chararr_get_arr (compile->targv),
       OS_PROC_WAIT | OS_PROC_NOWINDOW, rbuff, rsz, &retsz);
 
+  rbuff [retsz] = '\0';
   compile_display_output (compile, rbuff, retsz, "run log", rc);
 
   free (exefile);
@@ -680,24 +682,24 @@ compile_link_run (compile_t *compile, mkc_compiler_t compiler,
 }
 
 static void
-compile_append_list_arg (compile_t *compile, mkc_list_t *list)
+compile_append_list_arg (compile_t *compile, list_t *list)
 {
-  mkc_listidx_t   iteridx;
-  mkc_listidx_t   lidx;
+  listidx_t   iteridx;
+  listidx_t   lidx;
 
   if (compile == NULL || list == NULL) {
     return;
   }
 
-  mkc_list_iter_start (list, &iteridx);
-  while ((lidx = mkc_list_iter_next (list, &iteridx)) != MKC_ITER_FINISH) {
+  list_iter_start (list, &iteridx);
+  while ((lidx = list_iter_next (list, &iteridx)) != MKC_ITER_FINISH) {
     value_t   *lvalue;
 
     if (mkc_error_chk_err (compile->mkcerr)) {
       break;
     }
 
-    lvalue = mkc_list_get_by_idx (list, lidx);
+    lvalue = list_get_by_idx (list, lidx);
     chararr_append (compile->targv, lvalue->sval);
   }
 }

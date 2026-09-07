@@ -9,7 +9,7 @@
 #endif
 
 #include "mkc_error.h"
-#include "mkc_list.h"
+#include "list.h"
 #include "mkc_nodiscard.h"
 #include "mkc_regex.h"
 
@@ -18,7 +18,7 @@ extern "C" {
 #endif
 
 #if _have_regex
-MKC_NODISCARD mkc_list_t * dir_match (const char *dirname, mkc_regex_t *rx, mkc_error_t *mkcerr);
+MKC_NODISCARD list_t * dir_match (const char *dirname, mkc_regex_t *rx, mkc_error_t *mkcerr);
 #endif
 
 #if defined (__cplusplus) || defined (c_plusplus)

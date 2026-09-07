@@ -12,7 +12,7 @@
 #include "compile.h"
 #include "mkc_compiler.h"
 #include "mkc_error.h"
-#include "mkc_list.h"
+#include "list.h"
 #include "mkc_log.h"
 #include "mkc_nodiscard.h"
 #include "scopedvar.h"

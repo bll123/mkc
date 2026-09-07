@@ -515,8 +515,8 @@ mkc_chk_package (mkc_check_t *check,
   char            * tpath;
   const char      * tmpnm;
   mkc_alternate_t * alt;
-  mkc_listidx_t   iteridx;
-  mkc_listidx_t   pathidx;
+  listidx_t   iteridx;
+  listidx_t   pathidx;
   char            tmpname [MKC_VNAME_MAX];
   char            * rbuff;
 
@@ -561,8 +561,8 @@ mkc_chk_package (mkc_check_t *check,
     return MKC_ERR_FAILURE;
   }
 
-  mkc_list_iter_start (check->attr->pathlist, &iteridx);
-  while ((pathidx = mkc_list_iter_next (check->attr->pathlist, &iteridx)) != MKC_ITER_FINISH) {
+  list_iter_start (check->attr->pathlist, &iteridx);
+  while ((pathidx = list_iter_next (check->attr->pathlist, &iteridx)) != MKC_ITER_FINISH) {
     value_t   *path;
 
     if (mkc_error_chk_err (check->mkcerr)) {
@@ -571,7 +571,7 @@ mkc_chk_package (mkc_check_t *check,
       return MKC_ERR_FAILURE;
     }
 
-    path = mkc_list_get_by_idx (check->attr->pathlist, pathidx);
+    path = list_get_by_idx (check->attr->pathlist, pathidx);
     sv_value_get_str (check->sv, path, tpath, MKC_PATH_MAX);
     if (*tpath) {
       chararr_append (targv, "--with-path");

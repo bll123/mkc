@@ -11,12 +11,13 @@
 #include <stdarg.h>
 
 #include "ast.h"
+#include "dict.h"
+#include "list.h"
 #include "mkc_check.h"
 #include "mkc_context.h"
 #include "mkc_def.h"
 #include "mkc_error.h"
 #include "mkc_log.h"
-#include "mkc_list.h"
 #include "mkc_nodiscard.h"
 #include "mkc_option.h"
 #include "os_process.h"
@@ -65,7 +66,7 @@ typedef struct ast_unary_op_t {
 } ast_unary_op_t;
 
 typedef struct ast_list_t {
-  mkc_list_t          *list;
+  list_t          *list;
 } ast_list_t;
 
 typedef struct ast_nodelist_t {
@@ -73,7 +74,7 @@ typedef struct ast_nodelist_t {
 } ast_nodelist_t;
 
 typedef struct ast_stmtlist_t {
-  mkc_list_t          *stmtlist;
+  list_t          *stmtlist;
 } ast_stmtlist_t;
 
 /* statements */
@@ -217,7 +218,7 @@ typedef struct astmain_t {
   mkc_error_t           * mkcerr;
   mkc_log_t             * log;
   mkc_option_t          * mkcoptions;
-  mkc_list_t            * funclist;
+  list_t            * funclist;
   value_t               value;
   int32_t               allocsz;
   int32_t               sz;
@@ -255,7 +256,7 @@ ast_init (mkc_log_t *log, mkc_option_t *mkcoptions, mkc_error_t *mkcerr)
   }
   memset (astmain, 0, sizeof (astmain_t));
 
-  astmain->funclist = mkc_list_init (MKC_LIST_SORTED,
+  astmain->funclist = list_init (MKC_LIST_SORTED,
       NULL, ast_func_compare, mkcerr);
   astmain->mkcoptions = mkcoptions;
 
@@ -336,7 +337,7 @@ ast_free (astmain_t *astmain)
   if (astmain->context != NULL) {
     mkc_context_free (astmain->context);
   }
-  mkc_list_free (astmain->funclist);
+  list_free (astmain->funclist);
   free (astmain);
 }
 
@@ -423,7 +424,7 @@ astnode_t *
 ast_mk_value_list (astmain_t *astmain,
     astnode_t *listnode, astnode_t *vala, int32_t lineno, int colno)
 {
-  mkc_list_t      *tlist = NULL;
+  list_t      *tlist = NULL;
   ast_value_t *astvalue;
   value_t         *value;
 
@@ -435,7 +436,7 @@ ast_mk_value_list (astmain_t *astmain,
 
     astnode = astnode_init (astmain, MKC_T_VALUE, lineno, colno);
     /* the values are already in an astnode, the values will be freed elsewhere */
-    tlist = mkc_list_init (MKC_LIST_UNSORTED, NULL, NULL, astmain->mkcerr);
+    tlist = list_init (MKC_LIST_UNSORTED, NULL, NULL, astmain->mkcerr);
     astvalue = &astnode->value;
     value = &astvalue->value;
     value_init (value);
@@ -449,10 +450,52 @@ ast_mk_value_list (astmain_t *astmain,
 
   if (vala != NULL) {
     value = &vala->value.value;
-    mkc_list_set (tlist, value, sizeof (value_t));
+    list_set (tlist, value, sizeof (value_t));
   }
 
   return listnode;
+}
+
+MKC_NODISCARD
+astnode_t *
+ast_mk_value_dict (astmain_t *astmain,
+    astnode_t *dictnode, astnode_t *name, astnode_t *vala,
+    int32_t lineno, int colno)
+{
+  dict_t        * tdict = NULL;
+  ast_value_t   * astvalue;
+  value_t       * value;
+  const char    * nm = NULL;
+
+  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
+      "ast-mk: value-dict\n");
+
+  if (dictnode == NULL) {
+    astnode_t     *astnode;
+
+    astnode = astnode_init (astmain, MKC_T_VALUE, lineno, colno);
+    /* the values are already in an astnode, the values will be freed elsewhere */
+    tdict = dict_init (astmain->log, NULL, sizeof (value_t), astmain->mkcerr);
+    astvalue = &astnode->value;
+    value = &astvalue->value;
+    value_init (value);
+    value->vtype = MKC_VT_DICT;
+    value->dict = tdict;
+    dictnode = astnode;
+  }
+  astvalue = &dictnode->value;
+  value = &astvalue->value;
+  tdict = value->dict;
+
+  if (vala != NULL) {
+    value = &name->value.value;
+    nm = value->sval;
+
+    value = &vala->value.value;
+    dict_set (tdict, nm, value);
+  }
+
+  return dictnode;
 }
 
 MKC_NODISCARD
@@ -496,7 +539,7 @@ ast_mk_stmtlist (astmain_t *astmain,
     int32_t lineno, int colno)
 {
   astnode_t   *astnode = NULL;
-  mkc_list_t      *tlist = NULL;
+  list_t      *tlist = NULL;
 
   mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
       "ast-mk: stmt-list\n");
@@ -506,14 +549,14 @@ ast_mk_stmtlist (astmain_t *astmain,
     if (astnode == NULL) {
       return NULL;
     }
-    astnode->stmtlist.stmtlist = mkc_list_init (MKC_LIST_UNSORTED,
+    astnode->stmtlist.stmtlist = list_init (MKC_LIST_UNSORTED,
         NULL, NULL, astmain->mkcerr);
     stmtlist = astnode;
   }
   tlist = stmtlist->stmtlist.stmtlist;
   /* the node is already created, there's no need to store the */
   /* entire structure, just store the pointer */
-  mkc_list_set (tlist, &stmt, sizeof (astnode_t *));
+  list_set (tlist, &stmt, sizeof (astnode_t *));
 
   return stmtlist;
 }
@@ -1230,6 +1273,7 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
         break;
       }
 
+// ### check the log level before doing this
       {
         char    *tbuff;
 
@@ -1250,12 +1294,12 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
     }
 
     case MKC_T_STMTLIST: {
-      mkc_listidx_t   iteridx;
-      mkc_listidx_t   lidx;
+      listidx_t   iteridx;
+      listidx_t   lidx;
 
       sv_incr_local_id (astmain->sv);
-      mkc_list_iter_start (astnode->stmtlist.stmtlist, &iteridx);
-      while ((lidx = mkc_list_iter_next (astnode->stmtlist.stmtlist, &iteridx)) != MKC_ITER_FINISH) {
+      list_iter_start (astnode->stmtlist.stmtlist, &iteridx);
+      while ((lidx = list_iter_next (astnode->stmtlist.stmtlist, &iteridx)) != MKC_ITER_FINISH) {
         astnode_t   **plistnode;
         astnode_t   *listnode;
 
@@ -1273,7 +1317,7 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
           break;
         }
 
-        plistnode = mkc_list_get_by_idx (astnode->stmtlist.stmtlist, lidx);
+        plistnode = list_get_by_idx (astnode->stmtlist.stmtlist, lidx);
         listnode = *plistnode;
 
         if (listnode != NULL) {
@@ -1472,14 +1516,14 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
 
     case MKC_T_STMT_FUNCTION: {
       /* no need to store the entire structure, just store the pointer */
-      mkc_list_set (astmain->funclist, &astnode, sizeof (astnode_t *));
+      list_set (astmain->funclist, &astnode, sizeof (astnode_t *));
       break;
     }
 
     case MKC_T_STMT_FUNCTION_CALL: {
       bool            funccallret = true;
       astnode_t   tfunc;
-      mkc_listidx_t   fidx;
+      listidx_t   fidx;
       astnode_t   **funcp;
       astnode_t   *func;
       value_t     *valfuncargs;
@@ -1490,13 +1534,13 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
       func = &tfunc;
 
       /* the list is a list of pointers to astnode_t */
-      fidx = mkc_list_find (astmain->funclist, &func);
+      fidx = list_find (astmain->funclist, &func);
       if (fidx == MKC_LIST_NOTFOUND) {
         mkc_error_set (astmain->mkcerr, MKC_ERR_FUNCTION_NOT_FOUND, 0, NULL);
         break;
       }
 
-      funcp = mkc_list_get_by_idx (astmain->funclist, fidx);
+      funcp = list_get_by_idx (astmain->funclist, fidx);
       func = *funcp;
 
       valarglist = ast_get_value (astmain, func->stmt_function.argnames);
@@ -1621,6 +1665,9 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
       }
 
       ast_process (astmain, astnode->stmt_set.vala, ifcond, stmtcontrol, funcret, depth);
+      if (mkc_error_chk_err (astmain->mkcerr)) {
+        break;
+      }
       rc = process_stmt_set (astmain->process, valnm, &astmain->value,
           astnode->stmt_set.local);
       if (mkc_context_check (astmain->context, MKC_CONTEXT_CACHE)) {
@@ -2016,6 +2063,7 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
 
     case MKC_T_OP_FILE_EXISTS:
     case MKC_T_OP_IS_DEFINED:
+    case MKC_T_OP_IS_DICT:
     case MKC_T_OP_IS_DIRECTORY:
     case MKC_T_OP_IS_LIST: {
       ast_process (astmain, astnode->unary_op.vala, ifcond, stmtcontrol, funcret, depth);
@@ -2099,7 +2147,7 @@ astnode_free (void *tastnode)
       break;
     }
     case MKC_T_STMTLIST: {
-      mkc_list_free (astnode->stmtlist.stmtlist);
+      list_free (astnode->stmtlist.stmtlist);
       break;
     }
   }

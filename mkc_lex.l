@@ -111,15 +111,18 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 "*"             { return T_OP_MULTIPLY; }
 "+"             { return T_OP_PLUS; }
 "file_exists"   { return T_OP_FILE_EXISTS; }
-"is_list"       { return T_OP_IS_LIST; }
+"is_dict"       { return T_OP_IS_DICT; }
 "is_defined"    { return T_OP_IS_DEFINED; }
 "is_directory"  { return T_OP_IS_DIRECTORY; }
+"is_list"       { return T_OP_IS_LIST; }
 "{"             { return T_LEFT_BRACE; }
-"["             { return T_LEFT_BRACKET; }
-"("             { return T_LEFT_PAREN; }
 "}"             { return T_RIGHT_BRACE; }
+"["             { return T_LEFT_BRACKET; }
 "]"             { return T_RIGHT_BRACKET; }
+"("             { return T_LEFT_PAREN; }
 ")"             { return T_RIGHT_PAREN; }
+"[["            { return T_DOUBLE_LEFT_BRACKET; }
+"]]"            { return T_DOUBLE_RIGHT_BRACKET; }
 ";"             { return T_SEMICOLON; }
 
 "true"|"TRUE"     { return T_VAL_TRUE; }
