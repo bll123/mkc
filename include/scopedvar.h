@@ -92,7 +92,7 @@ value_t * sv_get_value (scopedvar_t *scopedvar, sv_type_t svtype, const char *vn
 int32_t sv_value_get_integer (scopedvar_t *scopedvar, value_t *value);
 int64_t sv_value_get_timestamp (scopedvar_t *scopedvar, value_t *value);
 void sv_value_get_str (scopedvar_t *scopedvar, value_t *value, char *buff, size_t sz);
-value_t * sv_value_get_value (scopedvar_t *scopedvar, value_t *value);
+value_t * sv_value_get_value (scopedvar_t *scopedvar, value_t *value, value_t *rvalue);
 value_t * sv_value_get_list_value (scopedvar_t *scopedvar, value_t *value);
 
 void sv_set_context (scopedvar_t *scopedvar, const char *vname, value_ctxt_t vctxt);

@@ -78,16 +78,24 @@ value_free (void *tvalue)
 }
 
 const char *
-value_to_str (value_t *value, char *buff, size_t sz)
+value_to_str (value_t *value, char *buff, size_t sz, int depth)
 {
+  char      * eptr;
+  char      * p;
+  char      * tbuff = NULL;
+  bool      allocated = false;
+
   if (value == NULL) {
     snprintf (buff, sz, "null");
     return buff;
   }
 
+  eptr = buff + sz;
+  p = buff;
+
   switch (value->vtype) {
     case MKC_VT_INVALID: {
-      snprintf (buff, sz, "invalid");
+      snprintf (buff, sz, "%s", "invalid");
       break;
     }
     case MKC_VT_RANGE: {
@@ -108,27 +116,33 @@ value_to_str (value_t *value, char *buff, size_t sz)
       listidx_t     iteridx;
       listidx_t     lidx;
       value_t       * tvalue;
-      char          tbuff [MKC_PATH_MAX];
-      char          * p;
-      char          * eptr;
       int           lsz;
 
-      eptr = buff + sz;
       tlist = value->list;
       lsz = list_size (tlist);
-      p = stpecpy (buff, eptr, "[");
+      p = stpecpy (p, eptr, "[");
       if (lsz > 1) {
         p = stpecpy (p, eptr, "\n");
       }
       list_iter_start (tlist, &iteridx);
       while ((lidx = list_iter_next (tlist, &iteridx)) != MKC_ITER_FINISH) {
+        if (! allocated) {
+          tbuff = malloc (MKC_PATH_MAX);
+          if (tbuff == NULL) {
+            return NULL;
+          }
+          allocated = true;
+        }
+
         tvalue = list_get_by_idx (tlist, lidx);
         if (lsz > 1) {
-          p = stpecpy (p, eptr, "       ");
+          p = stpecpy (p, eptr, "      ");
+          snprintf (tbuff, MKC_PATH_MAX, "%*s", depth, "");
+          p = stpecpy (p, eptr, tbuff);
         } else {
           p = stpecpy (p, eptr, " ");
         }
-        value_to_str (tvalue, tbuff, sizeof (tbuff));
+        value_to_str (tvalue, tbuff, MKC_PATH_MAX, depth + 2);
         if (value_is_string_type (tvalue)) {
           p = stpecpy (p, eptr, "'");
         }
@@ -141,34 +155,43 @@ value_to_str (value_t *value, char *buff, size_t sz)
         }
       }
       if (lsz > 1) {
-        p = stpecpy (p, eptr, "       ]");
+        snprintf (tbuff, MKC_PATH_MAX, "%*s", depth, "");
+        p = stpecpy (p, eptr, tbuff);
+        p = stpecpy (p, eptr, "    ]");
       } else {
         p = stpecpy (p, eptr, " ]");
       }
+
       break;
     }
     case MKC_VT_DICT: {
       dict_t        * tdict;
       dictitem_t    * diter;
       listidx_t     iteridx;
-      value_t       *tvalue = NULL;
-      char          tbuff [MKC_PATH_MAX];
-      char          *p;
-      char          *eptr;
+      value_t       * tvalue = NULL;
       int           lsz;
       const char    * name;
 
-      eptr = buff + sz;
       tdict = value->dict;
       lsz = dict_size (tdict);
-      p = stpecpy (buff, eptr, "[[");
-      if (lsz > 1) {
+      p = stpecpy (p, eptr, "[[");
+      if (lsz > 2) {
         p = stpecpy (p, eptr, "\n");
       }
       dict_iter_start (tdict, &iteridx);
       while ((diter = dict_iter_next (tdict, &iteridx)) != NULL) {
-        if (lsz > 1) {
-          p = stpecpy (p, eptr, "       ");
+        if (! allocated) {
+          tbuff = malloc (MKC_PATH_MAX);
+          if (tbuff == NULL) {
+            return NULL;
+          }
+          allocated = true;
+        }
+
+        if (lsz > 2) {
+          p = stpecpy (p, eptr, "      ");
+          snprintf (tbuff, MKC_PATH_MAX, "%*s", depth, "");
+          p = stpecpy (p, eptr, tbuff);
         } else {
           p = stpecpy (p, eptr, " ");
         }
@@ -179,7 +202,7 @@ value_to_str (value_t *value, char *buff, size_t sz)
         p = stpecpy (p, eptr, "' ");
 
         tvalue = dict_iter_get_data (diter);
-        value_to_str (tvalue, tbuff, sizeof (tbuff));
+        value_to_str (tvalue, tbuff, MKC_PATH_MAX, depth + 2);
         if (value_is_string_type (tvalue)) {
           p = stpecpy (p, eptr, "'");
         }
@@ -187,12 +210,14 @@ value_to_str (value_t *value, char *buff, size_t sz)
         if (value_is_string_type (tvalue)) {
           p = stpecpy (p, eptr, "'");
         }
-        if (lsz > 1) {
+        if (lsz > 2) {
           p = stpecpy (p, eptr, "\n");
         }
       }
-      if (lsz > 1) {
-        p = stpecpy (p, eptr, "       ]]");
+      if (lsz > 2) {
+        snprintf (tbuff, MKC_PATH_MAX, "%*s", depth, "");
+        p = stpecpy (p, eptr, tbuff);
+        p = stpecpy (p, eptr, "    ]]");
       } else {
         p = stpecpy (p, eptr, " ]]");
       }
@@ -208,6 +233,7 @@ value_to_str (value_t *value, char *buff, size_t sz)
     }
   }
 
+  free (tbuff);
   return buff;
 }
 

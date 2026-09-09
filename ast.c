@@ -1285,7 +1285,7 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
         mkc_log_loc (astmain->log, MKC_LOG_AST,
             astnode->lineno, astnode->colno,
             "%*s%s\n", astmain->depth * 2, " ",
-            value_to_str (value, tbuff, MKC_PATH_MAX));
+            value_to_str (value, tbuff, MKC_PATH_MAX, 0));
         free (tbuff);
       }
 

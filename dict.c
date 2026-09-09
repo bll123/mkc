@@ -111,7 +111,6 @@ dict_set (dict_t * dict, const char * name, void *data)
   ditem.dict = dict;
 
   list_set (dict->list, &ditem, sizeof (dictitem_t));
-fprintf (stderr, "dict: set %s ok\n", ditem.name);
 }
 
 void *
@@ -128,7 +127,6 @@ dict_get (dict_t * dict, const char * name)
   titem.name = (char *) name;
 
   idx = list_find (dict->list, &titem);
-fprintf (stderr, "dict: find: %d\n", idx);
   if (idx != MKC_LIST_NOTFOUND) {
     ditem = list_get_by_idx (dict->list, idx);
   }
@@ -214,11 +212,9 @@ dictitem_compare (void *titema, void *titemb)
 
 
   if (ditema == NULL || ditemb == NULL) {
-fprintf (stderr, "d: comp: null\n");
     return 0;
   }
 
-fprintf (stderr, "d: comp: %s %s\n", ditema->name, ditemb->name);
   rc = strcmp (ditema->name, ditemb->name);
   return rc;
 }

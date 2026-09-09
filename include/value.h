@@ -70,7 +70,7 @@ typedef struct value_t {
 
 void value_init (value_t *value);
 void value_free (void *value);
-const char *value_to_str (value_t *value, char *buff, size_t sz);
+const char *value_to_str (value_t *value, char *buff, size_t sz, int depth);
 void value_range_init (value_t *value, int32_t beg, int32_t end, int32_t incr);
 void value_range_iter_start (value_t *value, listidx_t *iteridx);
 int value_range_iter_next (value_t *value, value_t *rval, listidx_t *iteridx);

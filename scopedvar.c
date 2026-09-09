@@ -785,13 +785,11 @@ sv_value_get_str (scopedvar_t *sv, value_t *value,
 }
 
 /* get the actual value of a value */
-/* this is only an issue for env-variables, quoted strings and lists */
-/* the caller is responsible for calling sv_temp_value_free() */
+/* this is an issue for env-variables, quoted strings, lists and dicts */
 value_t *
-sv_value_get_value (scopedvar_t *sv, value_t *value)
+sv_value_get_value (scopedvar_t *sv, value_t *value, value_t *rvalue)
 {
-  value_t   *tvalue;
-  value_t   *nvalue;
+  value_t   * nvalue;
 
   /* in many cases the value returned is simply the value passed in */
   nvalue = value;
@@ -821,18 +819,12 @@ sv_value_get_value (scopedvar_t *sv, value_t *value)
       /* need to get the actual value */
       sv_value_get_str (sv, value, buff, MKC_PATH_MAX);
 
-      tvalue = malloc (sizeof (value_t));
-      if (tvalue == NULL) {
-        mkc_error_set (sv->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-        return nvalue;
-      }
-      value_init (tvalue);
-      tvalue->tempallocated = true;
-      tvalue->vtype = MKC_VT_STRING;
-      tvalue->vctxt = value->vctxt;
-      tvalue->sval = buff;
-      nvalue = tvalue;
-
+      value_init (rvalue);
+      rvalue->tempallocated = true;
+      rvalue->vtype = MKC_VT_STRING;
+      rvalue->vctxt = value->vctxt;
+      rvalue->sval = buff;
+      nvalue = rvalue;
       break;
     }
     case MKC_VT_VARIABLE: {
@@ -852,7 +844,7 @@ sv_value_get_value (scopedvar_t *sv, value_t *value)
       while ((ditem = dict_iter_next (value->dict, &iteridx)) != NULL) {
         const char  * name;
         value_t     * dvalue;
-        value_t     * tmpvalue;
+        value_t     tmpvalue;
 
         if (mkc_error_chk_err (sv->mkcerr)) {
           break;
@@ -860,28 +852,22 @@ sv_value_get_value (scopedvar_t *sv, value_t *value)
 
         name = dict_iter_get_name (ditem);
         dvalue = dict_iter_get_data (ditem);
-        tmpvalue = sv_value_get_value (sv, dvalue);
-        dict_set (ndict, name, tmpvalue);
+        sv_value_get_value (sv, dvalue, &tmpvalue);
+        dict_set (ndict, name, &tmpvalue);
       }
 
-      tvalue = malloc (sizeof (value_t));
-      if (tvalue == NULL) {
-        mkc_error_set (sv->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-        return nvalue;
-      }
-
-      value_init (tvalue);
-      tvalue->tempallocated = true;
-      tvalue->vtype = MKC_VT_DICT;
-      tvalue->vctxt = value->vctxt;
-      tvalue->dict = ndict;
-      nvalue = tvalue;
+      value_init (rvalue);
+      rvalue->tempallocated = true;
+      rvalue->vtype = MKC_VT_DICT;
+      rvalue->vctxt = value->vctxt;
+      rvalue->dict = ndict;
+      nvalue = rvalue;
       break;
     }
     case MKC_VT_LIST: {
       listidx_t     iteridx;
       listidx_t     lidx;
-      list_t        *nlist;
+      list_t        * nlist;
 
       /* each value in a list must be processed, as the value in the list */
       /* may be an env-variable or a quoted string or a list */
@@ -892,32 +878,30 @@ sv_value_get_value (scopedvar_t *sv, value_t *value)
 
       list_iter_start (value->list, &iteridx);
       while ((lidx = list_iter_next (value->list, &iteridx)) != MKC_ITER_FINISH) {
-        value_t   *lvalue;
-        value_t   *tmpvalue;
+        value_t   * lvalue;
+        value_t   tmpvalue;
 
         if (mkc_error_chk_err (sv->mkcerr)) {
           break;
         }
 
         lvalue = list_get_by_idx (value->list, lidx);
-        tmpvalue = sv_value_get_value (sv, lvalue);
-        list_set (nlist, tmpvalue, sizeof (value_t));
+        sv_value_get_value (sv, lvalue, &tmpvalue);
+        list_set (nlist, &tmpvalue, sizeof (value_t));
       }
 
-      tvalue = malloc (sizeof (value_t));
-      if (tvalue == NULL) {
-        mkc_error_set (sv->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-        return nvalue;
-      }
-
-      value_init (tvalue);
-      tvalue->tempallocated = true;
-      tvalue->vtype = MKC_VT_LIST;
-      tvalue->vctxt = value->vctxt;
-      tvalue->list = nlist;
-      nvalue = tvalue;
+      value_init (rvalue);
+      rvalue->tempallocated = true;
+      rvalue->vtype = MKC_VT_LIST;
+      rvalue->vctxt = value->vctxt;
+      rvalue->list = nlist;
+      nvalue = rvalue;
       break;
     }
+  }
+
+  if (nvalue != rvalue) {
+    memcpy (rvalue, nvalue, sizeof (value_t));
   }
 
   return nvalue;
@@ -1220,7 +1204,6 @@ sv_temp_value_free (void *tvalue)
 
   if (value->tempallocated) {
     value_free (value);
-    free (value);
   }
 }
 
@@ -1600,7 +1583,7 @@ sv_get_variable_str (scopedvar_t *sv, value_t *value,
     char    dbuff [MKC_PATH_MAX];
 
     mkc_log (sv->log, MKC_LOG_PROCESS, "  scope-get-var-str: %s\n",
-        value_to_str (tvalue, dbuff, sizeof (dbuff)));
+        value_to_str (tvalue, dbuff, sizeof (dbuff), 0));
   }
 }
 
