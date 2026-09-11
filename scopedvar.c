@@ -11,6 +11,8 @@
 #include <inttypes.h>
 #include <string.h>
 
+#include "dict.h"
+#include "dictdict.h"
 #include "envutil.h"
 #include "mkc_compiler.h"
 #include "mkc_const.h"
@@ -66,21 +68,17 @@ typedef struct sv_iter_t {
 
 static char const * const svtypenames [] = {
   [SV_T_ACTIVE] = "active",
-  [SV_T_BUILD] = "builditems",
-  [SV_T_COMPFLAGS] = "target_compiler_flags",
+  [SV_T_BUILD_DATA] = "builddata",
   [SV_T_CURR_PROF_COMPILER] = "curr_prof_compiler",
   [SV_T_CURR_PROF] = "curr_prof",
-  [SV_T_DEPENDENCY] = "dependency",
   [SV_T_DFLT_PROF] = "dflt_prof",
   [SV_T_INTERNAL] = "internal",
-  [SV_T_LIBS] = "target_libraries",
-  [SV_T_LINKFLAGS] = "target_link_flags",
   [SV_T_LOCAL] = "local",
   [SV_T_NOT_SET] = "not_in_use",
   [SV_T_PATHS] = "paths",
   [SV_T_SEARCH] = "search",
+  [SV_T_SPECIAL] = "special",
   [SV_T_TARGET] = "targetitems",
-  [SV_T_TIMESTAMP] = "timestamp",
 };
 
 static void sv_set_current_profile (scopedvar_t *sv, const char *name);
@@ -535,43 +533,46 @@ sv_get_timestamp (scopedvar_t *sv, sv_type_t svtype,
     const char *vname)
 {
   value_t     *value;
+  const char  *tag = NULL;
 
-  value = sv_get_value (sv, svtype, vname);
+  if (svtype == SV_T_BUILD_DATA) {
+    tag = MKC_C_BVAR_TIMESTAMP;
+  }
+  value = sv_get_value (sv, svtype, vname, tag);
   return sv_value_get_timestamp (sv, value);
 }
 
 value_t *
 sv_get_value (scopedvar_t *sv, sv_type_t svtype,
-    const char *vname)
+    const char *vname, const char *tag)
 {
   sv_profile_t    * svprof;
   value_t         * value = NULL;
-  mkc_varlist_t   * varlist;
 
   if (svtype == SV_T_ACTIVE) {
     svprof = sv->active_prof;
     svtype = svprof->svtype;
   }
 
-  /* handle the special namespaces */
-  if (svtype > SV_T_NAMESPACE) {
-    int     idx = -1;
+  /* handle special type to variable mappings */
+  if (svtype == SV_T_BUILD_DATA) {
+    value_t   * dictval;
 
-    for (int i = 0; i < sv->profiles.sz; ++i) {
-      if (sv->profiles.variables [i].svtype == svtype) {
-        idx = i;
-        break;
-      }
-    }
-
-    if (idx == -1) {
+    dictval = sv_get_value (sv, SV_T_INTERNAL, MKC_C_VAR_BUILD_DATA, NULL);
+    if (dictval == NULL || dictval->vtype != MKC_VT_DICT) {
       return NULL;
     }
+    value = dictdict_get (dictval->dict, vname, tag, sv->mkcerr);
+    return value;
+  }
+  if (svtype == SV_T_PATHS) {
+    value_t   * dictval;
 
-    svprof = &sv->profiles.variables [idx];
-    varlist = svprof->varlist;
-    value = mkc_var_get_value (varlist, vname);
-
+    dictval = sv_get_value (sv, SV_T_INTERNAL, MKC_C_VAR_BUILD_PATHS, NULL);
+    if (dictval == NULL || dictval->vtype != MKC_VT_DICT) {
+      return NULL;
+    }
+    value = dict_get (dictval->dict, vname);
     return value;
   }
 
@@ -820,7 +821,7 @@ sv_value_get_value (scopedvar_t *sv, value_t *value, value_t *rvalue)
       sv_value_get_str (sv, value, buff, MKC_PATH_MAX);
 
       value_init (rvalue);
-      rvalue->tempallocated = true;
+      rvalue->isallocated = true;
       rvalue->vtype = MKC_VT_STRING;
       rvalue->vctxt = value->vctxt;
       rvalue->sval = buff;
@@ -838,7 +839,7 @@ sv_value_get_value (scopedvar_t *sv, value_t *value, value_t *rvalue)
 
       /* each value in a dict must be processed */
 
-      ndict = dict_init (sv->log, sv_temp_value_free, sizeof (value_t), sv->mkcerr);
+      ndict = dict_init (sv->log, sv_value_free, sizeof (value_t), sv->mkcerr);
 
       dict_iter_start (value->dict, &iteridx);
       while ((ditem = dict_iter_next (value->dict, &iteridx)) != NULL) {
@@ -857,7 +858,7 @@ sv_value_get_value (scopedvar_t *sv, value_t *value, value_t *rvalue)
       }
 
       value_init (rvalue);
-      rvalue->tempallocated = true;
+      rvalue->isallocated = true;
       rvalue->vtype = MKC_VT_DICT;
       rvalue->vctxt = value->vctxt;
       rvalue->dict = ndict;
@@ -874,7 +875,8 @@ sv_value_get_value (scopedvar_t *sv, value_t *value, value_t *rvalue)
       /* the list may not need substitution, but just create a new list */
       /* in all cases */
 
-      nlist = list_init (MKC_LIST_UNSORTED, sv_temp_value_free, NULL, sv->mkcerr);
+      nlist = list_init (MKC_LIST_UNSORTED, sv_value_free, NULL,
+          sizeof (value_t), sv->mkcerr);
 
       list_iter_start (value->list, &iteridx);
       while ((lidx = list_iter_next (value->list, &iteridx)) != MKC_ITER_FINISH) {
@@ -887,11 +889,11 @@ sv_value_get_value (scopedvar_t *sv, value_t *value, value_t *rvalue)
 
         lvalue = list_get_by_idx (value->list, lidx);
         sv_value_get_value (sv, lvalue, &tmpvalue);
-        list_set (nlist, &tmpvalue, sizeof (value_t));
+        list_set (nlist, &tmpvalue);
       }
 
       value_init (rvalue);
-      rvalue->tempallocated = true;
+      rvalue->isallocated = true;
       rvalue->vtype = MKC_VT_LIST;
       rvalue->vctxt = value->vctxt;
       rvalue->list = nlist;
@@ -967,7 +969,7 @@ sv_set_context (scopedvar_t *sv, const char *vname,
     return;
   }
 
-  value = sv_get_value (sv, SV_T_SEARCH, vname);
+  value = sv_get_value (sv, SV_T_SEARCH, vname, NULL);
   if (value != NULL) {
     value->vctxt = vctxt;
   }
@@ -975,7 +977,7 @@ sv_set_context (scopedvar_t *sv, const char *vname,
 
 int
 sv_set (scopedvar_t *sv, sv_type_t svtype,
-    const char *vname, value_t *value, value_ctxt_t vctxt)
+    const char *vname, const char *tag, value_t *value, value_ctxt_t vctxt)
 {
   mkc_varlist_t   *varlist = NULL;
   int             rc = MKC_ERR_FAILURE;
@@ -986,6 +988,43 @@ sv_set (scopedvar_t *sv, sv_type_t svtype,
   if (vname == NULL || value == NULL) {
     mkc_error_set (sv->mkcerr, MKC_ERR_NULL_ARGUMENT, 0, NULL);
     return rc;
+  }
+
+  /* handle special dictionary types */
+  if (svtype == SV_T_BUILD_DATA) {
+    value_t   * dictval;
+
+    dictval = sv_get_value (sv, SV_T_INTERNAL, MKC_C_VAR_BUILD_DATA, NULL);
+    if (dictval != NULL && dictval->vtype == MKC_VT_DICT) {
+      value_t   * tvalue;
+
+      tvalue = malloc (sizeof (value_t));
+      if (tvalue == NULL) {
+        mkc_error_set (sv->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+        return rc;
+      }
+      value_copy (tvalue, value, sv->mkcerr);
+      dictdict_set (dictval->dict, vname, tag, tvalue,
+          sv->log, value_free, sv->mkcerr);
+    }
+    return MKC_OK;
+  }
+  if (svtype == SV_T_PATHS) {
+    value_t   * dictval;
+
+    dictval = sv_get_value (sv, SV_T_INTERNAL, MKC_C_VAR_BUILD_PATHS, NULL);
+    if (dictval != NULL && dictval->vtype == MKC_VT_DICT) {
+      value_t   * tvalue;
+
+      tvalue = malloc (sizeof (value_t));
+      if (tvalue == NULL) {
+        mkc_error_set (sv->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+        return rc;
+      }
+      value_copy (tvalue, value, sv->mkcerr);
+      dict_set (dictval->dict, vname, tvalue);
+    }
+    return MKC_OK;
   }
 
   varlist = sv_get_varlist (sv, svtype, vname);
@@ -1002,7 +1041,7 @@ sv_set (scopedvar_t *sv, sv_type_t svtype,
 
 int
 sv_set_integer (scopedvar_t *sv, sv_type_t svtype,
-    const char *vname, int32_t ival, value_ctxt_t vctxt)
+    const char *vname, const char *tag, int32_t ival, value_ctxt_t vctxt)
 {
   int       rc = MKC_ERR_FAILURE;
   value_t   value;
@@ -1011,13 +1050,13 @@ sv_set_integer (scopedvar_t *sv, sv_type_t svtype,
   value.ival = ival;
   value.vtype = MKC_VT_INTEGER;
 
-  rc = sv_set (sv, svtype, vname, &value, vctxt);
+  rc = sv_set (sv, svtype, vname, tag, &value, vctxt);
   return rc;
 }
 
 int
 sv_set_timestamp (scopedvar_t *sv, sv_type_t svtype,
-    const char *vname, int64_t tmval, value_ctxt_t vctxt)
+    const char *vname, const char *tag, int64_t tmval, value_ctxt_t vctxt)
 {
   int       rc = MKC_ERR_FAILURE;
   value_t   value;
@@ -1026,13 +1065,13 @@ sv_set_timestamp (scopedvar_t *sv, sv_type_t svtype,
   value.tmval = tmval;
   value.vtype = MKC_VT_TIMESTAMP;
 
-  rc = sv_set (sv, svtype, vname, &value, vctxt);
+  rc = sv_set (sv, svtype, vname, tag, &value, vctxt);
   return rc;
 }
 
 int
 sv_set_str (scopedvar_t *sv, sv_type_t svtype,
-    const char *vname, const char *str, value_ctxt_t vctxt)
+    const char *vname, const char *tag, const char *str, value_ctxt_t vctxt)
 {
   int       rc = MKC_ERR_FAILURE;
   value_t   value;
@@ -1041,13 +1080,14 @@ sv_set_str (scopedvar_t *sv, sv_type_t svtype,
   value.sval = (char *) str;
   value.vtype = MKC_VT_STRING;
 
-  rc = sv_set (sv, svtype, vname, &value, vctxt);
+  rc = sv_set (sv, svtype, vname, tag, &value, vctxt);
   return rc;
 }
 
 int
 sv_set_list (scopedvar_t *sv, sv_type_t svtype,
-    const char *vname, list_t *list, value_ctxt_t vctxt)
+    const char *vname, const char *tag,
+    list_t *list, value_ctxt_t vctxt)
 {
   int       rc = MKC_ERR_FAILURE;
   value_t   value;
@@ -1056,7 +1096,7 @@ sv_set_list (scopedvar_t *sv, sv_type_t svtype,
   value.list = list;
   value.vtype = MKC_VT_LIST;
 
-  rc = sv_set (sv, svtype, vname, &value, vctxt);
+  rc = sv_set (sv, svtype, vname, tag, &value, vctxt);
   return rc;
 }
 
@@ -1075,7 +1115,7 @@ sv_set_list_from_str (scopedvar_t *sv,
     }
 
     str_trim (p, 0);
-    sv_append_str_list (sv, SV_T_SEARCH, vname, p, vctxt);
+    sv_append_str_list (sv, SV_T_SEARCH, vname, NULL, p, vctxt);
     p = str_token (NULL, " ", &tokstr);
   }
 
@@ -1088,19 +1128,21 @@ sv_set_list_from_str (scopedvar_t *sv,
 /* verification checks */
 int
 sv_append_str_list (scopedvar_t *sv, sv_type_t svtype,
-    const char *vname, const char *data, value_ctxt_t vctxt)
+    const char *vname, const char *tag,
+    const char *data, value_ctxt_t vctxt)
 {
   value_t       *listval;
   list_t    *list;
   value_t       tvalue;
 
 
-  listval = sv_get_value (sv, svtype, vname);
+  listval = sv_get_value (sv, svtype, vname, tag);
   if (listval == NULL) {
-    list = list_init (MKC_LIST_UNSORTED, value_free, NULL, sv->mkcerr);
-    sv_set_list (sv, svtype, vname, list, vctxt);
-    listval = sv_get_value (sv, svtype, vname);
+    list = list_init (MKC_LIST_UNSORTED, value_free, NULL,
+        sizeof (value_t), sv->mkcerr);
+    sv_set_list (sv, svtype, vname, tag, list, vctxt);
     list_free (list);
+    listval = sv_get_value (sv, svtype, vname, tag);
   }
   list = listval->list;
 
@@ -1108,14 +1150,30 @@ sv_append_str_list (scopedvar_t *sv, sv_type_t svtype,
     value_init (&tvalue);
     tvalue.vtype = MKC_VT_STRING;
     tvalue.sval = strdup (data);
-    list_set (list, &tvalue, sizeof (value_t));
+    list_set (list, &tvalue);
   }
 
   return MKC_OK;
 }
 
+int
+sv_set_dict (scopedvar_t *sv, sv_type_t svtype,
+    const char *vname, dict_t *dict, value_ctxt_t vctxt)
+{
+  int       rc = MKC_ERR_FAILURE;
+  value_t   value;
+
+  value_init (&value);
+  value.dict = dict;
+  value.vtype = MKC_VT_DICT;
+
+  rc = sv_set (sv, svtype, vname, NULL, &value, vctxt);
+  return rc;
+}
+
 void
-sv_delete (scopedvar_t *sv, sv_type_t svtype, const char *vname)
+sv_delete (scopedvar_t *sv, sv_type_t svtype,
+    const char *vname, const char * tag)
 {
   mkc_varlist_t   *varlist;
 
@@ -1127,16 +1185,24 @@ sv_delete (scopedvar_t *sv, sv_type_t svtype, const char *vname)
     return;
   }
 
-  varlist = sv_get_varlist (sv, svtype, vname);
-  if (varlist == NULL) {
-    return;
-  }
+  if (svtype == SV_T_BUILD_DATA) {
+    value_t   * dictval;
 
-  mkc_var_delete (varlist, vname);
+    dictval = sv_get_value (sv, SV_T_INTERNAL, MKC_C_VAR_BUILD_DATA, NULL);
+    dictdict_delete (dictval->dict, vname, tag, sv->mkcerr);
+  } else {
+    varlist = sv_get_varlist (sv, svtype, vname);
+    if (varlist == NULL) {
+      return;
+    }
+
+    mkc_var_delete (varlist, vname);
+  }
 }
 
 bool
-sv_is_defined (scopedvar_t *sv, sv_type_t svtype, const char *vname)
+sv_is_defined (scopedvar_t *sv, sv_type_t svtype,
+    const char *vname, const char *tag)
 {
   value_t     *value;
 
@@ -1144,7 +1210,7 @@ sv_is_defined (scopedvar_t *sv, sv_type_t svtype, const char *vname)
     return false;
   }
 
-  value = sv_get_value (sv, svtype, vname);
+  value = sv_get_value (sv, svtype, vname, tag);
   if (value == NULL) {
     return false;
   }
@@ -1161,7 +1227,7 @@ sv_var_is_dict (scopedvar_t *sv, const char *vname)
     return rc;
   }
 
-  value = sv_get_value (sv, SV_T_SEARCH, vname);
+  value = sv_get_value (sv, SV_T_SEARCH, vname, NULL);
   if (value == NULL) {
     return rc;
   }
@@ -1182,7 +1248,7 @@ sv_var_is_list (scopedvar_t *sv, const char *vname)
     return rc;
   }
 
-  value = sv_get_value (sv, SV_T_SEARCH, vname);
+  value = sv_get_value (sv, SV_T_SEARCH, vname, NULL);
   if (value == NULL) {
     return rc;
   }
@@ -1193,8 +1259,9 @@ sv_var_is_list (scopedvar_t *sv, const char *vname)
   return rc;
 }
 
+/* only frees the value if the value was allocated */
 void
-sv_temp_value_free (void *tvalue)
+sv_value_free (void *tvalue)
 {
   value_t   *value = tvalue;
 
@@ -1202,7 +1269,7 @@ sv_temp_value_free (void *tvalue)
     return;
   }
 
-  if (value->tempallocated) {
+  if (value->isallocated) {
     value_free (value);
   }
 }
@@ -1337,7 +1404,7 @@ sv_substitute (scopedvar_t *sv, const char *data,
       } else {
         value_t   *value;
 
-        value = sv_get_value (sv, SV_T_SEARCH, tstr);
+        value = sv_get_value (sv, SV_T_SEARCH, tstr, NULL);
 //fprintf (stderr, "%*svalue-null? %d\n", depth * 2, "", value == NULL ? 1 : 0);
         if (value != NULL && value->vtype == MKC_VT_INTEGER) {
           snprintf (tbuff, sizeof (tbuff), "%" PRId32, value->ival);
@@ -1655,7 +1722,7 @@ sv_get_variable_value (scopedvar_t *sv, const char *str)
   if (tstr == NULL) {
     return NULL;
   }
-  value = sv_get_value (sv, SV_T_SEARCH, tstr);
+  value = sv_get_value (sv, SV_T_SEARCH, tstr, NULL);
   free (tstr);
   return value;
 }
@@ -1765,15 +1832,6 @@ sv_init_vars (scopedvar_t *sv, mkc_option_t *mkcoptions)
     sv_create (sv, SV_T_CURR_PROF, sv->current_profile, false);
   }
 
-  /* namespaces */
-  sv_create (sv, SV_T_BUILD, MKC_C_PROF_NAME_BUILD, false);
-  sv_create (sv, SV_T_COMPFLAGS, MKC_C_PROF_NAME_COMPFLAGS, false);
-  sv_create (sv, SV_T_DEPENDENCY, MKC_C_PROF_NAME_DEPENDENCY, false);
-  sv_create (sv, SV_T_LINKFLAGS, MKC_C_PROF_NAME_LINKFLAGS, false);
-  sv_create (sv, SV_T_LIBS, MKC_C_PROF_NAME_LIBS, false);
-  sv_create (sv, SV_T_PATHS, MKC_C_PROF_NAME_PATHS, false);
-  sv_create (sv, SV_T_TIMESTAMP, MKC_C_PROF_NAME_TIMESTAMP, false);
-
   sv_set_current_profile (sv, sv->current_profile);
   sv_set_comp_profile (sv, MKC_C_PROF_NAME_DEFAULT, sv->currcompiler);
   sv_set_active_profile (sv, MKC_C_PROF_NAME_DEFAULT);
@@ -1818,6 +1876,8 @@ sv_get_varlist (scopedvar_t *sv, sv_type_t svtype, const char *vname)
 {
   mkc_varlist_t   *varlist = NULL;
   int             idx = -1;
+  sv_profile_t    * svprof = NULL;
+
 
   if (svtype == SV_T_ACTIVE) {
     sv_profile_t * svprof;
@@ -1826,59 +1886,38 @@ sv_get_varlist (scopedvar_t *sv, sv_type_t svtype, const char *vname)
     svtype = svprof->svtype;
   }
 
-  if (svtype > SV_T_NAMESPACE) {
-    sv_profile_t * svprof = NULL;
+  if (svtype == SV_T_SEARCH) {
+    /* search any local scopes that are on the stack */
+    /* if the active_idx is reached, stop there */
+    for (int i = sv->hierarchy.sz - 1; i >= 0; --i) {
+      svprof = &sv->hierarchy.variables [i];
 
-    for (int i = 0; i < sv->profiles.sz; ++i) {
-      svprof = &sv->profiles.variables [i];
-
-      if (svprof->svtype == svtype) {
+      if (i == sv->active_idx) {
         idx = i;
+        varlist = svprof->varlist;
         break;
       }
-    }
 
-    if (idx == -1) {
-      return varlist;
-    }
-
-    varlist = svprof->varlist;
-  } else {
-    sv_profile_t * svprof = NULL;
-
-    if (svtype == SV_T_SEARCH) {
-      /* search any local scopes that are on the stack */
-      /* if the active_idx is reached, stop there */
-      for (int i = sv->hierarchy.sz - 1; i >= 0; --i) {
-        svprof = &sv->hierarchy.variables [i];
-
-        if (i == sv->active_idx) {
+      if (svprof->svtype == SV_T_LOCAL) {
+        varlist = svprof->varlist;
+        if (mkc_var_is_defined (varlist, vname)) {
           idx = i;
-          varlist = svprof->varlist;
           break;
         }
-
-        if (svprof->svtype == SV_T_LOCAL) {
-          varlist = svprof->varlist;
-          if (mkc_var_is_defined (varlist, vname)) {
-            idx = i;
-            break;
-          }
-        }
       }
-    } else {
-      if (svtype == SV_T_LOCAL) {
-        sv_push (sv, SV_T_LOCAL, "local");
-      }
-      /* the set statement is for a specific profile */
-      idx = sv_locate_svtype (sv, svtype);
-      svprof = &sv->profiles.variables [idx];
-      varlist = svprof->varlist;
     }
+  } else {
+    if (svtype == SV_T_LOCAL) {
+      sv_push (sv, SV_T_LOCAL, "local");
+    }
+    /* the set statement is for a specific profile */
+    idx = sv_locate_svtype (sv, svtype);
+    svprof = &sv->profiles.variables [idx];
+    varlist = svprof->varlist;
+  }
 
-    if (idx == -1) {
-      return varlist;
-    }
+  if (idx == -1) {
+    return varlist;
   }
 
   return varlist;

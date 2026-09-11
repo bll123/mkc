@@ -46,7 +46,7 @@ dict_init (mkc_log_t *log, list_free_t freefunc,
   }
 
   dict->list = list_init (MKC_LIST_SORTED,
-      dictitem_free, dictitem_compare, mkcerr);
+      dictitem_free, dictitem_compare, sizeof (dictitem_t), mkcerr);
   dict->log = log;
   dict->mkcerr = mkcerr;
   dict->freefunc = freefunc;
@@ -89,28 +89,37 @@ void
 dict_set (dict_t * dict, const char * name, void *data)
 {
   dictitem_t    ditem;
+  dictitem_t    * pditem;
+  listidx_t     idx;
 
   if (name == NULL) {
     mkc_error_set (dict->mkcerr, MKC_ERR_NULL_ARGUMENT, 0, NULL);
     return;
   }
 
-  ditem.data = malloc (dict->itemsz);
-  if (ditem.data == NULL) {
-    mkc_error_set (dict->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return;
-  }
-  memcpy (ditem.data, data, dict->itemsz);
+  ditem.name = (char *) name;
 
-  ditem.name = strdup (name);
-  if (ditem.name == NULL) {
-    mkc_error_set (dict->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    free (ditem.data);
-    return;
+  idx = list_find (dict->list, &ditem);
+  if (idx == MKC_LIST_NOTFOUND) {
+    ditem.name = strdup (name);
+    if (ditem.name == NULL) {
+      mkc_error_set (dict->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+      return;
+    }
+    ditem.data = malloc (dict->itemsz);
+    if (ditem.data == NULL) {
+      mkc_error_set (dict->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+      free (ditem.name);
+      return;
+    }
+    memcpy (ditem.data, data, dict->itemsz);
+    pditem = &ditem;
+  } else {
+    pditem = list_get_by_idx (dict->list, idx);
   }
-  ditem.dict = dict;
 
-  list_set (dict->list, &ditem, sizeof (dictitem_t));
+  pditem->dict = dict;
+  list_set (dict->list, pditem);
 }
 
 void *
@@ -127,11 +136,32 @@ dict_get (dict_t * dict, const char * name)
   titem.name = (char *) name;
 
   idx = list_find (dict->list, &titem);
-  if (idx != MKC_LIST_NOTFOUND) {
-    ditem = list_get_by_idx (dict->list, idx);
+  if (idx == MKC_LIST_NOTFOUND) {
+    return NULL;
   }
 
+  ditem = list_get_by_idx (dict->list, idx);
   return ditem->data;
+}
+
+void
+dict_delete (dict_t * dict, const char * name)
+{
+  dictitem_t    titem;
+  listidx_t idx;
+
+  if (dict == NULL) {
+    return;
+  }
+
+  titem.name = (char *) name;
+
+  idx = list_find (dict->list, &titem);
+  if (idx == MKC_LIST_NOTFOUND) {
+    return;
+  }
+
+  list_delete (dict->list, idx);
 }
 
 void

@@ -64,9 +64,9 @@ typedef struct mkc_user_regex_t {
 
 /* foreach processing */
 typedef struct mkc_foreach_t {
-  list_t      *namelist;
-  value_t         *listval;      // list or range
-  value_t         tvalue;
+  list_t      * namelist;
+  value_t     * listval;      // list or range
+  value_t     tvalue;
   listidx_t   iteridx;
 } mkc_foreach_t;
 
@@ -84,7 +84,7 @@ typedef struct process_t {
   const char        * exeext;
   mkc_regex_t       * rxshellvar;
   mkc_regex_t       * rxincguard;
-  list_t        * user_rx_list;
+  list_t            * user_rx_list;
   mkc_attribute_t   attr;
   /* internal */
   int64_t           mkc_ts;
@@ -255,16 +255,21 @@ process_init (scopedvar_t *sv,
   process->rxshellvar = NULL;
   process->rxincguard = NULL;
   process->user_rx_list = list_init (MKC_LIST_SORTED,
-      process_user_regex_free, process_user_regex_comp, mkcerr);
+      process_user_regex_free, process_user_regex_comp,
+      sizeof (mkc_user_regex_t), mkcerr);
 
   process->attr.compid = process->compid;
   process->attr.currcompiler = process->dfltcompiler;
   process->attr.headertype = process->headertype;
-  process->attr.alternates = list_init (MKC_LIST_UNSORTED, process_alternate_free, NULL, mkcerr);
+  process->attr.alternates = list_init (MKC_LIST_UNSORTED,
+      process_alternate_free, NULL, sizeof (mkc_alternate_t), mkcerr);
   process_attr_alternate (process);
-  process->attr.pathlist = list_init (MKC_LIST_UNSORTED, NULL, NULL, mkcerr);
-  process->attr.replacelist = list_init (MKC_LIST_UNSORTED, NULL, NULL, mkcerr);
-  process->attr.sourcelist = list_init (MKC_LIST_UNSORTED, NULL, NULL, mkcerr);
+  process->attr.pathlist = list_init (MKC_LIST_UNSORTED, NULL, NULL,
+      sizeof (value_t), mkcerr);
+  process->attr.replacelist = list_init (MKC_LIST_UNSORTED, NULL, NULL,
+      sizeof (value_t), mkcerr);
+  process->attr.sourcelist = list_init (MKC_LIST_UNSORTED, NULL, NULL,
+      sizeof (value_t), mkcerr);
   for (int i = 0; i < MKC_ATTR_MAX; ++i) {
     process->attr.str [i] = NULL;
   }
@@ -655,7 +660,7 @@ process_other_op (process_t *process, astnode_token_t asttype,
     }
     case MKC_T_OP_IS_DEFINED: {
       sv_value_get_str (process->sv, vala, tbuff, MKC_PATH_MAX);
-      result = sv_is_defined (process->sv, SV_T_SEARCH, tbuff);
+      result = sv_is_defined (process->sv, SV_T_SEARCH, tbuff, NULL);
       break;
     }
     case MKC_T_OP_IS_DIRECTORY: {
@@ -890,7 +895,7 @@ process_stmt_chk_inc_compile (process_t *process)
   /* files that are not out of date */
   /* this will happen if chk-inc-compile is not the first chk-inc */
   if (sv_is_defined (process->sv, SV_T_INTERNAL,
-      MKC_C_CHK_INC_COMPILE_TS)) {
+      MKC_C_CHK_INC_COMPILE_TS, NULL)) {
     chkinccompts = sv_get_timestamp (process->sv, SV_T_INTERNAL,
           MKC_C_CHK_INC_COMPILE_TS);
   }
@@ -922,7 +927,7 @@ process_stmt_chk_inc_compile (process_t *process)
   } else {
     ts = mstime ();
     sv_set_timestamp (process->sv, SV_T_INTERNAL,
-        MKC_C_CHK_INC_COMPILE_TS, ts, MKC_VCTXT_MKC);
+        MKC_C_CHK_INC_COMPILE_TS, NULL, ts, MKC_VCTXT_MKC);
 
     mkc_message (MKC_V_BASIC, "-- check_include_compile - %s (%d)\n",
         mkc_success_msg (rc), count);
@@ -941,9 +946,9 @@ process_stmt_chk_inc_compile (process_t *process)
 int
 process_stmt_chk_inc_deps (process_t *process)
 {
-  list_t        * hlist = NULL;
+  list_t            * hlist = NULL;
   toposort_t        * topo = NULL;
-  listidx_t     hiteridx;
+  listidx_t         hiteridx;
   int               rc = MKC_ERR_FAILURE;
   char              * hdrpath = NULL;
   const char        * hdr;
@@ -983,7 +988,7 @@ process_stmt_chk_inc_deps (process_t *process)
   /* ts now holds the timestamp of the latest modification time in ms */
 
   if (sv_is_defined (process->sv, SV_T_INTERNAL,
-      MKC_C_CHK_INC_DEPS_TS)) {
+      MKC_C_CHK_INC_DEPS_TS, NULL)) {
     int64_t    cachedts;
 
     cachedts = sv_get_timestamp (process->sv, SV_T_INTERNAL,
@@ -1044,7 +1049,7 @@ process_stmt_chk_inc_deps (process_t *process)
   if (rc == MKC_OK) {
     ts = mstime ();
     sv_set_timestamp (process->sv, SV_T_INTERNAL,
-        MKC_C_CHK_INC_DEPS_TS, ts, MKC_VCTXT_MKC);
+        MKC_C_CHK_INC_DEPS_TS, NULL, ts, MKC_VCTXT_MKC);
   }
 
   mkc_message (MKC_V_BASIC, "-- check_include_dependencies - %s\n", mkc_success_msg (rc));
@@ -1064,14 +1069,14 @@ process_stmt_chk_inc_guards (process_t *process)
 {
   int               rc = MKC_ERR_FAILURE;
 #if _have_regex
-  list_t        * hlist = NULL;
-  listidx_t     hiteridx;
+  list_t            * hlist = NULL;
+  listidx_t         hiteridx;
   char              * rbuff;
   char              * hdrpath;
   const char        * hdr;
   char              ** match = NULL;
   int               matchcount;
-  list_t        * guardlist = NULL;
+  list_t            * guardlist = NULL;
   int64_t           ts;
   int               count = 0;
   mkc_user_regex_t  * urx;
@@ -1088,7 +1093,7 @@ process_stmt_chk_inc_guards (process_t *process)
   }
 
   guardlist = list_init (MKC_LIST_SORTED, list_ind_free,
-      list_ind_compare, process->mkcerr);
+      list_ind_compare, sizeof (char *), process->mkcerr);
 
   if (process->rxincguard == NULL) {
     process->rxincguard = mkc_regex_init (
@@ -1121,7 +1126,7 @@ process_stmt_chk_inc_guards (process_t *process)
   hlist = target_get_include_list (process->target, include_paths, urx->rx, &ts);
 
   if (sv_is_defined (process->sv, SV_T_INTERNAL,
-      MKC_C_CHK_INC_GUARDS_TS)) {
+      MKC_C_CHK_INC_GUARDS_TS, NULL)) {
     int64_t    cachedts;
 
     cachedts = sv_get_timestamp (process->sv, SV_T_INTERNAL,
@@ -1141,7 +1146,6 @@ process_stmt_chk_inc_guards (process_t *process)
 
   hdrpath = malloc (MKC_PATH_MAX);
   if (hdrpath == NULL) {
-    list_free (hlist);
     list_free (guardlist);
     chararr_free (cflags);
     chararr_free (include_paths);
@@ -1179,7 +1183,7 @@ process_stmt_chk_inc_guards (process_t *process)
         free (tp);
         rc = MKC_ERR_FAILURE;
       } else {
-        list_set (guardlist, &tp, sizeof (char *));
+        list_set (guardlist, &tp);
       }
     }
     mkc_regex_get_free (match);
@@ -1188,7 +1192,7 @@ process_stmt_chk_inc_guards (process_t *process)
 
   ts = mstime ();
   sv_set_timestamp (process->sv, SV_T_INTERNAL,
-      MKC_C_CHK_INC_GUARDS_TS, ts, MKC_VCTXT_MKC);
+      MKC_C_CHK_INC_GUARDS_TS, NULL, ts, MKC_VCTXT_MKC);
 
   mkc_message (MKC_V_BASIC, "-- check_include_guards - %s (%d)\n",
       mkc_success_msg (rc), count);
@@ -1219,7 +1223,7 @@ process_stmt_build (process_t *process, value_t *vallist)
   mkc_create_mkcfiles (tbuff, MKC_PATH_MAX, process->mkcerr);
   free (tbuff);
 
-  blist = list_init (MKC_LIST_UNSORTED, NULL, NULL, process->mkcerr);
+  blist = list_init (MKC_LIST_UNSORTED, NULL, NULL, sizeof (value_t), process->mkcerr);
   process_list_to_flags (process, vallist, blist, false);
   process->attr.display = true;
   process->attr.printerrors = true;
@@ -1322,6 +1326,7 @@ process_stmt_executable (process_t *process, value_t *valnm)
   listidx_t   siteridx;
   listidx_t   sidx;
   char            * epath;
+  char            * tpath;
   char            * srcpath;
   bool            changed;
   mkc_alternate_t * curralt;
@@ -1341,13 +1346,14 @@ process_stmt_executable (process_t *process, value_t *valnm)
   *epath = '\0';
 
   path_build (MKC_PATH_STAGE_BIN, epath, MKC_PATH_MAX, execnm, process->mkcerr);
-  sv_set_str (process->sv, SV_T_PATHS, execnm, epath, MKC_VCTXT_MKC);
+  tpath = strdup (epath);
+  sv_set_str (process->sv, SV_T_PATHS, execnm, NULL, tpath, MKC_VCTXT_MKC);
 
   changed = process->mkc_changed;
 
   if (process->cacheloaded == false) {
     sv_set_integer (process->sv, SV_T_INTERNAL,
-        MKC_C_MKC_CHANGED, true, MKC_VCTXT_MKC);
+        MKC_C_MKC_CHANGED, NULL, true, MKC_VCTXT_MKC);
     changed = true;
     process->mkc_changed = true;
     process->reset_stage = true;
@@ -1355,7 +1361,8 @@ process_stmt_executable (process_t *process, value_t *valnm)
   }
 
   if (! changed &&
-      sv_is_defined (process->sv, SV_T_DEPENDENCY, epath)) {
+      sv_is_defined (process->sv, SV_T_BUILD_DATA,
+      epath, MKC_C_BVAR_DEPENDENCY)) {
     /* already in cache */
     free (epath);
     process_attr_clear (process);
@@ -1393,9 +1400,12 @@ process_stmt_executable (process_t *process, value_t *valnm)
   }
 
   curralt = process->attr.curralt;
-  sv_set_list (process->sv, SV_T_COMPFLAGS, epath, curralt->compflags, MKC_VCTXT_MKC);
-  sv_set_list (process->sv, SV_T_LINKFLAGS, epath, curralt->linkflags, MKC_VCTXT_MKC);
-  sv_set_list (process->sv, SV_T_LIBS, epath, curralt->libs, MKC_VCTXT_MKC);
+  sv_set_list (process->sv, SV_T_BUILD_DATA, epath, MKC_C_BVAR_COMPFLAGS,
+      curralt->compflags, MKC_VCTXT_MKC);
+  sv_set_list (process->sv, SV_T_BUILD_DATA, epath, MKC_C_BVAR_LINKFLAGS,
+      curralt->linkflags, MKC_VCTXT_MKC);
+  sv_set_list (process->sv, SV_T_BUILD_DATA, epath, MKC_C_BVAR_LIBS,
+      curralt->libs, MKC_VCTXT_MKC);
 
   free (srcpath);
   free (epath);
@@ -1512,7 +1522,7 @@ process_stmt_loadcache_post (process_t *process)
 
   /* the changed flag will invalidate certain cached items */
   sv_set_integer (process->sv, SV_T_INTERNAL,
-        MKC_C_MKC_CHANGED, changed, MKC_VCTXT_MKC);
+        MKC_C_MKC_CHANGED, NULL, changed, MKC_VCTXT_MKC);
 
   process->inloadcache = false;
 
@@ -1603,14 +1613,14 @@ process_stmt_project (process_t *process, value_t *valnm)
   process->dfltcompiler = process->attr.currcompiler;
 
   sv_set_str (process->sv, SV_T_INTERNAL,
-      MKC_C_PROJECT_NAME, process->projectname, MKC_VCTXT_MKC_BASE);
+      MKC_C_PROJECT_NAME, NULL, process->projectname, MKC_VCTXT_MKC_BASE);
   if (process->attr.str [MKC_ATTR_VERSION] != NULL) {
     sv_set_str (process->sv, SV_T_INTERNAL,
-        MKC_C_PROJECT_VERS, process->attr.str [MKC_ATTR_VERSION], MKC_VCTXT_MKC_BASE);
+        MKC_C_PROJECT_VERS, NULL, process->attr.str [MKC_ATTR_VERSION], MKC_VCTXT_MKC_BASE);
   }
   if (process->attr.str [MKC_ATTR_LIB_VERSION] != NULL) {
     sv_set_str (process->sv, SV_T_INTERNAL,
-        MKC_C_PROJECT_LIB_VERS, process->attr.str [MKC_ATTR_LIB_VERSION], MKC_VCTXT_MKC_BASE);
+        MKC_C_PROJECT_LIB_VERS, NULL, process->attr.str [MKC_ATTR_LIB_VERSION], MKC_VCTXT_MKC_BASE);
   }
 
   process_check_mkc_timestamp (process);
@@ -1670,7 +1680,7 @@ process_stmt_set (process_t *process,
     free (nm);
     return trc;
   }
-  istempval = tvalue->tempallocated;
+  istempval = tvalue->isallocated;
 
   if (process->attr.str [MKC_ATTR_VCONTEXT] != NULL) {
     const char    *tvc;
@@ -1691,22 +1701,7 @@ process_stmt_set (process_t *process,
     svtype = SV_T_LOCAL;
   }
 
-  if (process->attr.str [MKC_ATTR_NAMESPACE] != NULL) {
-    const char    *tns;
-
-    tns = process->attr.str [MKC_ATTR_NAMESPACE];
-    if (strcmp (tns, scopedvar_type_disp (SV_T_TIMESTAMP)) == 0) {
-      svtype = SV_T_TIMESTAMP;
-    } else if (strcmp (tns, scopedvar_type_disp (SV_T_DEPENDENCY)) == 0) {
-      svtype = SV_T_DEPENDENCY;
-    } else if (strcmp (tns, scopedvar_type_disp (SV_T_PATHS)) == 0) {
-      svtype = SV_T_PATHS;
-    } else if (strcmp (tns, scopedvar_type_disp (SV_T_BUILD)) == 0) {
-      svtype = SV_T_BUILD;
-    }
-  }
-
-  trc = sv_set (process->sv, svtype, nm, tvalue, vctxt);
+  trc = sv_set (process->sv, svtype, nm, NULL, tvalue, vctxt);
   if (trc == MKC_OK_CHANGE &&
      (vctxt == MKC_VCTXT_ENV || vctxt == MKC_VCTXT_MKC_BASE)) {
     process->cacheinvalidated = true;
@@ -1724,7 +1719,7 @@ process_stmt_set (process_t *process,
   }
 
   sv_set_integer (process->sv, SV_T_INTERNAL,
-        MKC_C_MKC_CHANGED, changed, MKC_VCTXT_MKC);
+        MKC_C_MKC_CHANGED, NULL, changed, MKC_VCTXT_MKC);
 
   /* tvalue may have been re-allocated, only call temp-value-free */
   /* if the tvalue was allocated */
@@ -1857,12 +1852,11 @@ process_attr_alternate (process_t *process)
   mkc_alternate_t   alt;
 
   alt.name = NULL;
-  alt.hdrlist = list_init (MKC_LIST_UNSORTED, NULL, NULL, process->mkcerr);
-  alt.compflags = list_init (MKC_LIST_UNSORTED, NULL, NULL, process->mkcerr);
-  alt.linkflags = list_init (MKC_LIST_UNSORTED, NULL, NULL, process->mkcerr);
-  alt.libs = list_init (MKC_LIST_UNSORTED, NULL, NULL, process->mkcerr);
-  process->attr.curralt = list_set (process->attr.alternates,
-      &alt, sizeof (mkc_alternate_t));
+  alt.hdrlist = list_init (MKC_LIST_UNSORTED, NULL, NULL, sizeof (value_t), process->mkcerr);
+  alt.compflags = list_init (MKC_LIST_UNSORTED, NULL, NULL, sizeof (value_t), process->mkcerr);
+  alt.linkflags = list_init (MKC_LIST_UNSORTED, NULL, NULL, sizeof (value_t), process->mkcerr);
+  alt.libs = list_init (MKC_LIST_UNSORTED, NULL, NULL, sizeof (value_t), process->mkcerr);
+  process->attr.curralt = list_set (process->attr.alternates, &alt);
 }
 
 void
@@ -1944,7 +1938,7 @@ process_attr_header (process_t *process, value_t *value)
     }
 
     lvalue = list_get_by_idx (value->list, lidx);
-    list_set (hlist, lvalue, sizeof (value_t));
+    list_set (hlist, lvalue);
   }
 
   return;
@@ -2001,7 +1995,7 @@ process_attr_path (process_t *process, value_t *path)
     return;
   }
 
-  list_set (process->attr.pathlist, path, sizeof (value_t));
+  list_set (process->attr.pathlist, path);
   return;
 }
 
@@ -2018,8 +2012,8 @@ process_attr_replace (process_t *process,
     return;
   }
 
-  list_set (process->attr.replacelist, str, sizeof (value_t));
-  list_set (process->attr.replacelist, name, sizeof (value_t));
+  list_set (process->attr.replacelist, str);
+  list_set (process->attr.replacelist, name);
   return;
 }
 
@@ -2050,7 +2044,7 @@ process_attr_source (process_t *process, value_t *value)
     }
 
     lvalue = list_get_by_idx (value->list, lidx);
-    list_set (srclist, lvalue, sizeof (value_t));
+    list_set (srclist, lvalue);
   }
 
   return;
@@ -2082,7 +2076,7 @@ process_check (process_t *process, value_t *valconst,
   if (process_chk_cache (process, txt, tnm)) {
     value_t   * value;
 
-    value = sv_get_value (scope, SV_T_SEARCH, tnm);
+    value = sv_get_value (scope, SV_T_SEARCH, tnm, NULL);
     rc = sv_value_get_integer (scope, value);
     switch (iasttype) {
       case MKC_T_CHK_ARG_COUNT:
@@ -2154,7 +2148,7 @@ process_check (process_t *process, value_t *valconst,
     /* the check returns 0 on success */
     /* convert this to a boolean */
 
-    sv_set_integer (scope, SV_T_SEARCH, tnm, rc == 0 ? true : false, MKC_VCTXT_CHECK);
+    sv_set_integer (scope, SV_T_SEARCH, tnm, NULL, rc == 0 ? true : false, MKC_VCTXT_CHECK);
     mkc_message (MKC_V_BASIC, "-- check %s: %s : %s - %s\n",
         typenames [asttype], txt, tnm, mkc_success_msg (rc));
     mkc_log (process->log, MKC_LOG_CHECK, "-- check %s: %s : %s - %s\n",
@@ -2162,7 +2156,7 @@ process_check (process_t *process, value_t *valconst,
   }
   if (valtype) {
     /* the check is run, and the return code is a value */
-    sv_set_integer (scope, SV_T_SEARCH, tnm, rc, MKC_VCTXT_CHECK);
+    sv_set_integer (scope, SV_T_SEARCH, tnm, NULL, rc, MKC_VCTXT_CHECK);
     mkc_message (MKC_V_BASIC, "-- check %s: %s : %s : %d\n", typenames [asttype], txt, tnm, rc);
     mkc_log (process->log, MKC_LOG_CHECK,
         "-- check %s: %s : %s : %d\n", typenames [asttype], txt, tnm, rc);
@@ -2224,17 +2218,17 @@ process_check_flag (process_t *process,
   process->attr.negate = false;
 
   if (rc == 0) {
-    sv_set_str (scope, SV_T_SEARCH, tnm, flag, MKC_VCTXT_FLAG);
+    sv_set_str (scope, SV_T_SEARCH, tnm, NULL, flag, MKC_VCTXT_FLAG);
 
     switch (iasttype) {
       case MKC_T_CHK_COMP_FLAG: {
         sv_append_str_list (process->sv, SV_T_ACTIVE,
-            MKC_C_CFLAGS, flag, MKC_VCTXT_MKC);
+            MKC_C_CFLAGS, NULL, flag, MKC_VCTXT_MKC);
         break;
       }
       case MKC_T_CHK_LIBRARY: {
         sv_append_str_list (process->sv, SV_T_ACTIVE,
-            MKC_C_LIBS, flag, MKC_VCTXT_MKC);
+            MKC_C_LIBS, NULL, flag, MKC_VCTXT_MKC);
         break;
       }
       case MKC_T_CHK_LINK_FLAG: {
@@ -2247,7 +2241,7 @@ process_check_flag (process_t *process,
           nm = MKC_C_LIBS;
         }
         sv_append_str_list (process->sv, SV_T_ACTIVE,
-            nm, flag, MKC_VCTXT_MKC);
+            nm, NULL, flag, MKC_VCTXT_MKC);
         break;
       }
     }
@@ -2294,7 +2288,7 @@ process_chk_struct_member (process_t *process,
   if (process_chk_cache (process, tmpdisp, tnm)) {
     value_t   * value;
 
-    value = sv_get_value (scope, SV_T_SEARCH, tnm);
+    value = sv_get_value (scope, SV_T_SEARCH, tnm, NULL);
     rc = sv_value_get_integer (scope, value);
     if (rc == 0) {
       rc = MKC_ERR_FAILURE;
@@ -2308,7 +2302,7 @@ process_chk_struct_member (process_t *process,
   rc = mkc_chk_struct_member (process->check,
       process->attr.currcompiler, structname, membername);
   sv_set_integer (scope, SV_T_SEARCH,
-      tnm, rc == 0 ? true : false, MKC_VCTXT_CHECK);
+      tnm, NULL, rc == 0 ? true : false, MKC_VCTXT_CHECK);
 
   mkc_message (MKC_V_BASIC, "-- check struct member: %s.%s - %s\n",
       structname, membername, mkc_success_msg (rc));
@@ -2415,7 +2409,7 @@ process_chk_shell_extract (process_t *process, value_t *valpath)
       continue;
     }
 
-    sv_set_str (process->sv, SV_T_SEARCH, varname, tvalue, MKC_VCTXT_CHECK);
+    sv_set_str (process->sv, SV_T_SEARCH, varname, NULL, tvalue, MKC_VCTXT_CHECK);
 
     mkc_message (MKC_V_BASIC, "-- shell extract %s %s\n", varname, tvalue);
     mkc_log (process->log, MKC_LOG_CHECK, "-- shell extract %s %s\n",
@@ -2450,7 +2444,7 @@ process_local_set (process_t *process, value_t *nmval,
 
   sv_value_get_str (process->sv, nmval, nm, sizeof (nm));
 
-  sv_set (process->sv, SV_T_LOCAL, nm, argval, MKC_VCTXT_TEMP);
+  sv_set (process->sv, SV_T_LOCAL, nm, NULL, argval, MKC_VCTXT_TEMP);
 }
 
 int32_t
@@ -2463,7 +2457,7 @@ process_get_loop_limit (process_t *process)
     return limit;
   }
 
-  value = sv_get_value (process->sv, SV_T_INTERNAL, MKC_C_LOOPLIMIT);
+  value = sv_get_value (process->sv, SV_T_INTERNAL, MKC_C_LOOPLIMIT, NULL);
   if (value != NULL) {
     limit = sv_value_get_integer (process->sv, value);
   }
@@ -2666,7 +2660,7 @@ process_initial_checks (process_t *process)
 
   for (mkc_compiler_id_t i = 0; i < MKC_COMP_ID_MAX; ++i) {
     if (process->compid == i) {
-      sv_set_integer (process->sv, SV_T_INTERNAL, compidnames [i], true, MKC_VCTXT_MKC_BASE);
+      sv_set_integer (process->sv, SV_T_INTERNAL, compidnames [i], NULL, true, MKC_VCTXT_MKC_BASE);
       break;
     }
   }
@@ -2690,7 +2684,7 @@ process_initial_checks (process_t *process)
 
   for (mkc_system_type_t i = 0; i < MKC_SYS_MAX; ++i) {
     if (process->systype == i) {
-      sv_set_integer (process->sv, SV_T_INTERNAL, sysnames [i], true, MKC_VCTXT_MKC_BASE);
+      sv_set_integer (process->sv, SV_T_INTERNAL, sysnames [i], NULL, true, MKC_VCTXT_MKC_BASE);
       break;
     }
   }
@@ -2702,30 +2696,30 @@ process_initial_checks (process_t *process)
     process->exeext = ".exe";
   }
   sv_set_str (process->sv, SV_T_INTERNAL,
-      MKC_C_OBJEXT, process->objext, MKC_VCTXT_MKC_BASE);
+      MKC_C_OBJEXT, NULL, process->objext, MKC_VCTXT_MKC_BASE);
   sv_set_str (process->sv, SV_T_INTERNAL,
-      MKC_C_EXEEXT, process->exeext, MKC_VCTXT_MKC_BASE);
+      MKC_C_EXEEXT, NULL, process->exeext, MKC_VCTXT_MKC_BASE);
 
   /* shared library extension : internal */
 
   /* default is .so */
   sv_set_str (process->sv, SV_T_INTERNAL,
-      MKC_C_SHLIBEXT, ".so", MKC_VCTXT_MKC_BASE);
+      MKC_C_SHLIBEXT, NULL, ".so", MKC_VCTXT_MKC_BASE);
   isystype = process->systype;
   switch (isystype) {
     case MKC_SYS_AIX: {
       sv_set_str (process->sv, SV_T_INTERNAL,
-          MKC_C_SHLIBEXT, ".a", MKC_VCTXT_MKC_BASE);
+          MKC_C_SHLIBEXT, NULL, ".a", MKC_VCTXT_MKC_BASE);
       break;
     }
     case MKC_SYS_MACOS: {
       sv_set_str (process->sv, SV_T_INTERNAL,
-          MKC_C_SHLIBEXT, ".dylib", MKC_VCTXT_MKC_BASE);
+          MKC_C_SHLIBEXT, NULL, ".dylib", MKC_VCTXT_MKC_BASE);
       break;
     }
     case MKC_SYS_WINDOWS: {
       sv_set_str (process->sv, SV_T_INTERNAL,
-          MKC_C_SHLIBEXT, ".dll", MKC_VCTXT_MKC_BASE);
+          MKC_C_SHLIBEXT, NULL, ".dll", MKC_VCTXT_MKC_BASE);
       break;
     }
   }
@@ -2741,7 +2735,7 @@ process_initial_checks (process_t *process)
   for (mkc_system_id_t i = 0; i < MKC_SYS_ID_MAX; ++i) {
     if (process->sysid == i) {
       sv_set_integer (process->sv, SV_T_INTERNAL,
-          sysidnames [i], true, MKC_VCTXT_MKC_BASE);
+          sysidnames [i], NULL, true, MKC_VCTXT_MKC_BASE);
       break;
     }
   }
@@ -2755,7 +2749,7 @@ process_initial_checks (process_t *process)
     }
     mkc_log (process->log, MKC_LOG_GENERAL, "%s: %d\n", MKC_C_LIBLOCNAME, process->libloc);
     sv_set_integer (process->sv, SV_T_INTERNAL,
-        MKC_C_LIBLOCNAME, process->libloc, MKC_VCTXT_MKC_BASE);
+        MKC_C_LIBLOCNAME, NULL, process->libloc, MKC_VCTXT_MKC_BASE);
   }
 
   /* check if compiler supports the -MM flag */
@@ -2768,7 +2762,7 @@ process_initial_checks (process_t *process)
     process->compiler_mm = true;
   }
   sv_set_integer (process->sv, SV_T_INTERNAL,
-      MKC_C_SUPPORTS_MM, process->compiler_mm, MKC_VCTXT_MKC_BASE);
+      MKC_C_SUPPORTS_MM, NULL, process->compiler_mm, MKC_VCTXT_MKC_BASE);
 
   /* variadic macro support : dflt/comp */
 
@@ -2778,15 +2772,15 @@ process_initial_checks (process_t *process)
   }
   mkc_log (process->log, MKC_LOG_GENERAL, "%s: %d\n", MKC_C_IVARMACRO, process->variadicmacro);
   sv_set_integer (process->sv, SV_T_SEARCH,
-      MKC_C_IVARMACRO, process->variadicmacro, MKC_VCTXT_MKC);
+      MKC_C_IVARMACRO, NULL, process->variadicmacro, MKC_VCTXT_MKC);
 
   /* make sure these variables exist */
   sv_set_integer (process->sv, SV_T_INTERNAL,
-        MKC_C_MKC_CHANGED, false, MKC_VCTXT_MKC);
+        MKC_C_MKC_CHANGED, NULL, false, MKC_VCTXT_MKC);
 
   path_build (MKC_PATH_PREFIX, tbuff, sizeof (tbuff), NULL, process->mkcerr);
   sv_set_str (process->sv, SV_T_INTERNAL,
-      MKC_C_PREFIX, tbuff, MKC_VCTXT_MKC);
+      MKC_C_PREFIX, NULL, tbuff, MKC_VCTXT_MKC);
 
   process_attr_clear (process);
   return MKC_OK;
@@ -2795,47 +2789,53 @@ process_initial_checks (process_t *process)
 static void
 process_set_defaults (process_t *process)
 {
+  dict_t    *dict;
+
   /* create internal constants */
 
   for (mkc_system_type_t i = 0; i < MKC_SYS_MAX; ++i) {
     sv_set_integer (process->sv, SV_T_INTERNAL,
-        sysnames [i], false, MKC_VCTXT_MKC_BASE);
+        sysnames [i], NULL, false, MKC_VCTXT_MKC_BASE);
   }
   for (mkc_system_id_t i = 0; i < MKC_SYS_ID_MAX; ++i) {
     sv_set_integer (process->sv, SV_T_INTERNAL,
-        sysidnames [i], false, MKC_VCTXT_MKC_BASE);
+        sysidnames [i], NULL, false, MKC_VCTXT_MKC_BASE);
   }
 
   sv_set_integer (process->sv, SV_T_INTERNAL,
-      MKC_C_LOOPLIMIT, 10000, MKC_VCTXT_MKC);
+      MKC_C_LOOPLIMIT, NULL, 10000, MKC_VCTXT_MKC);
   sv_set_integer (process->sv, SV_T_INTERNAL,
-      MKC_C_LIBLOCNAME, process->libloc, MKC_VCTXT_MKC_BASE);
+      MKC_C_LIBLOCNAME, NULL, process->libloc, MKC_VCTXT_MKC_BASE);
 
   sv_set_str (process->sv, SV_T_INTERNAL,
-      "BISON", "bison", MKC_VCTXT_ENV);
+      "BISON", NULL, "bison", MKC_VCTXT_ENV);
   sv_set_str (process->sv, SV_T_INTERNAL,
-      "CC", "cc", MKC_VCTXT_ENV);
+      "CC", NULL, "cc", MKC_VCTXT_ENV);
   sv_set_str (process->sv, SV_T_INTERNAL,
-      "CXX", "c++", MKC_VCTXT_ENV);
+      "CXX", NULL, "c++", MKC_VCTXT_ENV);
   sv_set_str (process->sv, SV_T_INTERNAL,
-      "DC", "dc", MKC_VCTXT_ENV);
+      "DC", NULL, "dc", MKC_VCTXT_ENV);
   sv_set_str (process->sv, SV_T_INTERNAL,
-      "FLEX", "flex", MKC_VCTXT_ENV);
+      "FLEX", NULL, "flex", MKC_VCTXT_ENV);
   sv_set_str (process->sv, SV_T_INTERNAL,
-      "OBJC", "cc", MKC_VCTXT_ENV);
+      "OBJC", NULL, "cc", MKC_VCTXT_ENV);
 
   for (mkc_compiler_id_t i = 0; i < MKC_COMP_ID_MAX; ++i) {
     if (mkc_error_chk_err (process->mkcerr)) {
       break;
     }
     sv_set_integer (process->sv, SV_T_INTERNAL,
-        compidnames [i], false, MKC_VCTXT_MKC_BASE);
+        compidnames [i], NULL, false, MKC_VCTXT_MKC_BASE);
   }
 
   sv_set_str (process->sv, SV_T_INTERNAL,
-      MKC_C_PROFILE_NAME,
-      sv_get_current_profile (process->sv),
-      MKC_VCTXT_MKC);
+      MKC_C_PROFILE_NAME, NULL,
+      sv_get_current_profile (process->sv), MKC_VCTXT_MKC);
+
+  dict = dict_init (process->log, value_free, sizeof (value_t), process->mkcerr);
+  sv_set_dict (process->sv, SV_T_INTERNAL, MKC_C_VAR_BUILD_PATHS, dict, MKC_VCTXT_MKC);
+  sv_set_dict (process->sv, SV_T_INTERNAL, MKC_C_VAR_BUILD_DATA, dict, MKC_VCTXT_MKC);
+  dict_free (dict);
 }
 
 static void
@@ -3011,11 +3011,11 @@ process_chk_cache (process_t *process,
   bool    rc = false;
 
   /* if the re-test mkc-option is set, then failed tests will be re-tested */
-  if (sv_is_defined (process->sv, SV_T_SEARCH, nm)) {
+  if (sv_is_defined (process->sv, SV_T_SEARCH, nm, NULL)) {
     if (process->mkcoptions->retest) {
       value_t   *value;
 
-      value = sv_get_value (process->sv, SV_T_SEARCH, nm);
+      value = sv_get_value (process->sv, SV_T_SEARCH, nm, NULL);
       if (value->vtype == MKC_VT_INTEGER) {
         int32_t   val;
 
@@ -3060,7 +3060,7 @@ process_get_path (process_t *process)
   while (tpath != NULL) {
     fileop_normalize_path (tpath, strlen (tpath));
     sv_append_str_list (process->sv, SV_T_INTERNAL,
-        MKC_C_PATH, tpath, MKC_VCTXT_MKC);
+        MKC_C_PATH, NULL, tpath, MKC_VCTXT_MKC);
     tpath = str_token (NULL, pathdelim, &tokstr);
   }
 
@@ -3070,12 +3070,12 @@ process_get_path (process_t *process)
 static void
 process_find_executables (process_t *process)
 {
-  char            *testpath;
-  mkc_prog_chk_t  *chk;
-  char            *p;
-  list_t      *pathlist;
-  listidx_t   iteridx;
-  listidx_t   lidx;
+  char            * testpath;
+  mkc_prog_chk_t  * chk;
+  char            * p;
+  list_t          * pathlist;
+  listidx_t       iteridx;
+  listidx_t       lidx;
   value_t         *valpath;
 
 
@@ -3086,7 +3086,7 @@ process_find_executables (process_t *process)
   }
   *testpath = '\0';
 
-  valpath = sv_get_value (process->sv, SV_T_INTERNAL, MKC_C_PATH);
+  valpath = sv_get_value (process->sv, SV_T_INTERNAL, MKC_C_PATH, NULL);
   pathlist = valpath->list;
 
   chk = proglist;
@@ -3105,7 +3105,7 @@ process_find_executables (process_t *process)
 
       if (fileop_exists (testpath)) {
         sv_set_str (process->sv, SV_T_INTERNAL,
-            chk->mkcvarname, testpath, MKC_VCTXT_MKC);
+            chk->mkcvarname, NULL, testpath, MKC_VCTXT_MKC);
         break;
       }
     }
@@ -3119,17 +3119,20 @@ static void
 process_attr_clear (process_t *process)
 {
   list_free (process->attr.alternates);
-  process->attr.alternates = list_init (MKC_LIST_UNSORTED, process_alternate_free, NULL, process->mkcerr);
+  process->attr.alternates = list_init (MKC_LIST_UNSORTED,
+      process_alternate_free, NULL, sizeof (mkc_alternate_t), process->mkcerr);
   process_attr_alternate (process);
 
   if (list_size (process->attr.pathlist) > 0) {
     list_free (process->attr.pathlist);
-    process->attr.pathlist = list_init (MKC_LIST_UNSORTED, NULL, NULL, process->mkcerr);
+    process->attr.pathlist = list_init (MKC_LIST_UNSORTED, NULL, NULL,
+        sizeof (value_t), process->mkcerr);
   }
 
   if (list_size (process->attr.replacelist) > 0) {
     list_free (process->attr.replacelist);
-    process->attr.replacelist = list_init (MKC_LIST_UNSORTED, NULL, NULL, process->mkcerr);
+    process->attr.replacelist = list_init (MKC_LIST_UNSORTED, NULL, NULL,
+        sizeof (value_t), process->mkcerr);
   }
 
   for (int i = 0; i < MKC_ATTR_MAX; ++i) {
@@ -3169,7 +3172,7 @@ process_user_regex_init (process_t *process, const char *pattern)
 #if _have_regex
   turx.rx = mkc_regex_init (turx.pattern, MKC_REGEX_NONE, process->mkcerr);
 #endif
-  urx = list_set (process->user_rx_list, &turx, sizeof (mkc_user_regex_t));
+  urx = list_set (process->user_rx_list, &turx);
 
   return urx;
 }
@@ -3285,7 +3288,7 @@ process_list_to_flags (process_t *process, value_t *value,
 
     if (tvalue->vtype == MKC_VT_LIST) {
       process_list_to_flags (process, tvalue, flags, true);
-      if (tvalue->tempallocated) {
+      if (tvalue->isallocated) {
         value_free (tvalue);
       }
       continue;
@@ -3300,8 +3303,8 @@ process_list_to_flags (process_t *process, value_t *value,
     }
 
     sv_value_get_str (process->sv, tvalue, flag, sizeof (flag));
-    list_set (flags, tvalue, sizeof (value_t));
-    if (tvalue->tempallocated) {
+    list_set (flags, tvalue);
+    if (tvalue->isallocated) {
       value_free (tvalue);
     }
   }
@@ -3387,18 +3390,16 @@ process_save_cache_profile (process_t *process, FILE *fh,
     p = stpecpy (p, scend, tmp);
     vctxtstr = value_ctxt_str (value->vctxt);
     p = stpecpy (p, scend, "{");
-    if (value->vtype == MKC_VT_LIST || svtype > SV_T_NAMESPACE) {
+    if (value->vtype == MKC_VT_LIST ||
+        value->vtype == MKC_VT_DICT) {
       p = stpecpy (p, scend, "\n      ");
     } else {
       p = stpecpy (p, scend, " ");
     }
     snprintf (tmp, tmpsz, "context %s;", vctxtstr);
     p = stpecpy (p, scend, tmp);
-    if (svtype > SV_T_NAMESPACE) {
-      snprintf (tmp, tmpsz, " namespace %s;", scopedvar_type_disp (svtype));
-      p = stpecpy (p, scend, tmp);
-    }
-    if (value->vtype == MKC_VT_LIST || svtype > SV_T_NAMESPACE) {
+    if (value->vtype == MKC_VT_LIST ||
+        value->vtype == MKC_VT_DICT) {
       p = stpecpy (p, scend, "\n    }\n");
     } else {
       p = stpecpy (p, scend, " }\n");
@@ -3437,9 +3438,9 @@ process_check_mkc_timestamp (process_t *process)
 
   process->mkc_ts_checked = true;
 
-  if (sv_is_defined (process->sv, SV_T_TIMESTAMP,
-      process->mkcoptions->mkc_filename)) {
-    cachedts = sv_get_timestamp (process->sv, SV_T_TIMESTAMP,
+  if (sv_is_defined (process->sv, SV_T_BUILD_DATA,
+      process->mkcoptions->mkc_filename, MKC_C_BVAR_TIMESTAMP)) {
+    cachedts = sv_get_timestamp (process->sv, SV_T_BUILD_DATA,
         process->mkcoptions->mkc_filename);
   }
 
@@ -3454,11 +3455,12 @@ process_check_mkc_timestamp (process_t *process)
 
   if (changed) {
     sv_set_integer (process->sv, SV_T_INTERNAL,
-        MKC_C_MKC_CHANGED, changed, MKC_VCTXT_MKC);
+        MKC_C_MKC_CHANGED, NULL, changed, MKC_VCTXT_MKC);
   }
 
-  sv_set_timestamp (process->sv, SV_T_TIMESTAMP,
-      process->mkcoptions->mkc_filename, process->mkc_ts, MKC_VCTXT_MKC);
+  sv_set_timestamp (process->sv, SV_T_BUILD_DATA,
+      process->mkcoptions->mkc_filename, MKC_C_BVAR_TIMESTAMP,
+      process->mkc_ts, MKC_VCTXT_MKC);
 }
 
 static void
@@ -3483,6 +3485,8 @@ process_clean_check (process_t *process)
   mkc_clean_mkcfiles (process->projectname, tbuff, MKC_PATH_MAX, process->mkcerr);
   process->cleaned = true;
 
+// ### re-write to use build-data dd
+#if 0
   sviter = sv_iter_start (sv, SV_ITER_PROFILES);
   while ((profname = sv_iter_next (sv, sviter)) != NULL) {
     if (sv_iter_get_type (sv, sviter) == SV_T_BUILD) {
@@ -3509,9 +3513,10 @@ process_clean_check (process_t *process)
       continue;
     }
 
-    sv_delete (sv, SV_T_DEPENDENCY, nm);
+    sv_delete (sv, SV_T_BUILD_DATA, nm, MKC_C_BVAR_DEPENDENCY);
   }
   sv_iter_finish (sviter);
+#endif
 }
 
 /* debug processing */

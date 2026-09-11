@@ -46,7 +46,7 @@ value_init (value_t *value)
   value->vtype = MKC_VT_INVALID;
   value->sval = NULL;
   value->vctxt = MKC_VCTXT_TEMP;
-  value->tempallocated = false;
+  value->isallocated = false;
 }
 
 list_t * value_list_copy (list_t *list, mkc_error_t *mkcerr);
@@ -116,7 +116,7 @@ value_to_str (value_t *value, char *buff, size_t sz, int depth)
       listidx_t     iteridx;
       listidx_t     lidx;
       value_t       * tvalue;
-      int           lsz;
+      listidx_t     lsz;
 
       tlist = value->list;
       lsz = list_size (tlist);
@@ -169,13 +169,13 @@ value_to_str (value_t *value, char *buff, size_t sz, int depth)
       dictitem_t    * diter;
       listidx_t     iteridx;
       value_t       * tvalue = NULL;
-      int           lsz;
+      listidx_t     lsz;
       const char    * name;
 
       tdict = value->dict;
       lsz = dict_size (tdict);
       p = stpecpy (p, eptr, "[[");
-      if (lsz > 2) {
+      if (lsz > 1) {
         p = stpecpy (p, eptr, "\n");
       }
       dict_iter_start (tdict, &iteridx);
@@ -188,7 +188,7 @@ value_to_str (value_t *value, char *buff, size_t sz, int depth)
           allocated = true;
         }
 
-        if (lsz > 2) {
+        if (lsz > 1) {
           p = stpecpy (p, eptr, "      ");
           snprintf (tbuff, MKC_PATH_MAX, "%*s", depth, "");
           p = stpecpy (p, eptr, tbuff);
@@ -210,11 +210,11 @@ value_to_str (value_t *value, char *buff, size_t sz, int depth)
         if (value_is_string_type (tvalue)) {
           p = stpecpy (p, eptr, "'");
         }
-        if (lsz > 2) {
+        if (lsz > 1) {
           p = stpecpy (p, eptr, "\n");
         }
       }
-      if (lsz > 2) {
+      if (lsz > 1) {
         snprintf (tbuff, MKC_PATH_MAX, "%*s", depth, "");
         p = stpecpy (p, eptr, tbuff);
         p = stpecpy (p, eptr, "    ]]");
@@ -338,7 +338,7 @@ value_copy (value_t * valuecopy, const value_t * value, mkc_error_t * mkcerr)
   if (value->vtype == MKC_VT_DICT) {
     valuecopy->dict = value_dict_copy (value->dict, mkcerr);
   }
-  valuecopy->tempallocated = false;
+  valuecopy->isallocated = false;
 }
 
 bool
@@ -438,7 +438,7 @@ value_list_copy (list_t *list, mkc_error_t *mkcerr)
 
     value = list_get_by_idx (list, lidx);
     value_copy (&nvalue, value, mkcerr);
-    list_set (nlist, &nvalue, sizeof (value_t));
+    list_set (nlist, &nvalue);
   }
 
   return nlist;

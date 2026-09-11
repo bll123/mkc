@@ -19,10 +19,10 @@ typedef struct list_t {
   /* only the indexes are sorted. */
   /* the indirection allows stable data indexes. */
   listidx_t         * idxsort;
-  mkc_error_t           * mkcerr;
+  mkc_error_t       * mkcerr;
   list_free_t       freefunc;
   list_compare_t    compare;
-  size_t                itemsz;
+  size_t            itemsz;
   listidx_t         allocsz;
   listidx_t         sz;
   listidx_t         idxsz;
@@ -34,7 +34,7 @@ static int list_binary_search (list_t *list, void *data, listidx_t *loc);
 MKC_NODISCARD
 list_t *
 list_init (list_type_t type, list_free_t freefunc,
-    list_compare_t compare, mkc_error_t *mkcerr)
+    list_compare_t compare, size_t itemsz, mkc_error_t *mkcerr)
 {
   list_t  *list;
 
@@ -53,7 +53,7 @@ list_init (list_type_t type, list_free_t freefunc,
   list->idxsort = NULL;
   list->freefunc = freefunc;
   list->compare = compare;
-  list->itemsz = 0;
+  list->itemsz = itemsz;
   list->allocsz = 0;
   list->sz = 0;
   list->idxsz = 0;
@@ -73,7 +73,7 @@ list_init_copy (list_t *list, list_free_t freefunc, mkc_error_t *mkcerr)
     return NULL;
   }
 
-  nlist = list_init (list->type, freefunc, list->compare, list->mkcerr);
+  nlist = list_init (list->type, freefunc, list->compare, list->itemsz, list->mkcerr);
   return nlist;
 }
 
@@ -136,7 +136,7 @@ list_get_compfunc (list_t *list)
 }
 
 void *
-list_set (list_t *list, void *data, size_t sz)
+list_set (list_t *list, void *data)
 {
   int         rc = MKC_LIST_NOTFOUND;
   listidx_t   newloc;
@@ -147,13 +147,12 @@ list_set (list_t *list, void *data, size_t sz)
   }
 
   if (list->type == MKC_LIST_UNSORTED) {
-    data = list_append (list, data, sz);
+    data = list_append (list, data);
     return data;
   }
 
   newloc = 0;
   dataloc = list->sz;
-  list->itemsz = sz;
 
   if (list->idxsz > 0) {
     rc = list_binary_search (list, data, &newloc);
@@ -187,7 +186,7 @@ list_set (list_t *list, void *data, size_t sz)
 
   if (rc == MKC_LIST_NOTFOUND) {
     /* the data is always added at the end... */
-    memcpy (list->data + list->itemsz * dataloc, data, sz);
+    memcpy (list->data + list->itemsz * dataloc, data, list->itemsz);
     list->idxsort [newloc] = dataloc;
     list->sz += 1;
     list->idxsz += 1;
@@ -199,7 +198,7 @@ list_set (list_t *list, void *data, size_t sz)
 /* an append to a sorted list will not update the sort-index */
 /* the data is simply appended to the list */
 void *
-list_append (list_t *list, void *data, size_t sz)
+list_append (list_t *list, void *data)
 {
   int             rc = MKC_LIST_NOTFOUND;
   listidx_t   dataloc;
@@ -209,7 +208,6 @@ list_append (list_t *list, void *data, size_t sz)
   }
 
   dataloc = list->sz;
-  list->itemsz = sz;
 
   if (rc == MKC_LIST_NOTFOUND &&
       list->allocsz <= list->sz) {
@@ -221,7 +219,7 @@ list_append (list_t *list, void *data, size_t sz)
     }
   }
 
-  memcpy (list->data + list->itemsz * dataloc, data, sz);
+  memcpy (list->data + list->itemsz * dataloc, data, list->itemsz);
   list->sz += 1;
 
   return list->data + list->itemsz * dataloc;
@@ -246,7 +244,7 @@ list_pop (list_t *list, listidx_t lidx)
 
 /* doing a delete invalidates any list indexes */
 void
-list_delete (list_t *list, listidx_t lidx, size_t sz)
+list_delete (list_t *list, listidx_t lidx)
 {
   void *data;
 
@@ -262,7 +260,7 @@ list_delete (list_t *list, listidx_t lidx, size_t sz)
   list->sz -= 1;
   for (listidx_t i = lidx; i < list->sz; ++i) {
     memcpy (list->data + list->itemsz * i,
-        list->data + list->itemsz * (i + 1), sz);
+        list->data + list->itemsz * (i + 1), list->itemsz);
   }
 
   if (list->type == MKC_LIST_SORTED) {

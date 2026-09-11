@@ -232,7 +232,7 @@ compile_create_header_var (compile_t *compile)
   if (hdrtxt == NULL) {
     tmp = "";
   }
-  sv_set_str (compile->sv, SV_T_LOCAL, MKC_C_TEST_HDR_LIST, tmp, MKC_VCTXT_TEMP);
+  sv_set_str (compile->sv, SV_T_LOCAL, MKC_C_TEST_HDR_LIST, NULL, tmp, MKC_VCTXT_TEMP);
 
   free (hdrtxt);
 }
@@ -245,7 +245,7 @@ compile_get_compstr (compile_t *compile, mkc_compiler_t compiler,
   value_t       *value;
 
   envstr = compiler_get_env_name (compiler);
-  value = sv_get_value (compile->sv, SV_T_INTERNAL, envstr);
+  value = sv_get_value (compile->sv, SV_T_INTERNAL, envstr, NULL);
   sv_value_get_str (compile->sv, value, buff, sz);
   return buff;
 }
@@ -351,7 +351,7 @@ compile_exec (compile_t *compile, ct_type_t ctype,
 
     if (rc == 0 && alt->name != NULL) {
       sv_set_integer (compile->sv, SV_T_SEARCH, alt->name,
-          rc == 0 ? true : false, MKC_VCTXT_CHECK);
+          NULL, rc == 0 ? true : false, MKC_VCTXT_CHECK);
     }
 
     if (rc == 0) {

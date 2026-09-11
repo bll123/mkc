@@ -7,6 +7,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "dict.h"
+#include "list.h"
 #include "mkc_compiler.h"
 #include "mkc_error.h"
 #include "mkc_log.h"
@@ -37,16 +39,11 @@ typedef enum {
   /* for a 'get', only checks the active profile */
   /* for a 'set', only sets in the active profile */
   SV_T_ACTIVE,
-  /* SV_T_NAMESPACE is used for comparison purposes */
-  /* any type following is not in the hierarchy */
-  SV_T_NAMESPACE,
-  SV_T_BUILD,
-  SV_T_COMPFLAGS,
-  SV_T_DEPENDENCY,
-  SV_T_LIBS,
-  SV_T_LINKFLAGS,
+  /* special types stored in the build-data dictionary */
+  /* paths data is stored in the paths dictionary */
+  SV_T_SPECIAL,
+  SV_T_BUILD_DATA,
   SV_T_PATHS,
-  SV_T_TIMESTAMP,
 } sv_type_t;
 
 typedef enum {
@@ -88,7 +85,7 @@ const char *sv_var_iter_get_name (scopedvar_t *scopedvar, sv_iter_t *sviter, mkc
 value_t *sv_var_iter_get_value (scopedvar_t *scopedvar, sv_iter_t *sviter, mkc_varidx_t vidx);
 
 int64_t sv_get_timestamp (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname);
-value_t * sv_get_value (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname);
+value_t * sv_get_value (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, const char *tag);
 int32_t sv_value_get_integer (scopedvar_t *scopedvar, value_t *value);
 int64_t sv_value_get_timestamp (scopedvar_t *scopedvar, value_t *value);
 void sv_value_get_str (scopedvar_t *scopedvar, value_t *value, char *buff, size_t sz);
@@ -96,20 +93,21 @@ value_t * sv_value_get_value (scopedvar_t *scopedvar, value_t *value, value_t *r
 value_t * sv_value_get_list_value (scopedvar_t *scopedvar, value_t *value);
 
 void sv_set_context (scopedvar_t *scopedvar, const char *vname, value_ctxt_t vctxt);
-int sv_set (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, value_t *value, value_ctxt_t vctxt);
-int sv_set_integer (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, int32_t ival, value_ctxt_t vctxt);
-int sv_set_timestamp (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, int64_t tmval, value_ctxt_t vctxt);
-int sv_set_str (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, const char *str, value_ctxt_t vctxt);
-int sv_set_list (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, list_t *list, value_ctxt_t vctxt);
+int sv_set (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, const char *tag, value_t *value, value_ctxt_t vctxt);
+int sv_set_integer (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, const char *tag, int32_t ival, value_ctxt_t vctxt);
+int sv_set_timestamp (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, const char *tag, int64_t tmval, value_ctxt_t vctxt);
+int sv_set_str (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, const char *tag, const char *str, value_ctxt_t vctxt);
+int sv_set_list (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, const char *tag, list_t *list, value_ctxt_t vctxt);
 int sv_set_list_from_str (scopedvar_t *scopedvar, const char *vname, char *str, value_ctxt_t vctxt);
-int sv_append_str_list (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, const char *data, value_ctxt_t vctxt);
+int sv_append_str_list (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, const char *tag, const char *data, value_ctxt_t vctxt);
+int sv_set_dict (scopedvar_t *sv, sv_type_t svtype, const char *vname, dict_t *dict, value_ctxt_t vctxt);
 
-void sv_delete (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname);
+void sv_delete (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, const char *tag);
 
-bool sv_is_defined (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname);
+bool sv_is_defined (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, const char *tag);
 bool sv_var_is_dict (scopedvar_t *scopedvar, const char *vname);
 bool sv_var_is_list (scopedvar_t *scopedvar, const char *vname);
-void sv_temp_value_free (void *tvalue);
+void sv_value_free (void *tvalue);
 char * sv_substitute (scopedvar_t *scopedvar, const char *data, sv_escape_t subescapeflag, int depth);
 
 const char * scopedvar_type_disp (sv_type_t svtype);

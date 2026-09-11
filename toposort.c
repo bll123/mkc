@@ -56,10 +56,14 @@ toposort_init (mkc_error_t *mkcerr)
   }
 
   topo->mkcerr = mkcerr;
-  topo->items = list_init (MKC_LIST_SORTED, NULL, mkc_topo_item_compare, mkcerr);
-  topo->pairs = list_init (MKC_LIST_UNSORTED, NULL, NULL, mkcerr);
-  topo->counts = list_init (MKC_LIST_SORTED, NULL, mkc_topo_count_compare, mkcerr);
-  topo->results = list_init (MKC_LIST_UNSORTED, NULL, NULL, mkcerr);
+  topo->items = list_init (MKC_LIST_SORTED, NULL, mkc_topo_item_compare,
+      sizeof (mkc_topoitem_t), mkcerr);
+  topo->pairs = list_init (MKC_LIST_UNSORTED, NULL, NULL,
+      sizeof (mkc_topopair_t), mkcerr);
+  topo->counts = list_init (MKC_LIST_SORTED, NULL, mkc_topo_count_compare,
+      sizeof (mkc_topocount_t), mkcerr);
+  topo->results = list_init (MKC_LIST_UNSORTED, NULL, NULL,
+      sizeof (listidx_t), mkcerr);
 
   return topo;
 }
@@ -88,7 +92,7 @@ toposort_add_item (toposort_t *topo, const char *item)
   }
 
   titem.name = item;
-  list_set (topo->items, &titem, sizeof (mkc_topoitem_t));
+  list_set (topo->items, &titem);
 
   return;
 }
@@ -117,8 +121,7 @@ toposort_add_pair (toposort_t *topo,
     return MKC_ERR_FAILURE;
   }
 
-  list_set (topo->pairs, &tpair, sizeof (mkc_topopair_t));
-
+  list_set (topo->pairs, &tpair);
   return MKC_OK;
 }
 
@@ -141,7 +144,7 @@ toposort (toposort_t *topo)
 
     count.idx = idx;
     count.count = 0;
-    list_set (topo->counts, &count, sizeof (mkc_topocount_t));
+    list_set (topo->counts, &count);
   }
 
   /* each pair is "a depends on b" */
@@ -172,7 +175,7 @@ toposort (toposort_t *topo)
         found += 1;
         count->count = MKC_TOPO_DONE;
 
-        list_set (topo->results, &count->idx, sizeof (listidx_t));
+        list_set (topo->results, &count->idx);
 
         /* update the edge counts for items that the item depends on */
         mkc_topo_update_counts (topo, count->idx);

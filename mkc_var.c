@@ -24,7 +24,7 @@ typedef struct mkc_var_t {
 } mkc_var_t;
 
 typedef struct mkc_varlist_t {
-  list_t    * list;
+  list_t        * list;
   mkc_error_t   * mkcerr;
   mkc_log_t     * log;
   bool          debug;
@@ -49,7 +49,7 @@ mkc_varlist_init (mkc_log_t *log, mkc_error_t *mkcerr)
   }
 
   varlist->list = list_init (MKC_LIST_SORTED,
-      mkc_var_free, mkc_var_compare, mkcerr);
+      mkc_var_free, mkc_var_compare, sizeof (mkc_var_t), mkcerr);
   varlist->debug = false;
   varlist->mkcerr = mkcerr;
   varlist->log = log;
@@ -164,7 +164,7 @@ mkc_var_delete (mkc_varlist_t *varlist, const char *vname)
     return;
   }
 
-  list_delete (varlist->list, vidx, sizeof (mkc_var_t));
+  list_delete (varlist->list, vidx);
 }
 
 void
@@ -355,7 +355,7 @@ mkc_var_create (mkc_varlist_t *varlist,
   value_init (&tvar.value);
   tvar.fromcache = varlist->fromcache;
 
-  var = list_set (varlist->list, &tvar, sizeof (mkc_var_t));
+  var = list_set (varlist->list, &tvar);
 
   return var;
 }

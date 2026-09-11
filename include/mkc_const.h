@@ -18,6 +18,15 @@ extern char const * const MKC_C_PROF_NAME_LINKFLAGS;
 extern char const * const MKC_C_PROF_NAME_PATHS;
 extern char const * const MKC_C_PROF_NAME_TIMESTAMP;
 
+extern char const * const MKC_C_BVAR_COMPFLAGS;
+extern char const * const MKC_C_BVAR_DEPENDENCY;
+extern char const * const MKC_C_BVAR_LIBS;
+extern char const * const MKC_C_BVAR_LINKFLAGS;
+extern char const * const MKC_C_BVAR_TIMESTAMP;
+extern char const * const MKC_C_BVAR_TYPE;
+extern char const * const MKC_C_VAR_BUILD_DATA;
+extern char const * const MKC_C_VAR_BUILD_PATHS;
+
 extern char const * const MKC_C_PATH_GETCONF;
 extern char const * const MKC_C_PATH_PKGCONF;
 extern char const * const MKC_C_PATH_PKGCONFIG;

@@ -27,8 +27,8 @@ listidx_t dict_size (dict_t *dict);
 listidx_t dict_size (dict_t *dict);
 
 void dict_set (dict_t *dict, const char *name, void *data);
-
 void * dict_get (dict_t *dict, const char *name);
+void dict_delete (dict_t * dict, const char * name);
 
 void dict_iter_start (dict_t *dict, listidx_t *iteridx);
 dictitem_t * dict_iter_next (dict_t *dict, listidx_t *iteridx);

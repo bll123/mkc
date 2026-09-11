@@ -31,17 +31,17 @@ typedef int32_t listidx_t;
 typedef void (*list_free_t) (void *data);
 typedef int (*list_compare_t) (void *ditema, void *ditemb);
 
-MKC_NODISCARD list_t * list_init (list_type_t type, list_free_t freefunc, list_compare_t compare, mkc_error_t *mkcerr);
+MKC_NODISCARD list_t * list_init (list_type_t type, list_free_t freefunc, list_compare_t compare, size_t itemsz, mkc_error_t *mkcerr);
 MKC_NODISCARD list_t * list_init_copy (list_t *list, list_free_t freefunc, mkc_error_t *mkcerr);
 void list_free (void *list);
 listidx_t list_size (list_t *list);
 list_type_t list_get_type (list_t *list);
 list_compare_t list_get_compfunc (list_t *list);
 
-void * list_set (list_t *list, void *data, size_t sz);
-void * list_append (list_t *list, void *data, size_t sz);
+void * list_set (list_t *list, void *data);
+void * list_append (list_t *list, void *data);
 void list_pop (list_t *list, listidx_t lidx);
-void list_delete (list_t *list, listidx_t lidx, size_t sz);
+void list_delete (list_t *list, listidx_t lidx);
 
 listidx_t list_find (list_t *list, void *data);
 void * list_get_by_idx (list_t *list, listidx_t idx);

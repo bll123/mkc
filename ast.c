@@ -257,7 +257,7 @@ ast_init (mkc_log_t *log, mkc_option_t *mkcoptions, mkc_error_t *mkcerr)
   memset (astmain, 0, sizeof (astmain_t));
 
   astmain->funclist = list_init (MKC_LIST_SORTED,
-      NULL, ast_func_compare, mkcerr);
+      NULL, ast_func_compare, sizeof (astnode_t *), mkcerr);
   astmain->mkcoptions = mkcoptions;
 
   astmain->sv = sv_init (log, mkcerr, mkcoptions);
@@ -436,7 +436,8 @@ ast_mk_value_list (astmain_t *astmain,
 
     astnode = astnode_init (astmain, MKC_T_VALUE, lineno, colno);
     /* the values are already in an astnode, the values will be freed elsewhere */
-    tlist = list_init (MKC_LIST_UNSORTED, NULL, NULL, astmain->mkcerr);
+    tlist = list_init (MKC_LIST_UNSORTED, NULL, NULL,
+        sizeof (value_t), astmain->mkcerr);
     astvalue = &astnode->value;
     value = &astvalue->value;
     value_init (value);
@@ -450,7 +451,7 @@ ast_mk_value_list (astmain_t *astmain,
 
   if (vala != NULL) {
     value = &vala->value.value;
-    list_set (tlist, value, sizeof (value_t));
+    list_set (tlist, value);
   }
 
   return listnode;
@@ -550,13 +551,13 @@ ast_mk_stmtlist (astmain_t *astmain,
       return NULL;
     }
     astnode->stmtlist.stmtlist = list_init (MKC_LIST_UNSORTED,
-        NULL, NULL, astmain->mkcerr);
+        NULL, NULL, sizeof (astnode_t *), astmain->mkcerr);
     stmtlist = astnode;
   }
   tlist = stmtlist->stmtlist.stmtlist;
   /* the node is already created, there's no need to store the */
   /* entire structure, just store the pointer */
-  list_set (tlist, &stmt, sizeof (astnode_t *));
+  list_set (tlist, &stmt);
 
   return stmtlist;
 }
@@ -1516,7 +1517,7 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
 
     case MKC_T_STMT_FUNCTION: {
       /* no need to store the entire structure, just store the pointer */
-      list_set (astmain->funclist, &astnode, sizeof (astnode_t *));
+      list_set (astmain->funclist, &astnode);
       break;
     }
 

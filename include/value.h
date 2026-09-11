@@ -65,7 +65,7 @@ typedef struct value_t {
   };
   value_type_t    vtype;
   value_ctxt_t    vctxt;
-  bool            tempallocated;
+  bool            isallocated;
 } value_t;
 
 void value_init (value_t *value);

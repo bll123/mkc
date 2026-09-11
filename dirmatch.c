@@ -31,12 +31,13 @@ MKC_NODISCARD
 list_t *
 dir_match (const char *dirname, mkc_regex_t *rx, mkc_error_t *mkcerr)
 {
-  list_t    *flist;
-  list_t    *nflist;
+  list_t    * flist;
+  list_t    * nflist;
   listidx_t fiteridx;
   listidx_t fidx;
 
-  nflist = list_init (MKC_LIST_UNSORTED, list_ind_free, NULL, mkcerr);
+  nflist = list_init (MKC_LIST_UNSORTED, list_ind_free, NULL,
+      sizeof (char *), mkcerr);
 
   flist = dirop_basic_list (dirname, mkcerr);
   list_iter_start (flist, &fiteridx);
@@ -54,7 +55,7 @@ dir_match (const char *dirname, mkc_regex_t *rx, mkc_error_t *mkcerr)
       char    *tp;
 
       tp = strdup (fn);
-      list_set (nflist, &tp, sizeof (char *));
+      list_set (nflist, &tp);
     }
   }
 

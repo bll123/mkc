@@ -320,21 +320,21 @@ mkc_chk_getconf (mkc_check_t *check)
   rsz = confstr (_CS_LFS_CFLAGS, flag, sizeof (flag));
   if (rsz > 0 && *flag) {
     sv_append_str_list (check->sv, SV_T_ACTIVE,
-        MKC_C_CFLAGS, flag, MKC_VCTXT_MKC);
+        MKC_C_CFLAGS, NULL, flag, MKC_VCTXT_MKC);
   }
 
   *flag = '\0';
   rsz = confstr (_CS_LFS_LDFLAGS, flag, sizeof (flag));
   if (rsz > 0 && *flag) {
     sv_append_str_list (check->sv, SV_T_ACTIVE,
-        MKC_C_LDFLAGS, flag, MKC_VCTXT_MKC);
+        MKC_C_LDFLAGS, NULL, flag, MKC_VCTXT_MKC);
   }
 
   *flag = '\0';
   rsz = confstr (_CS_LFS_LDFLAGS, flag, sizeof (flag));
   if (rsz > 0 && *flag) {
     sv_append_str_list (check->sv, SV_T_ACTIVE,
-        MKC_C_LIBS, flag, MKC_VCTXT_MKC);
+        MKC_C_LIBS, NULL, flag, MKC_VCTXT_MKC);
   }
 #endif
 
@@ -356,7 +356,7 @@ mkc_chk_arg_count (mkc_check_t *check, mkc_compiler_t compiler,
 
   mkc_log (check->log, MKC_LOG_CHECK, "== chk: arg_count: %s\n", funcname);
 
-  sv_set_str (check->sv, SV_T_LOCAL, "MKC_TV_TEST_FUNCTION_NAME", funcname, MKC_VCTXT_TEMP);
+  sv_set_str (check->sv, SV_T_LOCAL, "MKC_TV_TEST_FUNCTION_NAME", NULL, funcname, MKC_VCTXT_TEMP);
 
   rbuff = malloc (rsz);
   if (rbuff == NULL) {
@@ -477,7 +477,7 @@ mkc_chk_const (mkc_check_t *check,
 
   mkc_log (check->log, MKC_LOG_CHECK, "== chk: constant: %s\n", consttxt);
 
-  sv_set_str (check->sv, SV_T_LOCAL, "MKC_TV_TEST_CONSTANT", consttxt, MKC_VCTXT_TEMP);
+  sv_set_str (check->sv, SV_T_LOCAL, "MKC_TV_TEST_CONSTANT", NULL, consttxt, MKC_VCTXT_TEMP);
 
   compile_usetemplate (check->compile);
   rc = compile_exec (check->compile, COMPILE_COMPILE, compiler,
@@ -494,7 +494,7 @@ mkc_chk_define (mkc_check_t *check,
 
   mkc_log (check->log, MKC_LOG_CHECK, "== chk: define: %s\n", def);
 
-  sv_set_str (check->sv, SV_T_LOCAL, "MKC_TV_TEST_DEFINE", def, MKC_VCTXT_TEMP);
+  sv_set_str (check->sv, SV_T_LOCAL, "MKC_TV_TEST_DEFINE", NULL, def, MKC_VCTXT_TEMP);
 
   compile_usetemplate (check->compile);
   rc = compile_exec (check->compile, COMPILE_COMPILE, compiler,
@@ -529,9 +529,9 @@ mkc_chk_package (mkc_check_t *check,
   *pkgconfpath = '\0';
   /* if pkgconf is installed, pkg-config is a symlink. */
   /* use pkg-config by preference (pkgconf does not seem to work in macos macports) */
-  value = sv_get_value (check->sv, SV_T_INTERNAL, MKC_C_PATH_PKGCONFIG);
+  value = sv_get_value (check->sv, SV_T_INTERNAL, MKC_C_PATH_PKGCONFIG, NULL);
   if (value == NULL) {
-    value = sv_get_value (check->sv, SV_T_INTERNAL, MKC_C_PATH_PKGCONF);
+    value = sv_get_value (check->sv, SV_T_INTERNAL, MKC_C_PATH_PKGCONF, NULL);
   }
   if (value != NULL) {
     sv_value_get_str (check->sv, value, pkgconfpath, MKC_PATH_MAX);
@@ -676,7 +676,7 @@ mkc_chk_size (mkc_check_t *check,
 
   mkc_log (check->log, MKC_LOG_CHECK, "== chk: size: %s\n", type);
 
-  sv_set_str (check->sv, SV_T_LOCAL, "MKC_TV_TEST_SIZE", type, MKC_VCTXT_TEMP);
+  sv_set_str (check->sv, SV_T_LOCAL, "MKC_TV_TEST_SIZE", NULL, type, MKC_VCTXT_TEMP);
 
   compile_usetemplate (check->compile);
   rc = compile_exec (check->compile, COMPILE_COMPILE_LINK_RUN, compiler,
@@ -696,7 +696,7 @@ mkc_chk_type (mkc_check_t *check,
 
   mkc_log (check->log, MKC_LOG_CHECK, "== chk: type: %s\n", type);
 
-  sv_set_str (check->sv, SV_T_LOCAL, "MKC_TV_TEST_TYPE", type, MKC_VCTXT_TEMP);
+  sv_set_str (check->sv, SV_T_LOCAL, "MKC_TV_TEST_TYPE", NULL, type, MKC_VCTXT_TEMP);
 
   compile_usetemplate (check->compile);
   rc = compile_exec (check->compile, COMPILE_COMPILE, compiler,
@@ -715,8 +715,8 @@ mkc_chk_struct_member (mkc_check_t *check,
   mkc_log (check->log, MKC_LOG_CHECK,
       "== chk: struct member: %s.%s\n", structname, membername);
 
-  sv_set_str (check->sv, SV_T_LOCAL, "MKC_TV_TEST_STRUCT_NAME", structname, MKC_VCTXT_TEMP);
-  sv_set_str (check->sv, SV_T_LOCAL, "MKC_TV_TEST_STRUCT_MEMBER", membername, MKC_VCTXT_TEMP);
+  sv_set_str (check->sv, SV_T_LOCAL, "MKC_TV_TEST_STRUCT_NAME", NULL, structname, MKC_VCTXT_TEMP);
+  sv_set_str (check->sv, SV_T_LOCAL, "MKC_TV_TEST_STRUCT_MEMBER", NULL, membername, MKC_VCTXT_TEMP);
 
   compile_usetemplate (check->compile);
   rc = compile_exec (check->compile, COMPILE_COMPILE, compiler,
@@ -734,7 +734,7 @@ mkc_chk_function (mkc_check_t *check, mkc_compiler_t compiler,
   mkc_log (check->log, MKC_LOG_CHECK,
       "== chk: function: %s\n", funcname);
 
-  sv_set_str (check->sv, SV_T_LOCAL, "MKC_TV_TEST_FUNCTION_NAME", funcname, MKC_VCTXT_TEMP);
+  sv_set_str (check->sv, SV_T_LOCAL, "MKC_TV_TEST_FUNCTION_NAME", NULL, funcname, MKC_VCTXT_TEMP);
 
   compile_usetemplate (check->compile);
   rc = compile_exec (check->compile, COMPILE_COMPILE_LINK, compiler,
@@ -761,7 +761,7 @@ mkc_chk_header (mkc_check_t *check, mkc_compiler_t compiler,
     ec = '"';
   }
   snprintf (tbuff, sizeof (tbuff), "%c%s%c", bc, header, ec);
-  sv_set_str (check->sv, SV_T_LOCAL, "MKC_TV_TEST_HEADER", tbuff, MKC_VCTXT_TEMP);
+  sv_set_str (check->sv, SV_T_LOCAL, "MKC_TV_TEST_HEADER", NULL, tbuff, MKC_VCTXT_TEMP);
 
   compile_set_flags (check->compile, compflags, NULL, NULL);
   compile_usetemplate (check->compile);
@@ -788,7 +788,7 @@ mkc_chk_env_var_set (mkc_check_t *check, const char *nm)
   *tbuff = '\0';
   env_get (nm, tbuff, MKC_PATH_MAX);
   if (*tbuff) {
-    rc = sv_set_str (check->sv, SV_T_INTERNAL, nm, tbuff, MKC_VCTXT_ENV);
+    rc = sv_set_str (check->sv, SV_T_INTERNAL, nm, NULL, tbuff, MKC_VCTXT_ENV);
   }
 
   free (tbuff);
@@ -819,7 +819,7 @@ mkc_chk_package_exec (mkc_check_t *check, const char *pkgconfpath,
 
   if (name != NULL) {
     /* make sure a list exists */
-    sv_append_str_list (check->sv, SV_T_SEARCH, name, NULL, MKC_VCTXT_MKC);
+    sv_append_str_list (check->sv, SV_T_SEARCH, name, NULL, NULL, MKC_VCTXT_MKC);
     if (retsz > 0) {
       str_trim (rbuff, retsz);
       sv_set_list_from_str (check->sv, name, rbuff, MKC_VCTXT_MKC);
