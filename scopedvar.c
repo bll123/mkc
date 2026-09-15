@@ -170,6 +170,7 @@ sv_push (scopedvar_t *sv, sv_type_t svtype, const char *name)
 
   svprof = sv_create (sv, svtype, name, false);
   if (svprof != NULL) {
+    mkc_message (MKC_V_TMI, "push profile %s (%s)\n", svprof->name, svtypenames [svtype]);
     sv_push_hierarchy (sv, svprof);
   }
 }
@@ -184,30 +185,34 @@ sv_pop (scopedvar_t *sv)
     return;
   }
 
-  proflist = &sv->profiles;
+  proflist = &sv->hierarchy;
   if (proflist->sz <= 0) {
     mkc_error_set (sv->mkcerr, MKC_ERR_OUT_OF_RANGE, 0, "scope");
     return;
   }
 
+  svprof = &proflist->variables [proflist->sz - 1];
+  mkc_message (MKC_V_TMI, "pop profile %s (%s)\n", svprof->name, svtypenames [svprof->svtype]);
+
   /* the standard scopes should never get popped off of the stack */
+  proflist = &sv->hierarchy;
   if (proflist->sz == sv->standardsz) {
     mkc_error_set (sv->mkcerr, MKC_ERR_OUT_OF_RANGE, 0, "scope-b");
     return;
   }
 
-  svprof = &proflist->variables [proflist->sz - 1];
-
+  proflist = &sv->profiles;
   proflist->sz -= 1;
+  svprof = &proflist->variables [proflist->sz];
   datafree (svprof->name);
   mkc_varlist_free (svprof->varlist);
   svprof->varlist = NULL;
   svprof->svtype = SV_T_NOT_SET;
 
   proflist = &sv->hierarchy;
-  svprof = &proflist->variables [proflist->sz - 1];
-  svprof->svtype = SV_T_NOT_SET;
   proflist->sz -= 1;
+  svprof = &proflist->variables [proflist->sz];
+  svprof->svtype = SV_T_NOT_SET;
 }
 
 void
@@ -259,6 +264,9 @@ sv_set_fromcache (scopedvar_t *sv, bool flag)
     return;
   }
 
+  if (sv->fromcache != flag) {
+    mkc_message (MKC_V_TMI, "set from-cache: %d\n", flag);
+  }
   sv->fromcache = flag;
 }
 
@@ -990,23 +998,36 @@ sv_set (scopedvar_t *sv, sv_type_t svtype,
     return rc;
   }
 
+  if (mkc_msg_check_level (MKC_V_TMI)) {
+    char    tmp [80];
+
+    value_to_str (value, tmp, sizeof (tmp), 0);
+    mkc_message (MKC_V_TMI, "set %s %s (%s): %s\n",
+        vname, tag == NULL ? "" : tag, svtypenames [svtype], tmp);
+  }
+
   /* handle special dictionary types */
   if (svtype == SV_T_BUILD_DATA) {
     value_t   * dictval;
+    value_t   * tvalue;
 
     dictval = sv_get_value (sv, SV_T_INTERNAL, MKC_C_VAR_BUILD_DATA, NULL);
-    if (dictval != NULL && dictval->vtype == MKC_VT_DICT) {
-      value_t   * tvalue;
-
-      tvalue = malloc (sizeof (value_t));
-      if (tvalue == NULL) {
-        mkc_error_set (sv->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-        return rc;
-      }
-      value_copy (tvalue, value, sv->mkcerr);
-      dictdict_set (dictval->dict, vname, tag, tvalue,
-          sv->log, value_free, sv->mkcerr);
+    if (dictval == NULL || dictval->vtype != MKC_VT_DICT) {
+      mkc_error_set (sv->mkcerr, MKC_ERR_FATAL_ERROR, 0, "missing dict");
+      return rc;
     }
+
+    tvalue = malloc (sizeof (value_t));
+    if (tvalue == NULL) {
+      mkc_error_set (sv->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+      return rc;
+    }
+    value_copy (tvalue, value, sv->mkcerr);
+    tvalue->isallocated = true;
+    dictdict_set (dictval->dict, vname, tag, tvalue,
+        sv->log, value_free, sv->mkcerr);
+    free (tvalue);
+
     return MKC_OK;
   }
   if (svtype == SV_T_PATHS) {
@@ -1016,13 +1037,18 @@ sv_set (scopedvar_t *sv, sv_type_t svtype,
     if (dictval != NULL && dictval->vtype == MKC_VT_DICT) {
       value_t   * tvalue;
 
-      tvalue = malloc (sizeof (value_t));
-      if (tvalue == NULL) {
-        mkc_error_set (sv->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-        return rc;
+      tvalue = value;
+      if (! sv->fromcache) {
+        tvalue = malloc (sizeof (value_t));
+        if (tvalue == NULL) {
+          mkc_error_set (sv->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+          return rc;
+        }
+        value_copy (tvalue, value, sv->mkcerr);
+        tvalue->isallocated = true;
       }
-      value_copy (tvalue, value, sv->mkcerr);
       dict_set (dictval->dict, vname, tvalue);
+      free (tvalue);
     }
     return MKC_OK;
   }
@@ -1188,7 +1214,14 @@ sv_delete (scopedvar_t *sv, sv_type_t svtype,
   if (svtype == SV_T_BUILD_DATA) {
     value_t   * dictval;
 
+    if (tag == NULL) {
+      mkc_error_set (sv->mkcerr, MKC_ERR_NULL_ARGUMENT, 0, NULL);
+      return;
+    }
     dictval = sv_get_value (sv, SV_T_INTERNAL, MKC_C_VAR_BUILD_DATA, NULL);
+    if (dictval == NULL) {
+      return;
+    }
     dictdict_delete (dictval->dict, vname, tag, sv->mkcerr);
   } else {
     varlist = sv_get_varlist (sv, svtype, vname);

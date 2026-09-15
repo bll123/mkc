@@ -8,15 +8,8 @@
 extern "C" {
 #endif
 
-extern char const * const MKC_C_PROF_NAME_BUILD;
-extern char const * const MKC_C_PROF_NAME_COMPFLAGS;
 extern char const * const MKC_C_PROF_NAME_DEFAULT;
-extern char const * const MKC_C_PROF_NAME_DEPENDENCY;
 extern char const * const MKC_C_PROF_NAME_INTERNAL;
-extern char const * const MKC_C_PROF_NAME_LIBS;
-extern char const * const MKC_C_PROF_NAME_LINKFLAGS;
-extern char const * const MKC_C_PROF_NAME_PATHS;
-extern char const * const MKC_C_PROF_NAME_TIMESTAMP;
 
 extern char const * const MKC_C_BVAR_COMPFLAGS;
 extern char const * const MKC_C_BVAR_DEPENDENCY;
@@ -38,6 +31,8 @@ extern char const * const MKC_C_LIBS;
 extern char const * const MKC_C_SUPPORTS_MM;
 extern char const * const MKC_C_MKC_CHANGED;
 extern char const * const MKC_C_PREFIX;
+
+extern int gmkcdebug;
 
 #if defined (__cplusplus) || defined (c_plusplus)
 }

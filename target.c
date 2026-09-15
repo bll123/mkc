@@ -255,7 +255,7 @@ target_check_dependency_timestamp (target_t *target,
   int64_t       ts;
   listidx_t iteridx;
 
-  mkc_message (MKC_V_TMI, "   chk-dep-ts: %s ", filepath);
+  mkc_message (MKC_V_TMI, "chk-dep-ts: %s ", filepath);
 
   if (! sv_is_defined (target->sv, SV_T_BUILD_DATA,
       filepath, MKC_C_BVAR_DEPENDENCY)) {
@@ -299,7 +299,7 @@ target_get_dependencies (target_t *target,
   char            * p;
   bool            first = true;
 
-  mkc_message (MKC_V_TMI, "   get-deps: %s\n", filepath);
+  mkc_message (MKC_V_TMI, "get-deps: %s\n", filepath);
 
   rsz = MKC_LARGE_BUFF_SZ;
   rbuff = malloc (rsz);
@@ -464,8 +464,8 @@ target_get_include_list (target_t *target, chararr_t * include_paths,
 
     list_iter_start (tlist, &iteridx);
     while ((idx = list_iter_next (tlist, &iteridx)) != MKC_ITER_FINISH) {
-      char          **temp;
-      char          *hdr;
+      char          ** temp;
+      char          * hdr;
       int64_t       tts;
 
       if (mkc_error_chk_err (target->mkcerr)) {
@@ -524,6 +524,7 @@ target_get_include_list (target_t *target, chararr_t * include_paths,
 
   free (hdrpath);
   free (tname);
+gmkcdebug = false;
 #endif
   return hlist;
 }

@@ -7,19 +7,21 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "mkc_log.h"
+
 #if defined (__cplusplus) || defined (c_plusplus)
 extern "C" {
 #endif
 
 typedef struct mkc_option_t {
-  char        * currprofile;
-  const char  * mkc_filename;
-  const char  * stage;
-  const char  * prefix;
-  int32_t     loglevel;
-  int         verbose;
-  bool        clean;
-  bool        retest;
+  char          * currprofile;
+  const char    * mkc_filename;
+  const char    * stage;
+  const char    * prefix;
+  int32_t       loglevel;
+  log_verbose_t verbose;
+  bool          clean;
+  bool          retest;
 } mkc_option_t;
 
 #if defined (__cplusplus) || defined (c_plusplus)

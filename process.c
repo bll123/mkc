@@ -219,6 +219,7 @@ static void process_alternate_free (void *talt);
 static void process_list_to_flags (process_t *process, value_t *value, list_t *flags, bool inlist);
 static void process_check_mkc_timestamp (process_t *process);
 static void process_clean_check (process_t *process);
+static void process_init_build_vars (process_t *process);
 
 static void process_dbg_print_var (process_t *process, const char *pname);
 static void process_dbg_print_prof (process_t *process, sv_iter_flag_t sviterflag);
@@ -2789,8 +2790,6 @@ process_initial_checks (process_t *process)
 static void
 process_set_defaults (process_t *process)
 {
-  dict_t    *dict;
-
   /* create internal constants */
 
   for (mkc_system_type_t i = 0; i < MKC_SYS_MAX; ++i) {
@@ -2832,10 +2831,7 @@ process_set_defaults (process_t *process)
       MKC_C_PROFILE_NAME, NULL,
       sv_get_current_profile (process->sv), MKC_VCTXT_MKC);
 
-  dict = dict_init (process->log, value_free, sizeof (value_t), process->mkcerr);
-  sv_set_dict (process->sv, SV_T_INTERNAL, MKC_C_VAR_BUILD_PATHS, dict, MKC_VCTXT_MKC);
-  sv_set_dict (process->sv, SV_T_INTERNAL, MKC_C_VAR_BUILD_DATA, dict, MKC_VCTXT_MKC);
-  dict_free (dict);
+  process_init_build_vars (process);
 }
 
 static void
@@ -3445,7 +3441,7 @@ process_check_mkc_timestamp (process_t *process)
   }
 
   if (process->mkc_ts > cachedts) {
-    mkc_message (MKC_V_TMI, "   .mkc ts: changed: true\n");
+    mkc_message (MKC_V_TMI, ".mkc ts: changed: true\n");
     changed = true;
     process->mkc_changed = true;
     process->reset_stage = true;
@@ -3467,11 +3463,7 @@ static void
 process_clean_check (process_t *process)
 {
   char          tbuff [MKC_PATH_MAX];
-  sv_iter_t     * sviter;
   scopedvar_t   * sv = process->sv;
-  const char    * profname;
-  mkc_varidx_t  viter;
-  mkc_varidx_t  vidx;
 
   if (process->cleaned) {
     return;
@@ -3485,38 +3477,20 @@ process_clean_check (process_t *process)
   mkc_clean_mkcfiles (process->projectname, tbuff, MKC_PATH_MAX, process->mkcerr);
   process->cleaned = true;
 
-// ### re-write to use build-data dd
-#if 0
-  sviter = sv_iter_start (sv, SV_ITER_PROFILES);
-  while ((profname = sv_iter_next (sv, sviter)) != NULL) {
-    if (sv_iter_get_type (sv, sviter) == SV_T_BUILD) {
-      break;
-    }
-  }
+  sv_delete (sv, SV_T_INTERNAL, MKC_C_VAR_BUILD_DATA, NULL);
+  sv_delete (sv, SV_T_INTERNAL, MKC_C_VAR_BUILD_PATHS, NULL);
+  process_init_build_vars (process);
+}
 
-  if (sv_iter_get_type (sv, sviter) != SV_T_BUILD) {
-    return;
-  }
+static void
+process_init_build_vars (process_t *process)
+{
+  dict_t    *dict;
 
-  sv_var_iter_start (sv, sviter, &viter);
-  while ((vidx = sv_var_iter_next (sv, sviter, &viter)) != MKC_ITER_FINISH) {
-    value_t     * value;
-    const char  * nm;
-    int         tgttype;
-
-    nm = sv_var_iter_get_name (sv, sviter, vidx);
-    value = sv_var_iter_get_value (sv, sviter, vidx);
-    tgttype = sv_value_get_integer (sv, value);
-
-    if (tgttype == TGT_T_INCLUDE ||
-        tgttype == TGT_T_SOURCE) {
-      continue;
-    }
-
-    sv_delete (sv, SV_T_BUILD_DATA, nm, MKC_C_BVAR_DEPENDENCY);
-  }
-  sv_iter_finish (sviter);
-#endif
+  dict = dict_init (process->log, value_free, sizeof (value_t), process->mkcerr);
+  sv_set_dict (process->sv, SV_T_INTERNAL, MKC_C_VAR_BUILD_PATHS, dict, MKC_VCTXT_MKC);
+  sv_set_dict (process->sv, SV_T_INTERNAL, MKC_C_VAR_BUILD_DATA, dict, MKC_VCTXT_MKC);
+  dict_free (dict);
 }
 
 /* debug processing */
@@ -3693,3 +3667,4 @@ process_dbg_print_info (process_t *process)
   fprintf (stdout, "  int %zd\n", sizeof (int));
   fprintf (stdout, "  time_t %zd\n", sizeof (time_t));
 }
+

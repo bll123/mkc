@@ -180,7 +180,6 @@
 %token T_ATTR_MATCH           "match"
 %token T_ATTR_METHOD          "method"
 %token T_ATTR_NAME            "name"
-%token T_ATTR_NAMESPACE       "namespace"
 %token T_ATTR_NEGATE          "negate"
 %token T_ATTR_OUTPUT          "output"
 %token T_ATTR_PATH            "path"
@@ -240,7 +239,7 @@
 %type <astnode> attr attr_alternate attr_compiler attr_compilerflags
 %type <astnode> attr_context attr_define_zero attr_failure attr_header
 %type <astnode> attr_input attr_lib_flags attr_libversion attr_linkflags
-%type <astnode> attr_match attr_method attr_name attr_namespace attr_negate
+%type <astnode> attr_match attr_method attr_name attr_negate
 %type <astnode> attr_output attr_path attr_replace attr_source
 %type <astnode> attr_success attr_version
 
@@ -436,10 +435,6 @@ attr[v]:
       $v = $a;
     }
   | attr_name[a]
-    {
-      $v = $a;
-    }
-  | attr_namespace[a]
     {
       $v = $a;
     }
@@ -1056,15 +1051,6 @@ attr_name[v]:
     T_ATTR_NAME varany[a] T_SEMICOLON
     {
       $v = ast_mk_attribute (ast, $a, MKC_T_ATTR_NAME,
-          yylloc.first_line, yylloc.first_column);
-    }
-  ;
-
-/* used in load_cache/profile/set */
-attr_namespace[v]:
-    T_ATTR_NAMESPACE varany[a] T_SEMICOLON
-    {
-      $v = ast_mk_attribute (ast, $a, MKC_T_ATTR_NAMESPACE,
           yylloc.first_line, yylloc.first_column);
     }
   ;

@@ -128,7 +128,7 @@ main (int argc, char *argv [])
         break;
       }
       case 'q': {
-        mkcoptions.verbose = 0;
+        mkcoptions.verbose = MKC_V_QUIET;
         break;
       }
       case 'r': {

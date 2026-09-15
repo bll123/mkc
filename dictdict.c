@@ -76,7 +76,6 @@ void
 dictdict_delete (dict_t * dd, const char * name, const char *tag,
     mkc_error_t *mkcerr)
 {
-  value_t   * value;
   value_t   * subdval;
 
   if (name == NULL || tag == NULL) {

@@ -192,7 +192,6 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 "match"                     { return T_ATTR_MATCH; }
 "method"                    { return T_ATTR_METHOD; }
 "name"                      { return T_ATTR_NAME; }
-"namespace"                 { return T_ATTR_NAMESPACE; }
 "negate"                    { return T_ATTR_NEGATE; }
 "output"                    { return T_ATTR_OUTPUT; }
 "path"                      { return T_ATTR_PATH; }

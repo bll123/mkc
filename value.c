@@ -9,6 +9,7 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include "mkc_const.h"  // temporary
 #include "mkc_def.h"
 #include "list.h"
 #include "strutil.h"
@@ -344,8 +345,6 @@ value_copy (value_t * valuecopy, const value_t * value, mkc_error_t * mkcerr)
 bool
 value_is_string_type (const value_t *value)
 {
-  /* everything other than invalid, integers, */
-  /* timestamps and lists is a string */
   if (value->vtype == MKC_VT_STRING ||
       value->vtype == MKC_VT_STATIC_STRING ||
       value->vtype == MKC_VT_QUOTED_STRING ||

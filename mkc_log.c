@@ -26,7 +26,7 @@ typedef struct mkc_log_t {
   int32_t     logflag;
 } mkc_log_t;
 
-static int gmkcverbose = MKC_V_STATS;
+static log_verbose_t gmkcverbose = MKC_V_STATS;
 
 MKC_NODISCARD
 mkc_log_t *
@@ -104,13 +104,22 @@ mkc_log_free (mkc_log_t *log)
 }
 
 void
-mkc_msg_set_level (int vlevel)
+mkc_msg_set_level (log_verbose_t vlevel)
 {
   gmkcverbose = vlevel;
 }
 
+bool
+mkc_msg_check_level (log_verbose_t vlevel)
+{
+  if (vlevel > gmkcverbose) {
+    return false;
+  }
+  return true;
+}
+
 void
-mkc_message (int vlevel, const char *fmt, ...)
+mkc_message (log_verbose_t vlevel, const char *fmt, ...)
 {
   va_list   vap;
 
@@ -119,12 +128,19 @@ mkc_message (int vlevel, const char *fmt, ...)
   }
 
   va_start (vap, fmt);
+  if (vlevel <= MKC_V_STATS) {
+    /* no indent for level 1 (basic), 2 (stats) */
+    vlevel = 0;
+  }
+  if (vlevel > 0) {
+    fprintf (stderr, "%*s", vlevel * 2, "");
+  }
   vfprintf (stderr, fmt, vap);
   va_end (vap);
 }
 
 void
-mkc_message_chararr (int vlevel, const char *tag, chararr_t *carr)
+mkc_message_chararr (log_verbose_t vlevel, const char *tag, chararr_t *carr)
 {
   int           count = 0;
   const char    ** targv;

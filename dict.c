@@ -112,12 +112,15 @@ dict_set (dict_t * dict, const char * name, void *data)
       free (ditem.name);
       return;
     }
-    memcpy (ditem.data, data, dict->itemsz);
     pditem = &ditem;
   } else {
     pditem = list_get_by_idx (dict->list, idx);
+    if (pditem->dict->freefunc != NULL && pditem->data != NULL) {
+      (*pditem->dict->freefunc) (pditem->data);
+    }
   }
 
+  memcpy (pditem->data, data, dict->itemsz);
   pditem->dict = dict;
   list_set (dict->list, pditem);
 }
