@@ -1,8 +1,8 @@
 /*
  * Copyright 2026 Brad Lanam Pleasant Hill CA
  */
-#ifndef INC_MKC_PROCESS_H
-#define INC_MKC_PROCESS_H
+#ifndef INC_PROCESS_H
+#define INC_PROCESS_H
 
 #include <stdint.h>
 
@@ -81,4 +81,4 @@ bool process_profile_is_current (process_t *process, value_t *valnm);
 }
 #endif
 
-#endif /* INC_MKC_PROCESS_H */
+#endif /* INC_PROCESS_H */

@@ -1,8 +1,8 @@
 /*
  * Copyright 2026 Brad Lanam Pleasant Hill CA
  */
-#ifndef INC_MKC_AST_H
-#define INC_MKC_AST_H
+#ifndef INC_AST_H
+#define INC_AST_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -77,4 +77,4 @@ astnode_t * ast_get_main (astmain_t *astmain);
 }
 #endif
 
-#endif /* INC_MKC_AST_H */
+#endif /* INC_AST_H */

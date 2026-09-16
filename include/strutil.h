@@ -1,8 +1,8 @@
 /*
  * Copyright 2026 Brad Lanam Pleasant Hill CA
  */
-#ifndef INC_MKC_STRING_H
-#define INC_MKC_STRING_H
+#ifndef INC_STRUTIL_H
+#define INC_STRUTIL_H
 
 #ifndef MKC_BOOTSTRAP
 # include "mkc_config.h"
@@ -37,4 +37,4 @@ MKC_NODISCARD char * str_fromwide (const wchar_t *buff);
 }
 #endif
 
-#endif /* INC_MKC_STRING_H */
+#endif /* INC_STRUTIL_H */

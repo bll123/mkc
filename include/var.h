@@ -1,8 +1,8 @@
 /*
  * Copyright 2026 Brad Lanam Pleasant Hill CA
  */
-#ifndef INC_MKC_VAR_H
-#define INC_MKC_VAR_H
+#ifndef INC_VAR_H
+#define INC_VAR_H
 
 #include <stdint.h>
 #include <stddef.h>
@@ -50,4 +50,4 @@ bool var_is_list (varlist_t     *varlist, const char *vname);
 }
 #endif
 
-#endif /* INC_MKC_VAR_H */
+#endif /* INC_VAR_H */

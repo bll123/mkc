@@ -1,8 +1,8 @@
 /*
  * Copyright 2026 Brad Lanam Pleasant Hill CA
  */
-#ifndef INC_MKC_DIRMATCH_H
-#define INC_MKC_DIRMATCH_H
+#ifndef INC_DIRMATCH_H
+#define INC_DIRMATCH_H
 
 #ifndef MKC_BOOTSTRAP
 # include "mkc_config.h"
@@ -25,4 +25,4 @@ MKC_NODISCARD list_t * dir_match (const char *dirname, mkc_regex_t *rx, mkc_erro
 } /* extern C */
 #endif
 
-#endif /* INC_MKC_DIRMATCH_H */
+#endif /* INC_DIRMATCH_H */

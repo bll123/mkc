@@ -1,8 +1,8 @@
 /*
  * Copyright 2026 Brad Lanam Pleasant Hill CA
  */
-#ifndef INC_MKC_LIST_H
-#define INC_MKC_LIST_H
+#ifndef INC_LIST_H
+#define INC_LIST_H
 
 #include <stddef.h>
 #include <stdint.h>
@@ -57,4 +57,4 @@ int list_ind_compare (void *a, void *b);
 }
 #endif
 
-#endif /* INC_MKC_LIST_H */
+#endif /* INC_LIST_H */

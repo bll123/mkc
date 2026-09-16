@@ -1,8 +1,8 @@
 /*
  * Copyright 2026 Brad Lanam Pleasant Hill CA
  */
-#ifndef INC_MKC_PARSE_H
-#define INC_MKC_PARSE_H
+#ifndef INC_PARSE_H
+#define INC_PARSE_H
 
 #include <stdio.h>
 #include <stdint.h>
@@ -35,4 +35,4 @@ void parse_debug (parse_t *parse, bool debug);
 }
 #endif
 
-#endif /* INC_MKC_PARSE_H */
+#endif /* INC_PARSE_H */
