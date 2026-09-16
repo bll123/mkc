@@ -29,13 +29,13 @@ typedef enum {
   MKC_CONTEXT_SUCCESS_FAIL  = (1 << 15),
 } mkc_ctxt_val_t;
 
-typedef struct mkc_context_t mkc_context_t;
+typedef struct context_t context_t;
 
-MKC_NODISCARD mkc_context_t *mkc_context_init (mkc_error_t *mkcerr);
-void mkc_context_free (mkc_context_t *context);
-void mkc_context_push (mkc_context_t *context, mkc_ctxt_val_t ctxtval, mkc_error_t *mkcerr);
-void mkc_context_pop (mkc_context_t *context);
-bool mkc_context_check (mkc_context_t *context, mkc_ctxt_val_t ctxtval);
+MKC_NODISCARD context_t *context_init (mkc_error_t *mkcerr);
+void context_free (context_t *context);
+void context_push (context_t *context, mkc_ctxt_val_t ctxtval, mkc_error_t *mkcerr);
+void context_pop (context_t *context);
+bool context_check (context_t *context, mkc_ctxt_val_t ctxtval);
 
 #if defined (__cplusplus) || defined (c_plusplus)
 }

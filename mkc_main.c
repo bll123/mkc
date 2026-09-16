@@ -22,7 +22,7 @@
 #endif
 
 #include "ast.h"
-#include "mkc_const.h"
+#include "const.h"
 #include "mkc_def.h"
 #include "dirop.h"
 #include "envutil.h"

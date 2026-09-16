@@ -135,16 +135,15 @@
 %token T_STMT_CHK_INC_DEPS    "check_include_dependencies"
 %token T_STMT_CHK_INC_GUARDS  "check_include_guards"
 %token T_STMT_CONFIGURE       "configure"
-%token T_STMT_EXECUTABLE      "executable"
+%token T_STMT_EXECUTABLE      "define_executable"
 %token T_STMT_DEBUG           "mkcdebug"
 %token T_STMT_INCLUDE         "include"
 %token T_STMT_LOADCACHE       "load_cache"
-%token T_STMT_MARK            "mark"
+%token T_STMT_MARK_VAR        "mark_variable"
 %token T_STMT_PROJECT         "project"
 
 // commands
 %token T_STMT_FUNCTION        "function"
-%token T_STMT_OPTION          "option"
 %token T_STMT_PRINT           "print"
 %token T_STMT_PROFILE         "profile"
 
@@ -228,7 +227,7 @@
 %type <astnode> stmt_autobuild stmt_build stmt_chk_inc_compile
 %type <astnode> stmt_chk_inc_deps stmt_chk_inc_guards
 %type <astnode> stmt_config stmt_executable
-%type <astnode> stmt_mark stmt_print stmt_profile stmt_project stmt_set
+%type <astnode> stmt_mark_var stmt_print stmt_profile stmt_project stmt_set
 // other statements
 %type <astnode> directive stmt_loadcache
 // checks
@@ -341,7 +340,7 @@ stmt[v]:
     {
       $v = NULL;
     }
-  | stmt_mark[a]
+  | stmt_mark_var[a]
     {
       $v = $a;
     }
@@ -667,7 +666,8 @@ stmt_function[v]:
 stmt_autobuild[v]:
     T_STMT_AUTOBUILD T_SEMICOLON
     {
-      // not yet implemented
+      $v = ast_mk_stmt_val (ast, NULL, MKC_T_STMT_AUTOBUILD,
+          yylloc.first_line, yylloc.first_column);
       $v = NULL;
     }
     ;
@@ -744,10 +744,10 @@ stmt_include:
     }
   ;
 
-stmt_mark[v]:
-    T_STMT_MARK varname[a] varname[b] T_SEMICOLON
+stmt_mark_var[v]:
+    T_STMT_MARK_VAR varname[a] varname[b] T_SEMICOLON
     {
-      $v = ast_mk_stmt_val_val (ast, $a, $b, MKC_T_STMT_MARK,
+      $v = ast_mk_stmt_val_val (ast, $a, $b, MKC_T_STMT_MARK_VAR,
           yylloc.first_line, yylloc.first_column);
     }
   ;
@@ -809,11 +809,6 @@ directive[v]:
     {
       $v = ast_mk_stmt_val_val (ast, $a, $b, MKC_T_STMT_DEBUG,
           yylloc.first_line, yylloc.first_column);
-    }
-  | T_STMT_OPTION varname[a] varany[b] T_SEMICOLON
-    {
-      /* not implemented */
-      $v = NULL;
     }
   ;
 

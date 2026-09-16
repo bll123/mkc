@@ -147,19 +147,18 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 "range"       { return T_RANGE; }
 "return"      { return T_RETURN; }
 
-"auto_build"  { return T_STMT_AUTOBUILD; }
-"build"       { return T_STMT_BUILD; }
+"auto_build"                  { return T_STMT_AUTOBUILD; }
+"build"                       { return T_STMT_BUILD; }
 "check_include_compile"       { return T_STMT_CHK_INC_COMPILE; }
 "check_include_dependencies"  { return T_STMT_CHK_INC_DEPS; }
 "check_include_guards"        { return T_STMT_CHK_INC_GUARDS; }
-"configure"   { return T_STMT_CONFIGURE; }
-"executable"  { return T_STMT_EXECUTABLE; }
-"load_cache"  { return T_STMT_LOADCACHE; }
-"mark"        { return T_STMT_MARK; }
-"include"     { return T_STMT_INCLUDE; }
-"mkcdebug"    { return T_STMT_DEBUG; }
-"option"      { return T_STMT_OPTION; }
-"project"     { return T_STMT_PROJECT; }
+"configure"                   { return T_STMT_CONFIGURE; }
+"define_executable"           { return T_STMT_EXECUTABLE; }
+"load_cache"                  { return T_STMT_LOADCACHE; }
+"mark_variable"               { return T_STMT_MARK_VAR; }
+"include"                     { return T_STMT_INCLUDE; }
+"mkcdebug"                    { return T_STMT_DEBUG; }
+"project"                     { return T_STMT_PROJECT; }
 
 "check_arg_count"           { return T_CHK_ARG_COUNT; }
 "check_compile_flag"        { return T_CHK_COMP_FLAG; }

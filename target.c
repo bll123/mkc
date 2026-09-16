@@ -21,7 +21,7 @@
 #include "dirop.h"
 #include "fileop.h"
 #include "mkc_compiler.h"
-#include "mkc_const.h"
+#include "const.h"
 #include "mkc_def.h"
 #include "mkc_error.h"
 #include "mkc_log.h"

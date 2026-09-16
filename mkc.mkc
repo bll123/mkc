@@ -1,10 +1,10 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
 check_shell_extract VERSION.txt;
-mark VERSION enable-output;
-mark BUILD enable-output;
-mark BUILDDATE enable-output;
-mark RELEASELEVEL enable-output;
+mark_variable VERSION enable-output;
+mark_variable BUILD enable-output;
+mark_variable BUILDDATE enable-output;
+mark_variable RELEASELEVEL enable-output;
 
 project mkc {
   compiler c;
@@ -187,7 +187,7 @@ check_include_guards {
 }
 
 # build
-executable mkc {
+define_executable mkc {
   source ast.c asttoken.c chararr.c compile.c dirmatch.c dirop.c envutil.c
       fileop.c ast.c mkc_check.c mkc_compiler.c mkc_const.c
       mkc_context.c mkc_error.c mkc_grammar.c mkc_lex.c mkc_list.c

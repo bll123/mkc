@@ -15,7 +15,7 @@
 #include "dictdict.h"
 #include "envutil.h"
 #include "mkc_compiler.h"
-#include "mkc_const.h"
+#include "const.h"
 #include "mkc_def.h"
 #include "mkc_error.h"
 #include "list.h"   // for the iterator enums

@@ -17,10 +17,10 @@ check_function sqrt {
 }
 check_function other;
 
-mark _function_malloc disable-output;
+mark_variable _function_malloc disable-output;
 
 profile internal {
-  mark MKC_SYS_UNKNOWN enable-output;
+  mark_variable MKC_SYS_UNKNOWN enable-output;
 }
 
 configure {

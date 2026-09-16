@@ -26,8 +26,8 @@
 #include "envutil.h"
 #include "fileop.h"
 #include "mkc_check.h"
-#include "mkc_const.h"
-#include "mkc_context.h"
+#include "const.h"
+#include "context.h"
 #include "mkc_def.h"
 #include "dirmatch.h"
 #include "mkc_error.h"
@@ -74,7 +74,7 @@ typedef struct process_t {
   scopedvar_t       * sv;
   compile_t         * compile;
   mkc_check_t       * check;
-  mkc_context_t     * context;
+  context_t     * context;
   target_t          * target;
   mkc_error_t       * mkcerr;
   mkc_log_t         * log;
@@ -231,7 +231,7 @@ static void process_dbg_print_info (process_t *process);
 MKC_NODISCARD
 process_t *
 process_init (scopedvar_t *sv,
-    mkc_log_t *log, mkc_context_t *context,
+    mkc_log_t *log, context_t *context,
     mkc_option_t *mkcoptions, mkc_error_t *mkcerr)
 {
   process_t     *process;
@@ -1210,6 +1210,34 @@ process_stmt_chk_inc_guards (process_t *process)
 }
 
 void
+process_stmt_autobuild (process_t *process)
+{
+  list_t      * blist;
+  char        * tbuff;
+
+  tbuff = malloc (MKC_PATH_MAX);
+  if (tbuff == NULL) {
+    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return;
+  }
+
+  mkc_create_mkcfiles (tbuff, MKC_PATH_MAX, process->mkcerr);
+  free (tbuff);
+
+  blist = list_init (MKC_LIST_UNSORTED, NULL, NULL, sizeof (value_t), process->mkcerr);
+// ### go through build data, locate all items that need to be built.
+
+  process->attr.display = true;
+  process->attr.printerrors = true;
+
+  target_build (process->target, blist);
+
+  list_free (blist);
+  process_attr_clear (process);
+  return;
+}
+
+void
 process_stmt_build (process_t *process, value_t *vallist)
 {
   list_t      * blist;
@@ -1790,7 +1818,7 @@ process_attribute (process_t *process, value_t *valname,
     }
   }
 
-  if (! mkc_context_check (process->context, ctxt)) {
+  if (! context_check (process->context, ctxt)) {
     mkc_error_set (process->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
     return;
   }
@@ -1869,14 +1897,14 @@ process_attr_compiler (process_t *process, value_t *name)
 
   /* the compiler attribute is only allowed in */
   /* project, profile and check-include statements */
-  if (! mkc_context_check (process->context,
+  if (! context_check (process->context,
       MKC_CONTEXT_PROJECT | MKC_CONTEXT_PROFILE | MKC_CONTEXT_CHK_INC)) {
     mkc_error_set (process->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
     return;
   }
 
   sv_value_get_str (process->sv, name, nm, sizeof (nm));
-  if (mkc_context_check (process->context, MKC_CONTEXT_PROJECT)) {
+  if (context_check (process->context, MKC_CONTEXT_PROJECT)) {
     /* if in a project statement, the default compiler is set */
     process->dfltcompiler = compiler_get_id (nm);
     sv_set_default_compiler (process->sv, process->dfltcompiler);
@@ -1884,7 +1912,7 @@ process_attr_compiler (process_t *process, value_t *name)
 
   process->attr.currcompiler = compiler_get_id (nm);
 
-  if (mkc_context_check (process->context, MKC_CONTEXT_PROFILE)) {
+  if (context_check (process->context, MKC_CONTEXT_PROFILE)) {
     sv_set_current_compiler (process->sv, process->attr.currcompiler);
   }
 }
@@ -1898,7 +1926,7 @@ process_attr_comp_flags (process_t *process, value_t *value)
     return;
   }
 
-  if (! mkc_context_check (process->context,
+  if (! context_check (process->context,
       MKC_CONTEXT_CHECK | MKC_CONTEXT_ALTERNATE | MKC_CONTEXT_CHK_INC |
       MKC_CONTEXT_EXECUTABLE)) {
     mkc_error_set (process->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
@@ -1920,7 +1948,7 @@ process_attr_header (process_t *process, value_t *value)
     return;
   }
 
-  if (! mkc_context_check (process->context,
+  if (! context_check (process->context,
       MKC_CONTEXT_CHECK | MKC_CONTEXT_ALTERNATE)) {
     mkc_error_set (process->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
     return;
@@ -1952,7 +1980,7 @@ process_attr_link_flags (process_t *process, value_t *value)
     return;
   }
 
-  if (! mkc_context_check (process->context,
+  if (! context_check (process->context,
       MKC_CONTEXT_CHECK | MKC_CONTEXT_ALTERNATE | MKC_CONTEXT_EXECUTABLE)) {
     mkc_error_set (process->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
     return;
@@ -1971,7 +1999,7 @@ process_attr_lib_flags (process_t *process, value_t *value)
     return;
   }
 
-  if (! mkc_context_check (process->context,
+  if (! context_check (process->context,
       MKC_CONTEXT_CHECK | MKC_CONTEXT_ALTERNATE | MKC_CONTEXT_EXECUTABLE)) {
     mkc_error_set (process->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
     return;
@@ -1988,7 +2016,7 @@ process_attr_path (process_t *process, value_t *path)
     return;
   }
 
-  if (! mkc_context_check (process->context,
+  if (! context_check (process->context,
       MKC_CONTEXT_CHECK | MKC_CONTEXT_CHK_INC)) {
     mkc_error_set (process->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
     return;
@@ -2006,7 +2034,7 @@ process_attr_replace (process_t *process,
     return;
   }
 
-  if (! mkc_context_check (process->context, MKC_CONTEXT_CONFIGURE)) {
+  if (! context_check (process->context, MKC_CONTEXT_CONFIGURE)) {
     mkc_error_set (process->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
     return;
   }
@@ -2027,7 +2055,7 @@ process_attr_source (process_t *process, value_t *value)
     return;
   }
 
-  if (! mkc_context_check (process->context, MKC_CONTEXT_EXECUTABLE)) {
+  if (! context_check (process->context, MKC_CONTEXT_EXECUTABLE)) {
     mkc_error_set (process->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
     return;
   }

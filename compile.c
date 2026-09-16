@@ -13,7 +13,7 @@
 #include "attribute.h"
 #include "compile.h"
 #include "fileop.h"
-#include "mkc_const.h"
+#include "const.h"
 #include "mkc_error.h"
 #include "mkc_log.h"
 #include "os_process.h"

@@ -14,7 +14,7 @@
 #include "dict.h"
 #include "list.h"
 #include "mkc_check.h"
-#include "mkc_context.h"
+#include "context.h"
 #include "mkc_def.h"
 #include "mkc_error.h"
 #include "mkc_log.h"
@@ -212,7 +212,7 @@ typedef struct astmain_t {
   astnode_t         * mainnode;
   scopedvar_t           * sv;
   process_t         * process;
-  mkc_context_t         * context;
+  context_t         * context;
   astnode_t         ** nodelist;
   astnode_t         * delay_stack [MKC_DELAY_STACK_SZ];
   mkc_error_t           * mkcerr;
@@ -266,7 +266,7 @@ ast_init (mkc_log_t *log, mkc_option_t *mkcoptions, mkc_error_t *mkcerr)
     return NULL;
   }
 
-  astmain->context = mkc_context_init (mkcerr);
+  astmain->context = context_init (mkcerr);
   if (astmain->context == NULL) {
     ast_free (astmain);
     return NULL;
@@ -335,7 +335,7 @@ ast_free (astmain_t *astmain)
     sv_free (astmain->sv);
   }
   if (astmain->context != NULL) {
-    mkc_context_free (astmain->context);
+    context_free (astmain->context);
   }
   list_free (astmain->funclist);
   free (astmain);
@@ -1308,7 +1308,7 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
           break;
         }
 
-        if (mkc_context_check (astmain->context,
+        if (context_check (astmain->context,
             MKC_CONTEXT_LOOP | MKC_CONTEXT_CACHE)) {
           if (*stmtcontrol != MKC_LOOP_RUN) {
             break;
@@ -1337,7 +1337,7 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
 
           if (listnode->asttype == MKC_T_LOOP_CONTINUE ||
               listnode->asttype == MKC_T_LOOP_BREAK) {
-            if (! mkc_context_check (astmain->context, MKC_CONTEXT_LOOP)) {
+            if (! context_check (astmain->context, MKC_CONTEXT_LOOP)) {
               mkc_error_set (astmain->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
               break;
             }
@@ -1363,6 +1363,11 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
 
     /* statements */
 
+    case MKC_T_STMT_AUTOBUILD: {
+      process_stmt_autobuild (astmain->process);
+      break;
+    }
+
     case MKC_T_STMT_BUILD: {
       value_t   *val;
 
@@ -1377,9 +1382,9 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
     case MKC_T_STMT_CHK_INC_COMPILE:
     case MKC_T_STMT_CHK_INC_DEPS:
     case MKC_T_STMT_CHK_INC_GUARDS: {
-      mkc_context_push (astmain->context, MKC_CONTEXT_CHK_INC, astmain->mkcerr);
+      context_push (astmain->context, MKC_CONTEXT_CHK_INC, astmain->mkcerr);
       ast_process (astmain, astnode->stmt_stmtblock.stmtblock, ifcond, stmtcontrol, funcret, depth + 1);
-      mkc_context_pop (astmain->context);
+      context_pop (astmain->context);
       switch (astnode->asttype) {
         case MKC_T_STMT_CHK_INC_COMPILE: {
           process_stmt_chk_inc_compile (astmain->process);
@@ -1399,9 +1404,9 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
 
     case MKC_T_STMT_CONFIGURE: {
       if (astnode->stmt_stmtblock.stmtblock != NULL) {
-        mkc_context_push (astmain->context, MKC_CONTEXT_CONFIGURE, astmain->mkcerr);
+        context_push (astmain->context, MKC_CONTEXT_CONFIGURE, astmain->mkcerr);
         ast_process (astmain, astnode->stmt_stmtblock.stmtblock, ifcond, stmtcontrol, funcret, depth + 1);
-        mkc_context_pop (astmain->context);
+        context_pop (astmain->context);
       }
       process_stmt_configure (astmain->process);
       break;
@@ -1447,9 +1452,9 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
     case MKC_T_STMT_EXECUTABLE: {
       value_t   *valnm;
 
-      mkc_context_push (astmain->context, MKC_CONTEXT_EXECUTABLE, astmain->mkcerr);
+      context_push (astmain->context, MKC_CONTEXT_EXECUTABLE, astmain->mkcerr);
       ast_process (astmain, astnode->stmt_val_stmtblock.stmtblock, ifcond, stmtcontrol, funcret, depth + 1);
-      mkc_context_pop (astmain->context);
+      context_pop (astmain->context);
 
       valnm = ast_get_value (astmain, astnode->stmt_val_stmtblock.val);
       process_stmt_executable (astmain->process, valnm);
@@ -1490,7 +1495,7 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
         break;
       }
 
-      mkc_context_push (astmain->context, MKC_CONTEXT_LOOP, astmain->mkcerr);
+      context_push (astmain->context, MKC_CONTEXT_LOOP, astmain->mkcerr);
       while (process_stmt_foreach (astmain->process, pforeach) &&
           foreachstmtcontrol == MKC_LOOP_RUN &&
           count < limit) {
@@ -1508,7 +1513,7 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
         ++count;
       }
       process_stmt_foreach_finish (astmain->process, pforeach);
-      mkc_context_pop (astmain->context);
+      context_pop (astmain->context);
       if (count >= limit) {
         mkc_error_set (astmain->mkcerr, MKC_ERR_LOOP_LIMIT_EXCEEDED, 0, NULL);
       }
@@ -1582,15 +1587,15 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
       value = ast_get_value (astmain, astnode->stmt_loadcache.version);
       process_stmt_loadcache (astmain->process, value);
       if (astnode->stmt_loadcache.stmtblock != NULL) {
-        mkc_context_push (astmain->context, MKC_CONTEXT_CACHE, astmain->mkcerr);
+        context_push (astmain->context, MKC_CONTEXT_CACHE, astmain->mkcerr);
         ast_process (astmain, astnode->stmt_loadcache.stmtblock, ifcond, &stmtcontrol, funcret, depth + 1);
-        mkc_context_pop (astmain->context);
+        context_pop (astmain->context);
       }
       process_stmt_loadcache_post (astmain->process);
       break;
     }
 
-    case MKC_T_STMT_MARK: {
+    case MKC_T_STMT_MARK_VAR: {
       value_t *vala;
       value_t *valb;
 
@@ -1626,9 +1631,9 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
       }
 
       process_stmt_profile (astmain->process, valnm);
-      mkc_context_push (astmain->context, MKC_CONTEXT_PROFILE, astmain->mkcerr);
+      context_push (astmain->context, MKC_CONTEXT_PROFILE, astmain->mkcerr);
       ast_process (astmain, astnode->stmt_val_stmtblock.stmtblock, ifcond, stmtcontrol, funcret, depth + 1);
-      mkc_context_pop (astmain->context);
+      context_pop (astmain->context);
       process_stmt_profile_post (astmain->process);
       break;
     }
@@ -1642,9 +1647,9 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
       }
 
       if (astnode->stmt_stmtblock.stmtblock != NULL) {
-        mkc_context_push (astmain->context, MKC_CONTEXT_PROJECT, astmain->mkcerr);
+        context_push (astmain->context, MKC_CONTEXT_PROJECT, astmain->mkcerr);
         ast_process (astmain, astnode->stmt_val_stmtblock.stmtblock, ifcond, stmtcontrol, funcret, depth + 1);
-        mkc_context_pop (astmain->context);
+        context_pop (astmain->context);
       }
       process_stmt_project (astmain->process, valnm);
       break;
@@ -1660,9 +1665,9 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
       }
 
       if (astnode->stmt_set.stmtblock != NULL) {
-        mkc_context_push (astmain->context, MKC_CONTEXT_SET, astmain->mkcerr);
+        context_push (astmain->context, MKC_CONTEXT_SET, astmain->mkcerr);
         ast_process (astmain, astnode->stmt_set.stmtblock, ifcond, stmtcontrol, funcret, depth + 1);
-        mkc_context_pop (astmain->context);
+        context_pop (astmain->context);
       }
 
       ast_process (astmain, astnode->stmt_set.vala, ifcond, stmtcontrol, funcret, depth);
@@ -1671,7 +1676,7 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
       }
       rc = process_stmt_set (astmain->process, valnm, &astmain->value,
           astnode->stmt_set.local);
-      if (mkc_context_check (astmain->context, MKC_CONTEXT_CACHE)) {
+      if (context_check (astmain->context, MKC_CONTEXT_CACHE)) {
         if (rc == MKC_OK_CHANGE) {
           *stmtcontrol = MKC_LOOP_BREAK;
         }
@@ -1688,7 +1693,7 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
       limit = process_get_loop_limit (astmain->process);
       ast_process (astmain, astnode->stmt_while.expr, ifcond, &whilestmtcontrol, funcret, depth);
       whilecond = process_condition (astmain->process, &astmain->value);
-      mkc_context_push (astmain->context, MKC_CONTEXT_LOOP, astmain->mkcerr);
+      context_push (astmain->context, MKC_CONTEXT_LOOP, astmain->mkcerr);
       while (whilecond && whilestmtcontrol == MKC_LOOP_RUN && count < limit) {
         if (mkc_error_chk_err (astmain->mkcerr)) {
           break;
@@ -1707,7 +1712,7 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
         whilecond = process_condition (astmain->process, &astmain->value);
         ++count;
       }
-      mkc_context_pop (astmain->context);
+      context_pop (astmain->context);
       if (count >= limit) {
         mkc_error_set (astmain->mkcerr, MKC_ERR_LOOP_LIMIT_EXCEEDED, 0, NULL);
       }
@@ -1717,7 +1722,7 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
     /* attributes */
 
     case MKC_T_ATTR_ALTERNATE: {
-      if (! mkc_context_check (astmain->context, MKC_CONTEXT_CHECK)) {
+      if (! context_check (astmain->context, MKC_CONTEXT_CHECK)) {
         mkc_error_set (astmain->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
         break;
       }
@@ -1725,9 +1730,9 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
       /* create a new check context */
       process_attr_alternate (astmain->process);
 
-      mkc_context_push (astmain->context, MKC_CONTEXT_ALTERNATE, astmain->mkcerr);
+      context_push (astmain->context, MKC_CONTEXT_ALTERNATE, astmain->mkcerr);
       ast_process (astmain, astnode->attr_stmtblock.stmtblock, ifcond, stmtcontrol, funcret, depth + 1);
-      mkc_context_pop (astmain->context);
+      context_pop (astmain->context);
       break;
     }
 
@@ -1807,7 +1812,7 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
       /* when any check returns, check the stack and process it */
 
       if (astnode->delayed == false) {
-        if (! mkc_context_check (astmain->context, MKC_CONTEXT_CHECK)) {
+        if (! context_check (astmain->context, MKC_CONTEXT_CHECK)) {
           mkc_error_set (astmain->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
           break;
         }
@@ -1871,9 +1876,9 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
         ctxt = MKC_CONTEXT_COMP_FLAG;
       }
       if (astnode->chk_flag.stmtblock != NULL) {
-        mkc_context_push (astmain->context, ctxt, astmain->mkcerr);
+        context_push (astmain->context, ctxt, astmain->mkcerr);
         ast_process (astmain, astnode->chk_flag.stmtblock, ifcond, stmtcontrol, funcret, depth + 1);
-        mkc_context_pop (astmain->context);
+        context_pop (astmain->context);
       }
 
       val = ast_get_value (astmain, astnode->chk_flag.vala);
@@ -1917,9 +1922,9 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
       value_t   *val;
 
       if (astnode->stmt_val_stmtblock.stmtblock != NULL) {
-        mkc_context_push (astmain->context, MKC_CONTEXT_CHECK, astmain->mkcerr);
+        context_push (astmain->context, MKC_CONTEXT_CHECK, astmain->mkcerr);
         ast_process (astmain, astnode->stmt_val_stmtblock.stmtblock, ifcond, stmtcontrol, funcret, depth + 1);
-        mkc_context_pop (astmain->context);
+        context_pop (astmain->context);
       }
       val = ast_get_value (astmain, astnode->stmt_val_stmtblock.val);
       if (mkc_error_chk_err (astmain->mkcerr)) {
@@ -1940,9 +1945,9 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
       value_t   *valb;
 
       if (astnode->chk_member.stmtblock != NULL) {
-        mkc_context_push (astmain->context, MKC_CONTEXT_CHECK, astmain->mkcerr);
+        context_push (astmain->context, MKC_CONTEXT_CHECK, astmain->mkcerr);
         ast_process (astmain, astnode->chk_member.stmtblock, ifcond, stmtcontrol, funcret, depth + 1);
-        mkc_context_pop (astmain->context);
+        context_pop (astmain->context);
       }
 
       vala = ast_get_value (astmain, astnode->chk_member.vala);

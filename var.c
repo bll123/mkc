@@ -9,7 +9,7 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include "mkc_const.h"
+#include "const.h"
 #include "mkc_def.h"
 #include "mkc_error.h"
 #include "list.h"

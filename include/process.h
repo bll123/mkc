@@ -7,7 +7,7 @@
 #include <stdint.h>
 
 #include "asttoken.h"
-#include "mkc_context.h"
+#include "context.h"
 #include "mkc_error.h"
 #include "list.h"
 #include "mkc_log.h"
@@ -23,7 +23,7 @@ extern "C" {
 typedef struct mkc_foreach_t mkc_foreach_t;
 typedef struct process_t process_t;
 
-MKC_NODISCARD process_t *process_init (scopedvar_t *scope, mkc_log_t *log, mkc_context_t *context, mkc_option_t *mkcoptions, mkc_error_t *mkcerr);
+MKC_NODISCARD process_t *process_init (scopedvar_t *scope, mkc_log_t *log, context_t *context, mkc_option_t *mkcoptions, mkc_error_t *mkcerr);
 void process_free (process_t *process);
 
 void process_range_init (process_t *process, value_t *value, value_t *beg, value_t *end, value_t *incr);
@@ -41,6 +41,7 @@ void process_stmt_foreach_finish (process_t *process, mkc_foreach_t *procforeach
 int process_stmt_chk_inc_compile (process_t *process);
 int process_stmt_chk_inc_deps (process_t *process);
 int process_stmt_chk_inc_guards (process_t *process);
+void process_stmt_autobuild (process_t *process);
 void process_stmt_build (process_t *process, value_t *vallist);
 void process_stmt_configure (process_t *process);
 int process_stmt_debug (process_t *process, value_t *value, value_t *subvalue);
