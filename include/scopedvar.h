@@ -13,7 +13,7 @@
 #include "mkc_error.h"
 #include "mkc_log.h"
 #include "mkc_option.h"
-#include "mkc_var.h"
+#include "var.h"
 #include "value.h"
 
 #if defined (__cplusplus) || defined (c_plusplus)

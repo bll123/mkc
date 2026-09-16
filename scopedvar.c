@@ -20,13 +20,13 @@
 #include "mkc_error.h"
 #include "list.h"   // for the iterator enums
 #include "mkc_log.h"
-#include "mkc_var.h"
+#include "var.h"
 #include "scopedvar.h"
 #include "strutil.h"
 #include "value.h"
 
 typedef struct sv_profile_t {
-  mkc_varlist_t   * varlist;
+  varlist_t       * varlist;
   char            * name;
   int32_t         local_id;
   sv_type_t       svtype;
@@ -100,7 +100,7 @@ static void sv_free_vars (scopedvar_t *sv);
 static void sv_init_vars (scopedvar_t *sv, mkc_option_t *mkcoptions);
 static void sv_push_hierarchy (scopedvar_t *sv, sv_profile_t *svprof);
 static const char * sv_get_active_name (scopedvar_t *sv);
-static mkc_varlist_t *sv_get_varlist (scopedvar_t *sv, sv_type_t svtype, const char *vname);
+static varlist_t     *sv_get_varlist (scopedvar_t *sv, sv_type_t svtype, const char *vname);
 
 scopedvar_t *
 sv_init (mkc_log_t *log, mkc_error_t *mkcerr, mkc_option_t *mkcoptions)
@@ -205,7 +205,7 @@ sv_pop (scopedvar_t *sv)
   proflist->sz -= 1;
   svprof = &proflist->variables [proflist->sz];
   datafree (svprof->name);
-  mkc_varlist_free (svprof->varlist);
+  varlist_free (svprof->varlist);
   svprof->varlist = NULL;
   svprof->svtype = SV_T_NOT_SET;
 
@@ -460,7 +460,7 @@ sv_var_iter_start (scopedvar_t *sv, sv_iter_t *sviter,
     mkc_varidx_t *variteridx)
 {
   sv_profile_t    * svprof;
-  mkc_varlist_t   * varlist = NULL;
+  varlist_t       * varlist = NULL;
 
   if (sviter->idx < 0 || sviter->idx >= sviter->profiles->sz) {
     mkc_error_set (sv->mkcerr, MKC_ERR_OUT_OF_RANGE, 0, NULL);
@@ -469,7 +469,7 @@ sv_var_iter_start (scopedvar_t *sv, sv_iter_t *sviter,
 
   svprof = &sviter->profiles->variables [sviter->idx];
   varlist = svprof->varlist;
-  mkc_var_iter_start (varlist, variteridx);
+  var_iter_start (varlist, variteridx);
 
   return;
 }
@@ -479,7 +479,7 @@ sv_var_iter_next (scopedvar_t *sv, sv_iter_t *sviter,
     mkc_varidx_t *variteridx)
 {
   sv_profile_t    * svprof;
-  mkc_varlist_t   * varlist = NULL;
+  varlist_t       * varlist = NULL;
   mkc_varidx_t    vidx;
 
   if (sviter->idx < 0 || sviter->idx >= sviter->profiles->sz) {
@@ -489,7 +489,7 @@ sv_var_iter_next (scopedvar_t *sv, sv_iter_t *sviter,
 
   svprof = &sviter->profiles->variables [sviter->idx];
   varlist = svprof->varlist;
-  vidx = mkc_var_iter_next (varlist, variteridx);
+  vidx = var_iter_next (varlist, variteridx);
 
   return vidx;
 }
@@ -499,7 +499,7 @@ sv_var_iter_get_name (scopedvar_t *sv, sv_iter_t *sviter,
     mkc_varidx_t vidx)
 {
   sv_profile_t * svprof;
-  mkc_varlist_t   * varlist = NULL;
+  varlist_t       * varlist = NULL;
   const char      * vname;
 
   if (sviter->idx < 0 || sviter->idx >= sviter->profiles->sz) {
@@ -509,7 +509,7 @@ sv_var_iter_get_name (scopedvar_t *sv, sv_iter_t *sviter,
 
   svprof = &sviter->profiles->variables [sviter->idx];
   varlist = svprof->varlist;
-  vname = mkc_var_get_name (varlist, vidx);
+  vname = var_get_name (varlist, vidx);
 
   return vname;
 }
@@ -519,7 +519,7 @@ sv_var_iter_get_value (scopedvar_t *sv, sv_iter_t *sviter,
     mkc_varidx_t vidx)
 {
   sv_profile_t * svprof;
-  mkc_varlist_t   * varlist = NULL;
+  varlist_t       * varlist = NULL;
   value_t         * value = NULL;
 
   if (sviter->idx < 0 || sviter->idx >= sviter->profiles->sz) {
@@ -529,7 +529,7 @@ sv_var_iter_get_value (scopedvar_t *sv, sv_iter_t *sviter,
 
   svprof = &sviter->profiles->variables [sviter->idx];
   varlist = svprof->varlist;
-  value = mkc_var_get_value_by_idx (varlist, vidx);
+  value = var_get_value_by_idx (varlist, vidx);
 
   return value;
 }
@@ -585,7 +585,7 @@ sv_get_value (scopedvar_t *sv, sv_type_t svtype,
   }
 
   for (int i = sv->hierarchy.sz - 1; i >= 0; --i) {
-    mkc_varlist_t   *varlist;
+    varlist_t       *varlist;
 
     svprof = &sv->hierarchy.variables [i];
     if (svtype != SV_T_SEARCH && svprof->svtype != svtype) {
@@ -594,7 +594,7 @@ sv_get_value (scopedvar_t *sv, sv_type_t svtype,
     }
 
     varlist = svprof->varlist;
-    value = mkc_var_get_value (varlist, vname);
+    value = var_get_value (varlist, vname);
     if (value != NULL) {
       break;
     }
@@ -987,7 +987,7 @@ int
 sv_set (scopedvar_t *sv, sv_type_t svtype,
     const char *vname, const char *tag, value_t *value, value_ctxt_t vctxt)
 {
-  mkc_varlist_t   *varlist = NULL;
+  varlist_t       *varlist = NULL;
   int             rc = MKC_ERR_FAILURE;
 
   if (sv == NULL) {
@@ -1059,8 +1059,8 @@ sv_set (scopedvar_t *sv, sv_type_t svtype,
   }
 
   value->vctxt = vctxt;
-  mkc_var_set_fromcache (varlist, sv->fromcache);
-  rc = mkc_var_set (varlist, vname, value);
+  var_set_fromcache (varlist, sv->fromcache);
+  rc = var_set (varlist, vname, value);
 
   return MKC_OK;
 }
@@ -1201,7 +1201,7 @@ void
 sv_delete (scopedvar_t *sv, sv_type_t svtype,
     const char *vname, const char * tag)
 {
-  mkc_varlist_t   *varlist;
+  varlist_t       *varlist;
 
   if (sv == NULL) {
     return;
@@ -1229,7 +1229,7 @@ sv_delete (scopedvar_t *sv, sv_type_t svtype,
       return;
     }
 
-    mkc_var_delete (varlist, vname);
+    var_delete (varlist, vname);
   }
 }
 
@@ -1560,7 +1560,7 @@ sv_free_variables (sv_proflist_t *profiles, bool hierarchyflag)
 
         svprof = &profiles->variables [i];
         datafree (svprof->name);
-        mkc_varlist_free (svprof->varlist);
+        varlist_free (svprof->varlist);
       }
     }
     free (profiles->variables);
@@ -1631,7 +1631,7 @@ sv_create_profile (scopedvar_t *sv,
   }
 
   svprof = &profiles->variables [profiles->sz];
-  svprof->varlist = mkc_varlist_init (sv->log, sv->mkcerr);
+  svprof->varlist = varlist_init (sv->log, sv->mkcerr);
   svprof->svtype = svtype;
   svprof->local_id = sv->local_id;
   if (svtype == SV_T_CURR_PROF_COMPILER) {
@@ -1904,10 +1904,10 @@ sv_get_active_name (scopedvar_t *sv)
 }
 
 /* used for sv_set() */
-static mkc_varlist_t *
+static varlist_t     *
 sv_get_varlist (scopedvar_t *sv, sv_type_t svtype, const char *vname)
 {
-  mkc_varlist_t   *varlist = NULL;
+  varlist_t       *varlist = NULL;
   int             idx = -1;
   sv_profile_t    * svprof = NULL;
 
@@ -1933,7 +1933,7 @@ sv_get_varlist (scopedvar_t *sv, sv_type_t svtype, const char *vname)
 
       if (svprof->svtype == SV_T_LOCAL) {
         varlist = svprof->varlist;
-        if (mkc_var_is_defined (varlist, vname)) {
+        if (var_is_defined (varlist, vname)) {
           idx = i;
           break;
         }

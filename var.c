@@ -13,43 +13,43 @@
 #include "mkc_def.h"
 #include "mkc_error.h"
 #include "list.h"
-#include "mkc_var.h"
+#include "var.h"
 #include "strutil.h"
 #include "value.h"
 
-typedef struct mkc_var_t {
+typedef struct var_t {
   char          * name;
   value_t       value;
   bool          fromcache;
-} mkc_var_t;
+} var_t;
 
-typedef struct mkc_varlist_t {
+typedef struct varlist_t     {
   list_t        * list;
   mkc_error_t   * mkcerr;
   mkc_log_t     * log;
   bool          debug;
   bool          fromcache;
-} mkc_varlist_t;
+} varlist_t;
 
-static mkc_var_t *mkc_var_create (mkc_varlist_t *varlist, const char *vname, value_type_t type);
-static mkc_varidx_t mkc_var_find (mkc_varlist_t *varlist, const char *name);
-static void mkc_var_free (void *data);
-static int mkc_var_compare (void *tvara, void *tvarb);
+static var_t *var_create (varlist_t     *varlist, const char *vname, value_type_t type);
+static mkc_varidx_t var_find (varlist_t     *varlist, const char *name);
+static void var_free (void *data);
+static int var_compare (void *tvara, void *tvarb);
 
 MKC_NODISCARD
-mkc_varlist_t *
-mkc_varlist_init (mkc_log_t *log, mkc_error_t *mkcerr)
+varlist_t     *
+varlist_init (mkc_log_t *log, mkc_error_t *mkcerr)
 {
-  mkc_varlist_t  *varlist;
+  varlist_t      *varlist;
 
-  varlist = malloc (sizeof (mkc_varlist_t));
+  varlist = malloc (sizeof (varlist_t));
   if (varlist == NULL) {
     mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
     return NULL;
   }
 
   varlist->list = list_init (MKC_LIST_SORTED,
-      mkc_var_free, mkc_var_compare, sizeof (mkc_var_t), mkcerr);
+      var_free, var_compare, sizeof (var_t), mkcerr);
   varlist->debug = false;
   varlist->mkcerr = mkcerr;
   varlist->log = log;
@@ -59,7 +59,7 @@ mkc_varlist_init (mkc_log_t *log, mkc_error_t *mkcerr)
 }
 
 void
-mkc_varlist_free (mkc_varlist_t *varlist)
+varlist_free (varlist_t     *varlist)
 {
   if (varlist == NULL) {
     return;
@@ -73,7 +73,7 @@ mkc_varlist_free (mkc_varlist_t *varlist)
 }
 
 void
-mkc_var_set_fromcache (mkc_varlist_t *varlist, bool flag)
+var_set_fromcache (varlist_t     *varlist, bool flag)
 {
   if (varlist == NULL) {
     return;
@@ -83,10 +83,10 @@ mkc_var_set_fromcache (mkc_varlist_t *varlist, bool flag)
 }
 
 int
-mkc_var_set (mkc_varlist_t *varlist, const char *vname, value_t *value)
+var_set (varlist_t     *varlist, const char *vname, value_t *value)
 {
   mkc_err_code_t  rc = MKC_OK;
-  mkc_var_t       *var;
+  var_t       *var;
   mkc_varidx_t    vidx;
   value_t         *tvalue;
   value_t         valuecopy;
@@ -96,9 +96,9 @@ mkc_var_set (mkc_varlist_t *varlist, const char *vname, value_t *value)
   memcpy (&valuecopy, value, sizeof (value_t));
   value = &valuecopy;
 
-  vidx = mkc_var_find (varlist, vname);
+  vidx = var_find (varlist, vname);
   if (vidx == MKC_VAR_NOTFOUND) {
-    var = mkc_var_create (varlist, vname, value->vtype);
+    var = var_create (varlist, vname, value->vtype);
     if (mkc_error_chk_err (varlist->mkcerr)) {
       return MKC_ERR_FAILURE;
     }
@@ -155,11 +155,11 @@ mkc_var_set (mkc_varlist_t *varlist, const char *vname, value_t *value)
 }
 
 void
-mkc_var_delete (mkc_varlist_t *varlist, const char *vname)
+var_delete (varlist_t     *varlist, const char *vname)
 {
   mkc_varidx_t    vidx;
 
-  vidx = mkc_var_find (varlist, vname);
+  vidx = var_find (varlist, vname);
   if (vidx == MKC_VAR_NOTFOUND) {
     return;
   }
@@ -168,10 +168,10 @@ mkc_var_delete (mkc_varlist_t *varlist, const char *vname)
 }
 
 void
-mkc_var_set_context (mkc_varlist_t *varlist, const char *vname, int vctxt)
+var_set_context (varlist_t     *varlist, const char *vname, int vctxt)
 {
   listidx_t   vidx;
-  mkc_var_t       *var;
+  var_t       *var;
   value_t     *tvalue;
 
   if (varlist == NULL) {
@@ -182,7 +182,7 @@ mkc_var_set_context (mkc_varlist_t *varlist, const char *vname, int vctxt)
     return;
   }
 
-  vidx = mkc_var_find (varlist, vname);
+  vidx = var_find (varlist, vname);
   if (vidx == MKC_VAR_NOTFOUND) {
     return;
   }
@@ -193,7 +193,7 @@ mkc_var_set_context (mkc_varlist_t *varlist, const char *vname, int vctxt)
 }
 
 int32_t
-mkc_var_size (mkc_varlist_t *varlist)
+var_size (varlist_t     *varlist)
 {
   int32_t     sz;
 
@@ -206,7 +206,7 @@ mkc_var_size (mkc_varlist_t *varlist)
 }
 
 void
-mkc_var_iter_start (mkc_varlist_t *varlist, mkc_varidx_t *iteridx)
+var_iter_start (varlist_t     *varlist, mkc_varidx_t *iteridx)
 {
   if (varlist == NULL || iteridx == NULL) {
     return;
@@ -216,7 +216,7 @@ mkc_var_iter_start (mkc_varlist_t *varlist, mkc_varidx_t *iteridx)
 }
 
 mkc_varidx_t
-mkc_var_iter_next (mkc_varlist_t *varlist, mkc_varidx_t *iteridx)
+var_iter_next (varlist_t     *varlist, mkc_varidx_t *iteridx)
 {
   mkc_varidx_t   idx;
 
@@ -229,10 +229,10 @@ mkc_var_iter_next (mkc_varlist_t *varlist, mkc_varidx_t *iteridx)
 }
 
 value_t *
-mkc_var_get_value (mkc_varlist_t *varlist, const char *name)
+var_get_value (varlist_t     *varlist, const char *name)
 {
   mkc_varidx_t  vidx = MKC_VAR_NOTFOUND;
-  mkc_var_t     *var;
+  var_t     *var;
   value_t       *value;
 
   if (varlist == NULL) {
@@ -243,7 +243,7 @@ mkc_var_get_value (mkc_varlist_t *varlist, const char *name)
     return NULL;
   }
 
-  vidx = mkc_var_find (varlist, name);
+  vidx = var_find (varlist, name);
   if (vidx == MKC_VAR_NOTFOUND) {
     return NULL;
   }
@@ -258,9 +258,9 @@ mkc_var_get_value (mkc_varlist_t *varlist, const char *name)
 }
 
 value_t *
-mkc_var_get_value_by_idx (mkc_varlist_t *varlist, mkc_varidx_t vidx)
+var_get_value_by_idx (varlist_t     *varlist, mkc_varidx_t vidx)
 {
-  mkc_var_t     *var;
+  var_t     *var;
   value_t       *value;
 
   if (varlist == NULL) {
@@ -277,9 +277,9 @@ mkc_var_get_value_by_idx (mkc_varlist_t *varlist, mkc_varidx_t vidx)
 }
 
 const char *
-mkc_var_get_name (mkc_varlist_t *varlist, mkc_varidx_t vidx)
+var_get_name (varlist_t     *varlist, mkc_varidx_t vidx)
 {
-  mkc_var_t     *var;
+  var_t     *var;
   const char    *nm;
 
   if (varlist == NULL) {
@@ -296,7 +296,7 @@ mkc_var_get_name (mkc_varlist_t *varlist, mkc_varidx_t vidx)
 }
 
 bool
-mkc_var_is_defined (mkc_varlist_t *varlist, const char *vname)
+var_is_defined (varlist_t     *varlist, const char *vname)
 {
   mkc_varidx_t    vidx;
   bool            rc = false;
@@ -305,7 +305,7 @@ mkc_var_is_defined (mkc_varlist_t *varlist, const char *vname)
     return rc;
   }
 
-  vidx = mkc_var_find (varlist, vname);
+  vidx = var_find (varlist, vname);
   if (vidx != MKC_ERR_FAILURE && vidx != MKC_VAR_NOTFOUND) {
     rc = true;
   }
@@ -314,14 +314,14 @@ mkc_var_is_defined (mkc_varlist_t *varlist, const char *vname)
 }
 
 bool
-mkc_var_is_list (mkc_varlist_t *varlist, const char *vname)
+var_is_list (varlist_t     *varlist, const char *vname)
 {
   mkc_varidx_t    vidx;
   bool            rc = false;
 
-  vidx = mkc_var_find (varlist, vname);
+  vidx = var_find (varlist, vname);
   if (vidx != MKC_VAR_NOTFOUND) {
-    mkc_var_t   *var;
+    var_t   *var;
     value_t *value;
 
     var = list_get_by_idx (varlist->list, vidx);
@@ -339,12 +339,12 @@ mkc_var_is_list (mkc_varlist_t *varlist, const char *vname)
 
 /* internal routines */
 
-static mkc_var_t *
-mkc_var_create (mkc_varlist_t *varlist,
+static var_t *
+var_create (varlist_t     *varlist,
     const char *name, value_type_t vtype)
 {
-  mkc_var_t     *var;
-  mkc_var_t     tvar;
+  var_t     *var;
+  var_t     tvar;
 
   if (name == NULL) {
     mkc_error_set (varlist->mkcerr, MKC_ERR_NULL_ARGUMENT, 0, NULL);
@@ -361,9 +361,9 @@ mkc_var_create (mkc_varlist_t *varlist,
 }
 
 static mkc_varidx_t
-mkc_var_find (mkc_varlist_t *varlist, const char *name)
+var_find (varlist_t     *varlist, const char *name)
 {
-  mkc_var_t     tvar;
+  var_t     tvar;
   mkc_varidx_t  idx;
 
   if (varlist == NULL) {
@@ -376,9 +376,9 @@ mkc_var_find (mkc_varlist_t *varlist, const char *name)
 }
 
 static void
-mkc_var_free (void *data)
+var_free (void *data)
 {
-  mkc_var_t   *var = data;
+  var_t   *var = data;
 
   if (var == NULL) {
     return;
@@ -389,10 +389,10 @@ mkc_var_free (void *data)
 }
 
 static int
-mkc_var_compare (void *tvara, void *tvarb)
+var_compare (void *tvara, void *tvarb)
 {
-  mkc_var_t   *vara = tvara;
-  mkc_var_t   *varb = tvarb;
+  var_t   *vara = tvara;
+  var_t   *varb = tvarb;
 
   if (vara == NULL || varb == NULL) {
     return 0;

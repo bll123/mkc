@@ -638,6 +638,7 @@ target_executable_object (target_t *target, const char *execnm,
   }
 
   free (epath);
+  free (opath);
   // opath is set in the list and should not be freed
   return;
 }

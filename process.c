@@ -37,7 +37,7 @@
 #include "mkc_regex.h"
 #include "strutil.h"
 #include "mkc_util.h"
-#include "mkc_var.h"      // for debugging
+#include "var.h"      // for debugging
 #include "pathutil.h"
 #include "scopedvar.h"
 #include "target.h"
@@ -1327,7 +1327,6 @@ process_stmt_executable (process_t *process, value_t *valnm)
   listidx_t   siteridx;
   listidx_t   sidx;
   char            * epath;
-  char            * tpath;
   char            * srcpath;
   bool            changed;
   mkc_alternate_t * curralt;
@@ -1347,8 +1346,7 @@ process_stmt_executable (process_t *process, value_t *valnm)
   *epath = '\0';
 
   path_build (MKC_PATH_STAGE_BIN, epath, MKC_PATH_MAX, execnm, process->mkcerr);
-  tpath = strdup (epath);
-  sv_set_str (process->sv, SV_T_PATHS, execnm, NULL, tpath, MKC_VCTXT_MKC);
+  sv_set_str (process->sv, SV_T_PATHS, execnm, NULL, epath, MKC_VCTXT_MKC);
 
   changed = process->mkc_changed;
 

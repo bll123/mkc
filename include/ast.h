@@ -12,7 +12,7 @@
 #include "mkc_log.h"
 #include "mkc_nodiscard.h"
 #include "mkc_option.h"
-#include "mkc_var.h"
+#include "var.h"
 #include "scopedvar.h"
 
 #if defined (__cplusplus) || defined (c_plusplus)
