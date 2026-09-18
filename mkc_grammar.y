@@ -1550,12 +1550,12 @@ parse_debug (parse_t *parse, bool debug)
 
 static void
 parse_process_include (MKCYYLTYPE* mkcyyllocp, parse_t *parse,
-    astmain_t *ast, astnode_t *path, astnode_t *node)
+    astmain_t *astmain, astnode_t *path, astnode_t *node)
 {
   char    fn [MKC_PATH_MAX];
 
   *fn = '\0';
-  ast_process_include (ast, path, node, fn, sizeof (fn),
+  ast_process_include (astmain, path, node, fn, sizeof (fn),
       mkcyyllocp->first_line, mkcyyllocp->first_column);
 
   if (*fn) {

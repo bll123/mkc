@@ -889,7 +889,7 @@ process_stmt_chk_inc_compile (process_t *process)
 
   include_paths = chararr_init (process->mkcerr);
   chararr_set_freeinternals (include_paths);
-  cflags = target_get_flags (process->target, MKC_C_CFLAGS, include_paths);
+  cflags = target_get_flags (process->target, MKC_C_COMPFLAGS, include_paths);
 
   hlist = target_get_include_list (process->target, include_paths, urx->rx, &ts);
 
@@ -979,7 +979,7 @@ process_stmt_chk_inc_deps (process_t *process)
 
   include_paths = chararr_init (process->mkcerr);
   chararr_set_freeinternals (include_paths);
-  cflags = target_get_flags (process->target, MKC_C_CFLAGS, include_paths);
+  cflags = target_get_flags (process->target, MKC_C_COMPFLAGS, include_paths);
 
   mkc_message (MKC_V_INFO, "-- check_include_dependencies: getting dependencies\n");
 
@@ -1119,7 +1119,7 @@ process_stmt_chk_inc_guards (process_t *process)
 
   include_paths = chararr_init (process->mkcerr);
   chararr_set_freeinternals (include_paths);
-  cflags = target_get_flags (process->target, MKC_C_CFLAGS, include_paths);
+  cflags = target_get_flags (process->target, MKC_C_COMPFLAGS, include_paths);
 
   rc = MKC_OK;
   ts = 0;
@@ -2295,7 +2295,7 @@ process_check_flag (process_t *process,
     switch (iasttype) {
       case MKC_T_CHK_COMP_FLAG: {
         sv_append_str_list (process->sv, SV_T_ACTIVE,
-            MKC_C_CFLAGS, NULL, flag, MKC_VCTXT_MKC);
+            MKC_C_COMPFLAGS, NULL, flag, MKC_VCTXT_MKC);
         break;
       }
       case MKC_T_CHK_LIBRARY: {
@@ -2304,7 +2304,7 @@ process_check_flag (process_t *process,
         break;
       }
       case MKC_T_CHK_LINK_FLAG: {
-        const char    *nm = MKC_C_LDFLAGS;
+        const char    *nm = MKC_C_LINKFLAGS;
 
         if (mkc_flag_is_libloc (process->compid, flag) ||
             strncmp (flag,

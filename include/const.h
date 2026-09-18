@@ -25,8 +25,8 @@ extern char const * const MKC_C_PATH_PKGCONF;
 extern char const * const MKC_C_PATH_PKGCONFIG;
 
 extern char const * const MKC_C_PROFILE_NAME;
-extern char const * const MKC_C_CFLAGS;
-extern char const * const MKC_C_LDFLAGS;
+extern char const * const MKC_C_COMPFLAGS;
+extern char const * const MKC_C_LINKFLAGS;
 extern char const * const MKC_C_LIBS;
 extern char const * const MKC_C_SUPPORTS_MM;
 extern char const * const MKC_C_MKC_CHANGED;

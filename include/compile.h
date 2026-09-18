@@ -24,7 +24,13 @@ typedef enum {
   COMPILE_COMPILE_LINK,
   COMPILE_COMPILE_LINK_RUN,
   COMPILE_LINK,
-} ct_type_t;
+} comp_type_t;
+
+typedef enum {
+  COMP_COMPFLAGS,
+  COMP_LINKFLAGS,
+  COMP_LIBS,
+} comp_flag_t;
 
 typedef struct compile_t compile_t;
 
@@ -37,11 +43,11 @@ void compile_preprocess (compile_t *compile);
 void compile_usetemplate (compile_t *compile);
 void compile_reset (compile_t *compile);
 void compile_append_object (compile_t *compile, const char *objpath);
-void compile_append_compflag (compile_t *compile, const char *flag);
-void compile_append_linkflag (compile_t *compile, const char *flag);
+void compile_append_flag (compile_t *compile, comp_flag_t ftype, const char *flag);
+void compile_set_freeinternals (compile_t *compile, comp_flag_t ftype);
 
 void compile_create_header_var (compile_t *compile);
-int compile_exec (compile_t *compile, ct_type_t ctype, mkc_compiler_t compiler, const char *fname, char *rbuff, size_t rsz);
+int compile_exec (compile_t *compile, comp_type_t ctype, mkc_compiler_t compiler, const char *fname, char *rbuff, size_t rsz);
 const char * compile_get_compstr (compile_t *compile, mkc_compiler_t compiler, char *buff, size_t sz);
 void compile_file_sub_copy (compile_t *compile, char *tbuff, size_t sz, const char *fname, const char *origsfx, const char *sfx);
 

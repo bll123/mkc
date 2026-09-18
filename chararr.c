@@ -79,6 +79,12 @@ chararr_reset (chararr_t *carr, int idx)
     return;
   }
 
+  if (carr->freeinternals) {
+    for (int i = idx; i < carr->sz; ++i) {
+      free (carr->targv [i]);
+    }
+  }
+
   carr->sz = idx;
   if (carr->targv != NULL) {
     carr->targv [carr->sz] = NULL;

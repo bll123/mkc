@@ -132,9 +132,9 @@ mkc_chk_compiler_works (mkc_check_t *check, mkc_compiler_t compiler)
   nodeprecateflag =
       compiler_get_flag (check->attr->compid, MKC_COMP_FLAG_WARN_NO_DEPRECATE);
   if (*nodeprecateflag) {
-    compile_append_compflag (check->compile, nodeprecateflag);
+    compile_append_flag (check->compile, COMP_COMPFLAGS, nodeprecateflag);
   }
-  compile_append_compflag (check->compile, NULL);
+  compile_append_flag (check->compile, COMP_COMPFLAGS, NULL);
   rc = compile_exec (check->compile, COMPILE_COMPILE, compiler,
       "int-main", NULL, 0);
   compile_reset (check->compile);
@@ -320,14 +320,14 @@ mkc_chk_getconf (mkc_check_t *check)
   rsz = confstr (_CS_LFS_CFLAGS, flag, sizeof (flag));
   if (rsz > 0 && *flag) {
     sv_append_str_list (check->sv, SV_T_ACTIVE,
-        MKC_C_CFLAGS, NULL, flag, MKC_VCTXT_MKC);
+        MKC_C_COMPFLAGS, NULL, flag, MKC_VCTXT_MKC);
   }
 
   *flag = '\0';
   rsz = confstr (_CS_LFS_LDFLAGS, flag, sizeof (flag));
   if (rsz > 0 && *flag) {
     sv_append_str_list (check->sv, SV_T_ACTIVE,
-        MKC_C_LDFLAGS, NULL, flag, MKC_VCTXT_MKC);
+        MKC_C_LINKFLAGS, NULL, flag, MKC_VCTXT_MKC);
   }
 
   *flag = '\0';
@@ -453,8 +453,8 @@ mkc_chk_compiler_flag (mkc_check_t *check,
 
   compile_set_flags (check->compile, NULL, NULL, NULL);
   compile_usetemplate (check->compile);
-  compile_append_compflag (check->compile, tbuff);
-  compile_append_compflag (check->compile, NULL);
+  compile_append_flag (check->compile, COMP_COMPFLAGS, tbuff);
+  compile_append_flag (check->compile, COMP_COMPFLAGS, NULL);
   rc = compile_exec (check->compile, COMPILE_COMPILE, compiler,
       "c-main", rbuff, rsz);
   compile_reset (check->compile);
@@ -649,8 +649,8 @@ mkc_chk_link_flag (mkc_check_t *check,
   }
 
   mkc_log (check->log, MKC_LOG_CHECK, "== chk: link-flag: %s\n", flag);
-  compile_append_linkflag (check->compile, flag);
-  compile_append_linkflag (check->compile, NULL);
+  compile_append_flag (check->compile, COMP_LINKFLAGS, flag);
+  compile_append_flag (check->compile, COMP_LINKFLAGS, NULL);
   compile_usetemplate (check->compile);
   rc = compile_exec (check->compile, COMPILE_COMPILE_LINK, compiler,
       "c-main", rbuff, MKC_PATH_MAX);

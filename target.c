@@ -47,12 +47,19 @@ typedef struct target_t {
   bool                create_stage_bin;
 } target_t;
 
+typedef enum {
+  TGT_FLAGS,
+  TGT_ADDITIONAL,
+} tgt_flag_t;
+
 static const char * const dependency_delim = " \n\r\\";
 
 static bool target_chk_last_libloc (mkc_compiler_id_t compid, char *lastlibloc, size_t sz, const char *str);
 static void target_process_timestamp (target_t *target, char *path, size_t psz, const char *filename);
 static void target_topo_add_items_deps (target_t *target, toposort_t *topo, list_t *itemlist);
 static void target_create_stage_bin (target_t *target);
+static void target_set_target_flags (target_t *target, const char *builditem, const char *bvarname, comp_flag_t ftype);
+static void target_append_flags (target_t *target, comp_flag_t ftype, value_t *value, chararr_t *flags, chararr_t *include_paths);
 
 target_t *
 target_init (scopedvar_t *sv, compile_t *compile,
@@ -91,19 +98,11 @@ chararr_t *
 target_get_flags (target_t *target, const char *flagname,
     chararr_t *include_paths)
 {
-  char            * lastlibloc;
   char            * str;
   scopedvar_t     * sv;
   sv_iter_t       * sviter = NULL;
   const char      * profnm;
   chararr_t       * flags;
-
-  lastlibloc = malloc (MKC_PATH_MAX);
-  if (lastlibloc == NULL) {
-    mkc_error_set (target->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return NULL;
-  }
-  *lastlibloc = '\0';
 
   str = malloc (MKC_PATH_MAX);
   if (str == NULL) {
@@ -123,10 +122,7 @@ target_get_flags (target_t *target, const char *flagname,
   sviter = sv_iter_start (sv, SV_ITER_HIERARCHY);
   while ((profnm = sv_iter_next (sv, sviter)) != NULL) {
     value_t     * value = NULL;
-    listidx_t   fiter;
-    listidx_t   fidx;
     sv_type_t   svtype;
-    bool        append_next = false;
 
     if (mkc_error_chk_err (target->mkcerr)) {
       break;
@@ -138,52 +134,11 @@ target_get_flags (target_t *target, const char *flagname,
       continue;
     }
 
-    list_iter_start (value->list, &fiter);
-    while ((fidx = list_iter_next (value->list, &fiter)) != MKC_ITER_FINISH) {
-      value_t   *fval;
-
-      if (mkc_error_chk_err (target->mkcerr)) {
-        break;
-      }
-
-      fval = list_get_by_idx (value->list, fidx);
-      sv_value_get_str (sv, fval, str, MKC_PATH_MAX);
-      if (! *str) {
-        continue;
-      }
-      if (target_chk_last_libloc (target->attr->compid,
-          lastlibloc, MKC_PATH_MAX, str)) {
-        /* de-duplication check */
-        continue;
-      }
-
-      if (include_paths != NULL) {
-        size_t      len;
-
-        if (append_next) {
-          chararr_append (include_paths, strdup (str));
-          append_next = false;
-        }
-        len = compiler_get_flag_len (target->attr->compid, MKC_COMP_FLAG_INCLUDE);
-        if (strncmp (str,
-            compiler_get_flag (target->attr->compid, MKC_COMP_FLAG_INCLUDE),
-            len) == 0) {
-          if (strcmp (str,
-              compiler_get_flag (target->attr->compid, MKC_COMP_FLAG_INCLUDE)) == 0) {
-            append_next = true;
-          } else {
-            chararr_append (include_paths, strdup (str + len));
-          }
-        }
-      }
-
-      chararr_append (flags, strdup (str));
-    }
+    target_append_flags (target, COMP_COMPFLAGS, value, flags, include_paths);
   }
   sv_iter_finish (sviter);
   chararr_append (flags, NULL);
 
-  free (lastlibloc);
   free (str);
 
   return flags;
@@ -294,7 +249,7 @@ target_check_dependency_timestamp (target_t *target,
 void
 target_get_dependencies (target_t *target,
     mkc_compiler_t compiler, const char *tgtname, const char *filepath,
-    target_flag_t flags, chararr_t *cflags)
+    target_flag_t flags, chararr_t *compflags)
 {
   int             rc;
   char            * rbuff;
@@ -316,15 +271,15 @@ target_get_dependencies (target_t *target,
   *rbuff = '\0';
 
   if ((flags & TARGET_USE_MM) == TARGET_USE_MM) {
-    compile_append_compflag (target->compile,
+    compile_append_flag (target->compile, COMP_COMPFLAGS,
         compiler_get_flag (target->attr->compid, MKC_COMP_FLAG_DEPS_USER));
   } else {
-    compile_append_compflag (target->compile,
+    compile_append_flag (target->compile, COMP_COMPFLAGS,
         compiler_get_flag (target->attr->compid, MKC_COMP_FLAG_DEPS));
   }
-  compile_append_compflag (target->compile, NULL);
+  compile_append_flag (target->compile, COMP_COMPFLAGS, NULL);
   compile_preprocess (target->compile);
-  compile_set_flags (target->compile, cflags, NULL, NULL);
+  compile_set_flags (target->compile, compflags, NULL, NULL);
   target->attr->printerrors = true;
   rc = compile_exec (target->compile, COMPILE_COMPILE, compiler,
       filepath, rbuff, rsz);
@@ -662,7 +617,6 @@ target_object_source (target_t *target, const char *objnm,
   listidx_t   didx;
   char            * path;
   char            * opath;
-  chararr_t       * cflags;
 
   opath = malloc (MKC_PATH_MAX);
   if (opath == NULL) {
@@ -677,11 +631,13 @@ target_object_source (target_t *target, const char *objnm,
 
   if (target_check_dependency_timestamp (
       target, objnm, opath) == TARGET_OUT_OF_DATE) {
+    chararr_t   * compflags;
+
     mkc_message (MKC_V_INFO, "-- getting dependencies for %s\n", objnm);
-    cflags = target_get_flags (target, MKC_C_CFLAGS, NULL);
+    compflags = target_get_flags (target, MKC_C_COMPFLAGS, NULL);
     target_get_dependencies (target,
-        target->attr->currcompiler, opath, srcname, tgtflags, cflags);
-    chararr_free (cflags);
+        target->attr->currcompiler, opath, srcname, tgtflags, compflags);
+    chararr_free (compflags);
   }
 
   valdeplist = sv_get_value (target->sv, SV_T_BUILD_DATA,
@@ -723,14 +679,14 @@ target_object_source (target_t *target, const char *objnm,
 void
 target_build (target_t *target, list_t *blist)
 {
-  toposort_t      * topo;
-  const char      * builditem;
-  char            * dep;
-  char            * source;
-  int             rc;
-  chararr_t       * cflags;
-  chararr_t       * ldflags;
-  chararr_t       * libs;
+  toposort_t    * topo;
+  const char    * builditem;
+  char          * dep;
+  char          * source;
+  int           rc;
+  chararr_t     * compflags;
+  chararr_t     * linkflags;
+  chararr_t     * libs;
 
   topo = toposort_init (target->mkcerr);
 
@@ -760,22 +716,20 @@ target_build (target_t *target, list_t *blist)
     return;
   }
 
-// ### need to set the target profile in the hierarchy
-
-  cflags = target_get_flags (target, MKC_C_CFLAGS, NULL);
-  ldflags = target_get_flags (target, MKC_C_LDFLAGS, NULL);
+  compflags = target_get_flags (target, MKC_C_COMPFLAGS, NULL);
+  linkflags = target_get_flags (target, MKC_C_LINKFLAGS, NULL);
   libs = target_get_flags (target, MKC_C_LIBS, NULL);
 
   toposort_iter_start (topo);
   while ((builditem = toposort_iter_next_reverse (topo)) != NULL) {
-    value_t         *value;
-    value_t         * valdeplist;
-    value_t         tvalue;
-    listidx_t   diteridx;
-    listidx_t   didx;
-    int             tgttype;
-    ct_type_t       comptype = COMPILE_COMPILE;
-    const char      *buildtag = "";
+    value_t       * value;
+    value_t       * valdeplist;
+    value_t       tvalue;
+    listidx_t     diteridx;
+    listidx_t     didx;
+    int           tgttype;
+    comp_type_t     comptype = COMPILE_COMPILE;
+    const char    * buildtag = "";
 
     if (mkc_error_chk_err (target->mkcerr)) {
       break;
@@ -853,10 +807,18 @@ target_build (target_t *target, list_t *blist)
     }
 
     if (tgttype == TGT_T_EXEC || tgttype == TGT_T_OBJECT) {
-      int64_t   tts;
-      int       rc;
+      int64_t     tts;
+      int         rc;
 
-      compile_set_flags (target->compile, cflags, ldflags, libs);
+      compile_set_flags (target->compile, compflags, linkflags, libs);
+
+      target_set_target_flags (target, builditem,
+          MKC_C_BVAR_COMPFLAGS, COMP_COMPFLAGS);
+      target_set_target_flags (target, builditem,
+          MKC_C_BVAR_LINKFLAGS, COMP_LINKFLAGS);
+      target_set_target_flags (target, builditem,
+          MKC_C_BVAR_LIBS, COMP_LIBS);
+
       target->attr->printerrors = true;
       rc = compile_exec (target->compile, comptype, target->attr->currcompiler,
           source, NULL, 0);
@@ -871,8 +833,8 @@ target_build (target_t *target, list_t *blist)
     }
   }
 
-  chararr_free (cflags);
-  chararr_free (ldflags);
+  chararr_free (compflags);
+  chararr_free (linkflags);
   chararr_free (libs);
 
   toposort_free (topo);
@@ -914,7 +876,7 @@ target_process_timestamp (target_t *target,
   if (*path != '/') {
     value = sv_get_value (target->sv, SV_T_PATHS, filename, NULL);
     if (value == NULL) {
-// ### need the set of paths from cflags
+// ### need the set of paths from compflags
     } else {
       sv_value_get_str (target->sv, value, path, psz);
     }
@@ -1022,4 +984,99 @@ target_create_stage_bin (target_t *target)
   dirop_make (epath, target->mkcerr);
   free (epath);
   target->create_stage_bin = true;
+}
+
+static void
+target_set_target_flags (target_t *target, const char *builditem,
+    const char *bvarname, comp_flag_t ftype)
+{
+  value_t   * value;
+
+  value = sv_get_value (target->sv, SV_T_BUILD_DATA,
+      builditem, bvarname);
+  if (value == NULL || value->vtype != MKC_VT_LIST) {
+    return;
+  }
+
+  target_append_flags (target, ftype, value, NULL, NULL);
+}
+
+static void
+target_append_flags (target_t *target, comp_flag_t ftype, value_t *value,
+    chararr_t *flags, chararr_t *include_paths)
+{
+  listidx_t   fiter;
+  listidx_t   fidx;
+  bool        append_next = false;
+  char        * str;
+  char        * lastlibloc;
+
+  lastlibloc = malloc (MKC_PATH_MAX);
+  if (lastlibloc == NULL) {
+    mkc_error_set (target->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return;
+  }
+  *lastlibloc = '\0';
+
+  str = malloc (MKC_PATH_MAX);
+  if (str == NULL) {
+    mkc_error_set (target->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    free (lastlibloc);
+    return;
+  }
+  *str = '\0';
+
+  list_iter_start (value->list, &fiter);
+  while ((fidx = list_iter_next (value->list, &fiter)) != MKC_ITER_FINISH) {
+    value_t   *fval;
+
+    if (mkc_error_chk_err (target->mkcerr)) {
+      break;
+    }
+
+    fval = list_get_by_idx (value->list, fidx);
+    sv_value_get_str (target->sv, fval, str, MKC_PATH_MAX);
+    if (! *str) {
+      continue;
+    }
+    if (target_chk_last_libloc (target->attr->compid,
+        lastlibloc, MKC_PATH_MAX, str)) {
+      /* de-duplication check */
+      continue;
+    }
+
+    if (include_paths != NULL) {
+      size_t      len;
+
+      if (append_next) {
+        chararr_append (include_paths, strdup (str));
+        append_next = false;
+      }
+      len = compiler_get_flag_len (target->attr->compid, MKC_COMP_FLAG_INCLUDE);
+      if (strncmp (str,
+          compiler_get_flag (target->attr->compid, MKC_COMP_FLAG_INCLUDE),
+          len) == 0) {
+        if (strcmp (str,
+            compiler_get_flag (target->attr->compid, MKC_COMP_FLAG_INCLUDE)) == 0) {
+          append_next = true;
+        } else {
+          chararr_append (include_paths, strdup (str + len));
+        }
+      }
+    }
+
+    if (flags != NULL) {
+      chararr_append (flags, strdup (str));
+    } else {
+      compile_set_freeinternals (target->compile, ftype);
+      compile_append_flag (target->compile, ftype, strdup (str));
+    }
+  }
+
+  if (flags == NULL) {
+    compile_append_flag (target->compile, ftype, NULL);
+  }
+
+  free (str);
+  free (lastlibloc);
 }

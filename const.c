@@ -23,8 +23,8 @@ char const * const MKC_C_PATH_PKGCONF = "MKC_PATH_PKGCONF";
 char const * const MKC_C_PATH_PKGCONFIG = "MKC_PATH_PKG_CONFIG";
 
 char const * const MKC_C_PROFILE_NAME = "MKC_PROFILE_NAME";
-char const * const MKC_C_CFLAGS = "MKC_CFLAGS";
-char const * const MKC_C_LDFLAGS = "MKC_LDFLAGS";
+char const * const MKC_C_COMPFLAGS = "MKC_CFLAGS";
+char const * const MKC_C_LINKFLAGS = "MKC_LDFLAGS";
 char const * const MKC_C_LIBS = "MKC_LIBS";
 char const * const MKC_C_SUPPORTS_MM = "MKC_COMPILER_SUPPORTS_MM";
 char const * const MKC_C_MKC_CHANGED = "MKC_MKC_CHANGED";

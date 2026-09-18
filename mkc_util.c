@@ -25,9 +25,29 @@ mkc_flag_is_libloc (mkc_compiler_id_t compid, const char *str)
     str += len;
   }
 
+  len = compiler_get_flag_len (compid, MKC_COMP_FLAG_LIBPATH);
   if (strncmp (str,
-      compiler_get_flag (compid, MKC_COMP_FLAG_LIBPATH),
-      compiler_get_flag_len (compid, MKC_COMP_FLAG_LIBPATH)) == 0) {
+      compiler_get_flag (compid, MKC_COMP_FLAG_LIBPATH), len) == 0) {
+    return true;
+  }
+
+  return false;
+}
+
+bool
+mkc_flag_is_lib (mkc_compiler_id_t compid, const char *str)
+{
+  size_t    len;
+
+  len = compiler_get_flag_len (compid, MKC_COMP_FLAG_LINKPREFIX);
+  if (strncmp (str,
+      compiler_get_flag (compid, MKC_COMP_FLAG_LINKPREFIX), len) == 0) {
+    str += len;
+  }
+
+  len = compiler_get_flag_len (compid, MKC_COMP_FLAG_LIB);
+  if (strncmp (str,
+      compiler_get_flag (compid, MKC_COMP_FLAG_LIB), len) == 0) {
     return true;
   }
 

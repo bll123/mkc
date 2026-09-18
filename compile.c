@@ -42,11 +42,11 @@ typedef struct compile_t {
 
 static char const * const MKC_C_TEST_HDR_LIST = "MKC_TV_TEST_HEADER_LIST";
 
-typedef int (*test_func_t)(compile_t *compile, mkc_compiler_t compiler, const char *fname, char *rbuff, size_t rsz, ct_type_t ctype);
+typedef int (*test_func_t)(compile_t *compile, mkc_compiler_t compiler, const char *fname, char *rbuff, size_t rsz, comp_type_t ctype);
 
-static int compile_compile (compile_t *compile, mkc_compiler_t compiler, const char *fname, char *rbuff, size_t rsz, ct_type_t ctype);
-static int compile_link (compile_t *compile, mkc_compiler_t compiler, const char *fname, char *rbuff, size_t rsz, ct_type_t ctype);
-static int compile_link_run (compile_t *compile, mkc_compiler_t compiler, const char *fname, char *rbuff, size_t rsz, ct_type_t ctype);
+static int compile_compile (compile_t *compile, mkc_compiler_t compiler, const char *fname, char *rbuff, size_t rsz, comp_type_t ctype);
+static int compile_link (compile_t *compile, mkc_compiler_t compiler, const char *fname, char *rbuff, size_t rsz, comp_type_t ctype);
+static int compile_link_run (compile_t *compile, mkc_compiler_t compiler, const char *fname, char *rbuff, size_t rsz, comp_type_t ctype);
 static void compile_append_list_arg (compile_t *compile, list_t *list);
 static bool compile_append_chararr (compile_t *compile, chararr_t *flags);
 static void compile_display_output (compile_t *compile, const char *rbuff, size_t retsz, const char *tag, int rc);
@@ -297,7 +297,7 @@ compile_file_sub_copy (compile_t *compile,
 }
 
 int
-compile_exec (compile_t *compile, ct_type_t ctype,
+compile_exec (compile_t *compile, comp_type_t ctype,
     mkc_compiler_t compiler, const char *fname, char *rbuff, size_t rsz)
 {
   int             rc = MKC_ERR_FAILURE;
@@ -375,30 +375,56 @@ compile_append_object (compile_t *compile, const char *objpath)
 }
 
 void
-compile_append_compflag (compile_t *compile, const char *flag)
+compile_append_flag (compile_t *compile, comp_flag_t ftype, const char *flag)
 {
   if (compile == NULL) {
     return;
   }
 
-  chararr_append (compile->addcompflags, flag);
+  switch (ftype) {
+    case COMP_COMPFLAGS: {
+      chararr_append (compile->addcompflags, flag);
+      break;
+    }
+    case COMP_LINKFLAGS: {
+      chararr_append (compile->addlinkflags, flag);
+      break;
+    }
+    case COMP_LIBS: {
+      chararr_append (compile->addlibs, flag);
+      break;
+    }
+  }
 }
 
 void
-compile_append_linkflag (compile_t *compile, const char *flag)
+compile_set_freeinternals (compile_t *compile, comp_flag_t ftype)
 {
   if (compile == NULL) {
     return;
   }
 
-  chararr_append (compile->addlinkflags, flag);
+  switch (ftype) {
+    case COMP_COMPFLAGS: {
+      chararr_set_freeinternals (compile->addcompflags);
+      break;
+    }
+    case COMP_LINKFLAGS: {
+      chararr_set_freeinternals (compile->addlinkflags);
+      break;
+    }
+    case COMP_LIBS: {
+      chararr_set_freeinternals (compile->addlibs);
+      break;
+    }
+  }
 }
 
 /* internal routines */
 
 static int
 compile_compile (compile_t *compile, mkc_compiler_t compiler,
-    const char *fname, char *rbuff, size_t rsz, ct_type_t ctype)
+    const char *fname, char *rbuff, size_t rsz, comp_type_t ctype)
 {
   int             rc;
   char            * tbuff;
@@ -511,7 +537,7 @@ compile_compile (compile_t *compile, mkc_compiler_t compiler,
 
 static int
 compile_link (compile_t *compile, mkc_compiler_t compiler,
-    const char *fname, char *rbuff, size_t rsz, ct_type_t ctype)
+    const char *fname, char *rbuff, size_t rsz, comp_type_t ctype)
 {
   int               rc;
   size_t            retsz;
@@ -623,7 +649,7 @@ compile_link (compile_t *compile, mkc_compiler_t compiler,
 
 static int
 compile_link_run (compile_t *compile, mkc_compiler_t compiler,
-    const char *fname, char *rbuff, size_t rsz, ct_type_t ctype)
+    const char *fname, char *rbuff, size_t rsz, comp_type_t ctype)
 {
   int         rc;
   bool        rallocated = false;
