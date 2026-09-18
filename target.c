@@ -10,6 +10,8 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include <stdint.h>
+#include <inttypes.h>
 #include <string.h>
 #include <errno.h>
 
@@ -259,7 +261,7 @@ target_check_dependency_timestamp (target_t *target,
 
   if (! sv_is_defined (target->sv, SV_T_BUILD_DATA,
       filepath, MKC_C_BVAR_DEPENDENCY)) {
-    mkc_message (MKC_V_TMI, "ood\n");
+    mkc_message_no_indent (MKC_V_TMI, "ood\n");
     return TARGET_OUT_OF_DATE;
   }
 
@@ -268,6 +270,10 @@ target_check_dependency_timestamp (target_t *target,
       target->sv, SV_T_BUILD_DATA, filepath, MKC_C_BVAR_TIMESTAMP)) {
     fts = sv_get_timestamp (target->sv, SV_T_BUILD_DATA, filepath);
   }
+  if (fts == 0) {
+    /* can short-circuit any filepath that does not have a timestamp set */
+    return TARGET_OUT_OF_DATE;
+  }
 
   target_iter_dependency_ts_start (target, filepath, &iteridx);
   while ((ts = target_iter_dependency_ts (target, filepath, &iteridx)) != MKC_ITER_FINISH) {
@@ -275,13 +281,13 @@ target_check_dependency_timestamp (target_t *target,
       break;
     }
 
-    if (ts > fts) {
-      mkc_message (MKC_V_TMI, "ood\n");
+    if (ts >= fts) {
+      mkc_message_no_indent (MKC_V_TMI, "ood\n");
       return TARGET_OUT_OF_DATE;
     }
   }
 
-  mkc_message (MKC_V_TMI, "curr\n");
+  mkc_message_no_indent (MKC_V_TMI, "curr\n");
   return TARGET_CURRENT;
 }
 
@@ -408,7 +414,8 @@ target_get_include_list (target_t *target, chararr_t * include_paths,
   /* messy stuff to cache the include timestamps and include list */
   /* this cache is used for the check_include_* statements */
 
-  /* tname is only used internally, there is no need to "clean" the */
+  /* matchts_ and matchil_ are only used internally, */
+  /* there is no need to "clean" the */
   /* variable name, and cleaning it makes it much less specific */
   p = tname;
   tend = tname + MKC_SMALL_BUFF_SZ;

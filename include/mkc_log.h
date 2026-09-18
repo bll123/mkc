@@ -59,6 +59,7 @@ void mkc_log_free (mkc_log_t *log);
 void mkc_msg_set_level (log_verbose_t vlevel);
 bool mkc_msg_check_level (log_verbose_t vlevel);
 void mkc_message (log_verbose_t vlevel, const char *fmt, ...);
+void mkc_message_no_indent (log_verbose_t vlevel, const char *fmt, ...);
 void mkc_message_chararr (log_verbose_t vlevel, const char *tag, chararr_t *targv);
 
 const char * mkc_success_msg (int rc);

@@ -116,7 +116,7 @@ set _have_regex false;
 if (${_package_pcre}) {
   set _have_regex true;
 }
-mark _have_regex enable-output;
+mark_variable _have_regex enable-output;
 
 # configure
 
@@ -188,12 +188,13 @@ check_include_guards {
 
 # build
 define_executable mkc {
-  source ast.c asttoken.c chararr.c compile.c dirmatch.c dirop.c envutil.c
-      fileop.c ast.c mkc_check.c mkc_compiler.c mkc_const.c
-      mkc_context.c mkc_error.c mkc_grammar.c mkc_lex.c mkc_list.c
-      mkc_log.c mkc_main.c mkc_regex_pcre.c mkc_util.c mkc_var.c
+  source ast.c asttoken.c chararr.c compile.c const.c
+      context.c dict.c dictdict.c dirmatch.c dirop.c envutil.c
+      fileop.c list.c mkc_check.c mkc_compiler.c
+      mkc_error.c mkc_grammar.c mkc_lex.c
+      mkc_log.c mkc_main.c mkc_regex_pcre.c mkc_util.c
       os_process.c parse.c pathutil.c process.c scopedvar.c
-      strutil.c target.c tmutil.c toposort.c value.c;
+      strutil.c target.c tmutil.c toposort.c value.c var.c;
   if (${MKC_SYS_WINDOWS}) {
     source os_win_process.c;
   }

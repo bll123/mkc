@@ -23,6 +23,8 @@
 #include "attribute.h"
 #include "chararr.h"
 #include "compile.h"
+#include "dict.h"
+#include "dictdict.h"
 #include "envutil.h"
 #include "fileop.h"
 #include "mkc_check.h"
@@ -1214,6 +1216,12 @@ process_stmt_autobuild (process_t *process)
 {
   list_t      * blist;
   char        * tbuff;
+  dict_t      * dict;
+  dictitem_t  * ditem;
+  listidx_t   iteridx;
+  value_t     * value;
+  value_t     rvalue;
+  char        * vname;
 
   tbuff = malloc (MKC_PATH_MAX);
   if (tbuff == NULL) {
@@ -1224,8 +1232,44 @@ process_stmt_autobuild (process_t *process)
   mkc_create_mkcfiles (tbuff, MKC_PATH_MAX, process->mkcerr);
   free (tbuff);
 
+  vname = malloc (MKC_PATH_MAX);
+  if (vname == NULL) {
+    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return;
+  }
+
   blist = list_init (MKC_LIST_UNSORTED, NULL, NULL, sizeof (value_t), process->mkcerr);
-// ### go through build data, locate all items that need to be built.
+  value = sv_get_value (process->sv, SV_T_INTERNAL, MKC_C_VAR_BUILD_DATA, NULL);
+  if (value == NULL || value->vtype != MKC_VT_DICT) {
+    return;
+  }
+  value = sv_value_get_value (process->sv, value, &rvalue);
+  dict = value->dict;
+
+  dict_iter_start (dict, &iteridx);
+  while ((ditem = dict_iter_next (dict, &iteridx)) != NULL) {
+    value_t   * tvalue;
+    int32_t   ival;
+
+    if (mkc_error_chk_err (process->mkcerr)) {
+      break;
+    }
+
+    value = dict_iter_get_data (ditem);
+    sv_value_get_str (process->sv, value, vname, MKC_PATH_MAX);
+    tvalue = dictdict_get (dict, vname, MKC_C_BVAR_TYPE, process->mkcerr);
+    if (tvalue == NULL || tvalue->vtype != MKC_VT_INTEGER) {
+      continue;
+    }
+    ival = sv_value_get_integer (process->sv, tvalue);
+    switch (ival) {
+      case TGT_T_EXEC:
+      case TGT_T_OBJECT: {
+        list_set (blist, value);
+        break;
+      }
+    }
+  }
 
   process->attr.display = true;
   process->attr.printerrors = true;
@@ -1234,6 +1278,7 @@ process_stmt_autobuild (process_t *process)
 
   list_free (blist);
   process_attr_clear (process);
+  free (vname);
   return;
 }
 
@@ -1241,7 +1286,7 @@ void
 process_stmt_build (process_t *process, value_t *vallist)
 {
   list_t      * blist;
-  char            * tbuff;
+  char        * tbuff;
 
   tbuff = malloc (MKC_PATH_MAX);
   if (tbuff == NULL) {

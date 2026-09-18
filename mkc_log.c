@@ -140,6 +140,20 @@ mkc_message (log_verbose_t vlevel, const char *fmt, ...)
 }
 
 void
+mkc_message_no_indent (log_verbose_t vlevel, const char *fmt, ...)
+{
+  va_list   vap;
+
+  if (vlevel > gmkcverbose) {
+    return;
+  }
+
+  va_start (vap, fmt);
+  vfprintf (stderr, fmt, vap);
+  va_end (vap);
+}
+
+void
 mkc_message_chararr (log_verbose_t vlevel, const char *tag, chararr_t *carr)
 {
   int           count = 0;

@@ -24,9 +24,9 @@
     # functions may or may not have the 'libintl_' prefix.
     # check with and without the prefix.
     #
-    # if the 'libintl_' prefixes are active, a check for bindtextdomain
+    # if the 'libintl_' prefixes are active, a check for 'bindtextdomain'
     # will succeed without linking a library even though the library is needed.
-    # check for libintl_bindtextdomain first.
+    # check for 'libintl_bindtextdomain' first.
 
     if (! is_defined (MKC_COMMON_INCLUDE)) {
       # these need to be set to something
@@ -112,7 +112,7 @@
       set _function_gettext true;
       set _function_textdomain true;
       set _header_libintl true;
-      mark _header_libintl enable-output;
+      mark_variable _header_libintl enable-output;
 
       if (${mkc_libintl_prefixed}) {
         check_function libintl_wbindtextdomain {
@@ -137,11 +137,11 @@
       set _function_textdomain false;
     }
 
-    mark _function_wbindtextdomain enable-output;
-    mark _function_bindtextdomain enable-output;
-    mark _function_gettext enable-output;
-    mark _function_textdomain enable-output;
-    mark _function_libintl_bindtextdomain disable-output;
+    mark_variable _function_wbindtextdomain enable-output;
+    mark_variable _function_bindtextdomain enable-output;
+    mark_variable _function_gettext enable-output;
+    mark_variable _function_textdomain enable-output;
+    mark_variable _function_libintl_bindtextdomain disable-output;
   }
 
   profile mkc_test_libintl {

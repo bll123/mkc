@@ -26,6 +26,5 @@
       check_compile_flag '-fno-common';
       check_compile_flag '-fno-inline';
     }
-
   }
 }
