@@ -12,6 +12,7 @@
 #include "mkc_compiler.h"
 #include "mkc_error.h"
 #include "mkc_log.h"
+#include "mkc_nodiscard.h"
 #include "mkc_option.h"
 #include "var.h"
 #include "value.h"
@@ -30,7 +31,6 @@ typedef enum {
   /* the current-profile-compiler type encompasses all compilers */
   SV_T_CURR_PROF_COMPILER,
   SV_T_LOCAL,
-  SV_T_TARGET,
   SV_T_NOT_SET,
   /* for a 'get', checks the hierarchy until the active profile is found */
   /* for a 'set', searches any local profiles, */
@@ -59,7 +59,7 @@ typedef enum {
 typedef struct scopedvar_t scopedvar_t;
 typedef struct sv_iter_t sv_iter_t;
 
-scopedvar_t * sv_init (mkc_log_t *log, mkc_error_t *mkcerr, mkc_option_t *mkcoptions);
+MKC_NODISCARD scopedvar_t * sv_init (mkc_log_t *log, mkc_error_t *mkcerr, mkc_option_t *mkcoptions);
 void sv_free (scopedvar_t *scopedvar);
 void sv_reset (scopedvar_t *scopedvar, mkc_option_t *mkcoptions);
 void sv_push (scopedvar_t *scopedvar, sv_type_t svtype, const char *name);
@@ -74,7 +74,7 @@ void sv_decr_local_id (scopedvar_t *scopedvar);
 void sv_set_active_profile (scopedvar_t *scopedvar, const char *name);
 const char * sv_get_current_profile (scopedvar_t *scopedvar);
 
-sv_iter_t *sv_iter_start (scopedvar_t *scopedvar, sv_iter_flag_t flags);
+MKC_NODISCARD sv_iter_t *sv_iter_start (scopedvar_t *scopedvar, sv_iter_flag_t flags);
 const char * sv_iter_next (scopedvar_t *scopedvar, sv_iter_t *sviter);
 void sv_iter_finish (sv_iter_t *sviter);
 sv_type_t sv_iter_get_type (scopedvar_t *scopedvar, sv_iter_t *sviter);
@@ -89,7 +89,7 @@ value_t * sv_get_value (scopedvar_t *scopedvar, sv_type_t svtype, const char *vn
 int32_t sv_value_get_integer (scopedvar_t *scopedvar, value_t *value);
 int64_t sv_value_get_timestamp (scopedvar_t *scopedvar, value_t *value);
 void sv_value_get_str (scopedvar_t *scopedvar, value_t *value, char *buff, size_t sz);
-value_t * sv_value_get_value (scopedvar_t *scopedvar, value_t *value, value_t *rvalue);
+MKC_NODISCARD value_t * sv_value_get_value (scopedvar_t *scopedvar, value_t *value, value_t *rvalue);
 value_t * sv_value_get_list_value (scopedvar_t *scopedvar, value_t *value);
 
 void sv_set_context (scopedvar_t *scopedvar, const char *vname, value_ctxt_t vctxt);

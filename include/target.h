@@ -8,13 +8,14 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "attribute.h"
 #include "chararr.h"
 #include "compile.h"
-#include "attribute.h"
+#include "list.h"
 #include "mkc_compiler.h"
 #include "mkc_error.h"
-#include "list.h"
 #include "mkc_log.h"
+#include "mkc_nodiscard.h"
 #include "mkc_regex.h"
 #include "scopedvar.h"
 #include "toposort.h"
@@ -34,8 +35,7 @@ enum {
   TARGET_OUT_OF_DATE,
   TGT_T_EXEC,
   TGT_T_INCLUDE,
-  TGT_T_LIB_SHARED,
-  TGT_T_LIB_STATIC,
+  TGT_T_LIBRARY,
   TGT_T_OBJECT,
   TGT_T_SOURCE,
   TGT_T_FILE,
@@ -43,7 +43,7 @@ enum {
 
 typedef struct target_t target_t;
 
-target_t * target_init (scopedvar_t *scopedvar, compile_t *compile, mkc_attribute_t *attr, mkc_log_t *log, mkc_error_t *mkcerr);
+MKC_NODISCARD target_t * target_init (scopedvar_t *scopedvar, compile_t *compile, mkc_attribute_t *attr, mkc_log_t *log, mkc_error_t *mkcerr);
 void target_free (target_t *target);
 chararr_t *target_get_flags (target_t *target, const char *flagname, chararr_t *include_paths);
 
@@ -56,7 +56,7 @@ void target_executable_object (target_t *target, const char *execnm, const char 
 void target_object_source (target_t *target, const char *objnm, const char *srcname);
 void target_build (target_t *target, list_t *blist);
 
-list_t * target_get_include_list (target_t *target, chararr_t * include_paths, mkc_regex_t *rx, int64_t *ts);
+MKC_NODISCARD list_t * target_get_include_list (target_t *target, chararr_t * include_paths, mkc_regex_t *rx, int64_t *ts);
 const char * target_iter_includes (target_t *target, list_t *hlist, listidx_t *hiteridx, char *hdr, size_t hsz);
 
 void target_iter_dependency_ts_start (target_t *target, const char *filename, listidx_t *iteridx);

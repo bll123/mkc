@@ -12,10 +12,11 @@
 #include "alternate.h"
 #include "attribute.h"
 #include "compile.h"
-#include "fileop.h"
 #include "const.h"
+#include "fileop.h"
 #include "mkc_error.h"
 #include "mkc_log.h"
+#include "mkc_nodiscard.h"
 #include "os_process.h"
 #include "pathutil.h"
 #include "strutil.h"
@@ -51,6 +52,7 @@ static void compile_append_list_arg (compile_t *compile, list_t *list);
 static bool compile_append_chararr (compile_t *compile, chararr_t *flags);
 static void compile_display_output (compile_t *compile, const char *rbuff, size_t retsz, const char *tag, int rc);
 
+MKC_NODISCARD
 compile_t *
 compile_init (scopedvar_t *sv,
     mkc_attribute_t *attr, mkc_log_t *log,

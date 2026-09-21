@@ -13,7 +13,7 @@
 #include "ast.h"
 #include "dict.h"
 #include "list.h"
-#include "mkc_check.h"
+#include "check.h"
 #include "context.h"
 #include "mkc_def.h"
 #include "mkc_error.h"

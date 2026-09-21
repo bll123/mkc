@@ -1,5 +1,8 @@
 /*
  * Copyright 2026 Brad Lanam Pleasant Hill CA
+ *
+ * Uses a 'list' to store name/data value pairs.
+ *
  */
 
 #include <stdio.h>

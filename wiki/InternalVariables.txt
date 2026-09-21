@@ -62,6 +62,7 @@ replaced with the enviroment variable of the same name.
   BISON|bison
   CC|cc
   CXX|c&plus;&plus;
+  DC|dc
   FLEX|flex
   OBJC|cc
 
@@ -90,6 +91,5 @@ The compiler identification.
   MKC_PROFILE_NAME|string|
   MKC_PROJECT_NAME|string|
   MKC_SHARED_LIBRARY_EXTENSION|string|
-  MKC_TV_|string|any variable with this prefix is temporary
 
 [Wiki Home](Home)

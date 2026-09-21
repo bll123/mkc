@@ -84,6 +84,7 @@ value_to_str (value_t *value, char *buff, size_t sz, int depth)
   char      * eptr;
   char      * p;
   char      * tbuff = NULL;
+  size_t    tbuffsz = MKC_LARGE_BUFF_SZ;
   bool      allocated = false;
 
   if (value == NULL) {
@@ -128,7 +129,7 @@ value_to_str (value_t *value, char *buff, size_t sz, int depth)
       list_iter_start (tlist, &iteridx);
       while ((lidx = list_iter_next (tlist, &iteridx)) != MKC_ITER_FINISH) {
         if (! allocated) {
-          tbuff = malloc (MKC_PATH_MAX);
+          tbuff = malloc (tbuffsz);
           if (tbuff == NULL) {
             return NULL;
           }
@@ -138,12 +139,12 @@ value_to_str (value_t *value, char *buff, size_t sz, int depth)
         tvalue = list_get_by_idx (tlist, lidx);
         if (lsz > 1) {
           p = stpecpy (p, eptr, "      ");
-          snprintf (tbuff, MKC_PATH_MAX, "%*s", depth, "");
+          snprintf (tbuff, tbuffsz, "%*s", depth, "");
           p = stpecpy (p, eptr, tbuff);
         } else {
           p = stpecpy (p, eptr, " ");
         }
-        value_to_str (tvalue, tbuff, MKC_PATH_MAX, depth + 2);
+        value_to_str (tvalue, tbuff, tbuffsz, depth + 2);
         if (value_is_string_type (tvalue)) {
           p = stpecpy (p, eptr, "'");
         }
@@ -156,7 +157,7 @@ value_to_str (value_t *value, char *buff, size_t sz, int depth)
         }
       }
       if (lsz > 1) {
-        snprintf (tbuff, MKC_PATH_MAX, "%*s", depth, "");
+        snprintf (tbuff, tbuffsz, "%*s", depth, "");
         p = stpecpy (p, eptr, tbuff);
         p = stpecpy (p, eptr, "    ]");
       } else {
@@ -182,7 +183,7 @@ value_to_str (value_t *value, char *buff, size_t sz, int depth)
       dict_iter_start (tdict, &iteridx);
       while ((diter = dict_iter_next (tdict, &iteridx)) != NULL) {
         if (! allocated) {
-          tbuff = malloc (MKC_PATH_MAX);
+          tbuff = malloc (tbuffsz);
           if (tbuff == NULL) {
             return NULL;
           }
@@ -191,7 +192,7 @@ value_to_str (value_t *value, char *buff, size_t sz, int depth)
 
         if (lsz > 1) {
           p = stpecpy (p, eptr, "      ");
-          snprintf (tbuff, MKC_PATH_MAX, "%*s", depth, "");
+          snprintf (tbuff, tbuffsz, "%*s", depth, "");
           p = stpecpy (p, eptr, tbuff);
         } else {
           p = stpecpy (p, eptr, " ");
@@ -203,7 +204,7 @@ value_to_str (value_t *value, char *buff, size_t sz, int depth)
         p = stpecpy (p, eptr, "' ");
 
         tvalue = dict_iter_get_data (diter);
-        value_to_str (tvalue, tbuff, MKC_PATH_MAX, depth + 2);
+        value_to_str (tvalue, tbuff, tbuffsz, depth + 2);
         if (value_is_string_type (tvalue)) {
           p = stpecpy (p, eptr, "'");
         }
@@ -216,7 +217,7 @@ value_to_str (value_t *value, char *buff, size_t sz, int depth)
         }
       }
       if (lsz > 1) {
-        snprintf (tbuff, MKC_PATH_MAX, "%*s", depth, "");
+        snprintf (tbuff, tbuffsz, "%*s", depth, "");
         p = stpecpy (p, eptr, tbuff);
         p = stpecpy (p, eptr, "    ]]");
       } else {

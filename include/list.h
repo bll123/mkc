@@ -35,11 +35,8 @@ MKC_NODISCARD list_t * list_init (list_type_t type, list_free_t freefunc, list_c
 MKC_NODISCARD list_t * list_init_copy (list_t *list, list_free_t freefunc, mkc_error_t *mkcerr);
 void list_free (void *list);
 listidx_t list_size (list_t *list);
-list_type_t list_get_type (list_t *list);
-list_compare_t list_get_compfunc (list_t *list);
 
 void * list_set (list_t *list, void *data);
-void * list_append (list_t *list, void *data);
 void list_pop (list_t *list, listidx_t lidx);
 void list_delete (list_t *list, listidx_t lidx);
 

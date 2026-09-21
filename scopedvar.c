@@ -11,19 +11,20 @@
 #include <inttypes.h>
 #include <string.h>
 
-#include "dict.h"
-#include "dictdict.h"
-#include "envutil.h"
-#include "mkc_compiler.h"
 #include "const.h"
+#include "dictdict.h"
+#include "dict.h"
+#include "envutil.h"
+#include "list.h"   // for the iterator enums
+#include "mkc_compiler.h"
 #include "mkc_def.h"
 #include "mkc_error.h"
-#include "list.h"   // for the iterator enums
 #include "mkc_log.h"
-#include "var.h"
+#include "mkc_nodiscard.h"
 #include "scopedvar.h"
 #include "strutil.h"
 #include "value.h"
+#include "var.h"
 
 typedef struct sv_profile_t {
   varlist_t       * varlist;
@@ -78,7 +79,6 @@ static char const * const svtypenames [] = {
   [SV_T_PATHS] = "paths",
   [SV_T_SEARCH] = "search",
   [SV_T_SPECIAL] = "special",
-  [SV_T_TARGET] = "targetitems",
 };
 
 static void sv_set_current_profile (scopedvar_t *sv, const char *name);
@@ -163,8 +163,7 @@ sv_push (scopedvar_t *sv, sv_type_t svtype, const char *name)
 {
   sv_profile_t   * svprof;
 
-  if (svtype != SV_T_LOCAL &&
-     svtype != SV_T_TARGET) {
+  if (svtype != SV_T_LOCAL) {
     return;
   }
 
@@ -287,8 +286,7 @@ sv_decr_local_id (scopedvar_t *sv)
   sz = sv->hierarchy.sz - 1;
   svprof = &sv->hierarchy.variables [sz];
 
-  if ((svprof->svtype == SV_T_LOCAL ||
-      svprof->svtype == SV_T_TARGET) &&
+  if (svprof->svtype == SV_T_LOCAL &&
       svprof->local_id == sv->local_id) {
     sv_pop (sv);
   }
@@ -795,6 +793,7 @@ sv_value_get_str (scopedvar_t *sv, value_t *value,
 
 /* get the actual value of a value */
 /* this is an issue for env-variables, quoted strings, lists and dicts */
+MKC_NODISCARD
 value_t *
 sv_value_get_value (scopedvar_t *sv, value_t *value, value_t *rvalue)
 {
@@ -853,6 +852,7 @@ sv_value_get_value (scopedvar_t *sv, value_t *value, value_t *rvalue)
       while ((ditem = dict_iter_next (value->dict, &iteridx)) != NULL) {
         const char  * name;
         value_t     * dvalue;
+        value_t     * tvalue;
         value_t     tmpvalue;
 
         if (mkc_error_chk_err (sv->mkcerr)) {
@@ -861,8 +861,8 @@ sv_value_get_value (scopedvar_t *sv, value_t *value, value_t *rvalue)
 
         name = dict_iter_get_name (ditem);
         dvalue = dict_iter_get_data (ditem);
-        sv_value_get_value (sv, dvalue, &tmpvalue);
-        dict_set (ndict, name, &tmpvalue);
+        tvalue = sv_value_get_value (sv, dvalue, &tmpvalue);
+        dict_set (ndict, name, tvalue);
       }
 
       value_init (rvalue);
@@ -890,14 +890,15 @@ sv_value_get_value (scopedvar_t *sv, value_t *value, value_t *rvalue)
       while ((lidx = list_iter_next (value->list, &iteridx)) != MKC_ITER_FINISH) {
         value_t   * lvalue;
         value_t   tmpvalue;
+        value_t   * tvalue;
 
         if (mkc_error_chk_err (sv->mkcerr)) {
           break;
         }
 
         lvalue = list_get_by_idx (value->list, lidx);
-        sv_value_get_value (sv, lvalue, &tmpvalue);
-        list_set (nlist, &tmpvalue);
+        tvalue = sv_value_get_value (sv, lvalue, &tmpvalue);
+        list_set (nlist, tvalue);
       }
 
       value_init (rvalue);
@@ -1176,6 +1177,12 @@ sv_append_str_list (scopedvar_t *sv, sv_type_t svtype,
     value_init (&tvalue);
     tvalue.vtype = MKC_VT_STRING;
     tvalue.sval = strdup (data);
+
+    if (mkc_msg_check_level (MKC_V_TMI)) {
+      mkc_message (MKC_V_TMI, "append %s %s (%s): %s\n",
+          vname, tag == NULL ? "" : tag, svtypenames [svtype], data);
+    }
+
     list_set (list, &tvalue);
   }
 
@@ -1326,7 +1333,7 @@ sv_substitute (scopedvar_t *sv, const char *data,
   size_t        blen = 1;
   size_t        tlen;
   bool          isenv = false;
-  char          tbuff [40];
+  char          tbuff [MKC_PATH_MAX];
   char          ebuff [MKC_PATH_MAX];
 
   if (sv == NULL) {
@@ -1439,12 +1446,9 @@ sv_substitute (scopedvar_t *sv, const char *data,
 
         value = sv_get_value (sv, SV_T_SEARCH, tstr, NULL);
 //fprintf (stderr, "%*svalue-null? %d\n", depth * 2, "", value == NULL ? 1 : 0);
-        if (value != NULL && value->vtype == MKC_VT_INTEGER) {
-          snprintf (tbuff, sizeof (tbuff), "%" PRId32, value->ival);
+        if (value != NULL) {
+          value_to_str (value, tbuff, sizeof (tbuff), 0);
           tval = tbuff;
-        }
-        if (value != NULL && value->vtype == MKC_VT_STRING) {
-          tval = value->sval;
         }
 //fprintf (stderr, "%*s got %s\n", depth * 2, "", tval);
       }
@@ -1573,7 +1577,7 @@ sv_create (scopedvar_t *sv, sv_type_t svtype,
 {
   sv_profile_t    * svprof;
 
-  if (svtype == SV_T_LOCAL || svtype == SV_T_TARGET) {
+  if (svtype == SV_T_LOCAL) {
     char    tbuff [80];
 
     /* when attempting to create a local scope, first check to see */
@@ -1586,9 +1590,6 @@ sv_create (scopedvar_t *sv, sv_type_t svtype,
         if (svtype == SV_T_LOCAL &&
             svprof->local_id == sv->local_id) {
           /* already exists */
-          return NULL;
-        }
-        if (svtype == SV_T_TARGET) {
           return NULL;
         }
       }

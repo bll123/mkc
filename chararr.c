@@ -11,6 +11,7 @@
 
 #include "chararr.h"
 #include "mkc_error.h"
+#include "mkc_nodiscard.h"
 #include "strutil.h"
 
 typedef struct chararr_t {
@@ -21,6 +22,7 @@ typedef struct chararr_t {
   bool        freeinternals;
 } chararr_t;
 
+MKC_NODISCARD
 chararr_t *
 chararr_init (mkc_error_t *mkcerr)
 {

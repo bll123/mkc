@@ -19,14 +19,15 @@
 #include "attribute.h"
 #include "chararr.h"
 #include "compile.h"
+#include "const.h"
 #include "dirmatch.h"
 #include "dirop.h"
 #include "fileop.h"
 #include "mkc_compiler.h"
-#include "const.h"
 #include "mkc_def.h"
 #include "mkc_error.h"
 #include "mkc_log.h"
+#include "mkc_nodiscard.h"
 #include "mkc_util.h"
 #include "mkc_util.h"
 #include "os_process.h"
@@ -61,6 +62,7 @@ static void target_create_stage_bin (target_t *target);
 static void target_set_target_flags (target_t *target, const char *builditem, const char *bvarname, comp_flag_t ftype);
 static void target_append_flags (target_t *target, comp_flag_t ftype, value_t *value, chararr_t *flags, chararr_t *include_paths);
 
+MKC_NODISCARD
 target_t *
 target_init (scopedvar_t *sv, compile_t *compile,
     mkc_attribute_t *attr, mkc_log_t *log, mkc_error_t *mkcerr)
@@ -342,6 +344,7 @@ target_get_dependencies (target_t *target,
 /* the timestamps in the timestamp namespace are updated */
 /* used for check_include_dependencies, check_include_guards, */
 /*   check_include_compile */
+MKC_NODISCARD
 list_t *
 target_get_include_list (target_t *target, chararr_t * include_paths,
     mkc_regex_t *rx, int64_t *ts)
@@ -633,7 +636,7 @@ target_object_source (target_t *target, const char *objnm,
       target, objnm, opath) == TARGET_OUT_OF_DATE) {
     chararr_t   * compflags;
 
-    mkc_message (MKC_V_INFO, "-- getting dependencies for %s\n", objnm);
+    mkc_message (MKC_V_INFO, "getting dependencies for %s\n", objnm);
     compflags = target_get_flags (target, MKC_C_COMPFLAGS, NULL);
     target_get_dependencies (target,
         target->attr->currcompiler, opath, srcname, tgtflags, compflags);
@@ -753,6 +756,9 @@ target_build (target_t *target, list_t *blist)
       case TGT_T_INCLUDE: {
         continue;
       }
+      case TGT_T_LIBRARY: {
+        break;
+      }
       case TGT_T_FILE: {
         buildtag = "create";
         break;
@@ -806,7 +812,9 @@ target_build (target_t *target, list_t *blist)
       }
     }
 
-    if (tgttype == TGT_T_EXEC || tgttype == TGT_T_OBJECT) {
+    if (tgttype == TGT_T_EXEC ||
+        tgttype == TGT_T_LIBRARY ||
+        tgttype == TGT_T_OBJECT) {
       int64_t     tts;
       int         rc;
 
@@ -1010,6 +1018,11 @@ target_append_flags (target_t *target, comp_flag_t ftype, value_t *value,
   bool        append_next = false;
   char        * str;
   char        * lastlibloc;
+  const char  * incflag;
+  size_t      incflaglen;
+
+  incflag = compiler_get_flag (target->attr->compid, MKC_COMP_FLAG_INCLUDE);
+  incflaglen = compiler_get_flag_len (target->attr->compid, MKC_COMP_FLAG_INCLUDE);
 
   lastlibloc = malloc (MKC_PATH_MAX);
   if (lastlibloc == NULL) {
@@ -1046,21 +1059,19 @@ target_append_flags (target_t *target, comp_flag_t ftype, value_t *value,
     }
 
     if (include_paths != NULL) {
-      size_t      len;
-
       if (append_next) {
-        chararr_append (include_paths, strdup (str));
+        if (*str != '/') {
+          chararr_append (include_paths, strdup (str));
+        }
         append_next = false;
       }
-      len = compiler_get_flag_len (target->attr->compid, MKC_COMP_FLAG_INCLUDE);
-      if (strncmp (str,
-          compiler_get_flag (target->attr->compid, MKC_COMP_FLAG_INCLUDE),
-          len) == 0) {
-        if (strcmp (str,
-            compiler_get_flag (target->attr->compid, MKC_COMP_FLAG_INCLUDE)) == 0) {
+      if (strncmp (str, incflag, incflaglen) == 0) {
+        if (strcmp (str, incflag) == 0) {
           append_next = true;
         } else {
-          chararr_append (include_paths, strdup (str + len));
+          if (*(str + incflaglen) != '/') {
+            chararr_append (include_paths, strdup (str + incflaglen));
+          }
         }
       }
     }

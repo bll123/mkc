@@ -183,7 +183,9 @@ void
 path_set_dir (mkc_dir_t dir, const char *path)
 {
   path_set_dir_relative (dir, path);
-  path_realpath (mkc_dirs [dir], MKC_PATH_MAX);
+  if (*path) {
+    path_realpath (mkc_dirs [dir], MKC_PATH_MAX);
+  }
 }
 
 void

@@ -11,5 +11,4 @@
 190 - mkc options
 200 - check statements
 300 - configure
-400 - generate
-500 - build
+400 - build

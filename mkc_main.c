@@ -149,7 +149,11 @@ main (int argc, char *argv [])
       }
       case 3: {
         if (optarg != NULL) {
-          mkcoptions.loglevel = atol (optarg);
+          if (strcmp (optarg, "all") == 0) {
+            mkcoptions.loglevel = MKC_LOG_ALL;
+          } else {
+            mkcoptions.loglevel = atol (optarg);
+          }
         }
         break;
       }
@@ -364,14 +368,12 @@ void
 mkc_main_set_prefix (mkc_error_t *mkcerr)
 {
   char    tbuff [MKC_PATH_MAX];
-  char    *p;
 
   *tbuff = '\0';
   env_get ("PREFIX", tbuff, sizeof (tbuff));
   if (! *tbuff) {
-    path_build (MKC_PATH_HOME, tbuff, sizeof (tbuff), NULL, mkcerr);
-    p = tbuff + strlen (tbuff);
-    stpecpy (p, tbuff + sizeof (tbuff), "/local");
+    /* use $HOME/local as a default */
+    path_build (MKC_PATH_HOME, tbuff, sizeof (tbuff), "local", mkcerr);
   }
   path_set_dir (MKC_DIR_PREFIX, tbuff);
 }

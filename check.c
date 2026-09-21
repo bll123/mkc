@@ -17,7 +17,7 @@
 #include "alternate.h"
 #include "attribute.h"
 #include "chararr.h"
-#include "mkc_check.h"
+#include "check.h"
 #include "mkc_compiler.h"
 #include "const.h"
 #include "mkc_def.h"
@@ -35,7 +35,7 @@
 
 #define MKC_PKG_TRACE 0
 
-typedef struct mkc_check_t {
+typedef struct check_t {
   scopedvar_t       * sv;
   compile_t         * compile;
   mkc_error_t       * mkcerr;
@@ -45,19 +45,19 @@ typedef struct mkc_check_t {
   mkc_regex_t       * rxargcount;
   mkc_regex_t       * rxcomma;
   chararr_t         * flags;
-} mkc_check_t;
+} check_t;
 
-static mkc_err_code_t mkc_chk_env_var_set (mkc_check_t *check, const char *nm);
-static int mkc_chk_package_exec (mkc_check_t *check, const char *pkgconfpath, const char *flag, const char *pkg, chararr_t * targv, char *rbuff, size_t rsz, const char *name);
+static mkc_err_code_t check_env_var_set (check_t *check, const char *nm);
+static int check_package_exec (check_t *check, const char *pkgconfpath, const char *flag, const char *pkg, chararr_t * targv, char *rbuff, size_t rsz, const char *name);
 
 MKC_NODISCARD
-mkc_check_t *
-mkc_check_init (scopedvar_t *sv, compile_t *compile,
+check_t *
+check_init (scopedvar_t *sv, compile_t *compile,
     mkc_attribute_t *attr, mkc_log_t *log, mkc_error_t *mkcerr)
 {
-  mkc_check_t   *check;
+  check_t   *check;
 
-  check = malloc (sizeof (mkc_check_t));
+  check = malloc (sizeof (check_t));
   check->sv = sv;
   check->compile = compile;
   check->attr = attr;
@@ -76,7 +76,7 @@ mkc_check_init (scopedvar_t *sv, compile_t *compile,
 }
 
 void
-mkc_check_free (mkc_check_t *check)
+check_free (check_t *check)
 {
   if (check == NULL) {
     return;
@@ -99,27 +99,27 @@ mkc_check_free (mkc_check_t *check)
 }
 
 mkc_err_code_t
-mkc_chk_compiler_env (mkc_check_t *check)
+check_compiler_env (check_t *check)
 {
   mkc_err_code_t    rc = MKC_OK;
   mkc_err_code_t    trc;
 
-  trc = mkc_chk_env_var_set (check, "BISON");
+  trc = check_env_var_set (check, "BISON");
   if (trc == MKC_OK_CHANGE) { rc = trc; }
-  trc = mkc_chk_env_var_set (check, "CC");
+  trc = check_env_var_set (check, "CC");
   if (trc == MKC_OK_CHANGE) { rc = trc; }
-  trc = mkc_chk_env_var_set (check, "CXX");
+  trc = check_env_var_set (check, "CXX");
   if (trc == MKC_OK_CHANGE) { rc = trc; }
-  trc = mkc_chk_env_var_set (check, "FLEX");
+  trc = check_env_var_set (check, "FLEX");
   if (trc == MKC_OK_CHANGE) { rc = trc; }
-  trc = mkc_chk_env_var_set (check, "OBJC");
+  trc = check_env_var_set (check, "OBJC");
   if (trc == MKC_OK_CHANGE) { rc = trc; }
 
   return rc;
 }
 
 int
-mkc_chk_compiler_works (mkc_check_t *check, mkc_compiler_t compiler)
+check_compiler_works (check_t *check, mkc_compiler_t compiler)
 {
   int         rc;
   const char  * nodeprecateflag;
@@ -142,7 +142,7 @@ mkc_chk_compiler_works (mkc_check_t *check, mkc_compiler_t compiler)
 }
 
 int
-mkc_chk_header_modern (mkc_check_t *check, mkc_compiler_t compiler)
+check_header_modern (check_t *check, mkc_compiler_t compiler)
 {
   int         rc;
 
@@ -155,7 +155,7 @@ mkc_chk_header_modern (mkc_check_t *check, mkc_compiler_t compiler)
 }
 
 int
-mkc_chk_system_type (mkc_check_t *check, mkc_compiler_t compiler)
+check_system_type (check_t *check, mkc_compiler_t compiler)
 {
   int         rc = MKC_ERR_FAILURE;
   int         systype = MKC_ERR_FAILURE;
@@ -190,7 +190,7 @@ mkc_chk_system_type (mkc_check_t *check, mkc_compiler_t compiler)
 }
 
 int
-mkc_chk_system_id (mkc_check_t *check, mkc_compiler_t compiler)
+check_system_id (check_t *check, mkc_compiler_t compiler)
 {
   int         rc = MKC_ERR_FAILURE;
   int         sysid = MKC_ERR_FAILURE;
@@ -222,7 +222,7 @@ mkc_chk_system_id (mkc_check_t *check, mkc_compiler_t compiler)
 }
 
 int
-mkc_chk_variadic_macro (mkc_check_t *check, mkc_compiler_t compiler)
+check_variadic_macro (check_t *check, mkc_compiler_t compiler)
 {
   int         rc;
 
@@ -239,7 +239,7 @@ mkc_chk_variadic_macro (mkc_check_t *check, mkc_compiler_t compiler)
 /* other linux systems have lib64, but only use it for lib64 specific */
 /* libraries */
 int
-mkc_chk_library_location (mkc_check_t *check, mkc_compiler_t compiler)
+check_library_location (check_t *check, mkc_compiler_t compiler)
 {
   int         rc = MKC_ERR_FAILURE;
   int         libloc = MKC_ERR_FAILURE;
@@ -271,7 +271,7 @@ mkc_chk_library_location (mkc_check_t *check, mkc_compiler_t compiler)
 }
 
 int
-mkc_chk_compiler_id (mkc_check_t *check, mkc_compiler_t compiler)
+check_compiler_id (check_t *check, mkc_compiler_t compiler)
 {
   int         rc = MKC_ERR_FAILURE;
   int         compid = MKC_ERR_FAILURE;
@@ -303,7 +303,7 @@ mkc_chk_compiler_id (mkc_check_t *check, mkc_compiler_t compiler)
 }
 
 int
-mkc_chk_getconf (mkc_check_t *check)
+check_getconf (check_t *check)
 {
   int     rc = MKC_ERR_FAILURE;
 
@@ -342,7 +342,7 @@ mkc_chk_getconf (mkc_check_t *check)
 }
 
 int
-mkc_chk_arg_count (mkc_check_t *check, mkc_compiler_t compiler,
+check_arg_count (check_t *check, mkc_compiler_t compiler,
     const char *funcname)
 {
   int             rc = 0;
@@ -416,7 +416,7 @@ mkc_chk_arg_count (mkc_check_t *check, mkc_compiler_t compiler,
 }
 
 int
-mkc_chk_compiler_flag (mkc_check_t *check,
+check_compiler_flag (check_t *check,
     mkc_compiler_t compiler,
     const char *flag, bool negate)
 {
@@ -470,7 +470,7 @@ mkc_chk_compiler_flag (mkc_check_t *check,
 }
 
 int
-mkc_chk_const (mkc_check_t *check,
+check_const (check_t *check,
     mkc_compiler_t compiler, const char *consttxt)
 {
   int             rc;
@@ -487,7 +487,7 @@ mkc_chk_const (mkc_check_t *check,
 }
 
 int
-mkc_chk_define (mkc_check_t *check,
+check_define (check_t *check,
     mkc_compiler_t compiler, const char *def)
 {
   int             rc;
@@ -504,7 +504,7 @@ mkc_chk_define (mkc_check_t *check,
 }
 
 int
-mkc_chk_package (mkc_check_t *check,
+check_package (check_t *check,
     mkc_compiler_t compiler, const char *pkg)
 {
   int             rc = MKC_ERR_FAILURE;
@@ -604,7 +604,7 @@ mkc_chk_package (mkc_check_t *check,
   btargc = chararr_size (targv);
 
   /* libpkgconf's api is far to complex to bother using. */
-  rc = mkc_chk_package_exec (check, pkgconfpath, "--exists", pkg,
+  rc = check_package_exec (check, pkgconfpath, "--exists", pkg,
       targv, rbuff, MKC_SMALL_BUFF_SZ, NULL);
   if (rc != MKC_OK) {
     free (pkgconfpath);
@@ -615,17 +615,17 @@ mkc_chk_package (mkc_check_t *check,
   }
 
   chararr_reset (targv, btargc);
-  snprintf (tmpname, sizeof (tmpname), "%s_CFLAGS", tmpnm);
+  snprintf (tmpname, sizeof (tmpname), "%s_COMPFLAGS", tmpnm);
   str_clean (tmpname, 0);
 
-  rc = mkc_chk_package_exec (check, pkgconfpath, "--cflags", pkg,
+  rc = check_package_exec (check, pkgconfpath, "--cflags", pkg,
       targv, rbuff, MKC_SMALL_BUFF_SZ, tmpname);
 
   chararr_reset (targv, btargc);
   snprintf (tmpname, sizeof (tmpname), "%s_LIBS", tmpnm);
   str_clean (tmpname, 0);
 
-  rc = mkc_chk_package_exec (check, pkgconfpath, "--libs", pkg,
+  rc = check_package_exec (check, pkgconfpath, "--libs", pkg,
       targv, rbuff, MKC_SMALL_BUFF_SZ, tmpname);
 
   chararr_free (targv);
@@ -636,7 +636,7 @@ mkc_chk_package (mkc_check_t *check,
 }
 
 int
-mkc_chk_link_flag (mkc_check_t *check,
+check_link_flag (check_t *check,
     mkc_compiler_t compiler, const char *flag)
 {
   int               rc;
@@ -667,7 +667,7 @@ mkc_chk_link_flag (mkc_check_t *check,
 
 /* return a size of 0 when the type is not found */
 int
-mkc_chk_size (mkc_check_t *check,
+check_size (check_t *check,
     mkc_compiler_t compiler, const char *type)
 {
   int       rc;
@@ -689,7 +689,7 @@ mkc_chk_size (mkc_check_t *check,
 }
 
 int
-mkc_chk_type (mkc_check_t *check,
+check_type (check_t *check,
     mkc_compiler_t compiler, const char *type)
 {
   int             rc;
@@ -706,7 +706,7 @@ mkc_chk_type (mkc_check_t *check,
 }
 
 int
-mkc_chk_struct_member (mkc_check_t *check,
+check_struct_member (check_t *check,
     mkc_compiler_t compiler,
     const char *structname, const char *membername)
 {
@@ -726,7 +726,7 @@ mkc_chk_struct_member (mkc_check_t *check,
 }
 
 int
-mkc_chk_function (mkc_check_t *check, mkc_compiler_t compiler,
+check_function (check_t *check, mkc_compiler_t compiler,
     const char *funcname)
 {
   int             rc;
@@ -744,7 +744,7 @@ mkc_chk_function (mkc_check_t *check, mkc_compiler_t compiler,
 }
 
 int
-mkc_chk_header (mkc_check_t *check, mkc_compiler_t compiler,
+check_header (check_t *check, mkc_compiler_t compiler,
     const char *header, chararr_t * compflags)
 {
   int             rc;
@@ -774,7 +774,7 @@ mkc_chk_header (mkc_check_t *check, mkc_compiler_t compiler,
 /* internal routines */
 
 static mkc_err_code_t
-mkc_chk_env_var_set (mkc_check_t *check, const char *nm)
+check_env_var_set (check_t *check, const char *nm)
 {
   char            *tbuff;
   mkc_err_code_t  rc = MKC_OK;
@@ -797,7 +797,7 @@ mkc_chk_env_var_set (mkc_check_t *check, const char *nm)
 }
 
 static int
-mkc_chk_package_exec (mkc_check_t *check, const char *pkgconfpath,
+check_package_exec (check_t *check, const char *pkgconfpath,
     const char *flag, const char *pkg, chararr_t * targv,
     char *rbuff, size_t rsz, const char *name)
 {

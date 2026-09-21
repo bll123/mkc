@@ -24,7 +24,7 @@ if (${_package_unknown} == 0) {
 } else {
   print '  fail u';
 }
-if (! is_defined (unknown_CFLAGS)) {
+if (! is_defined (unknown_COMPFLAGS)) {
   print '  ok u';
 } else {
   print '  fail u';
@@ -41,7 +41,7 @@ if (${_package_zlib} == 1) {
   print '  fail zlib';
 }
 
-set a ${zlib_CFLAGS};
+set a ${zlib_COMPFLAGS};
 set b ${zlib_LIBS};
 # zlib_CFLAGS [ ]
 # zlib_LIBS [ -lz ]
@@ -62,7 +62,7 @@ if (${_package_z} == 1) {
   print '  fail z';
 }
 
-set a ${z_CFLAGS};
+set a ${z_COMPFLAGS};
 set b ${z_LIBS};
 # z_CFLAGS [ ]
 # z_LIBS [ -lz ]

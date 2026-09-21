@@ -5,6 +5,8 @@ project mkctest {
 }
 
 check_link_flag '-fPIC';
+# make sure a list works
+check_link_flag [ '-g' '-fPIC' ];
 add_library '-lm';
 
 profile default {

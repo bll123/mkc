@@ -142,6 +142,9 @@ profile default {
 profile debug {
   add_compile_flag '-O0';
 }
+profile sanitize {
+  add_compile_flag '-O0';
+}
 
 check_compile_flag '-pedantic';
 check_compile_flag '-pedantic-errors';
@@ -173,6 +176,7 @@ if (${MKC_FORTIFY}) {
 
 add_compile_flag '-Iinclude';
 add_compile_flag '-I.';
+add_compile_flag ${pcre_COMPFLAGS};
 
 # include file checks
 
@@ -188,9 +192,9 @@ check_include_guards {
 
 # build
 define_executable mkc {
-  source ast.c asttoken.c chararr.c compile.c const.c
+  source ast.c asttoken.c chararr.c check.c compile.c const.c
       context.c dict.c dictdict.c dirmatch.c dirop.c envutil.c
-      fileop.c list.c mkc_check.c mkc_compiler.c
+      fileop.c list.c mkc_compiler.c
       mkc_error.c mkc_grammar.c mkc_lex.c
       mkc_log.c mkc_main.c mkc_regex_pcre.c mkc_util.c
       os_process.c parse.c pathutil.c process.c scopedvar.c

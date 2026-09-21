@@ -1,5 +1,11 @@
 /*
  * Copyright 2026 Brad Lanam Pleasant Hill CA
+ *
+ * Like a 'dict', but only handles value_t storage, and is specialized
+ * to handle values.
+ *
+ * A 'set' of a value always makes a copy of the value.
+ *
  */
 
 #include <stdio.h>

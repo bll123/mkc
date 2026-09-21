@@ -1,5 +1,15 @@
 /*
  * Copyright 2026 Brad Lanam Pleasant Hill CA
+ *
+ * Stores items in an unsorted or sorted list.
+ * A copy of each item is made.
+ * The caller supplies the 'free' and 'comparison' (for sorted) functions.
+ * The list indices are stable except on a deletion.
+ *   Sorted lists use an indirect list of keys.
+ * The list pointers are not stable, as the list may be reallocated.
+ *   Never re-use a pointer to a list entry if the list may get changed,
+ *   instead re-fetch the list data using the list index.
+ *
  */
 
 #include <stdio.h>
@@ -15,7 +25,7 @@
 
 typedef struct list_t {
   /* create as a char * so that we can do arithmetic on it */
-  char                  * data;
+  char              * data;
   /* only the indexes are sorted. */
   /* the indirection allows stable data indexes. */
   listidx_t         * idxsort;
@@ -29,6 +39,7 @@ typedef struct list_t {
   list_type_t       type;
 } list_t;
 
+static void * list_append (list_t *list, void *data);
 static int list_binary_search (list_t *list, void *data, listidx_t *loc);
 
 MKC_NODISCARD
@@ -115,26 +126,6 @@ list_size (list_t *list)
   return list->idxsz;
 }
 
-list_type_t
-list_get_type (list_t *list)
-{
-  if (list == NULL) {
-    return MKC_LIST_UNSORTED;
-  }
-
-  return list->type;
-}
-
-list_compare_t
-list_get_compfunc (list_t *list)
-{
-  if (list == NULL) {
-    return NULL;
-  }
-
-  return list->compare;
-}
-
 void *
 list_set (list_t *list, void *data)
 {
@@ -191,36 +182,6 @@ list_set (list_t *list, void *data)
     list->sz += 1;
     list->idxsz += 1;
   }
-
-  return list->data + list->itemsz * dataloc;
-}
-
-/* an append to a sorted list will not update the sort-index */
-/* the data is simply appended to the list */
-void *
-list_append (list_t *list, void *data)
-{
-  int             rc = MKC_LIST_NOTFOUND;
-  listidx_t   dataloc;
-
-  if (list == NULL || data == NULL) {
-    return NULL;
-  }
-
-  dataloc = list->sz;
-
-  if (rc == MKC_LIST_NOTFOUND &&
-      list->allocsz <= list->sz) {
-    list->allocsz += 10;
-    list->data = realloc (list->data, list->itemsz * list->allocsz);
-    if (list->data == NULL) {
-      mkc_error_set (list->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-      return NULL;
-    }
-  }
-
-  memcpy (list->data + list->itemsz * dataloc, data, list->itemsz);
-  list->sz += 1;
 
   return list->data + list->itemsz * dataloc;
 }
@@ -431,6 +392,36 @@ list_ind_compare (void *ta, void *tb)
 }
 
 /* internal routines */
+
+/* an append to a sorted list will not update the sort-index */
+/* the data is simply appended to the list */
+static void *
+list_append (list_t *list, void *data)
+{
+  int             rc = MKC_LIST_NOTFOUND;
+  listidx_t   dataloc;
+
+  if (list == NULL || data == NULL) {
+    return NULL;
+  }
+
+  dataloc = list->sz;
+
+  if (rc == MKC_LIST_NOTFOUND &&
+      list->allocsz <= list->sz) {
+    list->allocsz += 10;
+    list->data = realloc (list->data, list->itemsz * list->allocsz);
+    if (list->data == NULL) {
+      mkc_error_set (list->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+      return NULL;
+    }
+  }
+
+  memcpy (list->data + list->itemsz * dataloc, data, list->itemsz);
+  list->sz += 1;
+
+  return list->data + list->itemsz * dataloc;
+}
 
 /* loc points to the idxsort entry, not the dataidx */
 static int

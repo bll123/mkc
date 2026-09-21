@@ -212,8 +212,8 @@
 
 /* valuelist: a list of varvalues */
 %type <astnode> valuelist
-/* pairedvaluelist: a list of varname/varvalues */
-%type <astnode> pairedvaluelist
+/* dictvaluelist: a list of varname/varvalues */
+%type <astnode> dictvaluelist
 /* a pathname may be a path, a string or ${variable} */
 %type <astnode> pathname pathlist
 %type <astnode> expr
@@ -860,7 +860,7 @@ chk_header[v]:
   ;
 
 chk_library[v]:
-    T_ADD_LIBRARY varvalue[a] stmtblock_or_semi[b]
+    T_ADD_LIBRARY valuelist[a] stmtblock_or_semi[b]
     {
       $v = ast_mk_check_flag (ast, $a, $b, MKC_ADD, MKC_T_CHK_LIBRARY,
           yylloc.first_line, yylloc.first_column);
@@ -868,12 +868,12 @@ chk_library[v]:
   ;
 
 chk_linkflag[v]:
-    T_ADD_LINK_FLAG varvalue[a] stmtblock_or_semi[b]
+    T_ADD_LINK_FLAG valuelist[a] stmtblock_or_semi[b]
     {
       $v = ast_mk_check_flag (ast, $a, $b, MKC_ADD, MKC_T_CHK_LINK_FLAG,
           yylloc.first_line, yylloc.first_column);
     }
-  | T_CHK_LINK_FLAG varvalue[a] stmtblock_or_semi[b]
+  | T_CHK_LINK_FLAG valuelist[a] stmtblock_or_semi[b]
     {
       $v = ast_mk_check_flag (ast, $a, $b, MKC_CHK, MKC_T_CHK_LINK_FLAG,
           yylloc.first_line, yylloc.first_column);
@@ -1310,7 +1310,7 @@ dict[v]:
       $v = ast_mk_value_dict (ast, NULL, NULL, NULL,
           yylloc.first_line, yylloc.first_column);
     }
-  | T_DOUBLE_LEFT_BRACKET pairedvaluelist[a] T_DOUBLE_RIGHT_BRACKET
+  | T_DOUBLE_LEFT_BRACKET dictvaluelist[a] T_DOUBLE_RIGHT_BRACKET
     {
       $v = $a;
     }
@@ -1343,6 +1343,9 @@ range[v]:
     }
   ;
 
+// valuelist is used to guarantee that the type will be a list
+// there are cases where it would be better to accept any type
+// rather than re-wrapping it inside another list
 valuelist[v]:
     varvalue[a]
     {
@@ -1356,13 +1359,13 @@ valuelist[v]:
     }
   ;
 
-pairedvaluelist[v]:
+dictvaluelist[v]:
     varname[a] varvalue[b]
     {
       $v = ast_mk_value_dict (ast, NULL, $a, $b,
           yylloc.first_line, yylloc.first_column);
     }
-  | pairedvaluelist[l] varname[a] varvalue[b]
+  | dictvaluelist[l] varname[a] varvalue[b]
     {
       $v = ast_mk_value_dict (ast, $l, $a, $b,
           yylloc.first_line, yylloc.first_column);

@@ -14,7 +14,7 @@ No escapes are implemented.
     set junk 'string value';
 
 Unless you are embedding a variable, it is recommended that single
-quoted string be used as they are more efficient.
+quoted string always be used as they are more efficient.
 
 ##### Double Quoted
 
@@ -66,6 +66,12 @@ contain other variables.
 
     set n [1 2 3 5];
     set o ['a' 'b' 'c'];
+
+#### Dictionaries
+
+Dictionaries are name value pairs.
+
+    set p [[ 'a' 1 'b' 2 ]];
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)
