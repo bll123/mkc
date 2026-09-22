@@ -29,7 +29,6 @@ extern char const * const MKC_C_COMPFLAGS;
 extern char const * const MKC_C_LINKFLAGS;
 extern char const * const MKC_C_LIBS;
 extern char const * const MKC_C_SUPPORTS_MM;
-extern char const * const MKC_C_MKC_CHANGED;
 extern char const * const MKC_C_PREFIX;
 
 extern int gmkcdebug;

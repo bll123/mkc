@@ -67,7 +67,7 @@ typedef struct mkc_user_regex_t {
 /* foreach processing */
 typedef struct mkc_foreach_t {
   list_t      * namelist;
-  value_t     * listval;      // list or range
+  value_t     * listval;      // list or range or dict
   value_t     tvalue;
   listidx_t   iteridx;
 } mkc_foreach_t;
@@ -437,9 +437,9 @@ process_num_op (process_t *process, astnode_token_t asttype,
   }
 
   mkc_log (process->log, MKC_LOG_PROCESS, "  p-num-op-a: %s\n",
-      value_to_str (vala, tbuff, sizeof (tbuff), 0));
+      value_to_str (vala, tbuff, sizeof (tbuff), 0, false));
   mkc_log (process->log, MKC_LOG_PROCESS, "  p-num-op-b: %s\n",
-      value_to_str (valb, tbuff, sizeof (tbuff), 0));
+      value_to_str (valb, tbuff, sizeof (tbuff), 0, false));
   ivala = sv_value_get_integer (process->sv, vala);
   ivalb = sv_value_get_integer (process->sv, valb);
   if (mkc_error_chk_err (process->mkcerr)) {
@@ -525,9 +525,9 @@ process_str_op (process_t *process, astnode_token_t asttype,
   }
 
   mkc_log (process->log, MKC_LOG_PROCESS, "  p-str-op-a: %s\n",
-      value_to_str (vala, stra, sizeof (stra), 0));
+      value_to_str (vala, stra, sizeof (stra), 0, false));
   mkc_log (process->log, MKC_LOG_PROCESS, "  p-str-op-b: %s\n",
-      value_to_str (valb, strb, sizeof (strb), 0));
+      value_to_str (valb, strb, sizeof (strb), 0, false));
   sv_value_get_str (process->sv, vala, stra, sizeof (stra));
   sv_value_get_str (process->sv, valb, strb, sizeof (strb));
   if (mkc_error_chk_err (process->mkcerr)) {
@@ -1424,10 +1424,9 @@ process_stmt_executable (process_t *process, value_t *valnm)
   changed = process->mkc_changed;
 
   if (process->cacheloaded == false) {
-    sv_set_integer (process->sv, SV_T_INTERNAL,
-        MKC_C_MKC_CHANGED, NULL, true, MKC_VCTXT_MKC);
     changed = true;
     process->mkc_changed = true;
+    target_set_changed (process->target, changed);
     process->reset_stage = true;
     process_clean_check (process);
   }
@@ -1593,8 +1592,8 @@ process_stmt_loadcache_post (process_t *process)
   process_clean_check (process);
 
   /* the changed flag will invalidate certain cached items */
-  sv_set_integer (process->sv, SV_T_INTERNAL,
-        MKC_C_MKC_CHANGED, NULL, changed, MKC_VCTXT_MKC);
+  process->mkc_changed = changed;
+  target_set_changed (process->target, changed);
 
   process->inloadcache = false;
 
@@ -1651,7 +1650,7 @@ process_stmt_print (process_t *process, value_t *value, int depth)
 
   value_init (&rvalue);
   tvalue = sv_value_get_value (process->sv, value, &rvalue);
-  value_to_str (tvalue, tbuff, sizeof (tbuff), 0);
+  value_to_str (tvalue, tbuff, sizeof (tbuff), 0, false);
   fprintf (stdout, "%s", tbuff);
   sv_value_free (tvalue);
 
@@ -1795,8 +1794,8 @@ process_stmt_set (process_t *process,
     trc = MKC_OK;
   }
 
-  sv_set_integer (process->sv, SV_T_INTERNAL,
-        MKC_C_MKC_CHANGED, NULL, changed, MKC_VCTXT_MKC);
+  process->mkc_changed = changed;
+  target_set_changed (process->target, changed);
 
   sv_value_free (tvalue);
 
@@ -2287,7 +2286,7 @@ process_check_flag (process_t *process,
     if (mkc_error_chk_err (process->mkcerr)) {
       char    tmp [MKC_VNAME_MAX];
 
-      value_to_str (tvalue, tmp, sizeof (tmp), 0);
+      value_to_str (tvalue, tmp, sizeof (tmp), 0, false);
       mkc_error_set (process->mkcerr, MKC_ERR_UNKNOWN_VARIABLE, 0, tmp);
       continue;
     }
@@ -2746,8 +2745,8 @@ process_create_name (process_t *process, astnode_token_t asttype,
 static int
 process_initial_checks (process_t *process)
 {
-  int       rc;
-  int       isystype;
+  int     rc;
+  int     isystype;
   char    tbuff [MKC_PATH_MAX];
 
   mkc_log (process->log, MKC_LOG_CHECK, "== internal checks\n");
@@ -2892,8 +2891,6 @@ process_initial_checks (process_t *process)
       MKC_C_IVARMACRO, NULL, process->variadicmacro, MKC_VCTXT_MKC);
 
   /* make sure these variables exist */
-  sv_set_integer (process->sv, SV_T_INTERNAL,
-        MKC_C_MKC_CHANGED, NULL, false, MKC_VCTXT_MKC);
 
   path_build (MKC_PATH_PREFIX, tbuff, sizeof (tbuff), NULL, process->mkcerr);
   sv_set_str (process->sv, SV_T_INTERNAL,
@@ -2929,7 +2926,7 @@ process_set_defaults (process_t *process)
   sv_set_str (process->sv, SV_T_INTERNAL,
       "CXX", NULL, "c++", MKC_VCTXT_ENV);
   sv_set_str (process->sv, SV_T_INTERNAL,
-      "DC", NULL, "dc", MKC_VCTXT_ENV);
+      "DC", NULL, "dcc", MKC_VCTXT_ENV);
   sv_set_str (process->sv, SV_T_INTERNAL,
       "FLEX", NULL, "flex", MKC_VCTXT_ENV);
   sv_set_str (process->sv, SV_T_INTERNAL,
@@ -3101,7 +3098,7 @@ process_configure_auto (process_t *process, int defzero)
           fprintf (fh, "#define %s %" PRId64 "\n", nm, tmval);
         }
       } else {
-        value_to_str (value, tbuff, MKC_PATH_MAX, 0);
+        value_to_str (value, tbuff, MKC_PATH_MAX, 0, false);
         fprintf (fh, "#define %s \"%s\"\n", nm, tbuff);
       }
     }
@@ -3393,7 +3390,7 @@ process_list_to_flags (process_t *process, value_t *value,
     if (mkc_error_chk_err (process->mkcerr)) {
       char    tmp [MKC_VNAME_MAX];
 
-      value_to_str (lvalue, tmp, sizeof (tmp), 0);
+      value_to_str (lvalue, tmp, sizeof (tmp), 0, false);
       mkc_error_set (process->mkcerr, MKC_ERR_UNKNOWN_VARIABLE, 0, tmp);
       continue;
     }
@@ -3491,7 +3488,7 @@ process_save_cache_profile (process_t *process, FILE *fh,
 
     nm = sv_var_iter_get_name (sv, sviter, vidx);
     value = sv_var_iter_get_value (sv, sviter, vidx);
-    value_to_str (value, tbuff, MKC_LARGE_BUFF_SZ, 0);
+    value_to_str (value, tbuff, MKC_LARGE_BUFF_SZ, 0, true);
 
     if (value_is_string_type (value)) {
       snprintf (tmp, tmpsz, "    set '%s' '%s' ", nm, tbuff);
@@ -3550,9 +3547,9 @@ process_check_mkc_timestamp (process_t *process)
 
   process->mkc_ts_checked = true;
 
-  if (sv_is_defined (process->sv, SV_T_BUILD_DATA,
-      process->mkcoptions->mkc_filename, MKC_C_BVAR_TIMESTAMP)) {
-    cachedts = sv_get_timestamp (process->sv, SV_T_BUILD_DATA,
+  if (sv_is_defined (process->sv, SV_T_INTERNAL,
+      process->mkcoptions->mkc_filename, NULL)) {
+    cachedts = sv_get_timestamp (process->sv, SV_T_INTERNAL,
         process->mkcoptions->mkc_filename);
   }
 
@@ -3565,14 +3562,14 @@ process_check_mkc_timestamp (process_t *process)
 
   process_clean_check (process);
 
+  /* don't revert back to false */
   if (changed) {
-    sv_set_integer (process->sv, SV_T_INTERNAL,
-        MKC_C_MKC_CHANGED, NULL, changed, MKC_VCTXT_MKC);
+    process->mkc_changed = changed;
+    target_set_changed (process->target, changed);
   }
 
-  sv_set_timestamp (process->sv, SV_T_BUILD_DATA,
-      process->mkcoptions->mkc_filename, MKC_C_BVAR_TIMESTAMP,
-      process->mkc_ts, MKC_VCTXT_MKC);
+  sv_set_timestamp (process->sv, SV_T_INTERNAL,
+      process->mkcoptions->mkc_filename, NULL, process->mkc_ts, MKC_VCTXT_MKC);
 }
 
 static void
@@ -3697,7 +3694,7 @@ process_dbg_print_var (process_t *process, const char *profname)
         }
       }
 
-      value_to_str (value, tbuff, MKC_LARGE_BUFF_SZ, 0);
+      value_to_str (value, tbuff, MKC_LARGE_BUFF_SZ, 0, false);
       if (value_is_string_type (value)) {
         fprintf (stdout, "  %s '%s'\n", nm, tbuff);
       } else {

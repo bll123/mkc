@@ -46,6 +46,7 @@ typedef struct target_t target_t;
 MKC_NODISCARD target_t * target_init (scopedvar_t *scopedvar, compile_t *compile, mkc_attribute_t *attr, mkc_log_t *log, mkc_error_t *mkcerr);
 void target_free (target_t *target);
 chararr_t *target_get_flags (target_t *target, const char *flagname, chararr_t *include_paths);
+void target_set_changed (target_t *target, bool changed);
 
 void target_topo_add_items (target_t *target, toposort_t *topo, list_t *hlist);
 void target_topo_add_deps (target_t *target, toposort_t *topo, const char *filename);

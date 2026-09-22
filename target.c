@@ -46,6 +46,7 @@ typedef struct target_t {
   mkc_log_t           * log;
   mkc_error_t         * mkcerr;
   bool                create_stage_bin;
+  bool                mkc_changed;
 } target_t;
 
 typedef enum {
@@ -56,11 +57,12 @@ typedef enum {
 static const char * const dependency_delim = " \n\r\\";
 
 static bool target_chk_last_libloc (mkc_compiler_id_t compid, char *lastlibloc, size_t sz, const char *str);
-static void target_process_timestamp (target_t *target, char *path, size_t psz, const char *filename);
 static void target_topo_add_items_deps (target_t *target, toposort_t *topo, list_t *itemlist);
 static void target_create_stage_bin (target_t *target);
 static void target_set_target_flags (target_t *target, const char *builditem, const char *bvarname, comp_flag_t ftype);
 static void target_append_flags (target_t *target, comp_flag_t ftype, value_t *value, chararr_t *flags, chararr_t *include_paths);
+static int64_t target_get_timestamp (target_t *target, const char *filepath);
+static void target_update_timestamp (target_t *target, const char *filepath);
 
 MKC_NODISCARD
 target_t *
@@ -81,6 +83,7 @@ target_init (scopedvar_t *sv, compile_t *compile,
   target->log = log;
   target->mkcerr = mkcerr;
   target->create_stage_bin = false;
+  target->mkc_changed = false;
 
   return target;
 }
@@ -144,6 +147,16 @@ target_get_flags (target_t *target, const char *flagname,
   free (str);
 
   return flags;
+}
+
+void
+target_set_changed (target_t *target, bool changed)
+{
+  if (target == NULL) {
+    return;
+  }
+
+  target->mkc_changed = changed;
 }
 
 void
@@ -214,37 +227,35 @@ target_check_dependency_timestamp (target_t *target,
   int64_t       ts;
   listidx_t iteridx;
 
-  mkc_message (MKC_V_TMI, "chk-dep-ts: %s ", filepath);
 
+  mkc_message (MKC_V_TMI, "chk-dep-ts: %s\n", filepath);
   if (! sv_is_defined (target->sv, SV_T_BUILD_DATA,
       filepath, MKC_C_BVAR_DEPENDENCY)) {
-    mkc_message_no_indent (MKC_V_TMI, "ood\n");
+    mkc_message (MKC_V_TMI, "chk-dep-ts: %s no-dep-def ood\n", filepath);
     return TARGET_OUT_OF_DATE;
   }
 
-  fts = 0;
-  if (sv_is_defined (
-      target->sv, SV_T_BUILD_DATA, filepath, MKC_C_BVAR_TIMESTAMP)) {
-    fts = sv_get_timestamp (target->sv, SV_T_BUILD_DATA, filepath);
-  }
+  fts = target_get_timestamp (target, filepath);
   if (fts == 0) {
+    mkc_message (MKC_V_TMI, "chk-dep-ts: %s 0 ood\n", filepath);
     /* can short-circuit any filepath that does not have a timestamp set */
     return TARGET_OUT_OF_DATE;
   }
 
+  mkc_message (MKC_V_WTMI, "chk-dep-ts: %s fts: %" PRId64 "\n", filepath, fts);
   target_iter_dependency_ts_start (target, filepath, &iteridx);
   while ((ts = target_iter_dependency_ts (target, filepath, &iteridx)) != MKC_ITER_FINISH) {
     if (mkc_error_chk_err (target->mkcerr)) {
       break;
     }
 
-    if (ts >= fts) {
-      mkc_message_no_indent (MKC_V_TMI, "ood\n");
+    if (ts == 0 || ts >= fts) {
+      mkc_message (MKC_V_TMI, "chk-dep-ts: %s ts-chk ood\n", filepath);
       return TARGET_OUT_OF_DATE;
     }
   }
 
-  mkc_message_no_indent (MKC_V_TMI, "curr\n");
+  mkc_message (MKC_V_TMI, "chk-dep-ts: %s curr\n", filepath);
   return TARGET_CURRENT;
 }
 
@@ -446,7 +457,7 @@ target_get_include_list (target_t *target, chararr_t * include_paths,
         snprintf (hdrpath, MKC_PATH_MAX, "%s/%s", path, hdr);
       }
       sv_set_str (sv, SV_T_PATHS, hdr, NULL, hdrpath, MKC_VCTXT_MKC);
-      tts = fileop_modtime (hdrpath);
+      tts = target_get_timestamp (target, hdrpath);
 
       /* cache invalidation check */
       /* if the timestamp of the file is newer than the cached timestamp */
@@ -530,7 +541,7 @@ target_iter_dependency_ts_start (target_t *target, const char *filename,
 }
 
 int64_t
-target_iter_dependency_ts (target_t *target, const char *filename,
+target_iter_dependency_ts (target_t *target, const char *filepath,
     listidx_t *iteridx)
 {
   value_t       *value;
@@ -539,18 +550,17 @@ target_iter_dependency_ts (target_t *target, const char *filename,
   int64_t       ts;
   char          dep [MKC_VNAME_MAX];
 
-  value = sv_get_value (target->sv, SV_T_BUILD_DATA, filename, MKC_C_BVAR_DEPENDENCY);
+  value = sv_get_value (target->sv, SV_T_BUILD_DATA, filepath, MKC_C_BVAR_DEPENDENCY);
   didx = value_iter_next (value, &tvalue, iteridx);
   if (didx == MKC_ITER_FINISH) {
     return didx;
   }
 
   sv_value_get_str (target->sv, &tvalue, dep, sizeof (dep));
-  if (! sv_is_defined (target->sv, SV_T_BUILD_DATA, dep, MKC_C_BVAR_DEPENDENCY)) {
-    return 0;
-  }
+  mkc_message (MKC_V_WTMI, "dep: %s ", dep);
 
-  ts = sv_get_timestamp (target->sv, SV_T_BUILD_DATA, dep);
+  ts = target_get_timestamp (target, dep);
+  mkc_message_no_indent (MKC_V_WTMI, "%" PRId64 "\n", ts);
   return ts;
 }
 
@@ -560,14 +570,8 @@ target_executable_object (target_t *target, const char *execnm,
 {
   char        * epath;
   char        * opath;
-  int64_t     fts = 0;
   scopedvar_t * sv = target->sv;
-  value_t     * value;
-  bool        changed;
-
-  value = sv_get_value (target->sv, SV_T_INTERNAL,
-      MKC_C_MKC_CHANGED, NULL);
-  changed = sv_value_get_integer (target->sv, value);
+  bool        changed = target->mkc_changed;
 
   epath = malloc (MKC_PATH_MAX);
   if (epath == NULL) {
@@ -586,14 +590,12 @@ target_executable_object (target_t *target, const char *execnm,
 
   path_build (MKC_PATH_STAGE_BIN, epath, MKC_PATH_MAX, execnm, target->mkcerr);
   sv_set_str (sv, SV_T_PATHS, execnm, NULL, epath, MKC_VCTXT_MKC);
-  fts = fileop_modtime (epath);
-  sv_set_timestamp (sv, SV_T_BUILD_DATA, epath, MKC_C_BVAR_TIMESTAMP, fts, MKC_VCTXT_MKC);
+  target_get_timestamp (target, epath);
   sv_set_integer (sv, SV_T_BUILD_DATA, epath, MKC_C_BVAR_TYPE, TGT_T_EXEC, MKC_VCTXT_MKC);
 
   path_build (MKC_PATH_MKCF_OBJECTS, opath, MKC_PATH_MAX, objnm, target->mkcerr);
   sv_set_str (sv, SV_T_PATHS, objnm, NULL, opath, MKC_VCTXT_MKC);
-  fts = fileop_modtime (opath);
-  sv_set_timestamp (sv, SV_T_BUILD_DATA, opath, MKC_C_BVAR_TIMESTAMP, fts, MKC_VCTXT_MKC);
+  target_get_timestamp (target, opath);
   sv_set_integer (sv, SV_T_BUILD_DATA, opath, MKC_C_BVAR_TYPE, TGT_T_OBJECT, MKC_VCTXT_MKC);
 
   mkc_log (target->log, MKC_LOG_TARGET, "  %s\n", objnm);
@@ -616,8 +618,8 @@ target_object_source (target_t *target, const char *objnm,
   value_t         * value;
   value_t         tvalue;
   value_t         * valdeplist;
-  listidx_t   diteridx;
-  listidx_t   didx;
+  listidx_t       diteridx;
+  listidx_t       didx;
   char            * path;
   char            * opath;
 
@@ -665,13 +667,18 @@ target_object_source (target_t *target, const char *objnm,
   value_iter_start (valdeplist, &diteridx);
   while ((didx = value_iter_next (valdeplist, &tvalue, &diteridx)) != MKC_ITER_FINISH) {
     char        dep [MKC_VNAME_MAX];
+    value_t     * tmpvalue;
 
     if (mkc_error_chk_err (target->mkcerr)) {
       break;
     }
 
     sv_value_get_str (target->sv, &tvalue, dep, sizeof (dep));
-    target_process_timestamp (target, path, MKC_PATH_MAX, dep);
+    tmpvalue = sv_get_value (target->sv, SV_T_PATHS, dep, NULL);
+    if (tmpvalue != NULL) {
+      sv_value_get_str (target->sv, tmpvalue, dep, sizeof (dep));
+    }
+    target_get_timestamp (target, dep);
   }
 
   free (path);
@@ -815,7 +822,6 @@ target_build (target_t *target, list_t *blist)
     if (tgttype == TGT_T_EXEC ||
         tgttype == TGT_T_LIBRARY ||
         tgttype == TGT_T_OBJECT) {
-      int64_t     tts;
       int         rc;
 
       compile_set_flags (target->compile, compflags, linkflags, libs);
@@ -835,9 +841,7 @@ target_build (target_t *target, list_t *blist)
         continue;
       }
 
-      tts = fileop_modtime (builditem);
-      sv_set_timestamp (target->sv, SV_T_BUILD_DATA, builditem,
-          MKC_C_BVAR_TIMESTAMP, tts, MKC_VCTXT_MKC);
+      target_update_timestamp (target, builditem);
     }
   }
 
@@ -867,31 +871,6 @@ target_chk_last_libloc (mkc_compiler_id_t compid,
 
   stpecpy (lastlibloc, lastlibloc + sz, str);
   return false;
-}
-
-static void
-target_process_timestamp (target_t *target,
-    char *path, size_t psz, const char *filename)
-{
-  value_t     *value;
-  int64_t     ts = 0;
-
-  if (sv_is_defined (target->sv, SV_T_BUILD_DATA, filename, MKC_C_BVAR_TIMESTAMP)) {
-    return;
-  }
-
-  stpecpy (path, path + psz, filename);
-  if (*path != '/') {
-    value = sv_get_value (target->sv, SV_T_PATHS, filename, NULL);
-    if (value == NULL) {
-// ### need the set of paths from compflags
-    } else {
-      sv_value_get_str (target->sv, value, path, psz);
-    }
-  }
-
-  ts = fileop_modtime (path);
-  sv_set_timestamp (target->sv, SV_T_BUILD_DATA, filename, MKC_C_BVAR_TIMESTAMP, ts, MKC_VCTXT_MKC);
 }
 
 static void
@@ -1090,4 +1069,34 @@ target_append_flags (target_t *target, comp_flag_t ftype, value_t *value,
 
   free (str);
   free (lastlibloc);
+}
+
+static int64_t
+target_get_timestamp (target_t *target, const char *filepath)
+{
+  value_t     * value;
+  int64_t     ts = 0;
+
+  value = sv_get_value (target->sv, SV_T_BUILD_DATA, filepath, MKC_C_BVAR_TIMESTAMP);
+  if (value != NULL) {
+    ts = sv_get_timestamp (target->sv, SV_T_BUILD_DATA, filepath);
+    mkc_message (MKC_V_WTMI, "t: ts-cache: %s ts: %" PRId64 "\n", filepath, ts);
+  }
+  if (value == NULL || ts == 0) {
+    ts = fileop_modtime (filepath);
+    sv_set_timestamp (target->sv, SV_T_BUILD_DATA, filepath, MKC_C_BVAR_TIMESTAMP, ts, MKC_VCTXT_MKC);
+    mkc_message (MKC_V_WTMI, "t: ts-file: %s ts: %" PRId64 "\n", filepath, ts);
+  }
+
+  return ts;
+}
+
+static void
+target_update_timestamp (target_t *target, const char *filepath)
+{
+  int64_t     ts = 0;
+
+  ts = fileop_modtime (filepath);
+  sv_set_timestamp (target->sv, SV_T_BUILD_DATA, filepath, MKC_C_BVAR_TIMESTAMP, ts, MKC_VCTXT_MKC);
+  mkc_message (MKC_V_WTMI, "t: ts-upd: %s ts: %" PRId64 "\n", filepath, ts);
 }

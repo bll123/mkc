@@ -821,32 +821,6 @@ ast_mk_foreach (astmain_t *astmain,
   return astnode;
 }
 
-#if 0
-MKC_NODISCARD
-astnode_t *
-ast_mk_foreach_range (astmain_t *astmain,
-    astnode_t *nm, astnode_t *range, astnode_t *stmtblock,
-    int32_t lineno, int colno)
-{
-  astnode_t   *astnode;
-
-  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
-      "ast-mk: foreach-range\n");
-
-  astnode = astnode_init (astmain, MKC_T_STMT_FOREACH, lineno, colno);
-  if (astnode == NULL) {
-    return NULL;
-  }
-
-  astnode->stmt_foreach.nm = nm;
-  astnode->stmt_foreach.range = range;
-  astnode->stmt_foreach.valuelist = NULL;
-  astnode->stmt_foreach.stmtblock = stmtblock;
-
-  return astnode;
-}
-#endif
-
 MKC_NODISCARD
 astnode_t *
 ast_mk_while (astmain_t *astmain,
@@ -1286,7 +1260,7 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
         mkc_log_loc (astmain->log, MKC_LOG_AST,
             astnode->lineno, astnode->colno,
             "%*s%s\n", astmain->depth * 2, " ",
-            value_to_str (value, tbuff, MKC_PATH_MAX, 0));
+            value_to_str (value, tbuff, MKC_PATH_MAX, 0, false));
         free (tbuff);
       }
 

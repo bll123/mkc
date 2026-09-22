@@ -79,7 +79,7 @@ value_free (void *tvalue)
 }
 
 const char *
-value_to_str (value_t *value, char *buff, size_t sz, int depth)
+value_to_str (value_t *value, char *buff, size_t sz, int depth, bool cachewrite)
 {
   char      * eptr;
   char      * p;
@@ -144,7 +144,7 @@ value_to_str (value_t *value, char *buff, size_t sz, int depth)
         } else {
           p = stpecpy (p, eptr, " ");
         }
-        value_to_str (tvalue, tbuff, tbuffsz, depth + 2);
+        value_to_str (tvalue, tbuff, tbuffsz, depth + 2, cachewrite);
         if (value_is_string_type (tvalue)) {
           p = stpecpy (p, eptr, "'");
         }
@@ -190,6 +190,12 @@ value_to_str (value_t *value, char *buff, size_t sz, int depth)
           allocated = true;
         }
 
+        name = dict_iter_get_name (diter);
+        if (cachewrite && strcmp (name, MKC_C_BVAR_TIMESTAMP) == 0) {
+          /* timestamps are not written to the cache */
+          continue;
+        }
+
         if (lsz > 1) {
           p = stpecpy (p, eptr, "      ");
           snprintf (tbuff, tbuffsz, "%*s", depth, "");
@@ -198,13 +204,12 @@ value_to_str (value_t *value, char *buff, size_t sz, int depth)
           p = stpecpy (p, eptr, " ");
         }
 
-        name = dict_iter_get_name (diter);
         p = stpecpy (p, eptr, "'");
         p = stpecpy (p, eptr, name);
         p = stpecpy (p, eptr, "' ");
 
         tvalue = dict_iter_get_data (diter);
-        value_to_str (tvalue, tbuff, tbuffsz, depth + 2);
+        value_to_str (tvalue, tbuff, tbuffsz, depth + 2, cachewrite);
         if (value_is_string_type (tvalue)) {
           p = stpecpy (p, eptr, "'");
         }

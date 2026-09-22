@@ -50,7 +50,7 @@ chararr_free (chararr_t *carr)
     return;
   }
 
-  if (carr->freeinternals) {
+  if (carr->freeinternals && carr->targv != NULL) {
     for (int i = 0; i < carr->sz; ++i) {
       free (carr->targv [i]);
     }
@@ -81,7 +81,7 @@ chararr_reset (chararr_t *carr, int idx)
     return;
   }
 
-  if (carr->freeinternals) {
+  if (carr->freeinternals && carr->targv != NULL) {
     for (int i = idx; i < carr->sz; ++i) {
       free (carr->targv [i]);
     }

@@ -68,6 +68,9 @@ dictdict_get (dict_t * dd, const char * name, const char *tag,
     return NULL;
   }
   value = dict_get (subdval->dict, tag);
+  if (value == NULL) {
+    return NULL;
+  }
 
   return value;
 }
