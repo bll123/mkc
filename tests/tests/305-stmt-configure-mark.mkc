@@ -23,7 +23,7 @@ profile internal {
   mark_variable MKC_SYS_UNKNOWN enable-output;
 }
 
-configure {
+configuration_file {
   method auto;
   define_zero;
   output 'tests/tmp/305-stmt-configure-mark.h';

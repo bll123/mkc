@@ -12,7 +12,7 @@ check_function sqrt {
 }
 check_function other;
 
-configure {
+configuration_file {
   method manual;
   replace '@malloc@' ${_function_malloc};
   replace '@sqrt@' ${_function_sqrt};

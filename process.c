@@ -206,8 +206,9 @@ static int process_user_regex_comp (void *turxa, void *turxb);
 const char * process_create_name (process_t *process, astnode_token_t asttype, char *buff, size_t sz, const char *tag, ...);
 static int process_initial_checks (process_t *process);
 static void process_set_defaults (process_t *process);
-static void process_configure_manual (process_t *process);
-static void process_configure_auto (process_t *process, int defzero);
+static void process_configure_create_name (process_t *process, char *autooutnm, size_t autooutsz, char *outname, size_t outsz);
+static void process_configure_manual (process_t *process, const char *outname);
+static void process_configure_auto (process_t *process, const char *autooutnm, const char *outname, int defzero);
 static bool process_chk_cache (process_t *process, const char *disp, const char *nm);
 static void process_get_path (process_t *process);
 static void process_find_executables (process_t *process);
@@ -436,10 +437,12 @@ process_num_op (process_t *process, astnode_token_t asttype,
     return 0;
   }
 
-  mkc_log (process->log, MKC_LOG_PROCESS, "  p-num-op-a: %s\n",
-      value_to_str (vala, tbuff, sizeof (tbuff), 0, false));
-  mkc_log (process->log, MKC_LOG_PROCESS, "  p-num-op-b: %s\n",
-      value_to_str (valb, tbuff, sizeof (tbuff), 0, false));
+  if (mkc_log_check_flag (process->log, MKC_LOG_PROCESS)) {
+    mkc_log (process->log, MKC_LOG_PROCESS, "  p-num-op-a: %s\n",
+        value_to_str (vala, tbuff, sizeof (tbuff), 0, false));
+    mkc_log (process->log, MKC_LOG_PROCESS, "  p-num-op-b: %s\n",
+        value_to_str (valb, tbuff, sizeof (tbuff), 0, false));
+  }
   ivala = sv_value_get_integer (process->sv, vala);
   ivalb = sv_value_get_integer (process->sv, valb);
   if (mkc_error_chk_err (process->mkcerr)) {
@@ -524,10 +527,12 @@ process_str_op (process_t *process, astnode_token_t asttype,
     return 0;
   }
 
-  mkc_log (process->log, MKC_LOG_PROCESS, "  p-str-op-a: %s\n",
-      value_to_str (vala, stra, sizeof (stra), 0, false));
-  mkc_log (process->log, MKC_LOG_PROCESS, "  p-str-op-b: %s\n",
-      value_to_str (valb, strb, sizeof (strb), 0, false));
+  if (mkc_log_check_flag (process->log, MKC_LOG_PROCESS)) {
+    mkc_log (process->log, MKC_LOG_PROCESS, "  p-str-op-a: %s\n",
+        value_to_str (vala, stra, sizeof (stra), 0, false));
+    mkc_log (process->log, MKC_LOG_PROCESS, "  p-str-op-b: %s\n",
+        value_to_str (valb, strb, sizeof (strb), 0, false));
+  }
   sv_value_get_str (process->sv, vala, stra, sizeof (stra));
   sv_value_get_str (process->sv, valb, strb, sizeof (strb));
   if (mkc_error_chk_err (process->mkcerr)) {
@@ -897,11 +902,8 @@ process_stmt_chk_inc_compile (process_t *process)
   /* otherwise, if never run, the compile check will skip include */
   /* files that are not out of date */
   /* this will happen if chk-inc-compile is not the first chk-inc */
-  if (sv_is_defined (process->sv, SV_T_INTERNAL,
-      MKC_C_CHK_INC_COMPILE_TS, NULL)) {
-    chkinccompts = sv_get_timestamp (process->sv, SV_T_INTERNAL,
-          MKC_C_CHK_INC_COMPILE_TS);
-  }
+  chkinccompts = sv_get_timestamp (process->sv, SV_T_INTERNAL,
+        MKC_C_CHK_INC_COMPILE_TS);
 
   list_iter_start (hlist, &hiteridx);
   while ((hdr = target_iter_includes (process->target, hlist,
@@ -925,7 +927,7 @@ process_stmt_chk_inc_compile (process_t *process)
   }
 
   if (count == 0) {
-    mkc_message (MKC_V_BASIC, "-- cached: check_include_compile\n");
+    mkc_message (MKC_V_CACHED, "-- cached: check_include_compile\n");
     mkc_log (process->log, MKC_LOG_CHECK, "-- cached: check_include_compile\n");
   } else {
     ts = mstime ();
@@ -959,6 +961,8 @@ process_stmt_chk_inc_deps (process_t *process)
   mkc_user_regex_t  * urx;
   chararr_t         * cflags;
   chararr_t         * include_paths;
+  int64_t           cachedts;
+
 
   process_check_mkc_timestamp (process);
   process_clean_check (process);
@@ -990,21 +994,16 @@ process_stmt_chk_inc_deps (process_t *process)
   hlist = target_get_include_list (process->target, include_paths, urx->rx, &ts);
   /* ts now holds the timestamp of the latest modification time in ms */
 
-  if (sv_is_defined (process->sv, SV_T_INTERNAL,
-      MKC_C_CHK_INC_DEPS_TS, NULL)) {
-    int64_t    cachedts;
+  cachedts = sv_get_timestamp (process->sv, SV_T_INTERNAL,
+      MKC_C_CHK_INC_DEPS_TS);
 
-    cachedts = sv_get_timestamp (process->sv, SV_T_INTERNAL,
-        MKC_C_CHK_INC_DEPS_TS);
-
-    if (cachedts > ts) {
-      chararr_free (cflags);
-      chararr_free (include_paths);
-      mkc_message (MKC_V_BASIC, "-- cached: check_include_dependencies\n");
-      mkc_log (process->log, MKC_LOG_CHECK, "-- cached: check_include_dependencies\n");
-      process_attr_clear (process);
-      return rc;
-    }
+  if (cachedts > ts) {
+    chararr_free (cflags);
+    chararr_free (include_paths);
+    mkc_message (MKC_V_CACHED, "-- cached: check_include_dependencies\n");
+    mkc_log (process->log, MKC_LOG_CHECK, "-- cached: check_include_dependencies\n");
+    process_attr_clear (process);
+    return rc;
   }
 
   hdrpath = malloc (MKC_PATH_MAX);
@@ -1085,6 +1084,8 @@ process_stmt_chk_inc_guards (process_t *process)
   mkc_user_regex_t  * urx;
   chararr_t         * cflags;
   chararr_t         * include_paths;
+  int64_t           cachedts;
+
 
   process_check_mkc_timestamp (process);
   process_clean_check (process);
@@ -1128,23 +1129,18 @@ process_stmt_chk_inc_guards (process_t *process)
   /* if a check needs to be made */
   hlist = target_get_include_list (process->target, include_paths, urx->rx, &ts);
 
-  if (sv_is_defined (process->sv, SV_T_INTERNAL,
-      MKC_C_CHK_INC_GUARDS_TS, NULL)) {
-    int64_t    cachedts;
+  cachedts = sv_get_timestamp (process->sv, SV_T_INTERNAL,
+      MKC_C_CHK_INC_GUARDS_TS);
 
-    cachedts = sv_get_timestamp (process->sv, SV_T_INTERNAL,
-        MKC_C_CHK_INC_GUARDS_TS);
+  if (cachedts > ts) {
+    mkc_message (MKC_V_CACHED, "-- cached: check_include_guards\n");
+    mkc_log (process->log, MKC_LOG_CHECK, "-- cached: check_include_guards\n");
 
-    if (cachedts > ts) {
-      mkc_message (MKC_V_BASIC, "-- cached: check_include_guards\n");
-      mkc_log (process->log, MKC_LOG_CHECK, "-- cached: check_include_guards\n");
-
-      list_free (guardlist);
-      process_attr_clear (process);
-      chararr_free (cflags);
-      chararr_free (include_paths);
-      return rc;
-    }
+    list_free (guardlist);
+    process_attr_clear (process);
+    chararr_free (cflags);
+    chararr_free (include_paths);
+    return rc;
   }
 
   hdrpath = malloc (MKC_PATH_MAX);
@@ -1313,7 +1309,9 @@ void
 process_stmt_configure (process_t *process)
 {
   int       defzero = MKC_AUTO_SKIP_ZERO;
-
+  char      * outname = NULL;
+  int       status = TARGET_CURRENT;
+  char      autooutnm [MKC_VNAME_MAX];
 
   if (process->attr.str [MKC_ATTR_METHOD] == NULL) {
     mkc_error_set (process->mkcerr, MKC_ERR_MISSING_ATTRIBUTE, 0, "method");
@@ -1334,23 +1332,43 @@ process_stmt_configure (process_t *process)
     }
   }
 
-  if (process->cacheloaded &&
-      ! process->cacheinvalidated &&
-      ! process->mkc_changed) {
-    mkc_message (MKC_V_BASIC, "-- configure: not required\n");
+  outname = malloc (MKC_PATH_MAX);
+  if (outname == NULL) {
+    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return;
+  }
+  *outname = '\0';
+
+  process_configure_create_name (process,
+      autooutnm, sizeof (autooutnm), outname, MKC_PATH_MAX);
+  defzero = process->attr.define_zero;
+
+  if ((process->cacheloaded && process->cacheinvalidated) ||
+      process->mkc_changed) {
+    mkc_message (MKC_V_TMI, "config: cache-changed\n");
+    status = TARGET_OUT_OF_DATE;
+  }
+  if (status == TARGET_CURRENT) {
+    status = target_config_file (process->target,
+        outname, process->mkcoptions->mkc_filename,
+        process->attr.str [MKC_ATTR_INPUT]);
+  }
+
+  if (status == TARGET_CURRENT) {
+    mkc_message (MKC_V_CACHED, "-- configuration_file: up to date\n");
+    free (outname);
     return;
   }
 
-  defzero = process->attr.define_zero;
-
   if (strcmp (process->attr.str [MKC_ATTR_METHOD], "auto") == 0) {
-    process_configure_auto (process, defzero);
+    process_configure_auto (process, autooutnm, outname, defzero);
   } else if (strcmp (process->attr.str [MKC_ATTR_METHOD], "manual") == 0) {
-    process_configure_manual (process);
+    process_configure_manual (process, outname);
   } else {
     mkc_error_set (process->mkcerr, MKC_ERR_PROC_INVALID_METHOD, 0, NULL);
   }
 
+  free (outname);
   process_attr_clear (process);
   return;
 }
@@ -2328,9 +2346,10 @@ process_check_flag (process_t *process,
     }
     process->attr.negate = false;
 
-    if (rc == 0) {
-      sv_set_str (scope, SV_T_SEARCH, tnm, NULL, flag, MKC_VCTXT_FLAG);
+    sv_set_integer (scope, SV_T_SEARCH, tnm, NULL,
+        rc == 0 ? true : false, MKC_VCTXT_FLAG);
 
+    if (rc == 0) {
       switch (iasttype) {
         case MKC_T_CHK_COMP_FLAG: {
           sv_append_str_list (process->sv, SV_T_ACTIVE,
@@ -2948,15 +2967,54 @@ process_set_defaults (process_t *process)
 }
 
 static void
-process_configure_manual (process_t *process)
+process_configure_create_name (process_t *process,
+    char *autooutnm, size_t autooutsz, char *outname, size_t outsz)
+{
+  char    * tp;
+
+  *autooutnm = '\0';
+
+  if (process->attr.str [MKC_ATTR_OUTPUT] != NULL) {
+    stpecpy (outname, outname + outsz, process->attr.str [MKC_ATTR_OUTPUT]);
+  }
+
+  if (strcmp (process->attr.str [MKC_ATTR_METHOD], "manual") == 0) {
+    return;
+  }
+
+  tp = process->projectname;
+  if (tp == NULL) {
+    tp = "project";
+  }
+  tp = stpecpy (autooutnm, autooutnm + autooutsz, tp);
+  tp = stpecpy (tp, autooutnm + autooutsz, "_config");
+
+  str_clean (autooutnm, autooutsz);
+
+  if (process->attr.str [MKC_ATTR_OUTPUT] != NULL) {
+    stpecpy (outname, outname + outsz, process->attr.str [MKC_ATTR_OUTPUT]);
+    tp = strrchr (outname, '/');
+    if (tp != NULL) {
+      tp = stpecpy (autooutnm, autooutnm + autooutsz, tp + 1);
+      tp = strrchr (autooutnm, '.');
+      if (tp != NULL) {
+        *tp = '\0';
+      }
+    }
+  } else {
+    snprintf (outname, outsz, "%s.h", autooutnm);
+  }
+}
+
+static void
+process_configure_manual (process_t *process, const char *outname)
 {
   char    *data;
   char    *ndata;
   size_t  fsz = 0;
   FILE    *fh;
 
-  mkc_message (MKC_V_BASIC, "-- configure: create: %s\n",
-      process->attr.str [MKC_ATTR_OUTPUT]);
+  mkc_message (MKC_V_BASIC, "-- configuration_file: create: %s\n", outname);
 
   data = fileop_read_file (process->attr.str [MKC_ATTR_INPUT], &fsz, process->mkcerr);
   if (mkc_error_chk_err (process->mkcerr)) {
@@ -2966,7 +3024,7 @@ process_configure_manual (process_t *process)
   }
   ndata = process_configure_substitute (process, data);
   free (data);
-  fh = fileop_open (process->attr.str [MKC_ATTR_OUTPUT], "w");
+  fh = fileop_open (outname, "w");
   if (fh == NULL) {
     mkc_error_set (process->mkcerr, MKC_ERR_FILE_NOT_FOUND, errno, process->attr.str [MKC_ATTR_OUTPUT]);
     return;
@@ -2980,61 +3038,21 @@ process_configure_manual (process_t *process)
 }
 
 static void
-process_configure_auto (process_t *process, int defzero)
+process_configure_auto (process_t *process,
+    const char *autooutnm, const char *outname, int defzero)
 {
   FILE            * fh;
-  char            * fname;
   char            * tbuff;
-  char            * tp;
-  char            autooutnm [MKC_VNAME_MAX];
-  size_t          len;
   scopedvar_t     * sv;
   sv_iter_t       * sviter;
   const char      * profname;
   const char      * currprof;
 
-  fname = malloc (MKC_PATH_MAX);
-  if (fname == NULL) {
-    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return;
-  }
-  *fname = '\0';
+  mkc_message (MKC_V_BASIC, "-- configuration_file: create: %s\n", outname);
 
-  tp = process->projectname;
-  if (tp == NULL) {
-    tp = "project";
-  }
-  tp = stpecpy (autooutnm, autooutnm + sizeof (autooutnm), tp);
-  tp = stpecpy (tp, autooutnm + sizeof (autooutnm), "_config");
-
-  if (process->attr.str [MKC_ATTR_OUTPUT] != NULL) {
-    stpecpy (fname, fname + MKC_PATH_MAX, process->attr.str [MKC_ATTR_OUTPUT]);
-    tp = strrchr (fname, '/');
-    if (tp != NULL) {
-      tp = stpecpy (autooutnm, autooutnm + sizeof (autooutnm), tp + 1);
-      tp = strrchr (autooutnm, '.');
-      if (tp != NULL) {
-        *tp = '\0';
-      }
-    }
-  } else {
-    snprintf (fname, MKC_PATH_MAX, "%s.h", autooutnm);
-  }
-
-  len = strlen (autooutnm);
-  for (size_t i = 0; i < len; ++i) {
-    if (! isalnum ((unsigned char) autooutnm [i])) {
-      autooutnm [i] = '_';
-    } else {
-      autooutnm [i] = toupper (autooutnm [i]);
-    }
-  }
-
-  mkc_message (MKC_V_BASIC, "-- configure: create: %s\n", fname);
-
-  fh = fileop_open (fname, "w");
+  fh = fileop_open (outname, "w");
   if (fh == NULL) {
-    mkc_error_set (process->mkcerr, MKC_ERR_FILE_NOT_FOUND, errno, fname);
+    mkc_error_set (process->mkcerr, MKC_ERR_FILE_NOT_FOUND, errno, outname);
     return;
   }
 
@@ -3045,7 +3063,6 @@ process_configure_auto (process_t *process, int defzero)
 
   tbuff = malloc (MKC_PATH_MAX);
   if (tbuff == NULL) {
-    free (fname);
     mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
     return;
   }
@@ -3108,7 +3125,6 @@ process_configure_auto (process_t *process, int defzero)
   fprintf (fh, "\n");
   fprintf (fh, "#endif /* INC_%s_H */\n", autooutnm);
 
-  free (fname);
   free (tbuff);
   fclose (fh);
 }
@@ -3117,14 +3133,13 @@ static bool
 process_chk_cache (process_t *process,
     const char *disp, const char *nm)
 {
-  bool    rc = false;
+  bool      rc = false;
+  value_t   * value;
 
   /* if the re-test mkc-option is set, then failed tests will be re-tested */
-  if (sv_is_defined (process->sv, SV_T_SEARCH, nm, NULL)) {
+  value = sv_get_value (process->sv, SV_T_SEARCH, nm, NULL);
+  if (value != NULL) {
     if (process->mkcoptions->retest) {
-      value_t   *value;
-
-      value = sv_get_value (process->sv, SV_T_SEARCH, nm, NULL);
       if (value->vtype == MKC_VT_INTEGER) {
         int32_t   val;
 
@@ -3135,7 +3150,7 @@ process_chk_cache (process_t *process,
       }
     }
 
-    mkc_message (MKC_V_BASIC, "-- cached: %s : %s\n", disp, nm);
+    mkc_message (MKC_V_CACHED, "-- cached: %s : %s\n", disp, nm);
     mkc_log (process->log, MKC_LOG_CHECK, "-- cached: %s : %s\n", disp, nm);
     rc = true;
   }
@@ -3547,11 +3562,8 @@ process_check_mkc_timestamp (process_t *process)
 
   process->mkc_ts_checked = true;
 
-  if (sv_is_defined (process->sv, SV_T_INTERNAL,
-      process->mkcoptions->mkc_filename, NULL)) {
-    cachedts = sv_get_timestamp (process->sv, SV_T_INTERNAL,
-        process->mkcoptions->mkc_filename);
-  }
+  cachedts = sv_get_timestamp (process->sv, SV_T_INTERNAL,
+      process->mkcoptions->mkc_filename);
 
   if (process->mkc_ts > cachedts) {
     mkc_message (MKC_V_TMI, ".mkc ts: changed: true\n");

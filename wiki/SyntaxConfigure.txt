@@ -1,11 +1,11 @@
 [Wiki Home](Home)
 <br>[Syntax](Syntax)
 
-### Syntax: configure
+### Syntax: configuration_file
 
-__configure__ generates a configuration file for use by the project.
+__configuration_file__ generates a configuration file for use by the project.
 
-    configure { <attribute-list> };
+    configuration_file { <attribute-list> };
 
 If the _method_ attribute is _auto_, the
 filename will be automatically generated based on the project name:
@@ -16,7 +16,7 @@ and all variable names are substituted.
 
 ##### Manual Replacement Strings
 
-    configure {
+    configuration_file {
       method manual;
       replace '@install-dir@' ${my_install_dir};
       replace '@HAVE_MALLOC@' ${_function_malloc};
@@ -48,7 +48,7 @@ variable substitution will be performed.
     check_function malloc;
     check_function junk;
 
-    configure {
+    configuration_file {
       method auto;
       # the define_zero attribute will output defines if the
       # check failed.
@@ -72,7 +72,7 @@ mkctest_config.h:
     check_function malloc;
     check_function junk;
 
-    configure {
+    configuration_file {
       method auto;
       # an output attribute overrides automatic generation of the filename
       output 'myconfig.h';
@@ -91,7 +91,7 @@ myconfig.h:
 
     check_function malloc;
 
-    configure {
+    configuration_file {
       method manual;
       input 'config.h.in';
       output 'config.h';
@@ -122,7 +122,7 @@ config.h:
     check_function malloc;
     set something 'abc';
 
-    configure {
+    configuration_file {
       method manual;
       replace '@malloc@' ${_function_malloc};
       replace '@shlibext@' ${MKC_SHARED_LIBRARY_EXTENSION}

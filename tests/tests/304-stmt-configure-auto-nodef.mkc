@@ -12,7 +12,7 @@ check_function sqrt {
 }
 check_function other;
 
-configure {
+configuration_file {
   method auto;
   output 'tests/tmp/304-stmt-configure-auto-nodef.h';
 }

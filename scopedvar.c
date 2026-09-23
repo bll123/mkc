@@ -545,6 +545,10 @@ sv_get_timestamp (scopedvar_t *sv, sv_type_t svtype,
     tag = MKC_C_BVAR_TIMESTAMP;
   }
   value = sv_get_value (sv, svtype, vname, tag);
+  if (value == NULL) {
+    /* not an error */
+    return 0;
+  }
   return sv_value_get_timestamp (sv, value);
 }
 
@@ -1680,7 +1684,7 @@ sv_get_variable_str (scopedvar_t *sv, value_t *value,
     snprintf (buff, sz, "%" PRId32, tvalue->ival);
   }
 
-  {
+  if (mkc_log_check_flag (sv->log, MKC_LOG_PROCESS)) {
     char    dbuff [MKC_PATH_MAX];
 
     mkc_log (sv->log, MKC_LOG_PROCESS, "  scope-get-var-str: %s\n",

@@ -4,17 +4,25 @@
 # Usage:
 #   sanitize_flags <profile-name>;
 #
-# Sets:
-#     MKC_FORTIFY (boolean)
+#     sets the compile and link flags for use with the address sanitizer
+#
+#     Sets:
+#         MKC_FORTIFY (boolean)
+#
+#   set_fortify_flags;
+#
+#     sets the compile flags appropriately based on the MKC_FORTIFY
+#     boolean set by 'sanitize_flags'.
 #
 
 {
   function sanitize_flags (profname) {
 
     set MKC_FORTIFY true;
+
     profile ${profname} {
       set MKC_FORTIFY false;
-      add_compile_flag '-O0';
+#      add_compile_flag '-O0';
       check_compile_flag '-ggdb';
       check_compile_flag '-fsanitize=address';
       check_link_flag '-fsanitize=address';
@@ -25,6 +33,16 @@
       check_compile_flag '-fno-omit-frame-pointer';
       check_compile_flag '-fno-common';
       check_compile_flag '-fno-inline';
+    }
+  }
+
+  function set_fortify_flags {
+    if (${MKC_FORTIFY}) {
+      check_compile_flag '-fstack-protector-all';
+      add_compile_flag '-D_FORTIFY_SOURCE=2';
+    } else {
+      add_compile_flag '-U_FORTIFY_SOURCE';
+      add_compile_flag '-D_FORTIFY_SOURCE=0';
     }
   }
 }

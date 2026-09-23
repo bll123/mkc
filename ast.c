@@ -1248,8 +1248,7 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
         break;
       }
 
-// ### check the log level before doing this
-      {
+      if (mkc_log_check_flag (astmain->log, MKC_LOG_AST)) {
         char    *tbuff;
 
         tbuff = malloc (MKC_PATH_MAX);

@@ -14,7 +14,7 @@ check_function other;
 
 mkcdebug printvar profiles;
 
-configure {
+configuration_file {
   method auto;
   define_zero;
   output 'tests/tmp/303-stmt-configure-auto-def.h';

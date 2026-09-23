@@ -190,7 +190,7 @@ target_topo_add_deps (target_t *target,
   value_t         tvalue;
   char            * dep;
 
-  mkc_log (target->log, MKC_LOG_CHECK, "add-dep %s :\n", tgtname);
+  mkc_log (target->log, MKC_LOG_CHECK, "add-dep %s\n", tgtname);
   valdeplist = sv_get_value (target->sv, SV_T_BUILD_DATA,
       tgtname, MKC_C_BVAR_DEPENDENCY);
   if (valdeplist == NULL) {
@@ -360,18 +360,18 @@ list_t *
 target_get_include_list (target_t *target, chararr_t * include_paths,
     mkc_regex_t *rx, int64_t *ts)
 {
-  value_t         * valhdr = NULL;
-  list_t          * hlist = NULL;
+  value_t       * tvalue = NULL;
+  list_t        * hlist = NULL;
 #if _have_regex
-  char            * hdrpath = NULL;
-  char            * tname = NULL;
-  char            * tend = NULL;
-  scopedvar_t     * sv = NULL;
-  const char      ** patharr;
-  const char      * path = NULL;
-  int64_t         newts = 0;
-  char            * p;
-  int             count;
+  char          * hdrpath = NULL;
+  char          * tname = NULL;
+  char          * tend = NULL;
+  scopedvar_t   * sv = NULL;
+  const char    ** patharr;
+  const char    * path = NULL;
+  int64_t       newts = 0;
+  char          * p;
+  int           count;
 
   tname = malloc (MKC_SMALL_BUFF_SZ);
   if (tname == NULL) {
@@ -401,14 +401,15 @@ target_get_include_list (target_t *target, chararr_t * include_paths,
   sv = target->sv;
 
   memcpy (tname, "matchil_", 8);
-  if (sv_is_defined (sv, SV_T_LOCAL, tname, NULL)) {
-    valhdr = sv_get_value (sv, SV_T_LOCAL, tname, NULL);
-    hlist = valhdr->list;
+  tvalue = sv_get_value (sv, SV_T_LOCAL, tname, NULL);
+  if (tvalue != NULL) {
+    hlist = tvalue->list;
     memcpy (tname, "matchts_", 8);
-    if (sv_is_defined (sv, SV_T_LOCAL, tname, NULL)) {
+    tvalue = sv_get_value (sv, SV_T_LOCAL, tname, NULL);
+    if (tvalue != NULL) {
       int64_t   cachedts;
 
-      cachedts = sv_get_timestamp (sv, SV_T_LOCAL, tname);
+      cachedts = sv_value_get_timestamp (sv, tvalue);
       *ts = cachedts;
       free (tname);
       return hlist;
@@ -464,10 +465,12 @@ target_get_include_list (target_t *target, chararr_t * include_paths,
       /* for the header, then the list of dependencies for the header */
       /* is out of date and must be cleared */
       /* header dependencies are used for the 'check_include_...' tests */
-      if (sv_is_defined (sv, SV_T_BUILD_DATA, hdrpath, MKC_C_BVAR_TIMESTAMP)) {
+
+      tvalue = sv_get_value (sv, SV_T_BUILD_DATA, hdrpath, MKC_C_BVAR_TIMESTAMP);
+      if (tvalue != NULL) {
         int64_t     cachedts;
 
-        cachedts = sv_get_timestamp (sv, SV_T_BUILD_DATA, hdrpath);
+        cachedts = sv_value_get_timestamp (sv, tvalue);
         if (tts > cachedts) {
           sv_delete (sv, SV_T_BUILD_DATA, hdrpath, MKC_C_BVAR_DEPENDENCY);
         }
@@ -490,8 +493,8 @@ target_get_include_list (target_t *target, chararr_t * include_paths,
   }
 
   memcpy (tname, "matchil_", 8);
-  valhdr = sv_get_value (sv, SV_T_LOCAL, tname, NULL);
-  hlist = valhdr->list;
+  tvalue = sv_get_value (sv, SV_T_LOCAL, tname, NULL);
+  hlist = tvalue->list;
 
   memcpy (tname, "matchts_", 8);
   /* return the timestamp of the latest include file */
@@ -648,7 +651,7 @@ target_object_source (target_t *target, const char *objnm,
   valdeplist = sv_get_value (target->sv, SV_T_BUILD_DATA,
       opath, MKC_C_BVAR_DEPENDENCY);
   if (valdeplist == NULL) {
-    mkc_error_set (target->mkcerr, MKC_ERR_FATAL_ERROR, 0, NULL);
+    mkc_error_set (target->mkcerr, MKC_ERR_FATAL_ERROR, 0, "missing dependency list");
     mkc_log (target->log, MKC_LOG_ERROR, "ERR: %s dependency list not found\n", opath);
     free (opath);
     return;
@@ -684,6 +687,35 @@ target_object_source (target_t *target, const char *objnm,
   free (path);
   free (opath);
   return;
+}
+
+/* if the configuration method is 'auto', 'infile' is NULL */
+int
+target_config_file (target_t *target, const char *outfile,
+    const char *mkcfile, const char *infile)
+{
+  int64_t         fts;
+  int64_t         ts;
+
+  mkc_log (target->log, MKC_LOG_TARGET, "conf-file: %s\n", outfile);
+
+  fts = target_get_timestamp (target, outfile);
+  mkc_message (MKC_V_TMI, "config: %" PRId64 "(out) %s\n", outfile);
+  ts = target_get_timestamp (target, mkcfile);
+  if (fts == 0 || ts > fts) {
+    mkc_message (MKC_V_TMI, "config: %" PRId64 "(mkc) > " PRId64 " %s\n", mkcfile);
+    return TARGET_OUT_OF_DATE;
+  }
+
+  if (infile != NULL) {
+    ts = target_get_timestamp (target, infile);
+    if (ts > fts) {
+      mkc_message (MKC_V_TMI, "config: %" PRId64 "(in)  > " PRId64 " %s\n", infile);
+      return TARGET_OUT_OF_DATE;
+    }
+  }
+
+  return TARGET_CURRENT;
 }
 
 void

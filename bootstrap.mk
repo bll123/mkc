@@ -130,7 +130,7 @@ real-start:
 # MKC_BOOTSTRAP must be defined
 # _have_regex and _package_pcre are also defined
 $(BOOTSTRAP_PASS1): $(BOOTSTRAP_TMPDIR) $(BOOTSTRAP_MKC_DIRS)
-	@echo "$(MAKEFILE): -- bootstrap mkc (pass1: initial)"
+	@echo "$(MAKEFILE): bootstrap mkc (pass1: initial)"
 	@$(MAKE) -f $(MAKEFILE) \
 	    CFLAGS="$(CFLAGS) $(INIT_DEF)" \
 	    LDFLAGS="$(LDFLAGS)" \
@@ -148,7 +148,7 @@ $(BOOTSTRAP_PASS1): $(BOOTSTRAP_TMPDIR) $(BOOTSTRAP_MKC_DIRS)
 # configuration will exit after 'mkc_config.h' is generated.
 $(BOOTSTRAP_PASS2): $(BOOTSTRAP_TMPDIR) $(BOOTSTRAP_MKC_DIRS) \
 		$(BOOTSTRAP_PASS1)
-	@echo "$(MAKEFILE): -- bootstrap mkc (pass2: create mkc_config.h)"
+	@echo "$(MAKEFILE): bootstrap mkc (pass2: create mkc_config.h)"
 	@$(MAKE) -f $(MAKEFILE) \
 	    CFLAGS="$(CFLAGS)" \
 	    LDFLAGS="$(LDFLAGS)" \
@@ -158,7 +158,7 @@ $(BOOTSTRAP_PASS2): $(BOOTSTRAP_TMPDIR) $(BOOTSTRAP_MKC_DIRS) \
 	    QUIET="@" \
 	    bootstrap-pass2
 	@touch $(BOOTSTRAP_PASS2)
-	@echo "$(MAKEFILE): -- bootstrap mkc (pass3: final)"
+	@echo "$(MAKEFILE): bootstrap mkc (pass3: final)"
 	@# make sure mkc_config.h is re-built
 	@rm -f $(MKC_CONFIG_H)
 
@@ -168,7 +168,7 @@ $(BOOTSTRAP_PASS2): $(BOOTSTRAP_TMPDIR) $(BOOTSTRAP_MKC_DIRS) \
 .PHONY: bootstrap-pass2
 bootstrap-pass2: $(MKC_CONFIG_H)
 	@# all objects and the executable must be removed (bootstrap flag set)
-	@echo "$(MAKEFILE): -- bootstrap mkc (pass2: rebuild)"
+	@echo "$(MAKEFILE): bootstrap mkc (pass2: rebuild)"
 	@$(MAKE) -f $(MAKEFILE) basicclean
 	@$(MAKE) -f $(MAKEFILE) \
 	    CFLAGS="$(CFLAGS)" \

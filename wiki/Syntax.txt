@@ -15,6 +15,7 @@
   * [Expressions](SyntaxExpression)
   * Statements
       * [build](SyntaxStmtBuild)
+      * [configuration_file](SyntaxConfigure)
       * [check_include_compile](SyntaxStmtCheckIncCompile)
       * [check_include_dependencies](SyntaxStmtCheckIncDeps)
       * [check_include_guards](SyntaxStmtCheckIncGuards)

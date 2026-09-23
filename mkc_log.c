@@ -295,3 +295,17 @@ mkc_log_chararr (mkc_log_t *log, const char *tag, chararr_t *carr)
   }
   mkc_log_flush (log);
 }
+
+bool
+mkc_log_check_flag (mkc_log_t *log, int32_t logflag)
+{
+  if (log == NULL) {
+    return false;
+  }
+
+  if ((logflag & log->logflag) == 0) {
+    return false;
+  }
+
+  return true;
+}

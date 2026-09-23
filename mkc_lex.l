@@ -152,7 +152,7 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 "check_include_compile"       { return T_STMT_CHK_INC_COMPILE; }
 "check_include_dependencies"  { return T_STMT_CHK_INC_DEPS; }
 "check_include_guards"        { return T_STMT_CHK_INC_GUARDS; }
-"configure"                   { return T_STMT_CONFIGURE; }
+"configuration_file"          { return T_STMT_CONFIGURE; }
 "define_executable"           { return T_STMT_EXECUTABLE; }
 "load_cache"                  { return T_STMT_LOADCACHE; }
 "mark_variable"               { return T_STMT_MARK_VAR; }

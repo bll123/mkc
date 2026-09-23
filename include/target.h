@@ -55,6 +55,7 @@ int target_check_dependency_timestamp (target_t *target, const char *filename, c
 void target_get_dependencies (target_t *target, mkc_compiler_t compiler, const char *tgtname, const char *filepath, target_flag_t flags, chararr_t *cflags);
 void target_executable_object (target_t *target, const char *execnm, const char *objnm);
 void target_object_source (target_t *target, const char *objnm, const char *srcname);
+int target_config_file (target_t *target, const char *outfile, const char *mkcfile, const char *infile);
 void target_build (target_t *target, list_t *blist);
 
 MKC_NODISCARD list_t * target_get_include_list (target_t *target, chararr_t * include_paths, mkc_regex_t *rx, int64_t *ts);

@@ -44,7 +44,8 @@ enum {
 typedef enum {
   MKC_V_QUIET     = 0,
   MKC_V_BASIC     = 1,
-  MKC_V_STATS     = 2,
+  MKC_V_STATS     = 1,
+  MKC_V_CACHED    = 2,
   MKC_V_INFO      = 3,
   MKC_V_OUTPUT    = 4,
   MKC_V_TMI       = 5,    // too much information, always last - 1
@@ -71,6 +72,7 @@ void mkc_error_disp (mkc_error_t mkcerr);
 void mkc_log_set_disp_filename (mkc_log_t *log, const char *fname);
 void mkc_log_flush (mkc_log_t *log);
 void mkc_log_chararr (mkc_log_t *log, const char *tag, chararr_t *carr);
+bool mkc_log_check_flag (mkc_log_t *log, int32_t logflag);
 
 #if defined (__cplusplus) || defined (c_plusplus)
 }

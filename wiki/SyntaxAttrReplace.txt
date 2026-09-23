@@ -4,7 +4,7 @@
 ### replace (attribute)
 
 The __replace__ attribute is used to configure replacement text.
-It is used in the [configure](SyntaxConfigure) statement.
+It is used in the [configuration_file](SyntaxConfigure) statement.
 
     replace <str> <value>;
 
