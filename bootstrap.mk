@@ -103,6 +103,15 @@ sanitize:
 	    MKC_PROFILE=$(SAN_MKC_PROFILE) \
 	    real-start
 
+.PHONY: sanitize-local
+sanitize-local:
+	@$(MAKE) -f $(MAKEFILE) \
+	    CFLAGS="$(SAN_CFLAGS)" \
+	    LDFLAGS="$(SAN_LDFLAGS)" \
+	    LIBS="$(SAN_LIBS)" \
+	    MKC_PROFILE=$(SAN_MKC_PROFILE) \
+	    real-local
+
 .PHONY: debug
 debug:
 	@$(MAKE) -f $(MAKEFILE) \
@@ -121,6 +130,15 @@ real-start:
 	    MKC_PROFILE=$(MKC_PROFILE) \
 	    $(BOOTSTRAP_PROCESS) \
 	    $(MKC_LOCAL)
+
+.PHONY: real-local
+real-local:
+	@$(MAKE) -f $(MAKEFILE) \
+	    CFLAGS="$(CFLAGS)" \
+	    LDFLAGS="$(LDFLAGS)" \
+	    LIBS="$(LIBS)" \
+	    MKC_PROFILE=$(MKC_PROFILE) \
+	    $(BOOTSTRAP_PASS2)
 
 # bootstrap process
 
@@ -146,8 +164,7 @@ $(BOOTSTRAP_PASS1): $(BOOTSTRAP_TMPDIR) $(BOOTSTRAP_MKC_DIRS)
 # generate the mkc_config.h file using the 'mkc' built in 'pass1'
 # MKC_BOOTSTRAP was defined in the 'pass1' version, and the mkc.mkc
 # configuration will exit after 'mkc_config.h' is generated.
-$(BOOTSTRAP_PASS2): $(BOOTSTRAP_TMPDIR) $(BOOTSTRAP_MKC_DIRS) \
-		$(BOOTSTRAP_PASS1)
+$(BOOTSTRAP_PASS2): $(BOOTSTRAP_PASS1)
 	@echo "$(MAKEFILE): bootstrap mkc (pass2: create mkc_config.h)"
 	@$(MAKE) -f $(MAKEFILE) \
 	    CFLAGS="$(CFLAGS)" \
@@ -158,9 +175,6 @@ $(BOOTSTRAP_PASS2): $(BOOTSTRAP_TMPDIR) $(BOOTSTRAP_MKC_DIRS) \
 	    QUIET="@" \
 	    bootstrap-pass2
 	@touch $(BOOTSTRAP_PASS2)
-	@echo "$(MAKEFILE): bootstrap mkc (pass3: final)"
-	@# make sure mkc_config.h is re-built
-	@rm -f $(MKC_CONFIG_H)
 
 # the initial mkc_config.h file is created (as a make dependency).
 # but 'mkc' still has the internal bootstrap flag set.
@@ -179,8 +193,13 @@ bootstrap-pass2: $(MKC_CONFIG_H)
 	    TARGET=bootstrap oscheck
 	@# now the 'mkc' executable has no bootstrap flag
 
-$(BOOTSTRAP_PROCESS): $(BOOTSTRAP_TMPDIR) $(BOOTSTRAP_MKC_DIRS) \
-		$(BOOTSTRAP_PASS2)
+$(BOOTSTRAP_PROCESS): $(BOOTSTRAP_PASS2)
+	@echo "$(MAKEFILE): bootstrap mkc (pass3: final)"
+	@# make sure mkc_config.h is re-built
+	@rm -f $(MKC_CONFIG_H)
+	@# objects in the current dir are no longer needed
+	@# mkc is still needed
+	@$(MAKE) -f $(MAKEFILE) objectclean
 	@touch $(BOOTSTRAP_PROCESS)
 
 $(MKC_CONFIG_H): mkc.mkc
@@ -200,19 +219,23 @@ $(BOOTSTRAP_MKC_DIRS):
 .PHONY: $(MKC_LOCAL)
 $(MKC_LOCAL):
 	@./mkc --prefix '' --profile $(MKC_PROFILE) $(MKC_MKC)
-	@# the executable and objects in the current dir are no longer needed
-	@$(MAKE) -f $(MAKEFILE) basicclean
 	@if [ $(WIN) = T ]; then \
 	  cp -pf $(MKC_FILES)/$(PROJECT)/stage/bin/mkc $(MKC_LOCAL) ; \
 	else \
-	  ln -sf $(MKC_FILES)/$(PROJECT)/stage/bin/mkc $(MKC_LOCAL) ; \
+	 ln -sf $(MKC_FILES)/$(PROJECT)/stage/bin/mkc $(MKC_LOCAL) ; \
 	fi
+
+# clean the object files
+.PHONY: objectclean
+objectclean:
+	@rm -f $(MKCOBJECTS) mkc_grammar.output
 
 # clean the object files and 'mkc' only
 # do not clean the mkc_files/ directory
 .PHONY: basicclean
 basicclean:
-	@rm -f $(MKCOBJECTS) mkc mkc_grammar.output
+	@$(MAKE) -f $(MAKEFILE) objectclean
+	@rm -f mkc
 
 .PHONY: oscheck
 oscheck:

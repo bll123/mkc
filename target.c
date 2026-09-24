@@ -574,7 +574,6 @@ target_executable_object (target_t *target, const char *execnm,
   char        * epath;
   char        * opath;
   scopedvar_t * sv = target->sv;
-  bool        changed = target->mkc_changed;
 
   epath = malloc (MKC_PATH_MAX);
   if (epath == NULL) {
@@ -602,14 +601,11 @@ target_executable_object (target_t *target, const char *execnm,
   sv_set_integer (sv, SV_T_BUILD_DATA, opath, MKC_C_BVAR_TYPE, TGT_T_OBJECT, MKC_VCTXT_MKC);
 
   mkc_log (target->log, MKC_LOG_TARGET, "  %s\n", objnm);
-  if (changed) {
-    sv_append_str_list (sv, SV_T_BUILD_DATA,
-        epath, MKC_C_BVAR_DEPENDENCY, opath, MKC_VCTXT_MKC);
-  }
+  sv_append_str_list (sv, SV_T_BUILD_DATA,
+      epath, MKC_C_BVAR_DEPENDENCY, opath, MKC_VCTXT_MKC);
 
   free (epath);
   free (opath);
-  // opath is set in the list and should not be freed
   return;
 }
 
@@ -700,17 +696,17 @@ target_config_file (target_t *target, const char *outfile,
   mkc_log (target->log, MKC_LOG_TARGET, "conf-file: %s\n", outfile);
 
   fts = target_get_timestamp (target, outfile);
-  mkc_message (MKC_V_TMI, "config: %" PRId64 "(out) %s\n", outfile);
+  mkc_message (MKC_V_TMI, "config: %" PRId64 " (out)\n", fts);
   ts = target_get_timestamp (target, mkcfile);
   if (fts == 0 || ts > fts) {
-    mkc_message (MKC_V_TMI, "config: %" PRId64 "(mkc) > " PRId64 " %s\n", mkcfile);
+    mkc_message (MKC_V_TMI, "config: %" PRId64 " (mkc) > " PRId64 " %s\n", ts, fts, mkcfile);
     return TARGET_OUT_OF_DATE;
   }
 
   if (infile != NULL) {
     ts = target_get_timestamp (target, infile);
     if (ts > fts) {
-      mkc_message (MKC_V_TMI, "config: %" PRId64 "(in)  > " PRId64 " %s\n", infile);
+      mkc_message (MKC_V_TMI, "config: %" PRId64 " (in)  > " PRId64 " %s\n", ts, fts, infile);
       return TARGET_OUT_OF_DATE;
     }
   }

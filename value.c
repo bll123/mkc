@@ -12,6 +12,7 @@
 #include "const.h"  // temporary
 #include "mkc_def.h"
 #include "list.h"
+#include "mkc_error.h"
 #include "strutil.h"
 #include "value.h"
 
@@ -40,6 +41,22 @@ static char const * const valuectxtnames [MKC_VCTXT_MAX] = {
   [MKC_VCTXT_USER_ENABLE] = "enable",
   [MKC_VCTXT_UNKNOWN] = "unknown",
 };
+
+value_t *
+value_alloc (mkc_error_t *mkcerr)
+{
+  value_t     *value;
+
+  value = malloc (sizeof (value_t));
+  if (value == NULL) {
+    mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return NULL;
+  }
+  value_init (value);
+  value->isallocated = true;
+
+  return value;
+}
 
 void
 value_init (value_t *value)
@@ -76,6 +93,9 @@ value_free (void *tvalue)
     free (value->sval);
   }
   value->vtype = MKC_VT_INVALID;
+  if (value->isallocated) {
+    free (value);
+  }
 }
 
 const char *
@@ -345,7 +365,6 @@ value_copy (value_t * valuecopy, const value_t * value, mkc_error_t * mkcerr)
   if (value->vtype == MKC_VT_DICT) {
     valuecopy->dict = value_dict_copy (value->dict, mkcerr);
   }
-  valuecopy->isallocated = false;
 }
 
 bool

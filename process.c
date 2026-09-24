@@ -1216,7 +1216,7 @@ process_stmt_autobuild (process_t *process)
   dictitem_t  * ditem;
   listidx_t   iteridx;
   value_t     * value;
-  value_t     rvalue;
+  value_t     retvalue;
   char        * vname;
 
   tbuff = malloc (MKC_PATH_MAX);
@@ -1234,16 +1234,18 @@ process_stmt_autobuild (process_t *process)
     return;
   }
 
-  blist = list_init (MKC_LIST_UNSORTED, NULL, NULL, sizeof (value_t), process->mkcerr);
+  blist = list_init (MKC_LIST_UNSORTED, value_free, NULL, sizeof (value_t), process->mkcerr);
+
   value = sv_get_value (process->sv, SV_T_INTERNAL, MKC_C_VAR_BUILD_DATA, NULL);
   if (value == NULL || value->vtype != MKC_VT_DICT) {
     return;
   }
-  value = sv_value_get_value (process->sv, value, &rvalue);
-  dict = value->dict;
+  sv_value_get_value (process->sv, value, &retvalue);
+  dict = retvalue.dict;
 
   dict_iter_start (dict, &iteridx);
   while ((ditem = dict_iter_next (dict, &iteridx)) != NULL) {
+    value_t   * dvalue;
     value_t   * tvalue;
     int32_t   ival;
 
@@ -1251,17 +1253,18 @@ process_stmt_autobuild (process_t *process)
       break;
     }
 
-    value = dict_iter_get_data (ditem);
-    sv_value_get_str (process->sv, value, vname, MKC_PATH_MAX);
+    dvalue = dict_iter_get_data (ditem);
+    sv_value_get_str (process->sv, dvalue, vname, MKC_PATH_MAX);
     tvalue = dictdict_get (dict, vname, MKC_C_BVAR_TYPE, process->mkcerr);
     if (tvalue == NULL || tvalue->vtype != MKC_VT_INTEGER) {
       continue;
     }
     ival = sv_value_get_integer (process->sv, tvalue);
     switch (ival) {
+      case TGT_T_FILE:
       case TGT_T_EXEC:
       case TGT_T_OBJECT: {
-        list_set (blist, value);
+        list_set (blist, dvalue);
         break;
       }
     }
@@ -1275,6 +1278,7 @@ process_stmt_autobuild (process_t *process)
   list_free (blist);
   process_attr_clear (process);
   free (vname);
+  value_free (&retvalue);
   return;
 }
 
@@ -1293,7 +1297,7 @@ process_stmt_build (process_t *process, value_t *vallist)
   mkc_create_mkcfiles (tbuff, MKC_PATH_MAX, process->mkcerr);
   free (tbuff);
 
-  blist = list_init (MKC_LIST_UNSORTED, NULL, NULL, sizeof (value_t), process->mkcerr);
+  blist = list_init (MKC_LIST_UNSORTED, value_free, NULL, sizeof (value_t), process->mkcerr);
   process_list_to_flags (process, vallist, blist, false);
   process->attr.display = true;
   process->attr.printerrors = true;
@@ -1655,8 +1659,7 @@ void
 process_stmt_print (process_t *process, value_t *value, int depth)
 {
   char      tbuff [MKC_PATH_MAX];
-  value_t   * tvalue;
-  value_t   rvalue;
+  value_t   retvalue;
 
   if (process == NULL) {
     return;
@@ -1666,11 +1669,10 @@ process_stmt_print (process_t *process, value_t *value, int depth)
     return;
   }
 
-  value_init (&rvalue);
-  tvalue = sv_value_get_value (process->sv, value, &rvalue);
-  value_to_str (tvalue, tbuff, sizeof (tbuff), 0, false);
+  sv_value_get_value (process->sv, value, &retvalue);
+  value_to_str (&retvalue, tbuff, sizeof (tbuff), 0, false);
   fprintf (stdout, "%s", tbuff);
-  sv_value_free (tvalue);
+  value_free (&retvalue);
 
   if (depth == 0) {
     fprintf (stdout, "\n");
@@ -1729,8 +1731,7 @@ process_stmt_set (process_t *process,
     value_t *valnm, value_t *value, bool local)
 {
   char            *nm;
-  value_t         rvalue;
-  value_t         * tvalue;
+  value_t         retvalue;
   mkc_err_code_t  trc = MKC_ERR_FAILURE;
   value_ctxt_t    vctxt = MKC_VCTXT_USER_DISABLE;
   bool            changed = false;
@@ -1769,10 +1770,11 @@ process_stmt_set (process_t *process,
 
 // ### need a check to make sure value has a value...
 // ${unknown} will cause a failure
-  tvalue = sv_value_get_value (process->sv, value, &rvalue);
+  sv_value_get_value (process->sv, value, &retvalue);
   if (mkc_error_chk_err (process->mkcerr)) {
-    process_attr_clear (process);
     free (nm);
+    value_free (&retvalue);
+    process_attr_clear (process);
     return trc;
   }
 
@@ -1795,7 +1797,7 @@ process_stmt_set (process_t *process,
     svtype = SV_T_LOCAL;
   }
 
-  trc = sv_set (process->sv, svtype, nm, NULL, tvalue, vctxt);
+  trc = sv_set (process->sv, svtype, nm, NULL, &retvalue, vctxt);
   if (trc == MKC_OK_CHANGE &&
      (vctxt == MKC_VCTXT_ENV || vctxt == MKC_VCTXT_MKC_BASE)) {
     process->cacheinvalidated = true;
@@ -1815,10 +1817,9 @@ process_stmt_set (process_t *process,
   process->mkc_changed = changed;
   target_set_changed (process->target, changed);
 
-  sv_value_free (tvalue);
-
   process_attr_clear (process);
   free (nm);
+  value_free (&retvalue);
   return trc;
 }
 
@@ -1943,9 +1944,10 @@ process_attr_alternate (process_t *process)
 
   alt.name = NULL;
   alt.hdrlist = list_init (MKC_LIST_UNSORTED, NULL, NULL, sizeof (value_t), process->mkcerr);
-  alt.compflags = list_init (MKC_LIST_UNSORTED, NULL, NULL, sizeof (value_t), process->mkcerr);
-  alt.linkflags = list_init (MKC_LIST_UNSORTED, NULL, NULL, sizeof (value_t), process->mkcerr);
-  alt.libs = list_init (MKC_LIST_UNSORTED, NULL, NULL, sizeof (value_t), process->mkcerr);
+  alt.compflags = list_init (MKC_LIST_UNSORTED, value_free, NULL, sizeof (value_t), process->mkcerr);
+fprintf (stderr, "%p p: create compflags\n", alt.compflags);
+  alt.linkflags = list_init (MKC_LIST_UNSORTED, value_free, NULL, sizeof (value_t), process->mkcerr);
+  alt.libs = list_init (MKC_LIST_UNSORTED, value_free, NULL, sizeof (value_t), process->mkcerr);
   process->attr.curralt = list_set (process->attr.alternates, &alt);
 }
 
@@ -1996,7 +1998,9 @@ process_attr_comp_flags (process_t *process, value_t *value)
     return;
   }
 
+fprintf (stderr, "%p p: use compflags\n", process->attr.curralt->compflags);
   clist = process->attr.curralt->compflags;
+fprintf (stderr, "p: compflags\n");
   process_list_to_flags (process, value, clist, false);
 }
 
@@ -2050,6 +2054,7 @@ process_attr_link_flags (process_t *process, value_t *value)
   }
 
   llist = process->attr.curralt->linkflags;
+fprintf (stderr, "p: linkflags\n");
   process_list_to_flags (process, value, llist, false);
 }
 
@@ -2069,6 +2074,7 @@ process_attr_lib_flags (process_t *process, value_t *value)
   }
 
   libs = process->attr.curralt->libs;
+fprintf (stderr, "p: libs\n");
   process_list_to_flags (process, value, libs, false);
 }
 
@@ -2277,7 +2283,7 @@ process_check_flag (process_t *process,
 
   scope = process->sv;
   if (value_is_string_type (valflag)) {
-    tlist = list_init (MKC_LIST_UNSORTED, sv_value_free, NULL, sizeof (value_t), process->mkcerr);
+    tlist = list_init (MKC_LIST_UNSORTED, NULL, NULL, sizeof (value_t), process->mkcerr);
     list_set (tlist, valflag);
     allocated = true;
   } else if (valflag->vtype == MKC_VT_LIST) {
@@ -2296,29 +2302,29 @@ process_check_flag (process_t *process,
   list_iter_start (tlist, &fiteridx);
   while ((fidx = list_iter_next (tlist, &fiteridx)) != MKC_ITER_FINISH) {
     value_t     * fvalue;
-    value_t     rvalue;
-    value_t     * tvalue;
+    value_t     retvalue;
 
     fvalue = list_get_by_idx (tlist, fidx);
-    tvalue = sv_value_get_value (process->sv, fvalue, &rvalue);
+    sv_value_get_value (process->sv, fvalue, &retvalue);
     if (mkc_error_chk_err (process->mkcerr)) {
       char    tmp [MKC_VNAME_MAX];
 
-      value_to_str (tvalue, tmp, sizeof (tmp), 0, false);
+      value_to_str (&retvalue, tmp, sizeof (tmp), 0, false);
       mkc_error_set (process->mkcerr, MKC_ERR_UNKNOWN_VARIABLE, 0, tmp);
+      value_free (&retvalue);
       continue;
     }
 
-    if (value_is_string_type (tvalue)) {
-      sv_value_get_str (scope, tvalue, flag, sizeof (flag));
-    } else if (tvalue->vtype == MKC_VT_LIST) {
-      process_check_flag (process, tvalue, addchk, asttype);
-      sv_value_free (tvalue);
+    if (value_is_string_type (&retvalue)) {
+      sv_value_get_str (scope, &retvalue, flag, sizeof (flag));
+    } else if (retvalue.vtype == MKC_VT_LIST) {
+      process_check_flag (process, &retvalue, addchk, asttype);
+      value_free (&retvalue);
       continue;
     }
 
     if (! *flag) {
-      sv_value_free (tvalue);
+      value_free (&retvalue);
       /* empty flags are ignored */
       continue;
     }
@@ -2326,7 +2332,7 @@ process_check_flag (process_t *process,
     process_create_name (process, asttype, tnm, sizeof (tnm), pfx, flag, NULL);
 
     if (process_chk_cache (process, flag, tnm)) {
-      sv_value_free (tvalue);
+      value_free (&retvalue);
       continue;
     }
 
@@ -2388,6 +2394,7 @@ process_check_flag (process_t *process,
       mkc_log (process->log, MKC_LOG_CHECK, "-- check %s: %s - %s\n",
           typenames [asttype], flag, mkc_success_msg (rc));
     }
+    value_free (&retvalue);
   } /* for each flag in list */
 
   if (allocated) {
@@ -3377,6 +3384,7 @@ process_alternate_free (void *tchkcontext)
 
   datafree (alt->name);
   list_free (alt->hdrlist);
+fprintf (stderr, "%p p: free compflags\n", alt->compflags);
   list_free (alt->compflags);
   list_free (alt->linkflags);
   list_free (alt->libs);
@@ -3389,11 +3397,15 @@ process_list_to_flags (process_t *process, value_t *value,
   listidx_t   iteridx;
   listidx_t   lidx;
 
+  if (value == NULL || flags == NULL) {
+    mkc_error_set (process->mkcerr, MKC_ERR_NULL_ARGUMENT, 0, NULL);
+    return;
+  }
+
   list_iter_start (value->list, &iteridx);
   while ((lidx = list_iter_next (value->list, &iteridx)) != MKC_ITER_FINISH) {
     value_t     * lvalue;
-    value_t     rvalue;
-    value_t     * tvalue;
+    value_t     retvalue;
     char        flag [MKC_VNAME_MAX];
 
     if (mkc_error_chk_err (process->mkcerr)) {
@@ -3401,36 +3413,30 @@ process_list_to_flags (process_t *process, value_t *value,
     }
 
     lvalue = list_get_by_idx (value->list, lidx);
-    tvalue = sv_value_get_value (process->sv, lvalue, &rvalue);
+    sv_value_get_value (process->sv, lvalue, &retvalue);
     if (mkc_error_chk_err (process->mkcerr)) {
-      char    tmp [MKC_VNAME_MAX];
-
-      value_to_str (lvalue, tmp, sizeof (tmp), 0, false);
-      mkc_error_set (process->mkcerr, MKC_ERR_UNKNOWN_VARIABLE, 0, tmp);
-      continue;
+      value_free (&retvalue);
+      break;
     }
 
-    if (tvalue->vtype == MKC_VT_LIST) {
-      process_list_to_flags (process, tvalue, flags, true);
-      if (tvalue->isallocated) {
-        value_free (tvalue);
-      }
+fprintf (stderr, "retvalue.vtype: %s\n", value_disp_type (&retvalue));
+    if (retvalue.vtype == MKC_VT_LIST) {
+      process_list_to_flags (process, &retvalue, flags, true);
+      value_free (&retvalue);
       continue;
-    } else if (tvalue->vtype == MKC_VT_STRING ||
-        tvalue->vtype == MKC_VT_STATIC_STRING ||
-        tvalue->vtype == MKC_VT_QUOTED_STRING) {
-      if (! *tvalue->sval) {
+    } else if (retvalue.vtype == MKC_VT_STRING ||
+        retvalue.vtype == MKC_VT_STATIC_STRING ||
+        retvalue.vtype == MKC_VT_QUOTED_STRING) {
+      if (! *retvalue.sval) {
+        value_free (&retvalue);
         continue;
       }
     } else {
       mkc_error_set (process->mkcerr, MKC_ERR_UNEXPECTED_VALUE_TYPE, 0, NULL);
     }
 
-    sv_value_get_str (process->sv, tvalue, flag, sizeof (flag));
-    list_set (flags, tvalue);
-    if (tvalue->isallocated) {
-      value_free (tvalue);
-    }
+    sv_value_get_str (process->sv, &retvalue, flag, sizeof (flag));
+    list_set (flags, &retvalue);
   }
 }
 

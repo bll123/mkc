@@ -20,7 +20,6 @@
 #include "mkc_def.h"
 #include "mkc_error.h"
 #include "mkc_log.h"
-#include "mkc_nodiscard.h"
 #include "scopedvar.h"
 #include "strutil.h"
 #include "value.h"
@@ -797,14 +796,17 @@ sv_value_get_str (scopedvar_t *sv, value_t *value,
 
 /* get the actual value of a value */
 /* this is an issue for env-variables, quoted strings, lists and dicts */
-MKC_NODISCARD
+/* returns a copy of the original value in all cases */
 value_t *
-sv_value_get_value (scopedvar_t *sv, value_t *value, value_t *rvalue)
+sv_value_get_value (scopedvar_t *sv, value_t *value, value_t *retvalue)
 {
-  value_t   * nvalue;
-
-  /* in many cases the value returned is simply the value passed in */
-  nvalue = value;
+  if (sv == NULL) {
+    return NULL;
+  }
+  if (value == NULL || retvalue == NULL) {
+    mkc_error_set (sv->mkcerr, MKC_ERR_NULL_ARGUMENT, 0, NULL);
+    return NULL;
+  }
 
   switch (value->vtype) {
     case MKC_VT_INVALID: {
@@ -813,9 +815,13 @@ sv_value_get_value (scopedvar_t *sv, value_t *value, value_t *rvalue)
     }
     case MKC_VT_INTEGER:
     case MKC_VT_RANGE:
-    case MKC_VT_STATIC_STRING:
-    case MKC_VT_STRING:
     case MKC_VT_TIMESTAMP: {
+      value_copy (retvalue, value, sv->mkcerr);
+      break;
+    }
+    case MKC_VT_STATIC_STRING:
+    case MKC_VT_STRING: {
+      value_copy (retvalue, value, sv->mkcerr);
       break;
     }
     case MKC_VT_ENV_VARIABLE:
@@ -825,22 +831,22 @@ sv_value_get_value (scopedvar_t *sv, value_t *value, value_t *rvalue)
       buff = malloc (MKC_PATH_MAX);
       if (buff == NULL) {
         mkc_error_set (sv->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-        return nvalue;
+        return retvalue;
       }
 
       /* need to get the actual value */
       sv_value_get_str (sv, value, buff, MKC_PATH_MAX);
 
-      value_init (rvalue);
-      rvalue->isallocated = true;
-      rvalue->vtype = MKC_VT_STRING;
-      rvalue->vctxt = value->vctxt;
-      rvalue->sval = buff;
-      nvalue = rvalue;
+      retvalue->vtype = MKC_VT_STRING;
+      retvalue->vctxt = value->vctxt;
+      retvalue->sval = buff;
       break;
     }
     case MKC_VT_VARIABLE: {
-      nvalue = sv_get_variable_value (sv, value->sval);
+      value_t   * tvalue;
+
+      tvalue = sv_get_variable_value (sv, value->sval);
+      value_copy (retvalue, tvalue, sv->mkcerr);
       break;
     }
     case MKC_VT_DICT: {
@@ -850,14 +856,13 @@ sv_value_get_value (scopedvar_t *sv, value_t *value, value_t *rvalue)
 
       /* each value in a dict must be processed */
 
-      ndict = dict_init (sv->log, sv_value_free, sizeof (value_t), sv->mkcerr);
+      ndict = dict_init (sv->log, value_free, sizeof (value_t), sv->mkcerr);
 
       dict_iter_start (value->dict, &iteridx);
       while ((ditem = dict_iter_next (value->dict, &iteridx)) != NULL) {
         const char  * name;
         value_t     * dvalue;
-        value_t     * tvalue;
-        value_t     tmpvalue;
+        value_t     tvalue;
 
         if (mkc_error_chk_err (sv->mkcerr)) {
           break;
@@ -865,16 +870,13 @@ sv_value_get_value (scopedvar_t *sv, value_t *value, value_t *rvalue)
 
         name = dict_iter_get_name (ditem);
         dvalue = dict_iter_get_data (ditem);
-        tvalue = sv_value_get_value (sv, dvalue, &tmpvalue);
-        dict_set (ndict, name, tvalue);
+        sv_value_get_value (sv, dvalue, &tvalue);
+        dict_set (ndict, name, &tvalue);
       }
 
-      value_init (rvalue);
-      rvalue->isallocated = true;
-      rvalue->vtype = MKC_VT_DICT;
-      rvalue->vctxt = value->vctxt;
-      rvalue->dict = ndict;
-      nvalue = rvalue;
+      retvalue->vtype = MKC_VT_DICT;
+      retvalue->vctxt = value->vctxt;
+      retvalue->dict = ndict;
       break;
     }
     case MKC_VT_LIST: {
@@ -887,39 +889,31 @@ sv_value_get_value (scopedvar_t *sv, value_t *value, value_t *rvalue)
       /* the list may not need substitution, but just create a new list */
       /* in all cases */
 
-      nlist = list_init (MKC_LIST_UNSORTED, sv_value_free, NULL,
+      nlist = list_init (MKC_LIST_UNSORTED, value_free, NULL,
           sizeof (value_t), sv->mkcerr);
 
       list_iter_start (value->list, &iteridx);
       while ((lidx = list_iter_next (value->list, &iteridx)) != MKC_ITER_FINISH) {
         value_t   * lvalue;
-        value_t   tmpvalue;
-        value_t   * tvalue;
+        value_t   tvalue;
 
         if (mkc_error_chk_err (sv->mkcerr)) {
           break;
         }
 
         lvalue = list_get_by_idx (value->list, lidx);
-        tvalue = sv_value_get_value (sv, lvalue, &tmpvalue);
-        list_set (nlist, tvalue);
+        sv_value_get_value (sv, lvalue, &tvalue);
+        list_set (nlist, &tvalue);
       }
 
-      value_init (rvalue);
-      rvalue->isallocated = true;
-      rvalue->vtype = MKC_VT_LIST;
-      rvalue->vctxt = value->vctxt;
-      rvalue->list = nlist;
-      nvalue = rvalue;
+      retvalue->vtype = MKC_VT_LIST;
+      retvalue->vctxt = value->vctxt;
+      retvalue->list = nlist;
       break;
     }
   }
 
-  if (nvalue != rvalue) {
-    memcpy (rvalue, nvalue, sizeof (value_t));
-  }
-
-  return nvalue;
+  return retvalue;
 }
 
 value_t *
@@ -1014,7 +1008,7 @@ sv_set (scopedvar_t *sv, sv_type_t svtype,
   /* handle special dictionary types */
   if (svtype == SV_T_BUILD_DATA) {
     value_t   * dictval;
-    value_t   * tvalue;
+    value_t   tvalue;
 
     dictval = sv_get_value (sv, SV_T_INTERNAL, MKC_C_VAR_BUILD_DATA, NULL);
     if (dictval == NULL || dictval->vtype != MKC_VT_DICT) {
@@ -1022,16 +1016,10 @@ sv_set (scopedvar_t *sv, sv_type_t svtype,
       return rc;
     }
 
-    tvalue = malloc (sizeof (value_t));
-    if (tvalue == NULL) {
-      mkc_error_set (sv->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-      return rc;
-    }
-    value_copy (tvalue, value, sv->mkcerr);
-    tvalue->isallocated = true;
-    dictdict_set (dictval->dict, vname, tag, tvalue,
+    value_init (&tvalue);
+    value_copy (&tvalue, value, sv->mkcerr);
+    dictdict_set (dictval->dict, vname, tag, &tvalue,
         sv->log, value_free, sv->mkcerr);
-    free (tvalue);
 
     return MKC_OK;
   }
@@ -1041,19 +1029,15 @@ sv_set (scopedvar_t *sv, sv_type_t svtype,
     dictval = sv_get_value (sv, SV_T_INTERNAL, MKC_C_VAR_BUILD_PATHS, NULL);
     if (dictval != NULL && dictval->vtype == MKC_VT_DICT) {
       value_t   * tvalue;
+      value_t   retvalue;
 
       tvalue = value;
       if (! sv->fromcache) {
-        tvalue = malloc (sizeof (value_t));
-        if (tvalue == NULL) {
-          mkc_error_set (sv->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-          return rc;
-        }
-        value_copy (tvalue, value, sv->mkcerr);
-        tvalue->isallocated = true;
+        value_init (&retvalue);
+        value_copy (&retvalue, value, sv->mkcerr);
+        tvalue = &retvalue;
       }
       dict_set (dictval->dict, vname, tvalue);
-      free (tvalue);
     }
     return MKC_OK;
   }
@@ -1115,6 +1099,7 @@ sv_set_str (scopedvar_t *sv, sv_type_t svtype,
   return rc;
 }
 
+/* sets a variable to a pre-allocated list */
 int
 sv_set_list (scopedvar_t *sv, sv_type_t svtype,
     const char *vname, const char *tag,
@@ -1127,6 +1112,7 @@ sv_set_list (scopedvar_t *sv, sv_type_t svtype,
   value.list = list;
   value.vtype = MKC_VT_LIST;
 
+fprintf (stderr, "sv: set-list %s %s\n", vname, tag);
   rc = sv_set (sv, svtype, vname, tag, &value, vctxt);
   return rc;
 }
@@ -1162,9 +1148,9 @@ sv_append_str_list (scopedvar_t *sv, sv_type_t svtype,
     const char *vname, const char *tag,
     const char *data, value_ctxt_t vctxt)
 {
-  value_t       *listval;
-  list_t    *list;
-  value_t       tvalue;
+  value_t   * listval;
+  list_t    * list;
+  value_t   tvalue;
 
 
   listval = sv_get_value (sv, svtype, vname, tag);
@@ -1301,21 +1287,6 @@ sv_var_is_list (scopedvar_t *sv, const char *vname)
     rc = true;
   }
   return rc;
-}
-
-/* only frees the value if the value was allocated */
-void
-sv_value_free (void *tvalue)
-{
-  value_t   *value = tvalue;
-
-  if (value == NULL) {
-    return;
-  }
-
-  if (value->isallocated) {
-    value_free (value);
-  }
 }
 
 /* processes the internal substitutions */

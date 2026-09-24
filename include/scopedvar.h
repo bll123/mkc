@@ -12,7 +12,6 @@
 #include "mkc_compiler.h"
 #include "mkc_error.h"
 #include "mkc_log.h"
-#include "mkc_nodiscard.h"
 #include "mkc_option.h"
 #include "var.h"
 #include "value.h"
@@ -89,7 +88,7 @@ value_t * sv_get_value (scopedvar_t *scopedvar, sv_type_t svtype, const char *vn
 int32_t sv_value_get_integer (scopedvar_t *scopedvar, value_t *value);
 int64_t sv_value_get_timestamp (scopedvar_t *scopedvar, value_t *value);
 void sv_value_get_str (scopedvar_t *scopedvar, value_t *value, char *buff, size_t sz);
-MKC_NODISCARD value_t * sv_value_get_value (scopedvar_t *scopedvar, value_t *value, value_t *rvalue);
+value_t * sv_value_get_value (scopedvar_t *scopedvar, value_t *value, value_t *retvalue);
 value_t * sv_value_get_list_value (scopedvar_t *scopedvar, value_t *value);
 
 void sv_set_context (scopedvar_t *scopedvar, const char *vname, value_ctxt_t vctxt);
@@ -107,7 +106,6 @@ void sv_delete (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, con
 bool sv_is_defined (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, const char *tag);
 bool sv_var_is_dict (scopedvar_t *scopedvar, const char *vname);
 bool sv_var_is_list (scopedvar_t *scopedvar, const char *vname);
-void sv_value_free (void *tvalue);
 char * sv_substitute (scopedvar_t *scopedvar, const char *data, sv_escape_t subescapeflag, int depth);
 
 const char * scopedvar_type_disp (sv_type_t svtype);

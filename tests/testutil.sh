@@ -29,6 +29,7 @@ dotest () {
 
   ${prog} ${cachearg} ${args} ${tfile} > ${odir}/$bnm.out 2>>${LOG}
   trc=$?
+  echo "rc: ${trc}" >> ${LOG}
   cachedisp=""
   if [ "${cachearg}" = "" ]; then
     cachedisp="(cached)"

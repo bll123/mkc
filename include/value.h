@@ -10,6 +10,7 @@
 
 #include "dict.h"
 #include "list.h"
+#include "mkc_error.h"
 
 #if defined (__cplusplus) || defined (c_plusplus)
 extern "C" {
@@ -68,6 +69,7 @@ typedef struct value_t {
   bool            isallocated;
 } value_t;
 
+value_t * value_alloc (mkc_error_t *mkcerr);
 void value_init (value_t *value);
 void value_free (void *value);
 const char *value_to_str (value_t *value, char *buff, size_t sz, int depth, bool cachewrite);

@@ -23,6 +23,10 @@ bootstrap:
 sanitize:
 	@$(MAKE) -f $(BOOTSTRAPMAKE) sanitize
 
+.PHONY: sanitize-local
+sanitize-local:
+	@$(MAKE) -f $(BOOTSTRAPMAKE) sanitize-local
+
 .PHONY: debug
 debug:
 	@$(MAKE) -f $(BOOTSTRAPMAKE) debug
