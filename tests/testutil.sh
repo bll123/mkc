@@ -27,13 +27,15 @@ dotest () {
     args=""
   fi
 
-  ${prog} ${cachearg} ${args} ${tfile} > ${odir}/$bnm.out 2>>${LOG}
-  trc=$?
-  echo "rc: ${trc}" >> ${LOG}
   cachedisp=""
   if [ "${cachearg}" = "" ]; then
     cachedisp="(cached)"
   fi
+
+  ${prog} ${cachearg} ${args} ${tfile} > ${odir}/$bnm.out 2>>${LOG}
+  trc=$?
+  echo "rc: ${trc}" >> ${LOG}
+
   if [ $expfail = T ]; then
     if [ $trc -eq 0 ]; then
       echo "   fail: test: ${cachedisp} $tfile"

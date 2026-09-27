@@ -22,6 +22,7 @@ profile default {
   set g 7;
 }
 
+# not active, should not run
 profile debug {
   compiler c;
   set a 1;
@@ -34,6 +35,7 @@ profile default {
   set l 12;
 }
 
+# not active, should not run
 profile internal {
   set i 9;
 }
@@ -82,8 +84,10 @@ if (${h} == 8) {
   print '  ok 8';
 }
 
-if (${i} == 9) {
+if (is_defined (i)) {
   # internal general
+  print '  fail 9';
+} else {
   print '  ok 9';
 }
 

@@ -137,15 +137,12 @@ add_compile_flag '-g';
 add_link_flag '-g';
 
 profile default {
-print '=== profile: default';
   add_compile_flag '-O2';
 }
 profile debug {
-print '=== profile: debug';
   add_compile_flag '-O0';
 }
 profile sanitize {
-print '=== profile: sanitize';
   add_compile_flag '-O0';
 }
 
@@ -200,6 +197,7 @@ define_executable mkc {
   library_flags ${pcre_LIBS};
 }
 
-build 'mkc';
+#build 'mkc';
+auto_build;
 
 # install

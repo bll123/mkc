@@ -99,7 +99,7 @@ static void sv_free_vars (scopedvar_t *sv);
 static void sv_init_vars (scopedvar_t *sv, mkc_option_t *mkcoptions);
 static void sv_push_hierarchy (scopedvar_t *sv, sv_profile_t *svprof);
 static const char * sv_get_active_name (scopedvar_t *sv);
-static varlist_t     *sv_get_varlist (scopedvar_t *sv, sv_type_t svtype, const char *vname);
+static varlist_t *sv_get_varlist (scopedvar_t *sv, sv_type_t svtype, const char *vname);
 
 scopedvar_t *
 sv_init (mkc_log_t *log, mkc_error_t *mkcerr, mkc_option_t *mkcoptions)
@@ -808,6 +808,8 @@ sv_value_get_value (scopedvar_t *sv, value_t *value, value_t *retvalue)
     return NULL;
   }
 
+  value_init (retvalue);
+
   switch (value->vtype) {
     case MKC_VT_INVALID: {
       mkc_error_set (sv->mkcerr, MKC_ERR_UNEXPECTED_VALUE_TYPE, 0, NULL);
@@ -1006,6 +1008,8 @@ sv_set (scopedvar_t *sv, sv_type_t svtype,
   }
 
   /* handle special dictionary types */
+  /* build-data is a dictionary of dictionaries */
+  /* the tag argument is used */
   if (svtype == SV_T_BUILD_DATA) {
     value_t   * dictval;
     value_t   tvalue;
@@ -1023,6 +1027,7 @@ sv_set (scopedvar_t *sv, sv_type_t svtype,
 
     return MKC_OK;
   }
+  /* paths is a simple dictionary */
   if (svtype == SV_T_PATHS) {
     value_t   * dictval;
 
@@ -1934,6 +1939,7 @@ sv_get_varlist (scopedvar_t *sv, sv_type_t svtype, const char *vname)
     if (svtype == SV_T_LOCAL) {
       sv_push (sv, SV_T_LOCAL, "local");
     }
+
     /* the set statement is for a specific profile */
     idx = sv_locate_svtype (sv, svtype);
     svprof = &sv->profiles.variables [idx];

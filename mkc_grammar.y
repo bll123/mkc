@@ -668,7 +668,6 @@ stmt_autobuild[v]:
     {
       $v = ast_mk_stmt_val (ast, NULL, MKC_T_STMT_AUTOBUILD,
           yylloc.first_line, yylloc.first_column);
-      $v = NULL;
     }
     ;
 

@@ -1245,26 +1245,35 @@ process_stmt_autobuild (process_t *process)
 
   dict_iter_start (dict, &iteridx);
   while ((ditem = dict_iter_next (dict, &iteridx)) != NULL) {
-    value_t   * dvalue;
-    value_t   * tvalue;
-    int32_t   ival;
+    const char  * dname;
+    value_t     * tvalue;
+    int32_t     ival;
 
     if (mkc_error_chk_err (process->mkcerr)) {
       break;
     }
 
-    dvalue = dict_iter_get_data (ditem);
-    sv_value_get_str (process->sv, dvalue, vname, MKC_PATH_MAX);
-    tvalue = dictdict_get (dict, vname, MKC_C_BVAR_TYPE, process->mkcerr);
+    dname = dict_iter_get_name (ditem);
+    tvalue = dictdict_get (dict, dname, MKC_C_BVAR_TYPE, process->mkcerr);
     if (tvalue == NULL || tvalue->vtype != MKC_VT_INTEGER) {
       continue;
     }
     ival = sv_value_get_integer (process->sv, tvalue);
+
     switch (ival) {
+// ### needs to be fixed so that user-defined targets
+// are different than mkc defined targets.
       case TGT_T_FILE:
-      case TGT_T_EXEC:
       case TGT_T_OBJECT: {
-        list_set (blist, dvalue);
+        break;
+      }
+      case TGT_T_EXEC: {
+        value_t   tmpvalue;
+
+        value_init (&tmpvalue);
+        tmpvalue.vtype = MKC_VT_STRING;
+        tmpvalue.sval = strdup (dname);
+        list_set (blist, &tmpvalue);
         break;
       }
     }
@@ -2669,9 +2678,7 @@ process_profile_is_current (process_t *process, value_t *valnm)
   sv_value_get_str (process->sv, valnm, nm, sizeof (nm));
   profnm = sv_get_current_profile (process->sv);
 
-  if (strcmp (nm, profnm) == 0 ||
-      strcmp (nm, MKC_C_PROF_NAME_INTERNAL) == 0 ||
-      strcmp (nm, MKC_C_PROF_NAME_DEFAULT) == 0) {
+  if (strcmp (nm, profnm) == 0) {
     return true;
   }
 

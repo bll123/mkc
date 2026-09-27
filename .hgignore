@@ -2,6 +2,7 @@
 ^bootstrap\.mk\.bak$
 ^btest\.log$
 ^dev
+^examples/[^/]*/mkc_files/
 ^mkc$
 \.o$
 \.tar\.gz$

@@ -64,6 +64,7 @@ clean:
 tclean:
 	@-find . -name '*.orig' -print | xargs rm -f
 	@-find . -name '*~' -print | xargs rm -f
+	@-rm -rf examples/*/mkc_files
 	@-rm -f w ww www *.orig asan.* core.*
 	@-rm -f mkc_grammar.output *.mk.bak
 	@-rm -f tests/tmp/*

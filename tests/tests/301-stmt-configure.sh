@@ -9,7 +9,7 @@
 . ./tests/testutil.sh
 
 tnm=$0
-bnm=$(basename $0 | sed 's,\.sh$,,')
+bnm=`basename $0 | sed 's,\.sh$,,'`
 expfail=F
 
 ttype=mkc
