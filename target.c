@@ -268,8 +268,6 @@ target_get_dependencies (target_t *target,
   char            * rbuff;
   size_t          rsz;
   char            * tokstr;
-  list_t      * elist;
-  value_t         evalue;
   char            * p;
   bool            first = true;
 
@@ -305,12 +303,8 @@ target_get_dependencies (target_t *target,
   sv_delete (target->sv, SV_T_BUILD_DATA, tgtname, MKC_C_BVAR_DEPENDENCY);
 
   /* the dependency list must exist */
-  elist = list_init (MKC_LIST_UNSORTED, NULL, NULL, sizeof (value_t), target->mkcerr);
-  evalue.vtype = MKC_VT_LIST;
-  evalue.list = elist;
-  sv_set (target->sv, SV_T_BUILD_DATA, tgtname, MKC_C_BVAR_DEPENDENCY,
-      &evalue, MKC_VCTXT_MKC);
-  list_free (elist);
+  sv_create_empty_list (target->sv, SV_T_BUILD_DATA,
+      tgtname, MKC_C_BVAR_DEPENDENCY, MKC_VCTXT_MKC);
 
   mkc_log (target->log, MKC_LOG_TARGET, "get-dep: %s\n", filepath);
 
@@ -503,7 +497,6 @@ target_get_include_list (target_t *target, chararr_t * include_paths,
 
   free (hdrpath);
   free (tname);
-gmkcdebug = false;
 #endif
   return hlist;
 }

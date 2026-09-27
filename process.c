@@ -1945,7 +1945,6 @@ process_attr_alternate (process_t *process)
   alt.name = NULL;
   alt.hdrlist = list_init (MKC_LIST_UNSORTED, NULL, NULL, sizeof (value_t), process->mkcerr);
   alt.compflags = list_init (MKC_LIST_UNSORTED, value_free, NULL, sizeof (value_t), process->mkcerr);
-fprintf (stderr, "%p p: create compflags\n", alt.compflags);
   alt.linkflags = list_init (MKC_LIST_UNSORTED, value_free, NULL, sizeof (value_t), process->mkcerr);
   alt.libs = list_init (MKC_LIST_UNSORTED, value_free, NULL, sizeof (value_t), process->mkcerr);
   process->attr.curralt = list_set (process->attr.alternates, &alt);
@@ -1998,9 +1997,7 @@ process_attr_comp_flags (process_t *process, value_t *value)
     return;
   }
 
-fprintf (stderr, "%p p: use compflags\n", process->attr.curralt->compflags);
   clist = process->attr.curralt->compflags;
-fprintf (stderr, "p: compflags\n");
   process_list_to_flags (process, value, clist, false);
 }
 
@@ -2054,7 +2051,6 @@ process_attr_link_flags (process_t *process, value_t *value)
   }
 
   llist = process->attr.curralt->linkflags;
-fprintf (stderr, "p: linkflags\n");
   process_list_to_flags (process, value, llist, false);
 }
 
@@ -2074,7 +2070,6 @@ process_attr_lib_flags (process_t *process, value_t *value)
   }
 
   libs = process->attr.curralt->libs;
-fprintf (stderr, "p: libs\n");
   process_list_to_flags (process, value, libs, false);
 }
 
@@ -2996,8 +2991,6 @@ process_configure_create_name (process_t *process,
   tp = stpecpy (autooutnm, autooutnm + autooutsz, tp);
   tp = stpecpy (tp, autooutnm + autooutsz, "_config");
 
-  str_clean (autooutnm, autooutsz);
-
   if (process->attr.str [MKC_ATTR_OUTPUT] != NULL) {
     stpecpy (outname, outname + outsz, process->attr.str [MKC_ATTR_OUTPUT]);
     tp = strrchr (outname, '/');
@@ -3011,6 +3004,9 @@ process_configure_create_name (process_t *process,
   } else {
     snprintf (outname, outsz, "%s.h", autooutnm);
   }
+
+  str_clean (autooutnm, autooutsz);
+  str_toupper (autooutnm, autooutsz);
 }
 
 static void
@@ -3384,7 +3380,6 @@ process_alternate_free (void *tchkcontext)
 
   datafree (alt->name);
   list_free (alt->hdrlist);
-fprintf (stderr, "%p p: free compflags\n", alt->compflags);
   list_free (alt->compflags);
   list_free (alt->linkflags);
   list_free (alt->libs);
@@ -3419,7 +3414,6 @@ process_list_to_flags (process_t *process, value_t *value,
       break;
     }
 
-fprintf (stderr, "retvalue.vtype: %s\n", value_disp_type (&retvalue));
     if (retvalue.vtype == MKC_VT_LIST) {
       process_list_to_flags (process, &retvalue, flags, true);
       value_free (&retvalue);

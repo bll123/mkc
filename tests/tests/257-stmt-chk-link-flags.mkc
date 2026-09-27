@@ -12,18 +12,23 @@ add_library '-lm';
 profile default {
   compiler c;
 
-  check_link_flag '-g';
+  check_link_flag '-O0';
 }
 
-if (${lf_fPIC} ne '') {
+if (${lf_fPIC}) {
   print '  ok p';
 } else {
   print '  fail p';
 }
-if (${lf_g} ne '') {
+if (${lf_g}) {
   print '  ok g';
 } else {
   print '  fail g';
+}
+if (${lf_O0}) {
+  print '  ok o';
+} else {
+  print '  fail o';
 }
 
 mkcdebug printvar test;

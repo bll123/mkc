@@ -1112,7 +1112,6 @@ sv_set_list (scopedvar_t *sv, sv_type_t svtype,
   value.list = list;
   value.vtype = MKC_VT_LIST;
 
-fprintf (stderr, "sv: set-list %s %s\n", vname, tag);
   rc = sv_set (sv, svtype, vname, tag, &value, vctxt);
   return rc;
 }
@@ -1177,6 +1176,22 @@ sv_append_str_list (scopedvar_t *sv, sv_type_t svtype,
   }
 
   return MKC_OK;
+}
+
+/* make sure a name/tag has a value, uses sizeof (value_t) */
+void
+sv_create_empty_list (scopedvar_t *sv, sv_type_t svtype,
+    const char *vname, const char *tag, value_ctxt_t vctxt)
+{
+  list_t    * elist;
+  value_t   evalue;
+
+  elist = list_init (MKC_LIST_UNSORTED, NULL, NULL, sizeof (value_t), sv->mkcerr);
+  value_init (&evalue);
+  evalue.vtype = MKC_VT_LIST;
+  evalue.list = elist;
+  sv_set (sv, svtype, vname, tag, &evalue, vctxt);
+  list_free (elist);
 }
 
 int

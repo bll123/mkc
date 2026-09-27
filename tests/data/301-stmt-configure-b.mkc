@@ -4,7 +4,7 @@ check_size int32_t {
   header stdint.h;
 }
 
-configure {
+configuration_file {
   method auto;
   define_zero;
 }

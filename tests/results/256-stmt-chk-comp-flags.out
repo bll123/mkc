@@ -1,7 +1,9 @@
   ok n
   ok c
+  ok d
+  ok e
 == default
-  HAVE_CF_ERROR '-Werror'
+  HAVE_CF_ERROR 1
   MKC_COMPFLAGS [
       '-Wunreachable-code'
       '-Wno-unreachable-code'
@@ -9,10 +11,12 @@
       '-Idef'
       '-Werror'
     ]
-  cf_Iabc '-Iabc'
-  cf_Idef '-Idef'
-  cf_no_unreachable_code '-Wno-unreachable-code'
-  cf_unreachable_code '-Wunreachable-code'
+  cf_Iabc 1
+  cf_Idef 1
+  cf_no_stuff 0
+  cf_no_unreachable_code 1
+  cf_something_bad 0
+  cf_unreachable_code 1
 == default c
-  C_CF_G '-g'
+  C_CF_G 1
   MKC_COMPFLAGS [ '-g' ]

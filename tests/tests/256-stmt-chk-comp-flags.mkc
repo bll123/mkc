@@ -6,8 +6,7 @@ project mkctest {
 
 check_compile_flag    '-Wunreachable-code';
 
-# without the negate flag, this will work
-check_compile_flag    '-Wno-unreachable-code';
+check_compile_flag    '-Wno-unreachable-code' { negate; }
 
 # unknown flag
 check_compile_flag    '-Wsomething-bad';
@@ -21,7 +20,7 @@ check_compile_flag    [ '-Iabc' '-Idef' ];
 check_compile_flag    '-Werror' {
   name HAVE_CF_ERROR;
 }
-if (${HAVE_CF_ERROR} ne '') {
+if (${HAVE_CF_ERROR}) {
   print '  ok n';
 } else {
   print '  fail n';
@@ -37,10 +36,21 @@ profile default {
   }
 }
 
-if (${C_CF_G} ne '') {
+if (${C_CF_G}) {
   print '  ok c';
 } else {
   print '  fail c';
+}
+
+if (! ${cf_no_stuff}) {
+  print '  ok d';
+} else {
+  print '  fail d';
+}
+if (! ${cf_something_bad}) {
+  print '  ok e';
+} else {
+  print '  fail e';
 }
 
 mkcdebug printvar test;

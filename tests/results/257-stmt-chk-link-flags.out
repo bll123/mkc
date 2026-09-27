@@ -1,10 +1,15 @@
   ok p
   ok g
+  ok o
 == default
   MKC_LIBS [ '-lm' ]
-  MKC_LINKFLAGS [ '-fPIC' ]
-  lf_fPIC '-fPIC'
-  lib_lm '-lm'
+  MKC_LINKFLAGS [
+      '-fPIC'
+      '-g'
+    ]
+  lf_fPIC 1
+  lf_g 1
+  lib_lm 1
 == default c
-  MKC_LINKFLAGS [ '-g' ]
-  lf_g '-g'
+  MKC_LINKFLAGS [ '-O0' ]
+  lf_O0 1

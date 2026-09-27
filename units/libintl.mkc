@@ -7,8 +7,15 @@
 #     _function_bindtextdomain
 #     _function_textdomain
 #     _function_gettext
-#     libintl_LIBS
 #     _package_libintl
+#     libintl_LIBS
+#       only exists if _package_libintl is true.
+#
+# Uses:
+#     MKC_COMMON_INCLUDE
+#     MKC_COMMON_LIB
+#   The commonpaths.mkc unit should be included first.
+#   If these variables are not set, sets them to an empty string.
 #
 # Checks for the 'libintl' library and determines the correct
 # compiler flags.
@@ -20,13 +27,13 @@
 {
   function check_libintl {
     # libintl has various macros to prevent linking issues.
-    # these make it difficult to find a function, as the
+    # These make it difficult to find a function, as the
     # functions may or may not have the 'libintl_' prefix.
     # check with and without the prefix.
     #
-    # if the 'libintl_' prefixes are active, a check for 'bindtextdomain'
+    # If the 'libintl_' prefixes are active, a check for 'bindtextdomain'
     # will succeed without linking a library even though the library is needed.
-    # check for 'libintl_bindtextdomain' first.
+    # Therefore, check for 'libintl_bindtextdomain' first.
 
     if (! is_defined (MKC_COMMON_INCLUDE)) {
       # these need to be set to something

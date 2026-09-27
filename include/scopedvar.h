@@ -99,6 +99,7 @@ int sv_set_str (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, con
 int sv_set_list (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, const char *tag, list_t *list, value_ctxt_t vctxt);
 int sv_set_list_from_str (scopedvar_t *scopedvar, const char *vname, char *str, value_ctxt_t vctxt);
 int sv_append_str_list (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, const char *tag, const char *data, value_ctxt_t vctxt);
+void sv_create_empty_list (scopedvar_t *sv, sv_type_t svtype, const char *vname, const char *tag, value_ctxt_t vctxt);
 int sv_set_dict (scopedvar_t *sv, sv_type_t svtype, const char *vname, dict_t *dict, value_ctxt_t vctxt);
 
 void sv_delete (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, const char *tag);

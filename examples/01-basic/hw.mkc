@@ -1,0 +1,10 @@
+
+project hw {
+  compiler c;
+}
+
+define_executable hw {
+  source hw.c;
+}
+
+build 'hw';

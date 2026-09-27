@@ -15,7 +15,7 @@ extern "C" {
 #endif
 
 char * stpecpy (char *dst, char *end, const char *restrict src);
-void str_toupper (char *buff);
+void str_toupper (char *buff, size_t sz);
 char * str_token (char *buff, const char *delim, char **tokstr);
 void str_trim (char *buff, size_t sz);
 void str_trim_char (char *buff, unsigned char c);

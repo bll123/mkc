@@ -67,12 +67,15 @@ stpecpy (char *dst, char *end, const char *restrict src)
 #endif /* ! _function_stpecpy */
 
 void
-str_toupper (char *buff)
+str_toupper (char *buff, size_t sz)
 {
-  size_t    len;
-
-  len = strlen (buff);
-  for (size_t i = 0; i < len; ++i) {
+  if (sz <= 0) {
+    sz = strlen (buff);
+  }
+  for (size_t i = 0; i < sz; ++i) {
+    if (buff [i] == '\0') {
+      break;
+    }
     buff [i] = toupper (buff [i]);
   }
 }
@@ -96,7 +99,7 @@ str_trim (char *buff, size_t sz)
 {
   char    *p;
 
-  if (sz == 0) {
+  if (sz <= 0) {
     sz = strlen (buff);
   }
   p = buff + sz - 1;
@@ -128,7 +131,7 @@ str_trim_char (char *s, unsigned char c)
 void
 str_clean (char *buff, size_t sz)
 {
-  if (sz == 0) {
+  if (sz <= 0) {
     sz = strlen (buff);
   }
   for (size_t i = 0; i < sz; ++i) {
