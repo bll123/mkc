@@ -107,47 +107,47 @@ typedef struct process_t {
   bool              variadicmacro;
 } process_t;
 
-static const char *sysnames [MKC_SYS_MAX] = {
-  [MKC_SYS_AIX] = "MKC_SYS_AIX",
-  [MKC_SYS_ANDROID] = "MKC_SYS_ANDROID",
-  [MKC_SYS_BSD] = "MKC_SYS_BSD",
-  [MKC_SYS_IOS] = "MKC_SYS_IOS",
-  [MKC_SYS_LINUX] = "MKC_SYS_LINUX",
-  [MKC_SYS_MACOS] = "MKC_SYS_MACOS",
-  [MKC_SYS_SOLARIS] = "MKC_SYS_SOLARIS",
-  [MKC_SYS_UNKNOWN] = "MKC_SYS_UNKNOWN",
-  [MKC_SYS_WINDOWS] = "MKC_SYS_WINDOWS",
+static const char *sysnames [MKC_ISYS_MAX] = {
+  [MKC_ISYS_AIX] = "MKC_SYS_AIX",
+  [MKC_ISYS_ANDROID] = "MKC_SYS_ANDROID",
+  [MKC_ISYS_BSD] = "MKC_SYS_BSD",
+  [MKC_ISYS_IOS] = "MKC_SYS_IOS",
+  [MKC_ISYS_LINUX] = "MKC_SYS_LINUX",
+  [MKC_ISYS_MACOS] = "MKC_SYS_MACOS",
+  [MKC_ISYS_SOLARIS] = "MKC_SYS_SOLARIS",
+  [MKC_ISYS_UNKNOWN] = "MKC_SYS_UNKNOWN",
+  [MKC_ISYS_WINDOWS] = "MKC_SYS_WINDOWS",
 };
 
-static const char *sysidnames [MKC_SYS_ID_MAX] = {
-  [MKC_SYS_ID_ALPINE] = "MKC_SYS_ID_ALPINE",
-  [MKC_SYS_ID_AZURE] = "MKC_SYS_ID_AZURE",
-  [MKC_SYS_ID_ARCH] = "MKC_SYS_ID_ARCH",
-  [MKC_SYS_ID_CYGWIN] = "MKC_SYS_ID_CYGWIN",
-  [MKC_SYS_ID_DEBIAN] = "MKC_SYS_ID_DEBIAN",
-  [MKC_SYS_ID_DRAGONFLYBSD] = "MKC_SYS_ID_DRAGONFLYBSD",
-  [MKC_SYS_ID_FEDORA] = "MKC_SYS_ID_FEDORA",
-  [MKC_SYS_ID_FREEBSD] = "MKC_SYS_ID_FREEBSD",
-  [MKC_SYS_ID_GENTOO] = "MKC_SYS_ID_GENTOO",
-  [MKC_SYS_ID_MSYS2] = "MKC_SYS_ID_MSYS2",
-  [MKC_SYS_ID_NETBSD] = "MKC_SYS_ID_NETBSD",
-  [MKC_SYS_ID_NIXOS] = "MKC_SYS_ID_NIXOS",
-  [MKC_SYS_ID_NOTSET] = "MKC_SYS_ID_NOTSET",
-  [MKC_SYS_ID_OPENBSD] = "MKC_SYS_ID_OPENBSD",
-  [MKC_SYS_ID_SLACKWARE] = "MKC_SYS_ID_SLACKWARE",
-  [MKC_SYS_ID_SOLARIS] = "MKC_SYS_ID_SOLARIS",
-  [MKC_SYS_ID_SUSE] = "MKC_SYS_ID_SUSE",
-  [MKC_SYS_ID_WRLINUX] = "MKC_SYS_ID_WRLINUX",
+static const char *sysidnames [MKC_ISYS_ID_MAX] = {
+  [MKC_ISYS_ID_ALPINE] = "MKC_SYS_ID_ALPINE",
+  [MKC_ISYS_ID_AZURE] = "MKC_SYS_ID_AZURE",
+  [MKC_ISYS_ID_ARCH] = "MKC_SYS_ID_ARCH",
+  [MKC_ISYS_ID_CYGWIN] = "MKC_SYS_ID_CYGWIN",
+  [MKC_ISYS_ID_DEBIAN] = "MKC_SYS_ID_DEBIAN",
+  [MKC_ISYS_ID_DRAGONFLYBSD] = "MKC_SYS_ID_DRAGONFLYBSD",
+  [MKC_ISYS_ID_FEDORA] = "MKC_SYS_ID_FEDORA",
+  [MKC_ISYS_ID_FREEBSD] = "MKC_SYS_ID_FREEBSD",
+  [MKC_ISYS_ID_GENTOO] = "MKC_SYS_ID_GENTOO",
+  [MKC_ISYS_ID_MSYS2] = "MKC_SYS_ID_MSYS2",
+  [MKC_ISYS_ID_NETBSD] = "MKC_SYS_ID_NETBSD",
+  [MKC_ISYS_ID_NIXOS] = "MKC_SYS_ID_NIXOS",
+  [MKC_ISYS_ID_NOTSET] = "MKC_SYS_ID_NOTSET",
+  [MKC_ISYS_ID_OPENBSD] = "MKC_SYS_ID_OPENBSD",
+  [MKC_ISYS_ID_SLACKWARE] = "MKC_SYS_ID_SLACKWARE",
+  [MKC_ISYS_ID_SOLARIS] = "MKC_SYS_ID_SOLARIS",
+  [MKC_ISYS_ID_SUSE] = "MKC_SYS_ID_SUSE",
+  [MKC_ISYS_ID_WRLINUX] = "MKC_SYS_ID_WRLINUX",
 };
 
-static const char *compidnames [MKC_COMP_ID_MAX] = {
-  [MKC_COMP_ID_CLANG] = "MKC_COMP_ID_CLANG",
-  [MKC_COMP_ID_GCC] = "MKC_COMP_ID_GCC",
-  [MKC_COMP_ID_ICC] = "MKC_COMP_ID_ICC",
-  [MKC_COMP_ID_MSC] = "MKC_COMP_ID_MSC",
-  [MKC_COMP_ID_SOLARIS] = "MKC_COMP_ID_SOLARIS",
-  [MKC_COMP_ID_UNKNOWN] = "MKC_COMP_ID_UNKNOWN",
-  [MKC_COMP_ID_XLC] = "MKC_COMP_ID_XLC",
+static const char *compidnames [MKC_ICOMP_ID_MAX] = {
+  [MKC_ICOMP_ID_CLANG] = "MKC_COMP_ID_CLANG",
+  [MKC_ICOMP_ID_GCC] = "MKC_COMP_ID_GCC",
+  [MKC_ICOMP_ID_ICC] = "MKC_COMP_ID_ICC",
+  [MKC_ICOMP_ID_MSC] = "MKC_COMP_ID_MSC",
+  [MKC_ICOMP_ID_SOLARIS] = "MKC_COMP_ID_SOLARIS",
+  [MKC_ICOMP_ID_UNKNOWN] = "MKC_COMP_ID_UNKNOWN",
+  [MKC_ICOMP_ID_XLC] = "MKC_COMP_ID_XLC",
 };
 
 static mkc_ctxt_val_t attrcontext [MKC_ATTR_MAX] = {
@@ -159,6 +159,7 @@ static mkc_ctxt_val_t attrcontext [MKC_ATTR_MAX] = {
   [MKC_ATTR_NAMESPACE] = MKC_CONTEXT_SET,
   [MKC_ATTR_OUTPUT] = MKC_CONTEXT_CONFIGURE,
   [MKC_ATTR_VCONTEXT] = MKC_CONTEXT_SET,
+  [MKC_ATTR_VOUTPUT] = MKC_CONTEXT_SET,
   [MKC_ATTR_VERSION] = MKC_CONTEXT_PROJECT,
 };
 
@@ -293,11 +294,11 @@ process_init (scopedvar_t *sv,
   process->reset_stage = false;
   process->mkcerr = mkcerr;
 
-  process->systype = MKC_SYS_UNKNOWN;
-  process->sysid = MKC_SYS_ID_NOTSET;
-  process->compid = MKC_COMP_ID_UNKNOWN;
-  process->libloc = MKC_LIB_LOC_NOTSET;
-  process->headertype = MKC_HEADER_MODERN;
+  process->systype = MKC_ISYS_UNKNOWN;
+  process->sysid = MKC_ISYS_ID_NOTSET;
+  process->compid = MKC_ICOMP_ID_UNKNOWN;
+  process->libloc = MKC_ILIB_LOC_NOTSET;
+  process->headertype = MKC_IHEADER_MODERN;
   process->attr.headertype = process->headertype;
   process->variadicmacro = MKC_VARIADIC_MACRO_SUPPORTED;
   process->compiler_mm = false;
@@ -1650,12 +1651,11 @@ process_stmt_mark (process_t *process,
     process_attr_clear (process);
     return;
   }
-  if (strcmp (val, "disable-output") == 0 ||
-      strcmp (val, "disable") == 0) {
-    sv_set_context (process->sv, nm, MKC_VCTXT_USER_DISABLE);
-  } else if (strcmp (val, "enable-output") == 0 ||
-      strcmp (val, "enable") == 0) {
-    sv_set_context (process->sv, nm, MKC_VCTXT_USER_ENABLE);
+
+  if (strcmp (val, "disable") == 0) {
+    sv_set_output (process->sv, nm, MKC_VOUT_DISABLE);
+  } else if (strcmp (val, "enable") == 0) {
+    sv_set_output (process->sv, nm, MKC_VOUT_ENABLE);
   } else {
     mkc_error_set (process->mkcerr, MKC_ERR_PROC_INVALID_MARK, 0, NULL);
   }
@@ -1714,7 +1714,7 @@ process_stmt_project (process_t *process, value_t *valnm)
 
   datafree (process->projectname);
   process->projectname = strdup (projnm);
-  path_set_dir_relative (MKC_DIR_PROJECT, projnm);
+  path_set_dir_relative (MKC_IDIR_PROJECT, projnm);
   process->dfltcompiler = process->attr.currcompiler;
 
   sv_set_str (process->sv, SV_T_INTERNAL,
@@ -1742,7 +1742,8 @@ process_stmt_set (process_t *process,
   char            *nm;
   value_t         retvalue;
   mkc_err_code_t  trc = MKC_ERR_FAILURE;
-  value_ctxt_t    vctxt = MKC_VCTXT_USER_DISABLE;
+  value_ctxt_t    vctxt = MKC_VCTXT_UNKNOWN;
+  value_out_t     vout = MKC_VOUT_DISABLE;
   bool            changed = false;
   sv_type_t       svtype;
 
@@ -1792,13 +1793,13 @@ process_stmt_set (process_t *process,
 
     tvc = process->attr.str [MKC_ATTR_VCONTEXT];
     vctxt = value_ctxt_value (tvc);
-    if (vctxt == MKC_VCTXT_UNKNOWN) {
-      if (strcmp (tvc, "disable-output") == 0) {
-        vctxt = MKC_VCTXT_USER_DISABLE;
-      } else if (strcmp (tvc, "enable-output") == 0) {
-        vctxt = MKC_VCTXT_USER_ENABLE;
-      }
-    }
+  }
+
+  if (process->attr.str [MKC_ATTR_VOUTPUT] != NULL) {
+    const char    *tvc;
+
+    tvc = process->attr.str [MKC_ATTR_VOUTPUT];
+    vout = value_out_value (tvc);
   }
 
   svtype = SV_T_SEARCH;
@@ -1806,7 +1807,7 @@ process_stmt_set (process_t *process,
     svtype = SV_T_LOCAL;
   }
 
-  trc = sv_set (process->sv, svtype, nm, NULL, &retvalue, vctxt);
+  trc = sv_set (process->sv, svtype, nm, NULL, &retvalue, vctxt, vout);
   if (trc == MKC_OK_CHANGE &&
      (vctxt == MKC_VCTXT_ENV || vctxt == MKC_VCTXT_MKC_BASE)) {
     process->cacheinvalidated = true;
@@ -1849,7 +1850,7 @@ process_attribute (process_t *process, value_t *valname,
   }
 
   switch (iasttype) {
-    case MKC_T_ATTR_CONTEXT:    { attrtype = MKC_ATTR_VCONTEXT; break; }
+    case MKC_T_ATTR_VCONTEXT:    { attrtype = MKC_ATTR_VCONTEXT; break; }
     case MKC_T_ATTR_INPUT:      { attrtype = MKC_ATTR_INPUT; break; }
     case MKC_T_ATTR_LIBRARY_VERSION: { attrtype = MKC_ATTR_LIB_VERSION; break; }
     case MKC_T_ATTR_MATCH:      { attrtype = MKC_ATTR_MATCH; break; }
@@ -1857,17 +1858,19 @@ process_attribute (process_t *process, value_t *valname,
     case MKC_T_ATTR_NAMESPACE:  { attrtype = MKC_ATTR_NAMESPACE; break; }
     case MKC_T_ATTR_OUTPUT:     { attrtype = MKC_ATTR_OUTPUT; break; }
     case MKC_T_ATTR_VERSION:    { attrtype = MKC_ATTR_VERSION; break; }
+    case MKC_T_ATTR_VOUTPUT:    { attrtype = MKC_ATTR_VOUTPUT; break; }
   }
 
   switch (iasttype) {
-    case MKC_T_ATTR_CONTEXT:
+    case MKC_T_ATTR_VCONTEXT:
     case MKC_T_ATTR_INPUT:
     case MKC_T_ATTR_LIBRARY_VERSION:
     case MKC_T_ATTR_MATCH:
     case MKC_T_ATTR_METHOD:
     case MKC_T_ATTR_NAMESPACE:
     case MKC_T_ATTR_OUTPUT:
-    case MKC_T_ATTR_VERSION: {
+    case MKC_T_ATTR_VERSION:
+    case MKC_T_ATTR_VOUTPUT: {
       ctxt = attrcontext [attrtype];
       break;
     }
@@ -1902,14 +1905,15 @@ process_attribute (process_t *process, value_t *valname,
   }
 
   switch (iasttype) {
-    case MKC_T_ATTR_CONTEXT:
+    case MKC_T_ATTR_VCONTEXT:
     case MKC_T_ATTR_INPUT:
     case MKC_T_ATTR_LIBRARY_VERSION:
     case MKC_T_ATTR_MATCH:
     case MKC_T_ATTR_METHOD:
     case MKC_T_ATTR_NAMESPACE:
     case MKC_T_ATTR_OUTPUT:
-    case MKC_T_ATTR_VERSION: {
+    case MKC_T_ATTR_VERSION:
+    case MKC_T_ATTR_VOUTPUT: {
       p = &process->attr.str [attrtype];
       break;
     }
@@ -2590,7 +2594,8 @@ process_local_set (process_t *process, value_t *nmval,
 
   sv_value_get_str (process->sv, nmval, nm, sizeof (nm));
 
-  sv_set (process->sv, SV_T_LOCAL, nm, NULL, argval, MKC_VCTXT_TEMP);
+  sv_set (process->sv, SV_T_LOCAL, nm, NULL, argval,
+      MKC_VCTXT_TEMP, MKC_VOUT_DISABLE);
 }
 
 int32_t
@@ -2802,7 +2807,7 @@ process_initial_checks (process_t *process)
   }
   mkc_log (process->log, MKC_LOG_GENERAL, "%s: %d\n", "compiler-id", process->compid);
 
-  for (mkc_compiler_id_t i = 0; i < MKC_COMP_ID_MAX; ++i) {
+  for (mkc_compiler_id_t i = 0; i < MKC_ICOMP_ID_MAX; ++i) {
     if (process->compid == i) {
       sv_set_integer (process->sv, SV_T_INTERNAL, compidnames [i], NULL, true, MKC_VCTXT_MKC_BASE);
       break;
@@ -2813,7 +2818,7 @@ process_initial_checks (process_t *process)
 
   rc = check_header_modern (process->check, process->dfltcompiler);
   if (rc != 0) {
-    process->headertype = MKC_HEADER_LEGACY;
+    process->headertype = MKC_IHEADER_LEGACY;
   }
   process->attr.headertype = process->headertype;
   mkc_log (process->log, MKC_LOG_GENERAL, "%s: %d\n", "header-type", process->headertype);
@@ -2826,7 +2831,7 @@ process_initial_checks (process_t *process)
   }
   mkc_log (process->log, MKC_LOG_GENERAL, "%s: %d\n", "system-type", process->systype);
 
-  for (mkc_system_type_t i = 0; i < MKC_SYS_MAX; ++i) {
+  for (mkc_system_type_t i = 0; i < MKC_ISYS_MAX; ++i) {
     if (process->systype == i) {
       sv_set_integer (process->sv, SV_T_INTERNAL, sysnames [i], NULL, true, MKC_VCTXT_MKC_BASE);
       break;
@@ -2835,7 +2840,7 @@ process_initial_checks (process_t *process)
 
   /* object, executable extension : internal */
 
-  if (process->systype == MKC_SYS_WINDOWS) {
+  if (process->systype == MKC_ISYS_WINDOWS) {
     process->objext = ".obj";
     process->exeext = ".exe";
   }
@@ -2851,17 +2856,17 @@ process_initial_checks (process_t *process)
       MKC_C_SHLIBEXT, NULL, ".so", MKC_VCTXT_MKC_BASE);
   isystype = process->systype;
   switch (isystype) {
-    case MKC_SYS_AIX: {
+    case MKC_ISYS_AIX: {
       sv_set_str (process->sv, SV_T_INTERNAL,
           MKC_C_SHLIBEXT, NULL, ".a", MKC_VCTXT_MKC_BASE);
       break;
     }
-    case MKC_SYS_MACOS: {
+    case MKC_ISYS_MACOS: {
       sv_set_str (process->sv, SV_T_INTERNAL,
           MKC_C_SHLIBEXT, NULL, ".dylib", MKC_VCTXT_MKC_BASE);
       break;
     }
-    case MKC_SYS_WINDOWS: {
+    case MKC_ISYS_WINDOWS: {
       sv_set_str (process->sv, SV_T_INTERNAL,
           MKC_C_SHLIBEXT, NULL, ".dll", MKC_VCTXT_MKC_BASE);
       break;
@@ -2876,7 +2881,7 @@ process_initial_checks (process_t *process)
   }
   mkc_log (process->log, MKC_LOG_GENERAL, "%s: %d\n", "system-id", process->sysid);
 
-  for (mkc_system_id_t i = 0; i < MKC_SYS_ID_MAX; ++i) {
+  for (mkc_system_id_t i = 0; i < MKC_ISYS_ID_MAX; ++i) {
     if (process->sysid == i) {
       sv_set_integer (process->sv, SV_T_INTERNAL,
           sysidnames [i], NULL, true, MKC_VCTXT_MKC_BASE);
@@ -2886,7 +2891,7 @@ process_initial_checks (process_t *process)
 
   /* linux: library location : internal */
 
-  if (process->systype == MKC_SYS_LINUX) {
+  if (process->systype == MKC_ISYS_LINUX) {
     rc = check_library_location (process->check, process->dfltcompiler);
     if (rc >= 0) {
       process->libloc = rc;
@@ -2933,11 +2938,11 @@ process_set_defaults (process_t *process)
 {
   /* create internal constants */
 
-  for (mkc_system_type_t i = 0; i < MKC_SYS_MAX; ++i) {
+  for (mkc_system_type_t i = 0; i < MKC_ISYS_MAX; ++i) {
     sv_set_integer (process->sv, SV_T_INTERNAL,
         sysnames [i], NULL, false, MKC_VCTXT_MKC_BASE);
   }
-  for (mkc_system_id_t i = 0; i < MKC_SYS_ID_MAX; ++i) {
+  for (mkc_system_id_t i = 0; i < MKC_ISYS_ID_MAX; ++i) {
     sv_set_integer (process->sv, SV_T_INTERNAL,
         sysidnames [i], NULL, false, MKC_VCTXT_MKC_BASE);
   }
@@ -2960,7 +2965,7 @@ process_set_defaults (process_t *process)
   sv_set_str (process->sv, SV_T_INTERNAL,
       "OBJC", NULL, "cc", MKC_VCTXT_ENV);
 
-  for (mkc_compiler_id_t i = 0; i < MKC_COMP_ID_MAX; ++i) {
+  for (mkc_compiler_id_t i = 0; i < MKC_ICOMP_ID_MAX; ++i) {
     if (mkc_error_chk_err (process->mkcerr)) {
       break;
     }
@@ -3105,8 +3110,7 @@ process_configure_auto (process_t *process,
 
       nm = sv_var_iter_get_name (sv, sviter, vidx);
       value = sv_var_iter_get_value (sv, sviter, vidx);
-      if (value->vctxt != MKC_VCTXT_CHECK &&
-          value->vctxt != MKC_VCTXT_USER_ENABLE) {
+      if (value->vout != MKC_VOUT_ENABLE) {
         continue;
       }
 
@@ -3177,7 +3181,7 @@ process_get_path (process_t *process)
   const char      *pathdelim = ":";
 
 
-  if (process->systype == MKC_SYS_WINDOWS) {
+  if (process->systype == MKC_ISYS_WINDOWS) {
     pathdelim = ";";
   }
 
@@ -3506,7 +3510,7 @@ process_save_cache_profile (process_t *process, FILE *fh,
   while ((vidx = sv_var_iter_next (sv, sviter, &viter)) != MKC_ITER_FINISH) {
     const char    *nm;
     value_t       *value;
-    const char    *vctxtstr = "";
+    const char    *vtmpstr = "";
 
     nm = sv_var_iter_get_name (sv, sviter, vidx);
     value = sv_var_iter_get_value (sv, sviter, vidx);
@@ -3518,7 +3522,6 @@ process_save_cache_profile (process_t *process, FILE *fh,
       snprintf (tmp, tmpsz, "    set '%s' %s ", nm, tbuff);
     }
     p = stpecpy (p, scend, tmp);
-    vctxtstr = value_ctxt_str (value->vctxt);
     p = stpecpy (p, scend, "{");
     if (value->vtype == MKC_VT_LIST ||
         value->vtype == MKC_VT_DICT) {
@@ -3526,7 +3529,13 @@ process_save_cache_profile (process_t *process, FILE *fh,
     } else {
       p = stpecpy (p, scend, " ");
     }
-    snprintf (tmp, tmpsz, "context %s;", vctxtstr);
+    vtmpstr = value_ctxt_str (value->vctxt);
+    snprintf (tmp, tmpsz, "vcontext %s; ", vtmpstr);
+    p = stpecpy (p, scend, tmp);
+    if (value->vout == MKC_VOUT_ENABLE) {
+      vtmpstr = value_out_str (value->vout);
+      snprintf (tmp, tmpsz, "voutput %s; ", vtmpstr);
+    }
     p = stpecpy (p, scend, tmp);
     if (value->vtype == MKC_VT_LIST ||
         value->vtype == MKC_VT_DICT) {

@@ -168,13 +168,13 @@ main (int argc, char *argv [])
       }
       case 5: {
         if (optarg != NULL) {
-          path_set_dir (MKC_DIR_MKC_FILES, optarg);
+          path_set_dir (MKC_IDIR_MKC_FILES, optarg);
         }
         break;
       }
       case 6: {
         if (optarg != NULL) {
-          path_set_dir (MKC_DIR_PREFIX, optarg);
+          path_set_dir (MKC_IDIR_PREFIX, optarg);
         }
         break;
       }
@@ -288,7 +288,7 @@ main (int argc, char *argv [])
 static void
 copyargs (argcopy_t *argcopy, int argc, char *argv [], mkc_error_t *mkcerr)
 {
-#if _function_GetCommandLineW || (MKC_BOOTSTRAP && MKC_SYS_WIN)
+#if _function_GetCommandLineW || (MKC_BOOTSTRAP && MKC_BOOTSTRAP_WIN)
   wchar_t         **wargv;
   int             targc;
 #endif
@@ -301,7 +301,7 @@ copyargs (argcopy_t *argcopy, int argc, char *argv [], mkc_error_t *mkcerr)
       mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
     }
   }
-#if _function_GetCommandLineW || (MKC_BOOTSTRAP && MKC_SYS_WIN)
+#if _function_GetCommandLineW || (MKC_BOOTSTRAP && MKC_BOOTSTRAP_WIN)
   wargv = CommandLineToArgvW (GetCommandLineW(), &targc);
   for (int i = 0; i < argcopy->nargc; ++i) {
     argcopy->utf8argv [i] = str_fromwide (wargv [i]);
@@ -355,13 +355,13 @@ mkc_main_set_home (void)
   char    tbuff [MKC_PATH_MAX];
 
   *tbuff = '\0';
-#if MKC_SYS_WIN
+#if MKC_SYS_WINDOWS || MKC_BOOTSTRAP_WIN
   env_get ("USERPROFILE", tbuff, sizeof (tbuff));
   fileop_normalize_path (tbuff, sizeof (tbuff));
 #else
   env_get ("HOME", tbuff, sizeof (tbuff));
 #endif
-  path_set_dir (MKC_DIR_HOME, tbuff);
+  path_set_dir (MKC_IDIR_HOME, tbuff);
 }
 
 void
@@ -375,7 +375,7 @@ mkc_main_set_prefix (mkc_error_t *mkcerr)
     /* use $HOME/local as a default */
     path_build (MKC_PATH_HOME, tbuff, sizeof (tbuff), "local", mkcerr);
   }
-  path_set_dir (MKC_DIR_PREFIX, tbuff);
+  path_set_dir (MKC_IDIR_PREFIX, tbuff);
 }
 
 void
@@ -390,13 +390,13 @@ mkc_main_set_exec_path (argcopy_t *argcopy)
   if (p != NULL) {
     *p = '\0';
   }
-  path_set_dir (MKC_DIR_EXEC, tbuff);
+  path_set_dir (MKC_IDIR_EXEC, tbuff);
 
   p = strrchr (tbuff, '/');
   if (p != NULL) {
     *p = '\0';
   }
-  path_set_dir (MKC_DIR_EXEC_PREFIX, tbuff);
+  path_set_dir (MKC_IDIR_EXEC_PREFIX, tbuff);
 }
 
 static void

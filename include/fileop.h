@@ -32,7 +32,7 @@ int fileop_link_copy (const char *fname, const char *nfn, mkc_error_t *mkcerr);
 void fileop_display_path (char *path, size_t sz);
 void fileop_normalize_path (char *path, size_t sz);
 
-#if _function_symlink || (MKC_BOOTSTRAP && ! MKC_SYS_WIN)
+#if _function_symlink || (MKC_BOOTSTRAP && ! MKC_BOOTSTRAP_WIN)
 int fileop_link_create (const char *target, const char *linkpath);
 #endif /* _function_symlink*/
 

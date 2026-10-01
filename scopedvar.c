@@ -984,9 +984,26 @@ sv_set_context (scopedvar_t *sv, const char *vname,
   }
 }
 
+void
+sv_set_output (scopedvar_t *sv, const char *vname,
+    value_out_t vout)
+{
+  value_t   *value;
+
+  if (sv == NULL || vname == NULL) {
+    return;
+  }
+
+  value = sv_get_value (sv, SV_T_SEARCH, vname, NULL);
+  if (value != NULL) {
+    value->vout = vout;
+  }
+}
+
 int
 sv_set (scopedvar_t *sv, sv_type_t svtype,
-    const char *vname, const char *tag, value_t *value, value_ctxt_t vctxt)
+    const char *vname, const char *tag, value_t *value,
+    value_ctxt_t vctxt, value_out_t vout)
 {
   varlist_t       *varlist = NULL;
   int             rc = MKC_ERR_FAILURE;
@@ -1052,7 +1069,12 @@ sv_set (scopedvar_t *sv, sv_type_t svtype,
     return rc;
   }
 
+  if (vctxt == MKC_VCTXT_CHECK) {
+    vout = MKC_VOUT_ENABLE;
+  }
+
   value->vctxt = vctxt;
+  value->vout = vout;
   var_set_fromcache (varlist, sv->fromcache);
   rc = var_set (varlist, vname, value);
 
@@ -1061,7 +1083,8 @@ sv_set (scopedvar_t *sv, sv_type_t svtype,
 
 int
 sv_set_integer (scopedvar_t *sv, sv_type_t svtype,
-    const char *vname, const char *tag, int32_t ival, value_ctxt_t vctxt)
+    const char *vname, const char *tag, int32_t ival,
+    value_ctxt_t vctxt)
 {
   int       rc = MKC_ERR_FAILURE;
   value_t   value;
@@ -1070,13 +1093,14 @@ sv_set_integer (scopedvar_t *sv, sv_type_t svtype,
   value.ival = ival;
   value.vtype = MKC_VT_INTEGER;
 
-  rc = sv_set (sv, svtype, vname, tag, &value, vctxt);
+  rc = sv_set (sv, svtype, vname, tag, &value, vctxt, MKC_VOUT_DISABLE);
   return rc;
 }
 
 int
 sv_set_timestamp (scopedvar_t *sv, sv_type_t svtype,
-    const char *vname, const char *tag, int64_t tmval, value_ctxt_t vctxt)
+    const char *vname, const char *tag, int64_t tmval,
+    value_ctxt_t vctxt)
 {
   int       rc = MKC_ERR_FAILURE;
   value_t   value;
@@ -1085,13 +1109,14 @@ sv_set_timestamp (scopedvar_t *sv, sv_type_t svtype,
   value.tmval = tmval;
   value.vtype = MKC_VT_TIMESTAMP;
 
-  rc = sv_set (sv, svtype, vname, tag, &value, vctxt);
+  rc = sv_set (sv, svtype, vname, tag, &value, vctxt, MKC_VOUT_DISABLE);
   return rc;
 }
 
 int
 sv_set_str (scopedvar_t *sv, sv_type_t svtype,
-    const char *vname, const char *tag, const char *str, value_ctxt_t vctxt)
+    const char *vname, const char *tag, const char *str,
+    value_ctxt_t vctxt)
 {
   int       rc = MKC_ERR_FAILURE;
   value_t   value;
@@ -1100,7 +1125,7 @@ sv_set_str (scopedvar_t *sv, sv_type_t svtype,
   value.sval = (char *) str;
   value.vtype = MKC_VT_STRING;
 
-  rc = sv_set (sv, svtype, vname, tag, &value, vctxt);
+  rc = sv_set (sv, svtype, vname, tag, &value, vctxt, MKC_VOUT_DISABLE);
   return rc;
 }
 
@@ -1117,7 +1142,7 @@ sv_set_list (scopedvar_t *sv, sv_type_t svtype,
   value.list = list;
   value.vtype = MKC_VT_LIST;
 
-  rc = sv_set (sv, svtype, vname, tag, &value, vctxt);
+  rc = sv_set (sv, svtype, vname, tag, &value, vctxt, MKC_VOUT_DISABLE);
   return rc;
 }
 
@@ -1186,7 +1211,8 @@ sv_append_str_list (scopedvar_t *sv, sv_type_t svtype,
 /* make sure a name/tag has a value, uses sizeof (value_t) */
 void
 sv_create_empty_list (scopedvar_t *sv, sv_type_t svtype,
-    const char *vname, const char *tag, value_ctxt_t vctxt)
+    const char *vname, const char *tag,
+    value_ctxt_t vctxt)
 {
   list_t    * elist;
   value_t   evalue;
@@ -1195,13 +1221,14 @@ sv_create_empty_list (scopedvar_t *sv, sv_type_t svtype,
   value_init (&evalue);
   evalue.vtype = MKC_VT_LIST;
   evalue.list = elist;
-  sv_set (sv, svtype, vname, tag, &evalue, vctxt);
+  sv_set (sv, svtype, vname, tag, &evalue, vctxt, MKC_VOUT_DISABLE);
   list_free (elist);
 }
 
 int
 sv_set_dict (scopedvar_t *sv, sv_type_t svtype,
-    const char *vname, dict_t *dict, value_ctxt_t vctxt)
+    const char *vname, dict_t *dict,
+    value_ctxt_t vctxt)
 {
   int       rc = MKC_ERR_FAILURE;
   value_t   value;
@@ -1210,7 +1237,7 @@ sv_set_dict (scopedvar_t *sv, sv_type_t svtype,
   value.dict = dict;
   value.vtype = MKC_VT_DICT;
 
-  rc = sv_set (sv, svtype, vname, NULL, &value, vctxt);
+  rc = sv_set (sv, svtype, vname, NULL, &value, vctxt, MKC_VOUT_DISABLE);
   return rc;
 }
 

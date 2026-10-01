@@ -92,7 +92,8 @@ value_t * sv_value_get_value (scopedvar_t *scopedvar, value_t *value, value_t *r
 value_t * sv_value_get_list_value (scopedvar_t *scopedvar, value_t *value);
 
 void sv_set_context (scopedvar_t *scopedvar, const char *vname, value_ctxt_t vctxt);
-int sv_set (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, const char *tag, value_t *value, value_ctxt_t vctxt);
+void sv_set_output (scopedvar_t *scopedvar, const char *vname, value_out_t vout);
+int sv_set (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, const char *tag, value_t *value, value_ctxt_t vctxt, value_out_t vout);
 int sv_set_integer (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, const char *tag, int32_t ival, value_ctxt_t vctxt);
 int sv_set_timestamp (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, const char *tag, int64_t tmval, value_ctxt_t vctxt);
 int sv_set_str (scopedvar_t *scopedvar, sv_type_t svtype, const char *vname, const char *tag, const char *str, value_ctxt_t vctxt);

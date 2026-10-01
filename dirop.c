@@ -195,7 +195,6 @@ dirop_delete (const char *dirname, int flags, mkc_error_t *mkcerr)
 {
   mkc_dirhandle_t *dh;
   char            *fname;
-  char            temp [MKC_PATH_MAX];
 
   if (! fileop_exists (dirname)) {
     /* not an error */
@@ -214,23 +213,34 @@ dirop_delete (const char *dirname, int flags, mkc_error_t *mkcerr)
   }
 
   while ((fname = dirop_iterate (dh, mkcerr)) != NULL) {
+    char    * temp = NULL;
+
     if (strcmp (fname, ".") == 0 ||
         strcmp (fname, "..") == 0) {
       free (fname);
       continue;
     }
 
-    snprintf (temp, sizeof (temp), "%s/%s", dirname, fname);
+    temp = malloc (MKC_PATH_MAX);
+    if (temp == NULL) {
+      mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+      free (fname);
+      return MKC_ERR_FAILURE;
+    }
+
+    snprintf (temp, MKC_PATH_MAX, "%s/%s", dirname, fname);
     if (fname != NULL) {
       if (fileop_is_directory (temp)) {
         if (! dirop_delete (temp, flags, mkcerr)) {
           free (fname);
+          free (temp);
           dirop_close (dh);
           return MKC_ERR_FAILURE;
         }
       } else {
         if ((flags & DIROP_ONLY_IF_EMPTY) == DIROP_ONLY_IF_EMPTY) {
           free (fname);
+          free (temp);
           dirop_close (dh);
           return MKC_ERR_FAILURE;
         }
@@ -238,6 +248,7 @@ dirop_delete (const char *dirname, int flags, mkc_error_t *mkcerr)
       }
     }
     free (fname);
+    free (temp);
   }
 
   dirop_close (dh);
@@ -282,6 +293,12 @@ dirop_basic_list (const char *dirname, mkc_error_t *mkcerr)
       sizeof (char *), mkcerr);
   dh = dirop_open (dirname, mkcerr);
   while ((fname = dirop_iterate (dh, mkcerr)) != NULL) {
+    if (strcmp (fname, ".") == 0 ||
+        strcmp (fname, "..") == 0) {
+      free (fname);
+      continue;
+    }
+
     snprintf (temp, sizeof (temp), "%s/%s", dirname, fname);
     if (fileop_is_directory (temp)) {
       free (fname);
@@ -299,12 +316,12 @@ MKC_NODISCARD
 list_t *
 dirop_list_recursive (const char *dirname, int flags, mkc_error_t *mkcerr)
 {
-  mkc_dirhandle_t *dh;
-  char            *fname;
-  list_t      *filelist;
-  list_t      *dirqueue;
+  mkc_dirhandle_t * dh;
+  char            * fname;
+  list_t          * filelist;
+  list_t          * dirqueue;
   char            temp [MKC_PATH_MAX];
-  char            *p;
+  char            * p;
   int32_t         processed = 0;
 
   if (! fileop_is_directory (dirname)) {

@@ -1,10 +1,10 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
 check_shell_extract VERSION.txt;
-mark_variable VERSION enable-output;
-mark_variable BUILD enable-output;
-mark_variable BUILDDATE enable-output;
-mark_variable RELEASELEVEL enable-output;
+mark_variable VERSION enable;
+mark_variable BUILD enable;
+mark_variable BUILDDATE enable;
+mark_variable RELEASELEVEL enable;
 
 project mkc {
   compiler c;
@@ -116,7 +116,9 @@ set _have_regex false;
 if (${_package_pcre}) {
   set _have_regex true;
 }
-mark_variable _have_regex enable-output;
+mark_variable _have_regex enable;
+
+mark_variable MKC_SYS_WINDOWS enable;
 
 # configure
 

@@ -309,9 +309,9 @@ mkc_os_win_create_cmd (char *buff, size_t sz, const char *targv [])
     if (sp != NULL || bsp != NULL) {
       /* anything that contains a slash or backslash gets quoted, */
       /* as it may contain a space */
-      snprintf (tbuff, sz, "\"%s\"", targv [idx]);
+      snprintf (tbuff, MKC_PATH_MAX, "\"%s\"", targv [idx]);
     } else {
-      snprintf (tbuff, sz, "%s", targv [idx]);
+      snprintf (tbuff, MKC_PATH_MAX, "%s", targv [idx]);
     }
     p = stpecpy (p, buff + sz, tbuff);
     p = stpecpy (p, buff + sz, " ");

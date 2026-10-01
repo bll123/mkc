@@ -19,27 +19,27 @@
 int
 main (void)
 {
-  int       rc = MKC_SYS_UNKNOWN;
+  int       rc = MKC_ISYS_UNKNOWN;
 
 #if defined (_AIX)
-  rc = MKC_SYS_AIX;
+  rc = MKC_ISYS_AIX;
 #endif
 #if defined (__ANDROID__)
-  rc = MKC_SYS_ANDROID;
+  rc = MKC_ISYS_ANDROID;
 #endif
 #if defined (__linux__) && ! defined (__ANDROID__)
-  rc = MKC_SYS_LINUX;
+  rc = MKC_ISYS_LINUX;
 #endif
 #if defined (_WIN32) || defined (__CYGWIN__)
-  rc = MKC_SYS_WINDOWS;
+  rc = MKC_ISYS_WINDOWS;
 #endif
 #if defined (__APPLE__) && defined (__MACH__)
 # if TARGET_IPHONE_SIMULATOR == 1
-   rc = MKC_SYS_IOS;
+   rc = MKC_ISYS_IOS;
 # elif TARGET_OS_IPHONE == 1
-   rc = MKC_SYS_IOS;
+   rc = MKC_ISYS_IOS;
 # elif TARGET_OS_MAC == 1
-   rc = MKC_SYS_MACOS;
+   rc = MKC_ISYS_MACOS;
 # endif
 #endif
 #if defined (BSD) || \
@@ -47,7 +47,7 @@ main (void)
     defined (__NetBSD__) || \
     defined (__OpenBSD__) || \
     defined (__DragonFly__)
-  rc = MKC_SYS_BSD;
+  rc = MKC_ISYS_BSD;
 #endif
   fprintf (stdout, "%d\n", rc);
   return 0;

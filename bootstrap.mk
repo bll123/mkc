@@ -14,20 +14,22 @@ MKC_REGEX_OBJ = mkc_regex_pcre.o
 MKC_REGEX_SRC = mkc_regex_pcre.c
 
 MAIN_TMP = tmp
+BOOTSTRAP_TMPDIR = $(MAIN_TMP)/bootstrap-tmpdir.txt
+BOOTSTRAP_MKC_DIRS = $(MAIN_TMP)/bootstrap-mkcfiles.txt
 BOOTSTRAP_PASS1 = $(MAIN_TMP)/bootstrap-pass1.txt
 BOOTSTRAP_PASS2 = $(MAIN_TMP)/bootstrap-pass2.txt
 BOOTSTRAP_PROCESS = $(MAIN_TMP)/bootstrap-process.txt
-BOOTSTRAP_LOCAL = $(MAIN_TMP)/bootstrap-local.txt
-BOOTSTRAP_TMPDIR = $(MAIN_TMP)/bootstrap-tmpdir.txt
-BOOTSTRAP_MKC_DIRS = $(MAIN_TMP)/bootstrap-mkcfiles.txt
 
 MKC_FILES = mkc_files
 MKCF_TMP = $(MKC_FILES)/tmp
 PROJECT = mkc
 MKC_TARGET = $(MKC_FILES)/$(PROJECT)/stage/bin/$(PROJECT)
 MKC_LOCAL = $(PROJECT)
+MKC_PASS1 = $(PROJECT)_1
+MKC_PASS2 = $(PROJECT)_2
 MKC_CONFIG_H = "$(PROJECT)_config.h"
 MKC_MKC = "$(PROJECT).mkc"
+MKC_EXEC = $(MKC_LOCAL)
 
 # base configuration for bootstrap
 
@@ -46,7 +48,7 @@ CONF_CFLAGS = $(BASE_OPTFLAGS) $(BASE_CFLAGS) \
     $$($(PKGCONF) --cflags $(MKC_REGEX_PKG))
 CONF_LDFLAGS = $(BASE_OPTFLAGS) $(BASE_LDFLAGS)
 CONF_LIBS = $$($(PKGCONF) --libs $(MKC_REGEX_PKG))
-CONF_MKC_PROFILE =
+CONF_MKC_PROFILE = default
 
 # debug build
 
@@ -79,14 +81,14 @@ SAN_MKC_PROFILE = sanitize
 
 # windows
 
-WIN=F
-WINOBJ=os_win_process.o
+WIN = F
+WINOBJ = os_win_process.o
+EXEEXT =
 
 # initial targets
 
 .PHONY: start
 start:
-	@echo "=== mkc: $(MKC_MKC) $(MKC_CONFIG_H)"
 	@$(MAKE) -f $(MAKEFILE) \
 	    CFLAGS="$(CONF_CFLAGS)" \
 	    LDFLAGS="$(CONF_LDFLAGS)" \
@@ -151,12 +153,9 @@ $(BOOTSTRAP_PASS1): $(BOOTSTRAP_TMPDIR) $(BOOTSTRAP_MKC_DIRS)
 	@echo "$(MAKEFILE): bootstrap mkc (pass1: initial)"
 	@$(MAKE) -f $(MAKEFILE) \
 	    CFLAGS="$(CFLAGS) $(INIT_DEF)" \
-	    LDFLAGS="$(LDFLAGS)" \
-	    LIBS="$(LIBS)" \
-	    MKC_PROFILE=$(MKC_PROFILE) \
-	    WIN=$(WIN) \
+	    MKC_EXEC=$(MKC_PASS1) \
 	    TARGET=bootstrap oscheck
-	@# at this point, an 'mkc' exists with the internal bootstrap
+	@# at this point, 'mkc_1' exists with the internal bootstrap
 	@# flag set.
 	@touch $(BOOTSTRAP_PASS1)
 
@@ -168,17 +167,15 @@ $(BOOTSTRAP_PASS2): $(BOOTSTRAP_PASS1)
 	@echo "$(MAKEFILE): bootstrap mkc (pass2: create mkc_config.h)"
 	@$(MAKE) -f $(MAKEFILE) \
 	    CFLAGS="$(CFLAGS)" \
-	    LDFLAGS="$(LDFLAGS)" \
-	    LIBS="$(LIBS)" \
-	    MKC_PROFILE=$(MKC_PROFILE) \
-	    WIN=$(WIN) \
 	    QUIET="@" \
+	    MKC_EXEC=$(MKC_PASS1) \
 	    bootstrap-pass2
+	@# the 'mkc_2' executable has no bootstrap flag
 	@touch $(BOOTSTRAP_PASS2)
 
 # the initial mkc_config.h file is created (as a make dependency).
-# but 'mkc' still has the internal bootstrap flag set.
-# clean out the objects and rebuild 'mkc'.
+# but 'mkc_1' still has the internal bootstrap flag set.
+# clean out the objects and build 'mkc_2'.
 .PHONY: bootstrap-pass2
 bootstrap-pass2: $(MKC_CONFIG_H)
 	@# all objects and the executable must be removed (bootstrap flag set)
@@ -186,24 +183,38 @@ bootstrap-pass2: $(MKC_CONFIG_H)
 	@$(MAKE) -f $(MAKEFILE) basicclean
 	@$(MAKE) -f $(MAKEFILE) \
 	    CFLAGS="$(CFLAGS)" \
-	    LDFLAGS="$(LDFLAGS)" \
-	    LIBS="$(LIBS)" \
-	    MKC_PROFILE=$(MKC_PROFILE) \
-	    WIN=$(WIN) \
+	    MKC_EXEC=$(MKC_PASS2) \
 	    TARGET=bootstrap oscheck
-	@# now the 'mkc' executable has no bootstrap flag
 
 $(BOOTSTRAP_PROCESS): $(BOOTSTRAP_PASS2)
 	@echo "$(MAKEFILE): bootstrap mkc (pass3: final)"
 	@# make sure mkc_config.h is re-built
 	@rm -f $(MKC_CONFIG_H)
 	@# objects in the current dir are no longer needed
-	@# mkc is still needed
+	@# mkc_2 is still needed
 	@$(MAKE) -f $(MAKEFILE) objectclean
+	@$(MAKE) -f $(MAKEFILE) \
+	    MKC_EXEC=$(MKC_PASS2) \
+	    bootstrap-process
+	@# on success, the old objects and mkc_1 and mkc_2 may be removed
+	@$(MAKE) -f $(MAKEFILE) bootstrapclean
+	@if [ $(WIN) = T ]; then \
+	  cp -pf $(MKC_FILES)/$(PROJECT)/stage/bin/mkc $(MKC_LOCAL) ; \
+	else \
+	  ln -sf $(MKC_FILES)/$(PROJECT)/stage/bin/mkc $(MKC_LOCAL) ; \
+	fi
 	@touch $(BOOTSTRAP_PROCESS)
 
+.PHONY: bootstrap-process
+bootstrap-process: $(MKC_CONFIG_H)
+	@:
+
+# if the bootstrap flag is set in the executable, mkc.mkc
+# will only build the configuration file.
+# if the bootstrap flag is not set, 
+# a complete build is performed using mkc.mkc.
 $(MKC_CONFIG_H): mkc.mkc
-	@./mkc --no-cache --clean --prefix '' \
+	@./$(MKC_EXEC) --no-cache --clean --prefix '' \
 	    --profile $(MKC_PROFILE) $(MKC_MKC)
 
 $(BOOTSTRAP_TMPDIR):
@@ -218,24 +229,26 @@ $(BOOTSTRAP_MKC_DIRS):
 # make this phony so that it always re-runs the mkc build
 .PHONY: $(MKC_LOCAL)
 $(MKC_LOCAL):
-	@./mkc --prefix '' --profile $(MKC_PROFILE) $(MKC_MKC)
-	@if [ $(WIN) = T ]; then \
-	  cp -pf $(MKC_FILES)/$(PROJECT)/stage/bin/mkc $(MKC_LOCAL) ; \
-	else \
-	 ln -sf $(MKC_FILES)/$(PROJECT)/stage/bin/mkc $(MKC_LOCAL) ; \
-	fi
+	@./$(MKC_EXEC) --prefix '' --profile $(MKC_PROFILE) $(MKC_MKC)
 
 # clean the object files
 .PHONY: objectclean
 objectclean:
 	@rm -f $(MKCOBJECTS) mkc_grammar.output
 
-# clean the object files and 'mkc' only
+# clean the object files and 'mkc_2' only
 # do not clean the mkc_files/ directory
 .PHONY: basicclean
 basicclean:
 	@$(MAKE) -f $(MAKEFILE) objectclean
-	@rm -f mkc
+	@rm -f mkc_2
+
+# clean the object files and 'mkc_2' only
+# do not clean the mkc_files/ directory
+.PHONY: bootstrapclean
+bootstrapclean:
+	@$(MAKE) -f $(MAKEFILE) basicclean
+	@rm -f mkc_1
 
 .PHONY: oscheck
 oscheck:
@@ -250,14 +263,15 @@ windows-bootstrap:
 	@# _WIN32 does not seem to be defined under cygwin
 	@$(MAKE) -f $(MAKEFILE) \
 	    CFLAGS="$(CFLAGS) \
-	    -DMKC_SYS_WIN=1" \
+	      -DMKC_BOOTSTRAP_WIN=1" \
 	    MKC_WIN_OBJ="$(WINOBJ)" \
 	    WIN=T \
-	    $(BOOTSTRAP_LOCAL)
+	    EXEEXT=".exe" \
+	    bootstrap-local
 
 .PHONY: other-bootstrap
 other-bootstrap:
-	@$(MAKE) -f $(MAKEFILE) $(BOOTSTRAP_LOCAL)
+	@$(MAKE) -f $(MAKEFILE) bootstrap-local
 
 # for the bootstrap process
 
@@ -308,9 +322,9 @@ TOPOCHKOBJ = \
 	mkc_error.o
 
 # links the local objects to create a local mkc file
-$(BOOTSTRAP_LOCAL): $(MKCOBJECTS)
-	$(QUIET)$(CC) $(LDFLAGS) -o $(PROJECT) $(MKCOBJECTS) $(LIBS)
-	@touch $(BOOTSTRAP_LOCAL)
+.PHONY: bootstrap-local
+bootstrap-local: $(MKCOBJECTS)
+	$(QUIET)$(CC) $(LDFLAGS) -o $(MKC_EXEC) $(MKCOBJECTS) $(LIBS)
 
 topochk: $(TOPOCHKOBJ)
 	$(QUIET)$(CC) $(LDFLAGS) -o $@ $(TOPOCHKOBJ)

@@ -24,14 +24,14 @@ typedef enum {
 } mkc_compiler_t;
 
 typedef enum {
-  MKC_COMP_ID_CLANG,
-  MKC_COMP_ID_GCC,
-  MKC_COMP_ID_ICC,
-  MKC_COMP_ID_MSC,
-  MKC_COMP_ID_SOLARIS,
-  MKC_COMP_ID_XLC,
-  MKC_COMP_ID_UNKNOWN,
-  MKC_COMP_ID_MAX,
+  MKC_ICOMP_ID_CLANG,
+  MKC_ICOMP_ID_GCC,
+  MKC_ICOMP_ID_ICC,
+  MKC_ICOMP_ID_MSC,
+  MKC_ICOMP_ID_SOLARIS,
+  MKC_ICOMP_ID_XLC,
+  MKC_ICOMP_ID_UNKNOWN,
+  MKC_ICOMP_ID_MAX,
 } mkc_compiler_id_t;
 
 typedef enum {

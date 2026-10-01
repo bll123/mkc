@@ -1757,7 +1757,7 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
       break;
     }
 
-    case MKC_T_ATTR_CONTEXT:
+    case MKC_T_ATTR_VCONTEXT:
     case MKC_T_ATTR_DEFINE_ZERO:
     case MKC_T_ATTR_LIBRARY_VERSION:
     case MKC_T_ATTR_INPUT:
@@ -1767,7 +1767,8 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
     case MKC_T_ATTR_NAMESPACE:
     case MKC_T_ATTR_NEGATE:
     case MKC_T_ATTR_OUTPUT:
-    case MKC_T_ATTR_VERSION: {
+    case MKC_T_ATTR_VERSION:
+    case MKC_T_ATTR_VOUTPUT: {
       value_t   *valnm;
 
       valnm = ast_get_value (astmain, astnode->attribute.name);

@@ -196,33 +196,39 @@ compile_reset (compile_t *compile)
 void
 compile_create_header_var (compile_t *compile)
 {
-  listidx_t   iteridx;
-  listidx_t   lidx;
+  listidx_t       iteridx;
+  listidx_t       lidx;
   char            * hdrtxt = NULL;
   char            * tmp = NULL;
   size_t          hdrtxtlen = 1;
-  mkc_alternate_t  * alt;
+  mkc_alternate_t * alt;
+  char            * tbuff;
 
+
+  tbuff = malloc (MKC_PATH_MAX);
+  if (tbuff == NULL) {
+    mkc_error_set (compile->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return;
+  }
 
   alt = compile->attr->curralt;
   list_iter_start (alt->hdrlist, &iteridx);
   while ((lidx = list_iter_next (alt->hdrlist, &iteridx)) != MKC_ITER_FINISH) {
-    char        tbuff [MKC_PATH_MAX];
-    value_t *lvalue;
-    size_t      tlen;
+    value_t   * lvalue;
+    size_t    tlen;
 
     if (mkc_error_chk_err (compile->mkcerr)) {
       break;
     }
 
     lvalue = list_get_by_idx (alt->hdrlist, lidx);
-    if (compile->attr->headertype == MKC_HEADER_MODERN) {
-      snprintf (tbuff, sizeof (tbuff),
+    if (compile->attr->headertype == MKC_IHEADER_MODERN) {
+      snprintf (tbuff, MKC_PATH_MAX,
           "#if __has_include (<%s>)\n"
           "# include <%s>\n"
           "#endif\n", lvalue->sval, lvalue->sval);
     } else {
-      snprintf (tbuff, sizeof (tbuff), "#include <%s>\n", lvalue->sval);
+      snprintf (tbuff, MKC_PATH_MAX, "#include <%s>\n", lvalue->sval);
     }
     tlen = strlen (tbuff);
     hdrtxtlen += tlen;
@@ -234,9 +240,11 @@ compile_create_header_var (compile_t *compile)
   if (hdrtxt == NULL) {
     tmp = "";
   }
-  sv_set_str (compile->sv, SV_T_LOCAL, MKC_C_TEST_HDR_LIST, NULL, tmp, MKC_VCTXT_TEMP);
+  sv_set_str (compile->sv, SV_T_LOCAL, MKC_C_TEST_HDR_LIST, NULL, tmp,
+      MKC_VCTXT_TEMP);
 
-  free (hdrtxt);
+  datafree (hdrtxt);
+  free (tbuff);
 }
 
 const char *

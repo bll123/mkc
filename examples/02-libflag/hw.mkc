@@ -8,4 +8,4 @@ define_executable hw {
   library_flags '-lm';
 }
 
-build 'hw';
+auto_build;

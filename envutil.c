@@ -21,7 +21,7 @@
 void
 env_get (const char *name, char *buff, size_t sz)
 {
-#if _function__wgetenv_s || (MKC_BOOTSTRAP && MKC_SYS_WIN)
+#if _function__wgetenv_s || (MKC_BOOTSTRAP && MKC_BOOTSTRAP_WIN)
   wchar_t     *wname;
   wchar_t     *wenv;
   char        *tenv;
@@ -55,7 +55,7 @@ env_set (const char *name, const char *value)
 {
   int     rc;
 
-#if _function__wputenv_s || (MKC_BOOTSTRAP && MKC_SYS_WIN)
+#if _function__wputenv_s || (MKC_BOOTSTRAP && MKC_BOOTSTRAP_WIN)
   {
     wchar_t *wname;
     wchar_t *wvalue;

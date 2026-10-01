@@ -43,7 +43,7 @@ static int mkc_os_process_wait (int wstatus);
 
 /* identical on linux and mac os */
 /* most anything not windows */
-#if _function_fork || (MKC_BOOTSTRAP && ! MKC_SYS_WIN)
+#if _function_fork || (MKC_BOOTSTRAP && ! MKC_BOOTSTRAP_WIN)
 
 /* handles redirection to a file */
 pid_t
@@ -63,7 +63,7 @@ os_process_start (const char *targv[], int flags, char *outfname)
       }
       fprintf (stderr, "\n");
     }
-#endif
+# endif
 
   tpid = fork ();
   if (tpid < 0) {
@@ -115,11 +115,11 @@ os_process_start (const char *targv[], int flags, char *outfname)
   return pid;
 }
 
-#endif /* if lib_fork */
+#endif /* if _function_fork */
 
 /* identical on linux and mac os */
 /* most anything not windows */
-#if _function_fork || (MKC_BOOTSTRAP && ! MKC_SYS_WIN)
+#if _function_fork || (MKC_BOOTSTRAP && ! MKC_BOOTSTRAP_WIN)
 
 /* creates a pipe for re-direction and grabs the output */
 int
@@ -153,7 +153,7 @@ os_process_pipe (const char *targv[], int flags, char *rbuff, size_t sz, size_t 
       }
       fprintf (stderr, "\n");
     }
-#endif
+# endif
 
   /* this may be slower, but it works; speed is not a major issue */
   tpid = fork ();
@@ -232,7 +232,7 @@ os_process_pipe (const char *targv[], int flags, char *rbuff, size_t sz, size_t 
   return rc;
 }
 
-#endif /* if lib_fork */
+#endif /* if _function_fork */
 
 /* valgrind complains about using an uninitialized variable, */
 /* but I cannot find any issue */

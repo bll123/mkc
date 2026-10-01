@@ -29,6 +29,8 @@ test -d ${MKCTMP} && rm -rf ${MKCTMP}
 test -d ${MKCTMP} || mkdir -p ${MKCTMP}
 test -d ${odir} || mkdir -p ${odir}
 
+grc=0
+
 target=""
 start=""
 START=F
@@ -73,6 +75,9 @@ runtest () {
     rc=$?
     if [ \( $STOPONFAIL = T \) -a \( $rc -ne 0 \) ]; then
       exit $rc
+    fi
+    if [ $rc -ne 0 ]; then
+      grc=$rc
     fi
   fi
   testfin
@@ -133,3 +138,4 @@ for tnm in ${tdir}/${pattern}; do
   fi
 done
 
+exit $grc

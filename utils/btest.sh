@@ -49,7 +49,7 @@ fi
 
 echo "-- test ${tag}"
 echo "-- test ${tag}" >> $LOG
-(./tests/runtests.sh;rc=$?;exit $rc) >> $LOG 2>&1
+(./tests/runtests.sh --stoponfail;rc=$?;exit $rc) >> $LOG 2>&1
 rc=$?
 if [ $rc -ne 0 ]; then
   echo "== tests failed"

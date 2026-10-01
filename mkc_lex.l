@@ -180,7 +180,6 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 "alternate"                 { return T_ATTR_ALTERNATE; }
 "compiler"                  { return T_ATTR_COMPILER; }
 "compiler_flags"            { return T_ATTR_COMP_FLAGS; }
-"context"                   { return T_ATTR_CONTEXT; }
 "define_zero"               { return T_ATTR_DEFINE_ZERO; }
 "failure"                   { return T_ATTR_FAILURE; }
 "header"                    { return T_ATTR_HEADER; }
@@ -197,7 +196,9 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 "replace"                   { return T_ATTR_REPLACE; }
 "source"                    { return T_ATTR_SOURCE; }
 "success"                   { return T_ATTR_SUCCESS; }
+"vcontext"                  { return T_ATTR_VCONTEXT; }
 "version"                   { return T_ATTR_VERSION; }
+"voutput"                   { return T_ATTR_VOUTPUT; }
 
 ({DIGIT}+) {
     yylval->sval = strdup (yytext);

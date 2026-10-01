@@ -153,7 +153,7 @@ datafree (void *data)
   free (data);
 }
 
-#if _function_MultiByteToWideChar || (MKC_BOOTSTRAP && MKC_SYS_WIN)
+#if _function_MultiByteToWideChar || (MKC_BOOTSTRAP && MKC_BOOTSTRAP_WIN)
 
 MKC_NODISCARD
 wchar_t *
@@ -174,7 +174,7 @@ str_towide (const char *buff)
 
 #endif /* _function_MultiByteToWideChar */
 
-#if _function_WideCharToMultiByte || (MKC_BOOTSTRAP && MKC_SYS_WIN)
+#if _function_WideCharToMultiByte || (MKC_BOOTSTRAP && MKC_BOOTSTRAP_WIN)
 
 MKC_NODISCARD
 char *

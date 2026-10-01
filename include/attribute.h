@@ -23,18 +23,19 @@ typedef enum {
   MKC_ATTR_NAMESPACE,
   MKC_ATTR_OUTPUT,
   MKC_ATTR_VCONTEXT,
+  MKC_ATTR_VOUTPUT,
   MKC_ATTR_VERSION,
   MKC_ATTR_MAX,
 } mkc_attr_type_t;
 
 typedef struct mkc_attribute_t {
-  list_t        * alternates;
+  list_t            * alternates;
   mkc_alternate_t   * curralt;
   char              * currname;
   char              * str [MKC_ATTR_MAX];
-  list_t        * pathlist;
-  list_t        * replacelist;
-  list_t        * sourcelist;
+  list_t            * pathlist;
+  list_t            * replacelist;
+  list_t            * sourcelist;
   mkc_compiler_t    currcompiler;
   mkc_compiler_id_t compid;
   int               define_zero;

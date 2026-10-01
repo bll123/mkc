@@ -41,11 +41,15 @@ typedef enum {
   MKC_VCTXT_MKC,          // general internal variable
   MKC_VCTXT_MKC_BASE,     // internal variable, cache invalidation on change
   MKC_VCTXT_TEMP,
-  MKC_VCTXT_USER_DISABLE,
-  MKC_VCTXT_USER_ENABLE,
   MKC_VCTXT_UNKNOWN,
   MKC_VCTXT_MAX,
 } value_ctxt_t;
+
+typedef enum {
+  MKC_VOUT_DISABLE,
+  MKC_VOUT_ENABLE,
+  MKC_VOUT_MAX,
+} value_out_t;
 
 typedef struct range_t {
   int32_t     beg;
@@ -66,6 +70,7 @@ typedef struct value_t {
   };
   value_type_t    vtype;
   value_ctxt_t    vctxt;
+  value_out_t     vout;
   bool            isallocated;
 } value_t;
 
@@ -86,7 +91,9 @@ bool value_is_string_type (const value_t *value);
 
 const char * value_disp_type (value_t *value);
 const char * value_ctxt_str (value_ctxt_t vctxt);
+const char * value_out_str (value_out_t vctxt);
 value_ctxt_t value_ctxt_value (const char *vctxtstr);
+value_out_t value_out_value (const char *voutstr);
 int value_str_compare (void *tvala, void *tvalb);
 
 #if defined (__cplusplus) || defined (c_plusplus)

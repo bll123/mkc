@@ -39,50 +39,50 @@ enum {
 
 /* the base system type */
 typedef enum {
-  MKC_SYS_AIX,
-  MKC_SYS_ANDROID,
-  MKC_SYS_BSD,
-  MKC_SYS_IOS,
-  MKC_SYS_LINUX,
-  MKC_SYS_MACOS,
-  MKC_SYS_SOLARIS,
-  MKC_SYS_UNKNOWN,
-  MKC_SYS_WINDOWS,
-  MKC_SYS_MAX,
+  MKC_ISYS_AIX,
+  MKC_ISYS_ANDROID,
+  MKC_ISYS_BSD,
+  MKC_ISYS_IOS,
+  MKC_ISYS_LINUX,
+  MKC_ISYS_MACOS,
+  MKC_ISYS_SOLARIS,
+  MKC_ISYS_UNKNOWN,
+  MKC_ISYS_WINDOWS,
+  MKC_ISYS_MAX,
 } mkc_system_type_t;
 
 /* update the variable names in process.c */
 typedef enum {
-  MKC_SYS_ID_ALPINE,          // linux
-  MKC_SYS_ID_ARCH,            // linux
-  MKC_SYS_ID_AZURE,           // linux
-  MKC_SYS_ID_CYGWIN,
-  MKC_SYS_ID_DEBIAN,          // linux
-  MKC_SYS_ID_DRAGONFLYBSD,
-  MKC_SYS_ID_FEDORA,          // linux
-  MKC_SYS_ID_FREEBSD,
-  MKC_SYS_ID_GENTOO,          // linux
-  MKC_SYS_ID_MSYS2,
-  MKC_SYS_ID_NETBSD,
-  MKC_SYS_ID_NIXOS,           // linux
-  MKC_SYS_ID_NOTSET,
-  MKC_SYS_ID_OPENBSD,
-  MKC_SYS_ID_SLACKWARE,       // linux
-  MKC_SYS_ID_SOLARIS,
-  MKC_SYS_ID_SUSE,            // linux
-  MKC_SYS_ID_WRLINUX,         // linux
-  MKC_SYS_ID_MAX,
+  MKC_ISYS_ID_ALPINE,          // linux
+  MKC_ISYS_ID_ARCH,            // linux
+  MKC_ISYS_ID_AZURE,           // linux
+  MKC_ISYS_ID_CYGWIN,
+  MKC_ISYS_ID_DEBIAN,          // linux
+  MKC_ISYS_ID_DRAGONFLYBSD,
+  MKC_ISYS_ID_FEDORA,          // linux
+  MKC_ISYS_ID_FREEBSD,
+  MKC_ISYS_ID_GENTOO,          // linux
+  MKC_ISYS_ID_MSYS2,
+  MKC_ISYS_ID_NETBSD,
+  MKC_ISYS_ID_NIXOS,           // linux
+  MKC_ISYS_ID_NOTSET,
+  MKC_ISYS_ID_OPENBSD,
+  MKC_ISYS_ID_SLACKWARE,       // linux
+  MKC_ISYS_ID_SOLARIS,
+  MKC_ISYS_ID_SUSE,            // linux
+  MKC_ISYS_ID_WRLINUX,         // linux
+  MKC_ISYS_ID_MAX,
 } mkc_system_id_t;
 
 typedef enum {
-  MKC_LIB_LOC_LIB,
-  MKC_LIB_LOC_LIB64,
-  MKC_LIB_LOC_NOTSET,
+  MKC_ILIB_LOC_LIB,
+  MKC_ILIB_LOC_LIB64,
+  MKC_ILIB_LOC_NOTSET,
 } mkc_lib_loc_t;
 
 typedef enum {
-  MKC_HEADER_LEGACY = false,
-  MKC_HEADER_MODERN = true,
+  MKC_IHEADER_LEGACY = false,
+  MKC_IHEADER_MODERN = true,
 } mkc_header_t;
 
 #if defined (__cplusplus) || defined (c_plusplus)

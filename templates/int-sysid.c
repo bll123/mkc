@@ -21,40 +21,40 @@ main (void)
   FILE        *fh = NULL;
   char        tbuff [1024];
   char        *p = NULL;
-  int         sysid = MKC_SYS_ID_NOTSET;
+  int         sysid = MKC_ISYS_ID_NOTSET;
 
 
 #if defined (__CYGWIN__)
-  sysid = MKC_SYS_ID_CYGWIN;
+  sysid = MKC_ISYS_ID_CYGWIN;
 #endif
 #if defined (__FreeBSD__)
-  sysid = MKC_SYS_ID_FREEBSD;
+  sysid = MKC_ISYS_ID_FREEBSD;
 #endif
 #if defined (__NetBSD__)
-  sysid = MKC_SYS_ID_NETBSD;
+  sysid = MKC_ISYS_ID_NETBSD;
 #endif
 #if defined (__OpenBSD__)
-  sysid = MKC_SYS_ID_OPENBSD;
+  sysid = MKC_ISYS_ID_OPENBSD;
 #endif
 #if defined (__DragonFly__)
-  sysid = MKC_SYS_ID_DRAGONFLYBSD;
+  sysid = MKC_ISYS_ID_DRAGONFLYBSD;
 #endif
 #if defined (__SunOS)
-  sysid = MKC_SYS_ID_SOLARIS;
+  sysid = MKC_ISYS_ID_SOLARIS;
 #endif
 
   msystem = getenv ("MSYSTEM");
 
   if (msystem != NULL) {
-    sysid = MKC_SYS_ID_MSYS2;
+    sysid = MKC_ISYS_ID_MSYS2;
   }
 
   debexists = stat ("/etc/debian_version", &statbuf);
   if (debexists == 0) {
-    sysid = MKC_SYS_ID_DEBIAN;
+    sysid = MKC_ISYS_ID_DEBIAN;
   }
 
-  if (sysid != MKC_SYS_ID_NOTSET) {
+  if (sysid != MKC_ISYS_ID_NOTSET) {
     fprintf (stdout, "%d\n", sysid);
     return 0;
   }
@@ -109,39 +109,39 @@ main (void)
     }
 
     if (strcmp (p, "alpine") == 0) {
-      sysid = MKC_SYS_ID_ALPINE;
+      sysid = MKC_ISYS_ID_ALPINE;
     }
     if (strcmp (p, "arch") == 0 ||
         strcmp (p, "cachyos") == 0 ||
         strcmp (p, "manjaro") == 0) {
-      sysid = MKC_SYS_ID_ARCH;
+      sysid = MKC_ISYS_ID_ARCH;
     }
     if (strcmp (p, "debian") == 0 ||
         strcmp (p, "ubuntu") == 0) {
-      sysid = MKC_SYS_ID_DEBIAN;
+      sysid = MKC_ISYS_ID_DEBIAN;
     }
     if (strcmp (p, "fedora") == 0 ||
         strcmp (p, "rhel") == 0 ||
         strcmp (p, "centos") == 0 ||
         strcmp (p, "mandriva") == 0) {
-      sysid = MKC_SYS_ID_FEDORA;
+      sysid = MKC_ISYS_ID_FEDORA;
     }
     if (strcmp (p, "gentoo") == 0) {
-      sysid = MKC_SYS_ID_GENTOO;
+      sysid = MKC_ISYS_ID_GENTOO;
     }
     if (strcmp (p, "nixos") == 0) {
-      sysid = MKC_SYS_ID_NIXOS;
+      sysid = MKC_ISYS_ID_NIXOS;
     }
     if (strcmp (p, "slackware") == 0) {
-      sysid = MKC_SYS_ID_SLACKWARE;
+      sysid = MKC_ISYS_ID_SLACKWARE;
     }
     if (strcmp (p, "suse") == 0 ||
         strcmp (p, "opensuse") == 0) {
-      sysid = MKC_SYS_ID_SUSE;
+      sysid = MKC_ISYS_ID_SUSE;
     }
     if (strcmp (p, "wrlinux") == 0 ||
         strcmp (p, "cisco-wrlinux") == 0) {
-      sysid = MKC_SYS_ID_WRLINUX;
+      sysid = MKC_ISYS_ID_WRLINUX;
     }
   }
 

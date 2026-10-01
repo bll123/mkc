@@ -8,6 +8,12 @@
 # include "mkc_config.h"
 #endif
 
+#if _function_MultiByteToWideChar || \
+   _function_WideCharToMultiByte || \
+   (MKC_BOOTSTRAP && MKC_BOOTSTRAP_WIN)
+# include <wchar.h>
+#endif
+
 #include "mkc_nodiscard.h"
 
 #if defined (__cplusplus) || defined (c_plusplus)
@@ -22,16 +28,12 @@ void str_trim_char (char *buff, unsigned char c);
 void str_clean (char *buff, size_t sz);
 void datafree (void *data);
 
-#if defined (MKC_SYS_WIN)
-
-#if _function_MultiByteToWideChar || (MKC_BOOTSTRAP && MKC_SYS_WIN)
+#if _function_MultiByteToWideChar || (MKC_BOOTSTRAP && MKC_BOOTSTRAP_WIN)
 MKC_NODISCARD wchar_t * str_towide (const char *buff);
 #endif
-#if _function_WideCharToMultiByte || (MKC_BOOTSTRAP && MKC_SYS_WIN)
+#if _function_WideCharToMultiByte || (MKC_BOOTSTRAP && MKC_BOOTSTRAP_WIN)
 MKC_NODISCARD char * str_fromwide (const wchar_t *buff);
 #endif
-
-#endif /* MKC_SYS_WIN */
 
 #if defined (__cplusplus) || defined (c_plusplus)
 }

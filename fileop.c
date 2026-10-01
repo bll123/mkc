@@ -40,7 +40,7 @@ fileop_open (const char *fname, const char *mode)
 {
   FILE          *fh = NULL;
 
-#if defined (MKC_SYS_WIN)
+#if MKC_SYS_WINDOWS || MKC_BOOTSTRAP_WIN
   {
     wchar_t       *tfname = NULL;
     wchar_t       *tmode = NULL;
@@ -67,7 +67,7 @@ fileop_exists (const char *fname)
   int     rc = -1;
   bool    brc = false;
 
-#if _function__wstat64 || (MKC_BOOTSTRAP && MKC_SYS_WIN)
+#if _function__wstat64 || (MKC_BOOTSTRAP && MKC_BOOTSTRAP_WIN)
   {
     struct __stat64  statbuf;
     wchar_t       *tfname = NULL;
@@ -97,22 +97,31 @@ fileop_modtime (const char *fname)
 {
   int64_t      tm = 0;
 
-#if _function_FindFirstFileW || (MKC_BOOTSTRAP && MKC_SYS_WIN)
+#if _function_FindFirstFileW || (MKC_BOOTSTRAP && MKC_BOOTSTRAP_WIN)
   {
     wchar_t           *tfname = NULL;
     WIN32_FIND_DATAW  fd;
     FILETIME          ft;
+    HANDLE            fh;
 
     tfname = str_towide (fname);
-
-    if (tfname != NULL) {
-      FindFirstFileW (tfname, &fd);
-      FileTimeToLocalFileTime (&fd.ftLastWriteTime, &ft);
-      tm = (int64_t) ft.dwLowDateTime + ((int64_t)(ft.dwHighDateTime) << 32LL);
-      tm -= 116444736000000000LL;
-      tm /= 10000;
-      free (tfname);
+    if (tfname == NULL) {
+      return tm;
     }
+
+    memset (&fh, 0, sizeof (WIN32_FIND_DATAW));
+    fh = FindFirstFileW (tfname, &fd);
+    if (fh == INVALID_HANDLE_VALUE) {
+      free (tfname);
+      return tm;
+    }
+
+    FileTimeToLocalFileTime (&fd.ftLastWriteTime, &ft);
+    FindClose (fh);
+    tm = (int64_t) ft.dwLowDateTime + ((int64_t)(ft.dwHighDateTime) << 32LL);
+    tm -= 116444736000000000LL;
+    tm /= 10000;
+    free (tfname);
   }
 #else
   {
@@ -120,16 +129,18 @@ fileop_modtime (const char *fname)
     struct stat statbuf;
 
     rc = stat (fname, &statbuf);
-    if (rc == 0) {
-      tm = statbuf.st_mtime;
-      tm *= 1000;
+    if (rc != 0) {
+      return tm;
+    }
+
+    tm = statbuf.st_mtime;
+    tm *= 1000;
 #if _member_struct_stat_st_mtim
-      tm += statbuf.st_mtim.tv_nsec / 1000000;
+    tm += statbuf.st_mtim.tv_nsec / 1000000;
 #endif
 #if _member_struct_stat_st_mtimespec
-      tm += statbuf.st_mtimespec.tv_nsec / 1000000;
+    tm += statbuf.st_mtimespec.tv_nsec / 1000000;
 #endif
-    }
   }
 #endif
   return tm;
@@ -140,7 +151,7 @@ fileop_size (const char *fname)
 {
   ssize_t       sz = -1;
 
-#if _function__wstat64 || (MKC_BOOTSTRAP && MKC_SYS_WIN)
+#if _function__wstat64 || (MKC_BOOTSTRAP && MKC_BOOTSTRAP_WIN)
   {
     struct __stat64  statbuf;
     wchar_t       *tfname = NULL;
@@ -242,7 +253,7 @@ int
 fileop_file_delete (const char *fname)
 {
   int     rc = -1;
-#if _function__wunlink || (MKC_BOOTSTRAP && MKC_SYS_WIN)
+#if _function__wunlink || (MKC_BOOTSTRAP && MKC_BOOTSTRAP_WIN)
   wchar_t *tname;
 #endif
 
@@ -250,7 +261,7 @@ fileop_file_delete (const char *fname)
     return MKC_ERR_NULL_ARGUMENT;
   }
 
-#if _function__wunlink || (MKC_BOOTSTRAP && MKC_SYS_WIN)
+#if _function__wunlink || (MKC_BOOTSTRAP && MKC_BOOTSTRAP_WIN)
   tname = str_towide (fname);
   if (tname != NULL) {
     rc = _wunlink (tname);
@@ -271,7 +282,7 @@ fileop_file_move (const char *fname, const char *nfn)
     return rc;
   }
 
-#if _function__wrename || (MKC_BOOTSTRAP && MKC_SYS_WIN)
+#if _function__wrename || (MKC_BOOTSTRAP && MKC_BOOTSTRAP_WIN)
   /*
    * Windows won't rename to an existing file, but does
    * not return an error.
@@ -320,7 +331,7 @@ fileop_file_copy (const char *fname, const char *nfn, mkc_error_t *mkcerr)
 {
   int     rc = -1;
 
-#if _function_CopyFileW || (MKC_BOOTSTRAP && defined MKC_SYS_WIN)
+#if _function_CopyFileW || (MKC_BOOTSTRAP && MKC_BOOTSTRAP_WIN)
   char      tfname [MKC_PATH_MAX];
   char      tnfn [MKC_PATH_MAX];
 
@@ -383,7 +394,7 @@ void
 fileop_display_path (char *path, size_t sz)
 {
   /* a no-op on unix systems */
-#if MKC_SYS_WIN
+#if MKC_SYS_WINDOWS || MKC_BOOTSTRAP_WIN
   for (size_t i = 0; i < sz; ++i) {
     if (path [i] == '\0') {
       break;
@@ -399,6 +410,7 @@ fileop_display_path (char *path, size_t sz)
 void
 fileop_normalize_path (char *path, size_t sz)
 {
+#if MKC_SYS_WINDOWS || MKC_BOOTSTRAP_WIN
   for (size_t i = 0; i < sz; ++i) {
     if (path [i] == '\0') {
       break;
@@ -407,6 +419,7 @@ fileop_normalize_path (char *path, size_t sz)
       path [i] = '/';
     }
   }
+#endif
   return;
 }
 

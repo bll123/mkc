@@ -17,8 +17,8 @@ check_function sqrt {
 }
 check_function other;
 
-mark_variable _function_malloc disable-output;
-mark_variable MKC_SYS_UNKNOWN enable-output;
+mark_variable _function_malloc disable;
+mark_variable MKC_SYS_UNKNOWN enable;
 
 configuration_file {
   method auto;

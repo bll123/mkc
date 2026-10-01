@@ -168,7 +168,7 @@
 %token T_ATTR_ALTERNATE       "alternate"
 %token T_ATTR_COMP_FLAGS      "compiler_flags"
 %token T_ATTR_COMPILER        "compiler"
-%token T_ATTR_CONTEXT         "context"
+%token T_ATTR_VCONTEXT        "vcontext"
 %token T_ATTR_DEFINE_ZERO     "define_zero"
 %token T_ATTR_FAILURE         "failure"
 %token T_ATTR_HEADER          "header"
@@ -186,6 +186,7 @@
 %token T_ATTR_SOURCE          "source"
 %token T_ATTR_SUCCESS         "success"
 %token T_ATTR_VERSION         "version"
+%token T_ATTR_VOUTPUT         "voutput"
 
 %type <astnode> integer variable string
 
@@ -236,11 +237,11 @@
 %type <astnode> chk_member chk_package chk_shellcmc chk_size chk_type
 // attributes
 %type <astnode> attr attr_alternate attr_compiler attr_compilerflags
-%type <astnode> attr_context attr_define_zero attr_failure attr_header
+%type <astnode> attr_define_zero attr_failure attr_header
 %type <astnode> attr_input attr_lib_flags attr_libversion attr_linkflags
 %type <astnode> attr_match attr_method attr_name attr_negate
 %type <astnode> attr_output attr_path attr_replace attr_source
-%type <astnode> attr_success attr_version
+%type <astnode> attr_success attr_vcontext attr_version attr_voutput
 
 // precedence rules: the lowest precedence comes first
 %precedence VALUE
@@ -393,10 +394,6 @@ attr[v]:
     {
       $v = $a;
     }
-  | attr_context[a]
-    {
-      $v = $a;
-    }
   | attr_define_zero[a]
     {
       $v = $a;
@@ -461,7 +458,15 @@ attr[v]:
     {
       $v = $a;
     }
+  | attr_vcontext[a]
+    {
+      $v = $a;
+    }
   | attr_version[a]
+    {
+      $v = $a;
+    }
+  | attr_voutput[a]
     {
       $v = $a;
     }
@@ -954,15 +959,6 @@ attr_compiler[v]:
     }
   ;
 
-/* context for set */
-attr_context[v]:
-    T_ATTR_CONTEXT varany[a] T_SEMICOLON
-    {
-      $v = ast_mk_attribute (ast, $a, MKC_T_ATTR_CONTEXT,
-          yylloc.first_line, yylloc.first_column);
-    }
-  ;
-
 /* define-zero flag for configure */
 attr_define_zero[v]:
     T_ATTR_DEFINE_ZERO T_SEMICOLON
@@ -1099,10 +1095,28 @@ attr_success[v]:
     }
   ;
 
+/* context for set */
+attr_vcontext[v]:
+    T_ATTR_VCONTEXT varany[a] T_SEMICOLON
+    {
+      $v = ast_mk_attribute (ast, $a, MKC_T_ATTR_VCONTEXT,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
 attr_version[v]:
     T_ATTR_VERSION varvalue[a] T_SEMICOLON
     {
       $v = ast_mk_attribute (ast, $a, MKC_T_ATTR_VERSION,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+/* voutput for set */
+attr_voutput[v]:
+    T_ATTR_VOUTPUT varany[a] T_SEMICOLON
+    {
+      $v = ast_mk_attribute (ast, $a, MKC_T_ATTR_VOUTPUT,
           yylloc.first_line, yylloc.first_column);
     }
   ;

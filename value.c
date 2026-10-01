@@ -37,9 +37,12 @@ static char const * const valuectxtnames [MKC_VCTXT_MAX] = {
   [MKC_VCTXT_MKC] = "mkc",
   [MKC_VCTXT_MKC_BASE] = "mkc_base",
   [MKC_VCTXT_TEMP] = "temp",
-  [MKC_VCTXT_USER_DISABLE] = "disable",
-  [MKC_VCTXT_USER_ENABLE] = "enable",
   [MKC_VCTXT_UNKNOWN] = "unknown",
+};
+
+static char const * const valueoutnames [MKC_VOUT_MAX] = {
+  [MKC_VOUT_DISABLE] = "disable",
+  [MKC_VOUT_ENABLE] = "enable",
 };
 
 value_t *
@@ -64,6 +67,7 @@ value_init (value_t *value)
   value->vtype = MKC_VT_INVALID;
   value->sval = NULL;
   value->vctxt = MKC_VCTXT_TEMP;
+  value->vout = MKC_VOUT_DISABLE;
   value->isallocated = false;
 }
 
@@ -400,6 +404,15 @@ value_ctxt_str (value_ctxt_t vctxt)
   return vctxtstr;
 }
 
+const char *
+value_out_str (value_out_t vout)
+{
+  const char  * voutstr;
+
+  voutstr = valueoutnames [vout];
+  return voutstr;
+}
+
 value_ctxt_t
 value_ctxt_value (const char *vctxtstr)
 {
@@ -413,6 +426,21 @@ value_ctxt_value (const char *vctxtstr)
   }
 
   return vctxt;
+}
+
+value_out_t
+value_out_value (const char *voutstr)
+{
+  value_out_t    vout = MKC_VOUT_DISABLE;
+
+  for (int i = 0; i < MKC_VOUT_MAX; ++i) {
+    if (strcmp (valueoutnames [i], voutstr) == 0) {
+      vout = i;
+      return vout;
+    }
+  }
+
+  return vout;
 }
 
 int

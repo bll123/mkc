@@ -161,7 +161,7 @@ var_set (varlist_t     *varlist, const char *vname, value_t *value)
 }
 
 void
-var_delete (varlist_t     *varlist, const char *vname)
+var_delete (varlist_t *varlist, const char *vname)
 {
   mkc_varidx_t    vidx;
 
@@ -173,33 +173,8 @@ var_delete (varlist_t     *varlist, const char *vname)
   list_delete (varlist->list, vidx);
 }
 
-void
-var_set_context (varlist_t     *varlist, const char *vname, int vctxt)
-{
-  listidx_t   vidx;
-  var_t       *var;
-  value_t     *tvalue;
-
-  if (varlist == NULL) {
-    return;
-  }
-  if (vname == NULL) {
-    mkc_error_set (varlist->mkcerr, MKC_ERR_NULL_ARGUMENT, 0, NULL);
-    return;
-  }
-
-  vidx = var_find (varlist, vname);
-  if (vidx == MKC_VAR_NOTFOUND) {
-    return;
-  }
-
-  var = list_get_by_idx (varlist->list, vidx);
-  tvalue = &var->value;
-  tvalue->vctxt = vctxt;
-}
-
 int32_t
-var_size (varlist_t     *varlist)
+var_size (varlist_t *varlist)
 {
   int32_t     sz;
 
@@ -212,7 +187,7 @@ var_size (varlist_t     *varlist)
 }
 
 void
-var_iter_start (varlist_t     *varlist, mkc_varidx_t *iteridx)
+var_iter_start (varlist_t *varlist, mkc_varidx_t *iteridx)
 {
   if (varlist == NULL || iteridx == NULL) {
     return;
@@ -222,7 +197,7 @@ var_iter_start (varlist_t     *varlist, mkc_varidx_t *iteridx)
 }
 
 mkc_varidx_t
-var_iter_next (varlist_t     *varlist, mkc_varidx_t *iteridx)
+var_iter_next (varlist_t *varlist, mkc_varidx_t *iteridx)
 {
   mkc_varidx_t   idx;
 
@@ -235,7 +210,7 @@ var_iter_next (varlist_t     *varlist, mkc_varidx_t *iteridx)
 }
 
 value_t *
-var_get_value (varlist_t     *varlist, const char *name)
+var_get_value (varlist_t *varlist, const char *name)
 {
   mkc_varidx_t  vidx = MKC_VAR_NOTFOUND;
   var_t     *var;
@@ -264,7 +239,7 @@ var_get_value (varlist_t     *varlist, const char *name)
 }
 
 value_t *
-var_get_value_by_idx (varlist_t     *varlist, mkc_varidx_t vidx)
+var_get_value_by_idx (varlist_t *varlist, mkc_varidx_t vidx)
 {
   var_t     *var;
   value_t       *value;
@@ -283,7 +258,7 @@ var_get_value_by_idx (varlist_t     *varlist, mkc_varidx_t vidx)
 }
 
 const char *
-var_get_name (varlist_t     *varlist, mkc_varidx_t vidx)
+var_get_name (varlist_t *varlist, mkc_varidx_t vidx)
 {
   var_t     *var;
   const char    *nm;
@@ -302,7 +277,7 @@ var_get_name (varlist_t     *varlist, mkc_varidx_t vidx)
 }
 
 bool
-var_is_defined (varlist_t     *varlist, const char *vname)
+var_is_defined (varlist_t *varlist, const char *vname)
 {
   mkc_varidx_t    vidx;
   bool            rc = false;
@@ -320,7 +295,7 @@ var_is_defined (varlist_t     *varlist, const char *vname)
 }
 
 bool
-var_is_list (varlist_t     *varlist, const char *vname)
+var_is_list (varlist_t *varlist, const char *vname)
 {
   mkc_varidx_t    vidx;
   bool            rc = false;
@@ -346,7 +321,7 @@ var_is_list (varlist_t     *varlist, const char *vname)
 /* internal routines */
 
 static var_t *
-var_create (varlist_t     *varlist,
+var_create (varlist_t *varlist,
     const char *name, value_type_t vtype)
 {
   var_t     *var;
@@ -367,7 +342,7 @@ var_create (varlist_t     *varlist,
 }
 
 static mkc_varidx_t
-var_find (varlist_t     *varlist, const char *name)
+var_find (varlist_t *varlist, const char *name)
 {
   var_t     tvar;
   mkc_varidx_t  idx;
