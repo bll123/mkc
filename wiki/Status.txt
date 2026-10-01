@@ -2,7 +2,7 @@
 
 ### Status
 
-##### 2026-9-27 pre-alpha 0.7
+##### 2026-10-1 pre-alpha 0.7
 
 Currently, the pre-alpha code will only create a configuration file.
 
@@ -12,7 +12,7 @@ To do list (major tasks):
 - fix 'return' statement (local scopes).
 - foreach for dictionaries
 
-2026-9-27: progress is slow right now, there's a lot of work to
+2026-10-1: progress is slow right now, there's a lot of work to
 be done, and many things to fix.
 
 ##### Testing
