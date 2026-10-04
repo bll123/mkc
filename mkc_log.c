@@ -215,7 +215,7 @@ mkc_log (mkc_log_t *log, int32_t logflag, const char *fmt, ...)
 
 void
 mkc_log_loc (mkc_log_t *log, int32_t logflag,
-    int32_t lineno, int col, const char *fmt, ...)
+    int32_t lineno, int col, int lastcol, const char *fmt, ...)
 {
   va_list   vap;
   char      tbuff [40];
@@ -235,8 +235,8 @@ mkc_log_loc (mkc_log_t *log, int32_t logflag,
   if (log->dispfname != NULL) {
     fprintf (log->fh, "%s:", log->dispfname);
   }
-  mkc_error_line_disp (tbuff, sizeof (tbuff), lineno, col);
-  fprintf (log->fh, "%s", tbuff);
+  mkc_error_line_disp (tbuff, sizeof (tbuff), lineno, col, lastcol);
+  fprintf (log->fh, "%s ", tbuff);
   vfprintf (log->fh, fmt, vap);
   va_end (vap);
 }

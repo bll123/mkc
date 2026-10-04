@@ -4,19 +4,19 @@ check_function malloc;
 
 check_function fstat {
   header sys/stat.h;
-  success {
+  on_success {
     print '  ok a';
   }
-  failure {
+  on_failure {
     print '  fail a';
   }
 }
 
 check_function unknown {
-  success {
+  on_success {
     print '  fail b';
   }
-  failure {
+  on_failure {
     print '  ok b';
   }
 }

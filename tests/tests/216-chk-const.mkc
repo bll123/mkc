@@ -3,10 +3,10 @@
 
 check_constant EPERM {
   header errno.h;
-  success {
+  on_success {
     print '  ok a';
   }
-  failure {
+  on_failure {
     print '  fail a';
   }
 }
@@ -16,10 +16,10 @@ check_constant O_RDONLY {
 }
 
 check_constant UNKNOWN {
-  success {
+  on_success {
     print '  fail b';
   }
-  failure {
+  on_failure {
     print '  ok b';
   }
 }

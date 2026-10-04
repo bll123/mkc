@@ -57,7 +57,7 @@ realclean:
 clean:
 	@$(MAKE) tclean
 	@-rm -f *.o
-	@-rm -f mkc
+	@-rm -f mkc mkc_1 mkc_2
 	@-rm -rf mkc_files
 
 .PHONY: tclean

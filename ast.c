@@ -353,7 +353,7 @@ ast_mk_value (astmain_t *astmain,
   value_t       *value;
   int               iasttype = asttype;
 
-  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
+  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno, -1,
       "ast-mk: mk-value\n");
 
   astnode = astnode_init (astmain, MKC_T_VALUE, lineno, colno);
@@ -365,7 +365,7 @@ ast_mk_value (astmain_t *astmain,
   value = &astvalue->value;
   value_init (value);
 
-  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
+  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno, -1,
       "ast-mk-value: %s %s\n", typenames [asttype], str);
 
   switch (iasttype) {
@@ -428,7 +428,7 @@ ast_mk_value_list (astmain_t *astmain,
   ast_value_t *astvalue;
   value_t         *value;
 
-  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
+  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno, -1,
       "ast-mk: value-list\n");
 
   if (listnode == NULL) {
@@ -468,7 +468,7 @@ ast_mk_value_dict (astmain_t *astmain,
   value_t       * value;
   const char    * nm = NULL;
 
-  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
+  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno, -1,
       "ast-mk: value-dict\n");
 
   if (dictnode == NULL) {
@@ -512,7 +512,7 @@ ast_mk_value_range (astmain_t *astmain,
   value_t       *valend;
   value_t       *valincr;
 
-  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
+  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno, -1,
       "ast-mk: value-range\n");
 
   astnode = astnode_init (astmain, MKC_T_VALUE, lineno, colno);
@@ -542,7 +542,7 @@ ast_mk_stmtlist (astmain_t *astmain,
   astnode_t   *astnode = NULL;
   list_t      *tlist = NULL;
 
-  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
+  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno, -1,
       "ast-mk: stmt-list\n");
 
   if (stmtlist == NULL) {
@@ -570,7 +570,7 @@ ast_mk_op (astmain_t *astmain,
 {
   astnode_t  *astnode;
 
-  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
+  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno, -1,
       "ast-mk: op\n");
 
   astnode = astnode_init (astmain, op, lineno, colno);
@@ -592,7 +592,7 @@ ast_mk_unary_op (astmain_t *astmain,
 {
   astnode_t   *astnode;
 
-  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
+  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno, -1,
       "ast-mk: unary-op\n");
 
   astnode = astnode_init (astmain, op, lineno, colno);
@@ -613,7 +613,7 @@ ast_mk_stmt_stmtblock (astmain_t *astmain,
 {
   astnode_t   *astnode;
 
-  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
+  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno, -1,
       "ast-mk: %s\n", typenames [asttype]);
 
   astnode = astnode_init (astmain, asttype, lineno, colno);
@@ -633,7 +633,7 @@ ast_mk_stmt_val_stmtblock (astmain_t *astmain,
 {
   astnode_t   *astnode;
 
-  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
+  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno, -1,
       "ast-mk: %s\n", typenames [asttype]);
 
   astnode = astnode_init (astmain, asttype, lineno, colno);
@@ -655,7 +655,7 @@ ast_mk_stmt_val_val (astmain_t *astmain,
 {
   astnode_t   *astnode;
 
-  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
+  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno, -1,
       "ast-mk: %s\n", typenames [asttype]);
 
   astnode = astnode_init (astmain, asttype, lineno, colno);
@@ -677,7 +677,7 @@ ast_mk_stmt_val (astmain_t *astmain,
 {
   astnode_t   *astnode;
 
-  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
+  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno, -1,
       "ast-mk: %s\n", typenames [asttype]);
 
   astnode = astnode_init (astmain, asttype, lineno, colno);
@@ -698,7 +698,7 @@ ast_mk_loadcache (astmain_t *astmain,
 {
   astnode_t   *astnode;
 
-  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
+  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno, -1,
       "ast-mk: load-cache\n");
 
   astnode = astnode_init (astmain, MKC_T_STMT_LOADCACHE, lineno, colno);
@@ -721,7 +721,7 @@ ast_mk_set (astmain_t *astmain,
 {
   astnode_t   *astnode;
 
-  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
+  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno, -1,
       "ast-mk: set\n");
 
   astnode = astnode_init (astmain, MKC_T_STMT_SET, lineno, colno);
@@ -746,7 +746,7 @@ ast_mk_if (astmain_t *astmain,
 {
   astnode_t   *astnode;
 
-  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
+  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno, -1,
       "ast-mk: if\n");
 
   astnode = astnode_init (astmain, MKC_T_STMT_IF, lineno, colno);
@@ -771,7 +771,7 @@ ast_mk_elseif (astmain_t *astmain,
 {
   astnode_t   *astnode;
 
-  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
+  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno, -1,
       "ast-mk: else-if\n");
 
   astnode = astnode_init (astmain, MKC_T_STMT_ELSEIF, lineno, colno);
@@ -791,7 +791,7 @@ ast_mk_else (astmain_t *astmain,
     astnode_t *ifstmt, astnode_t *stmtblock,
     int32_t lineno, int colno)
 {
-  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
+  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno, -1,
       "ast-mk: else\n");
 
   ifstmt->stmt_if.elseblock = stmtblock;
@@ -806,7 +806,7 @@ ast_mk_foreach (astmain_t *astmain,
 {
   astnode_t   *astnode;
 
-  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
+  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno, -1,
       "ast-mk: foreach\n");
 
   astnode = astnode_init (astmain, MKC_T_STMT_FOREACH, lineno, colno);
@@ -829,7 +829,7 @@ ast_mk_while (astmain_t *astmain,
 {
   astnode_t   *astnode;
 
-  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
+  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno, -1,
       "ast-mk: while\n");
 
   astnode = astnode_init (astmain, MKC_T_STMT_WHILE, lineno, colno);
@@ -850,7 +850,7 @@ ast_mk_exit (astmain_t *astmain, astnode_t *vala,
 {
   astnode_t     *astnode;
 
-  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
+  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno, -1,
       "ast-mk: exit\n");
 
   astnode = astnode_init (astmain, MKC_T_STMT_EXIT, lineno, colno);
@@ -894,7 +894,7 @@ ast_mk_loop_control (astmain_t *astmain, astnode_token_t asttype,
 {
   astnode_t   *astnode;
 
-  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
+  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno, -1,
       "ast-mk: loop-control %s\n", typenames [asttype]);
 
   astnode = astnode_init (astmain, asttype, lineno, colno);
@@ -913,7 +913,7 @@ ast_mk_function (astmain_t *astmain,
 {
   astnode_t   *astnode;
 
-  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
+  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno, -1,
       "ast-mk: function\n");
 
   astnode = astnode_init (astmain, MKC_T_STMT_FUNCTION, lineno, colno);
@@ -936,7 +936,7 @@ ast_mk_function_call (astmain_t *astmain,
 {
   astnode_t   *astnode;
 
-  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
+  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno, -1,
       "ast-mk: function-call\n");
 
   astnode = astnode_init (astmain, MKC_T_STMT_FUNCTION_CALL, lineno, colno);
@@ -956,7 +956,7 @@ ast_mk_func_return (astmain_t *astmain, int32_t lineno, int colno)
 {
   astnode_t       *astnode;
 
-  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
+  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno, -1,
       "ast-mk: return\n");
 
   astnode = astnode_init (astmain, MKC_T_RETURN, lineno, colno);
@@ -975,7 +975,7 @@ ast_mk_check (astmain_t *astmain,
 {
   astnode_t       *astnode;
 
-  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
+  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno, -1,
       "ast-mk: chk-%s\n", typenames [asttype]);
 
   astnode = astnode_init (astmain, asttype, lineno, colno);
@@ -997,7 +997,7 @@ ast_mk_check_flag (astmain_t *astmain,
 {
   astnode_t   *astnode;
 
-  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
+  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno, -1,
       "ast-mk: chk-%s\n", typenames [asttype]);
 
   astnode = astnode_init (astmain, asttype, lineno, colno);
@@ -1019,7 +1019,7 @@ ast_mk_chk_package (astmain_t *astmain,
 {
   astnode_t   *astnode;
 
-  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
+  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno, -1,
       "ast-mk: chk-package\n");
 
   astnode = astnode_init (astmain, MKC_T_CHK_PACKAGE, lineno, colno);
@@ -1040,7 +1040,7 @@ ast_mk_chk_struct_member (astmain_t *astmain,
 {
   astnode_t   *astnode;
 
-  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
+  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno, -1,
       "ast-mk: chk-struct-member\n");
 
   astnode = astnode_init (astmain, MKC_T_CHK_STRUCT_MEMBER, lineno, colno);
@@ -1064,7 +1064,7 @@ ast_mk_attribute (astmain_t *astmain,
 {
   astnode_t   *astnode;
 
-  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
+  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno, -1,
       "ast-mk: attr-%s\n", typenames [asttype]);
 
   astnode = astnode_init (astmain, asttype, lineno, colno);
@@ -1084,7 +1084,7 @@ ast_mk_attr_nodelist (astmain_t *astmain,
 {
   astnode_t   *astnode;
 
-  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
+  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno, -1,
       "ast-mk: %s\n", typenames [asttype]);
 
   astnode = astnode_init (astmain, asttype, lineno, colno);
@@ -1104,7 +1104,7 @@ ast_mk_attr_stmtblock (astmain_t *astmain,
 {
   astnode_t   *astnode;
 
-  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
+  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno, -1,
       "ast-mk: %s\n", typenames [asttype]);
 
   astnode = astnode_init (astmain, asttype, lineno, colno);
@@ -1125,7 +1125,7 @@ ast_mk_attr_match (astmain_t *astmain,
 {
   astnode_t   *astnode;
 
-  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
+  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno, -1,
       "ast-mk: attr-find\n");
 
   astnode = astnode_init (astmain, MKC_T_ATTR_MATCH, lineno, colno);
@@ -1146,7 +1146,7 @@ ast_mk_attr_replace (astmain_t *astmain,
 {
   astnode_t   *astnode;
 
-  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
+  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno, -1,
       "ast-mk: attr-replace\n");
 
   astnode = astnode_init (astmain, MKC_T_ATTR_REPLACE, lineno, colno);
@@ -1166,7 +1166,7 @@ ast_mk_main (astmain_t *astmain,
 {
   astnode_t   *astnode;
 
-  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno,
+  mkc_log_loc (astmain->log, MKC_LOG_AST, lineno, colno, -1,
       "ast-mk: main\n");
 
   astnode = astnode_init (astmain, MKC_T_MAIN, lineno, colno);
@@ -1231,7 +1231,8 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
   mkc_error_set_line_col (astmain->mkcerr, astnode->lineno, astnode->colno);
 
   //fprintf (stderr, "%*sast-proc: %s %s\n", astmain->depth * 2, " ", typenames [astnode->asttype], astnode->delayed ? "(delayed)" : "");
-  mkc_log_loc (astmain->log, MKC_LOG_AST_PROCESS, astnode->lineno, astnode->colno,
+  mkc_log_loc (astmain->log, MKC_LOG_AST_PROCESS,
+      astnode->lineno, astnode->colno, -1,
       "%*sast-proc: %s\n", astmain->depth * 2, " ", typenames [astnode->asttype]);
 
   switch (astnode->asttype) {
@@ -1257,7 +1258,7 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
           break;
         }
         mkc_log_loc (astmain->log, MKC_LOG_AST,
-            astnode->lineno, astnode->colno,
+            astnode->lineno, astnode->colno, -1,
             "%*s%s\n", astmain->depth * 2, " ",
             value_to_str (value, tbuff, MKC_PATH_MAX, 0, false));
         free (tbuff);
@@ -1295,7 +1296,8 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
         listnode = *plistnode;
 
         if (listnode != NULL) {
-          mkc_log_loc (astmain->log, MKC_LOG_AST_PROCESS, astnode->lineno, astnode->colno,
+          mkc_log_loc (astmain->log, MKC_LOG_AST_PROCESS,
+              astnode->lineno, astnode->colno, -1,
               "%*sast-proc: stmt-list: %s\n", astmain->depth * 2, " ", typenames [listnode->asttype]);
 
           if (listnode->asttype == MKC_T_RETURN) {
@@ -1382,6 +1384,10 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
         context_pop (astmain->context);
       }
       process_stmt_configure (astmain->process);
+      break;
+    }
+
+    case MKC_T_STMT_CREATE_FILE: {
       break;
     }
 
@@ -1835,6 +1841,10 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
         break;
       }
       process_attr_replace (astmain->process, str, val);
+      break;
+    }
+
+    case MKC_T_ATTR_RUN_COMMAND: {
       break;
     }
 

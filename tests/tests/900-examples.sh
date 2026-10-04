@@ -35,6 +35,16 @@ chk900() {
     echo "   fail: test: ${enm} (no executable) ${cachedisp} $tnm"
     exit 1
   fi
+  out=`./mkc_files/hw/stage/bin/hw`
+  rc=$?
+  if [ $rc -ne 0 ]]; then
+    echo "   fail: test: ${enm} (run failed) ${cachedisp} $tnm"
+    exit $rc
+  fi
+  if [ "$out" != "hello world" ]; then
+    echo "   fail: test: ${enm} (incorrect output) ${cachedisp} $tnm"
+    exit 1
+  fi
 }
 
 for e in examples/*; do

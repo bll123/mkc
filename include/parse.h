@@ -26,6 +26,7 @@ int parse_start (parse_t *parse, FILE *fh);
 void * parse_get_scanner (parse_t *parse);
 void parse_set_filename (parse_t *parse, const char *fname);
 const char * parse_get_filename (parse_t *parse);
+void parse_pop (parse_t *parse);
 
 /* mkc_grammar.y */
 int parse_process (parse_t *parse, void *scanner, astmain_t *astmain, mkc_error_t *mkcerr);

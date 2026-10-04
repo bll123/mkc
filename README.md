@@ -15,10 +15,11 @@ pre-alpha
 This software is in a volatile state.  It may or may not work.
 Anything can change.
 
-As of pre-alpha version 0.6, mkc can only create a configuration file.
+As of pre-alpha version 0.7, mkc can create a configuration file and
+do a basic build.
 
-version 0.6 has been tested on Windows 10/MSys2, FreeBSD 14.3,
-Debian 13, MacOS Sequoia (intel), MacOS Tahoe (m1).
+version 0.7 has been tested on Windows 10/MSys2, FreeBSD 14.3,
+Debian 13, MacOS Sequoia (intel), MacOS Golden Gate (m1).
 
 (See also: [wiki: Status](https://sourceforge.net/p/mkconf/wiki/Status/)).
 

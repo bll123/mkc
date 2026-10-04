@@ -586,7 +586,7 @@ target_executable_object (target_t *target, const char *execnm,
   path_build (MKC_PATH_STAGE_BIN, epath, MKC_PATH_MAX, execnm, target->mkcerr);
   sv_set_str (sv, SV_T_PATHS, execnm, NULL, epath, MKC_VCTXT_MKC);
   target_get_timestamp (target, epath);
-  sv_set_integer (sv, SV_T_BUILD_DATA, epath, MKC_C_BVAR_TYPE, TGT_T_EXEC, MKC_VCTXT_MKC);
+  sv_set_integer (sv, SV_T_BUILD_DATA, epath, MKC_C_BVAR_TYPE, TGT_T_USER_EXEC, MKC_VCTXT_MKC);
 
   path_build (MKC_PATH_MKCF_OBJECTS, opath, MKC_PATH_MAX, objnm, target->mkcerr);
   sv_set_str (sv, SV_T_PATHS, objnm, NULL, opath, MKC_VCTXT_MKC);
@@ -774,7 +774,8 @@ target_build (target_t *target, list_t *blist)
 
     tgttype = sv_value_get_integer (target->sv, value);
     switch (tgttype) {
-      case TGT_T_EXEC: {
+      case TGT_T_EXEC:
+      case TGT_T_USER_EXEC: {
         target_create_stage_bin (target);
         compile_set_output (target->compile, builditem);
         comptype = COMPILE_LINK;
@@ -784,14 +785,17 @@ target_build (target_t *target, list_t *blist)
       case TGT_T_INCLUDE: {
         continue;
       }
-      case TGT_T_LIBRARY: {
+      case TGT_T_LIBRARY:
+      case TGT_T_USER_LIBRARY: {
         break;
       }
-      case TGT_T_FILE: {
+      case TGT_T_FILE:
+      case TGT_T_USER_FILE: {
         buildtag = "create";
         break;
       }
-      case TGT_T_OBJECT: {
+      case TGT_T_OBJECT:
+      case TGT_T_USER_OBJECT: {
         compile_set_output (target->compile, builditem);
         buildtag = "compile";
         break;
@@ -829,20 +833,28 @@ target_build (target_t *target, list_t *blist)
       }
 
       ttgttype = sv_value_get_integer (target->sv, value);
-      if (tgttype == TGT_T_EXEC && ttgttype == TGT_T_OBJECT) {
+      if ((tgttype == TGT_T_EXEC ||
+          tgttype == TGT_T_USER_EXEC) &&
+          (ttgttype == TGT_T_OBJECT ||
+          ttgttype == TGT_T_USER_OBJECT)) {
         char    *tmp;
 
         tmp = strdup (dep);
         compile_append_object (target->compile, tmp);
       }
-      if (tgttype == TGT_T_OBJECT && ttgttype == TGT_T_SOURCE) {
+      if ((tgttype == TGT_T_OBJECT ||
+          tgttype == TGT_T_USER_OBJECT) &&
+          ttgttype == TGT_T_SOURCE) {
         stpecpy (source, source + MKC_PATH_MAX, dep);
       }
     }
 
     if (tgttype == TGT_T_EXEC ||
+        tgttype == TGT_T_USER_EXEC ||
         tgttype == TGT_T_LIBRARY ||
-        tgttype == TGT_T_OBJECT) {
+        tgttype == TGT_T_USER_LIBRARY ||
+        tgttype == TGT_T_OBJECT ||
+        tgttype == TGT_T_USER_OBJECT) {
       int         rc;
 
       compile_set_flags (target->compile, compflags, linkflags, libs);

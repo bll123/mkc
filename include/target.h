@@ -34,11 +34,15 @@ enum {
   TARGET_CURRENT,
   TARGET_OUT_OF_DATE,
   TGT_T_EXEC,
+  TGT_T_FILE,
   TGT_T_INCLUDE,
   TGT_T_LIBRARY,
   TGT_T_OBJECT,
   TGT_T_SOURCE,
-  TGT_T_FILE,
+  TGT_T_USER_EXEC,
+  TGT_T_USER_FILE,
+  TGT_T_USER_LIBRARY,
+  TGT_T_USER_OBJECT,
 };
 
 typedef struct target_t target_t;

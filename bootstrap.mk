@@ -16,8 +16,6 @@ MKC_REGEX_SRC = mkc_regex_pcre.c
 MAIN_TMP = tmp
 BOOTSTRAP_TMPDIR = $(MAIN_TMP)/bootstrap-tmpdir.txt
 BOOTSTRAP_MKC_DIRS = $(MAIN_TMP)/bootstrap-mkcfiles.txt
-BOOTSTRAP_PASS1 = $(MAIN_TMP)/bootstrap-pass1.txt
-BOOTSTRAP_PASS2 = $(MAIN_TMP)/bootstrap-pass2.txt
 BOOTSTRAP_PROCESS = $(MAIN_TMP)/bootstrap-process.txt
 
 MKC_FILES = mkc_files
@@ -140,7 +138,7 @@ real-local:
 	    LDFLAGS="$(LDFLAGS)" \
 	    LIBS="$(LIBS)" \
 	    MKC_PROFILE=$(MKC_PROFILE) \
-	    $(BOOTSTRAP_PASS2)
+	    $(MKC_2))
 
 # bootstrap process
 
@@ -149,7 +147,7 @@ real-local:
 # there is no mkc_config.h file
 # MKC_BOOTSTRAP must be defined
 # _have_regex and _package_pcre are also defined
-$(BOOTSTRAP_PASS1): $(BOOTSTRAP_TMPDIR) $(BOOTSTRAP_MKC_DIRS)
+$(MKC_PASS1): $(BOOTSTRAP_TMPDIR) $(BOOTSTRAP_MKC_DIRS)
 	@echo "$(MAKEFILE): bootstrap mkc (pass1: initial)"
 	@$(MAKE) -f $(MAKEFILE) \
 	    CFLAGS="$(CFLAGS) $(INIT_DEF)" \
@@ -157,13 +155,12 @@ $(BOOTSTRAP_PASS1): $(BOOTSTRAP_TMPDIR) $(BOOTSTRAP_MKC_DIRS)
 	    TARGET=bootstrap oscheck
 	@# at this point, 'mkc_1' exists with the internal bootstrap
 	@# flag set.
-	@touch $(BOOTSTRAP_PASS1)
 
 # pass2
 # generate the mkc_config.h file using the 'mkc' built in 'pass1'
 # MKC_BOOTSTRAP was defined in the 'pass1' version, and the mkc.mkc
 # configuration will exit after 'mkc_config.h' is generated.
-$(BOOTSTRAP_PASS2): $(BOOTSTRAP_PASS1)
+$(MKC_PASS2): $(MKC_PASS1)
 	@echo "$(MAKEFILE): bootstrap mkc (pass2: create mkc_config.h)"
 	@$(MAKE) -f $(MAKEFILE) \
 	    CFLAGS="$(CFLAGS)" \
@@ -171,7 +168,6 @@ $(BOOTSTRAP_PASS2): $(BOOTSTRAP_PASS1)
 	    MKC_EXEC=$(MKC_PASS1) \
 	    bootstrap-pass2
 	@# the 'mkc_2' executable has no bootstrap flag
-	@touch $(BOOTSTRAP_PASS2)
 
 # the initial mkc_config.h file is created (as a make dependency).
 # but 'mkc_1' still has the internal bootstrap flag set.
@@ -186,7 +182,7 @@ bootstrap-pass2: $(MKC_CONFIG_H)
 	    MKC_EXEC=$(MKC_PASS2) \
 	    TARGET=bootstrap oscheck
 
-$(BOOTSTRAP_PROCESS): $(BOOTSTRAP_PASS2)
+$(BOOTSTRAP_PROCESS): $(MKC_PASS2)
 	@echo "$(MAKEFILE): bootstrap mkc (pass3: final)"
 	@# make sure mkc_config.h is re-built
 	@rm -f $(MKC_CONFIG_H)
@@ -197,7 +193,7 @@ $(BOOTSTRAP_PROCESS): $(BOOTSTRAP_PASS2)
 	    MKC_EXEC=$(MKC_PASS2) \
 	    bootstrap-process
 	@# on success, the old objects and mkc_1 and mkc_2 may be removed
-	@$(MAKE) -f $(MAKEFILE) bootstrapclean
+	@$(MAKE) -f $(MAKEFILE) basicclean
 	@if [ $(WIN) = T ]; then \
 	  cp -pf $(MKC_FILES)/$(PROJECT)/stage/bin/mkc $(MKC_LOCAL) ; \
 	else \
@@ -236,19 +232,12 @@ $(MKC_LOCAL):
 objectclean:
 	@rm -f $(MKCOBJECTS) mkc_grammar.output
 
-# clean the object files and 'mkc_2' only
+# clean the object files
 # do not clean the mkc_files/ directory
 .PHONY: basicclean
 basicclean:
 	@$(MAKE) -f $(MAKEFILE) objectclean
-	@rm -f mkc_2
-
-# clean the object files and 'mkc_2' only
-# do not clean the mkc_files/ directory
-.PHONY: bootstrapclean
-bootstrapclean:
-	@$(MAKE) -f $(MAKEFILE) basicclean
-	@rm -f mkc_1
+	@rm -f mkc
 
 .PHONY: oscheck
 oscheck:
@@ -331,8 +320,9 @@ topochk: $(TOPOCHKOBJ)
 
 # source
 
+# -d
 mkc_grammar.h mkc_grammar.c: mkc_grammar.y
-	bison -d -v -o mkc_grammar.c --defines=mkc_grammar.h mkc_grammar.y
+	bison -v -o mkc_grammar.c --defines=mkc_grammar.h mkc_grammar.y
 	cat mkc_grammar.c | \
 	  sed -e 's,yynerrs = 0;,yynerrs YY_ATTRIBUTE_UNUSED = 0;,' \
 	  > mkc_grammar.c.n

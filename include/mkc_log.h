@@ -67,7 +67,7 @@ void mkc_message_chararr (log_verbose_t vlevel, const char *tag, chararr_t *targ
 const char * mkc_success_msg (int rc);
 const char * mkc_elapsed_disp (int64_t etm, char *buff, size_t sz);
 void mkc_log (mkc_log_t *log, int32_t logflag, const char *fmt, ...);
-void mkc_log_loc (mkc_log_t *log, int32_t logflag, int32_t lineno, int col, const char *fmt, ...);
+void mkc_log_loc (mkc_log_t *log, int32_t logflag, int32_t lineno, int col, int lastcol, const char *fmt, ...);
 void mkc_error_disp (mkc_error_t mkcerr);
 void mkc_log_set_disp_filename (mkc_log_t *log, const char *fname);
 void mkc_log_flush (mkc_log_t *log);

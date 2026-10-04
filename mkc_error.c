@@ -183,7 +183,8 @@ mkc_error_print (mkc_error_t *mkcerr)
   if (mkcerr->lineno != 0) {
     char    tbuff [40];
 
-    mkc_error_line_disp (tbuff, sizeof (tbuff), mkcerr->lineno, mkcerr->colno);
+    mkc_error_line_disp (tbuff, sizeof (tbuff), mkcerr->lineno,
+        mkcerr->colno, -1);
     fprintf (stderr, "%s", tbuff);
   }
   fprintf (stderr, "error: %s", mkcerrormsg [mkcerr->err]);
@@ -206,13 +207,18 @@ mkc_error_print (mkc_error_t *mkcerr)
 }
 
 char *
-mkc_error_line_disp (char *buff, size_t sz, int32_t lineno, int colno)
+mkc_error_line_disp (char *buff, size_t sz, int32_t lineno,
+    int colno, int lastcol)
 {
   if (buff == NULL) {
     return NULL;
   }
 
-  snprintf (buff, sz, "%" PRId32 ":%d: ", lineno, colno);
+  if (lastcol >= 0) {
+    snprintf (buff, sz, "%" PRId32 ":%d:%d", lineno, colno, lastcol);
+  } else {
+    snprintf (buff, sz, "%" PRId32 ":%d", lineno, colno);
+  }
 
   return buff;
 }

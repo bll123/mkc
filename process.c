@@ -1262,13 +1262,11 @@ process_stmt_autobuild (process_t *process)
     ival = sv_value_get_integer (process->sv, tvalue);
 
     switch (ival) {
-// ### needs to be fixed so that user-defined targets
-// are different than mkc defined targets.
-      case TGT_T_FILE:
-      case TGT_T_OBJECT: {
+      case TGT_T_USER_FILE:
+      case TGT_T_USER_OBJECT: {
         break;
       }
-      case TGT_T_EXEC: {
+      case TGT_T_USER_EXEC: {
         value_t   tmpvalue;
 
         value_init (&tmpvalue);

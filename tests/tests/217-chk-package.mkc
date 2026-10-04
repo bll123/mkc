@@ -1,20 +1,20 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
 check_package unknown {
-  success {
+  on_success {
     print '  fail a';
   }
-  failure {
+  on_failure {
     print '  ok a';
   }
 }
 check_package zlib;
 check_package zlib {
   name z;
-  success {
+  on_success {
     print '  ok b';
   }
-  failure {
+  on_failure {
     print '  fail b';
   }
 }

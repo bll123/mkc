@@ -1,18 +1,18 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
 check_type something_t {
-  success {
+  on_success {
     print '  fail a';
   }
-  failure {
+  on_failure {
     print '  ok a';
   }
 }
 check_type int {
-  success {
+  on_success {
     print '  ok b';
   }
-  failure {
+  on_failure {
     print '  fail b';
   }
 }

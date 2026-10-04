@@ -8,6 +8,7 @@
 #  include <stdint.h>
 
 #  include "mkc_grammar.h"
+#  include "parse.h"
 
   /* no idea if this is the right way to work around this */
 #  define YYSTYPE MKCYYSTYPE
@@ -153,6 +154,7 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 "check_include_dependencies"  { return T_STMT_CHK_INC_DEPS; }
 "check_include_guards"        { return T_STMT_CHK_INC_GUARDS; }
 "configuration_file"          { return T_STMT_CONFIGURE; }
+"create_file"                 { return T_STMT_CREATE_FILE; }
 "define_executable"           { return T_STMT_EXECUTABLE; }
 "load_cache"                  { return T_STMT_LOADCACHE; }
 "mark_variable"               { return T_STMT_MARK_VAR; }
@@ -181,7 +183,7 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 "compiler"                  { return T_ATTR_COMPILER; }
 "compiler_flags"            { return T_ATTR_COMP_FLAGS; }
 "define_zero"               { return T_ATTR_DEFINE_ZERO; }
-"failure"                   { return T_ATTR_FAILURE; }
+"on_failure"                { return T_ATTR_FAILURE; }
 "header"                    { return T_ATTR_HEADER; }
 "input"                     { return T_ATTR_INPUT; }
 "library_flags"             { return T_ATTR_LIB_FLAGS; }
@@ -194,11 +196,12 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 "output"                    { return T_ATTR_OUTPUT; }
 "path"                      { return T_ATTR_PATH; }
 "replace"                   { return T_ATTR_REPLACE; }
-"source"                    { return T_ATTR_SOURCE; }
-"success"                   { return T_ATTR_SUCCESS; }
+"run_command"               { return T_ATTR_RUN_COMMAND; }
+"on_success"                { return T_ATTR_SUCCESS; }
 "vcontext"                  { return T_ATTR_VCONTEXT; }
 "version"                   { return T_ATTR_VERSION; }
 "voutput"                   { return T_ATTR_VOUTPUT; }
+"with_source"               { return T_ATTR_SOURCE; }
 
 ({DIGIT}+) {
     yylval->sval = strdup (yytext);
@@ -254,8 +257,8 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
   }
 
 . {
-    fprintf (stderr, "[%d:%d]: %s %s\n",
-        yylloc->first_line, yylloc->first_column,
+    fprintf (stderr, "[%d:%d:%d]: %s %s\n",
+        yylloc->first_line, yylloc->first_column, yylloc->last_column,
         "unrecognized symbol", yytext
         );
     exit (0);
@@ -263,6 +266,7 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 
 <<EOF>> {
     yypop_buffer_state (yyscanner);
+    parse_pop (parse);
     if (! YY_CURRENT_BUFFER) {
       yyterminate ();
     }

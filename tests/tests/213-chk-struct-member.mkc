@@ -2,19 +2,19 @@
 
 check_struct_member 'struct stat' st_mode {
   header sys/stat.h;
-  success {
+  on_success {
     print '  ok a';
   }
-  failure {
+  on_failure {
     print '  fail a';
   }
 }
 
 check_struct_member 'struct stat' st_something {
-  success {
+  on_success {
     print '  fail b';
   }
-  failure {
+  on_failure {
     print '  ok b';
   }
 }

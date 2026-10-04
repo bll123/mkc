@@ -185,8 +185,21 @@ check_include_guards {
 }
 
 # build
+
+create_file 'mkc_lex.c' 'mkc_lex.h' {
+  with_source mkc_lex.l;
+  run_command 'flex --header-file=mkc_lex.h -o mkc_lex.c mkc_lex.l';
+}
+
+create_file 'mkc_grammar.c' 'mkc_grammar.h' {
+  with_source mkc_grammar.y;
+  run_command 'bison -v -o mkc_grammar.c --defines=mkc_grammar.h mkc_grammar.y';
+  run_command 'sed -e "s,yynerrs = 0;,yynerrs YY_ATTRIBUTE_UNUSED = 0;," mkc_grammar.c > mkc_grammar.c.n';
+  run_command 'mv mkc_grammar.c.n mkc_grammar.c';
+}
+
 define_executable mkc {
-  source ast.c asttoken.c chararr.c check.c compile.c const.c
+  with_source ast.c asttoken.c chararr.c check.c compile.c const.c
       context.c dict.c dictdict.c dirmatch.c dirop.c envutil.c
       fileop.c list.c mkc_compiler.c
       mkc_error.c mkc_grammar.c mkc_lex.c
@@ -194,12 +207,11 @@ define_executable mkc {
       os_process.c parse.c pathutil.c process.c scopedvar.c
       strutil.c target.c tmutil.c toposort.c value.c var.c;
   if (${MKC_SYS_WINDOWS}) {
-    source os_win_process.c;
+    with_source os_win_process.c;
   }
   library_flags ${pcre_LIBS};
 }
 
-#build 'mkc';
 auto_build;
 
 # install

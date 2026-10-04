@@ -4,7 +4,7 @@ project hw {
 }
 
 define_executable hw {
-  source hw.c;
+  with_source hw.c;
   library_flags '-lm';
 }
 

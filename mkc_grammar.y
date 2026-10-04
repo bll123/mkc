@@ -30,17 +30,19 @@
   typedef void *mkcyyscan_t;
 
 #  define MKCYYPARSE_PARAM mkcyyscan_t scanner
-#  define MKCYYLEX_PARAM scanner
+#  define MKCYYLEX_PARAM scanner parse
   /* define YY_BUF_SIZE so that the definition */
   /* from mkc_lex.h is not needed, and a consistent size is ensured */
 #  define YY_BUF_SIZE 32768
+#  define YY_DECL int mkcyylex \
+      (MKCYYSTYPE* yylval_param, MKCYYLTYPE* yylloc_param, mkcyyscan_t yyscanner, parse_t *parse)
 }
 
 %code {
   /* mkc_lex.h could be included, but it introduces a dependency loop */
 
   void mkcyyerror (MKCYYLTYPE* mkcyyllocp, mkcyyscan_t unused, parse_t *parse, astmain_t *ast, mkc_error_t *mkcerr, const char* msg);
-  int mkcyylex (MKCYYSTYPE* mkcyylvalp, MKCYYLTYPE* mkcyyllocp, mkcyyscan_t yyscanner);
+  YY_DECL;
   typedef struct yy_buffer_state *YY_BUFFER_STATE;
   YY_BUFFER_STATE mkcyy_create_buffer ( FILE *file, int size , mkcyyscan_t yyscanner );
   void mkcyypush_buffer_state ( YY_BUFFER_STATE new_buffer , mkcyyscan_t yyscanner );
@@ -56,7 +58,7 @@
   astnode_t * astdict;
 }
 
-%lex-param {void *scanner}
+%lex-param {void *scanner} {parse_t * parse}
 %parse-param {void *scanner} {parse_t * parse} {astmain_t * ast} {mkc_error_t * mkcerr}
 
 %start mkc
@@ -135,6 +137,7 @@
 %token T_STMT_CHK_INC_DEPS    "check_include_dependencies"
 %token T_STMT_CHK_INC_GUARDS  "check_include_guards"
 %token T_STMT_CONFIGURE       "configuration_file"
+%token T_STMT_CREATE_FILE     "create_file"
 %token T_STMT_EXECUTABLE      "define_executable"
 %token T_STMT_DEBUG           "mkcdebug"
 %token T_STMT_INCLUDE         "include"
@@ -170,7 +173,7 @@
 %token T_ATTR_COMPILER        "compiler"
 %token T_ATTR_VCONTEXT        "vcontext"
 %token T_ATTR_DEFINE_ZERO     "define_zero"
-%token T_ATTR_FAILURE         "failure"
+%token T_ATTR_FAILURE         "on_failure"
 %token T_ATTR_HEADER          "header"
 %token T_ATTR_INPUT           "input"
 %token T_ATTR_LIB_FLAGS       "library_flags"
@@ -183,8 +186,9 @@
 %token T_ATTR_OUTPUT          "output"
 %token T_ATTR_PATH            "path"
 %token T_ATTR_REPLACE         "replace"
-%token T_ATTR_SOURCE          "source"
-%token T_ATTR_SUCCESS         "success"
+%token T_ATTR_RUN_COMMAND     "run_command"
+%token T_ATTR_SOURCE          "with_source"
+%token T_ATTR_SUCCESS         "on_success"
 %token T_ATTR_VERSION         "version"
 %token T_ATTR_VOUTPUT         "voutput"
 
@@ -227,20 +231,20 @@
 // statements
 %type <astnode> stmt_autobuild stmt_build stmt_chk_inc_compile
 %type <astnode> stmt_chk_inc_deps stmt_chk_inc_guards
-%type <astnode> stmt_config stmt_executable
+%type <astnode> stmt_configure stmt_create_file stmt_executable
 %type <astnode> stmt_mark_var stmt_print stmt_profile stmt_project stmt_set
 // other statements
 %type <astnode> directive stmt_loadcache
 // checks
 %type <astnode> checkcommand chk_argcount chk_compflag chk_const
 %type <astnode> chk_define chk_function chk_header chk_library chk_linkflag
-%type <astnode> chk_member chk_package chk_shellcmc chk_size chk_type
+%type <astnode> chk_member chk_package chk_shell_extract chk_size chk_type
 // attributes
 %type <astnode> attr attr_alternate attr_compiler attr_compilerflags
 %type <astnode> attr_define_zero attr_failure attr_header
 %type <astnode> attr_input attr_lib_flags attr_libversion attr_linkflags
 %type <astnode> attr_match attr_method attr_name attr_negate
-%type <astnode> attr_output attr_path attr_replace attr_source
+%type <astnode> attr_output attr_path attr_replace attr_run_command attr_source
 %type <astnode> attr_success attr_vcontext attr_version attr_voutput
 
 // precedence rules: the lowest precedence comes first
@@ -325,7 +329,11 @@ stmt[v]:
     {
       $v = $a;
     }
-  | stmt_config[a]
+  | stmt_configure[a]
+    {
+      $v = $a;
+    }
+  | stmt_create_file[a]
     {
       $v = $a;
     }
@@ -450,6 +458,10 @@ attr[v]:
     {
       $v = $a;
     }
+  | attr_run_command[a]
+    {
+      $v = $a;
+    }
   | attr_source[a]
     {
       $v = $a;
@@ -530,7 +542,7 @@ checkcommand[v]:
     {
       $v = $a;
     }
-  | chk_shellcmc[a]
+  | chk_shell_extract[a]
     {
       $v = $a;
     }
@@ -708,10 +720,18 @@ stmt_chk_inc_guards[v]:
     }
   ;
 
-stmt_config[v]:
+stmt_configure[v]:
     T_STMT_CONFIGURE stmtblock[a]
     {
       $v = ast_mk_stmt_stmtblock (ast, $a, MKC_T_STMT_CONFIGURE,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+stmt_create_file[v]:
+    T_STMT_CREATE_FILE valuelist[a] stmtblock[b]
+    {
+      $v = ast_mk_stmt_val_stmtblock (ast, $a, $b, MKC_T_STMT_CREATE_FILE,
           yylloc.first_line, yylloc.first_column);
     }
   ;
@@ -924,7 +944,7 @@ chk_function[v]:
     }
   ;
 
-chk_shellcmc[v]:
+chk_shell_extract[v]:
     T_CHK_SHELL_EXTRACT pathname[a] T_SEMICOLON
     {
       $v = ast_mk_check (ast, $a, NULL, MKC_T_CHK_SHELL_EXTRACT,
@@ -1074,6 +1094,14 @@ attr_replace[v]:
     T_ATTR_REPLACE varvalue[a] varvalue[b] T_SEMICOLON
     {
       $v = ast_mk_attr_replace (ast, $a, $b,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+attr_run_command[v]:
+    T_ATTR_RUN_COMMAND varvalue[a] T_SEMICOLON
+    {
+      $v = ast_mk_attribute (ast, $a, MKC_T_ATTR_RUN_COMMAND,
           yylloc.first_line, yylloc.first_column);
     }
   ;
@@ -1533,8 +1561,9 @@ mkcyyerror (MKCYYLTYPE* mkcyyllocp, mkcyyscan_t unused,
 {
   char    tmp [40];
 
-  fprintf (stderr, "%s:", parse_get_filename (parse));
-  mkc_error_line_disp (tmp, sizeof (tmp), mkcyyllocp->first_line, mkcyyllocp->first_column);
+  fprintf (stderr, "%s: ", parse_get_filename (parse));
+  mkc_error_line_disp (tmp, sizeof (tmp), mkcyyllocp->first_line, mkcyyllocp->first_column, mkcyyllocp->last_column);
+  fprintf (stderr, "[%s] ", tmp);
   fprintf (stderr, "%s\n", msg);
 }
 

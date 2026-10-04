@@ -1,20 +1,20 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
-# checks the success/fail attribute
+# checks the on_success/fail attribute
 
 check_size unknown_t {
-  success {
+  on_success {
     print '  fail a';
   }
-  failure {
+  on_failure {
     print '  ok a';
   }
 }
 check_size int {
-  success {
+  on_success {
     print '  ok b';
   }
-  failure {
+  on_failure {
     print '  fail b';
   }
 }

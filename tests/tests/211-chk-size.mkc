@@ -4,10 +4,10 @@
 
 check_size int32_t {
   header stdint.h;
-  success {
+  on_success {
     print '  ok a';
   }
-  failure {
+  on_failure {
     print '  fail a';
   }
 }
@@ -24,10 +24,10 @@ check_size 'struct stat' {
   header sys/stat.h;
 }
 check_size unknown_t {
-  success {
+  on_success {
     print '  fail b';
   }
-  failure {
+  on_failure {
     print '  ok b';
   }
 }

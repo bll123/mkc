@@ -69,7 +69,7 @@
         link_flags ${MKC_COMMON_LIB};
         library_flags '-lintl' '-liconv';
       }
-      success {
+      on_success {
         set mkc_libintl_rc true;
         set mkc_libintl_prefixed true;
       }
@@ -96,7 +96,7 @@
           link_flags ${MKC_COMMON_LIB};
           library_flags '-lintl' '-liconv';
         }
-        success {
+        on_success {
           set mkc_libintl_rc true;
           set mkc_libintl_prefixed false;
         }

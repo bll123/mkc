@@ -22,7 +22,7 @@
 
     profile ${profname} {
       set MKC_FORTIFY false;
-#      add_compile_flag '-O0';
+      add_compile_flag '-O0';
       check_compile_flag '-ggdb';
       check_compile_flag '-fsanitize=address';
       check_link_flag '-fsanitize=address';

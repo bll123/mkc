@@ -3,10 +3,10 @@
 check_arg_count chk_v {
   compiler_flags '-Itests/data';
   header 218-chk-arg-count.h;
-  success {
+  on_success {
     print '  ok a';
   }
-  failure {
+  on_failure {
     print '  fail a';
   }
 }
@@ -37,10 +37,10 @@ check_arg_count chk_f {
 check_arg_count chk_unknown {
   compiler_flags '-Itests/data';
   header 218-chk-arg-count.h;
-  success {
+  on_success {
     print '  fail b';
   }
-  failure {
+  on_failure {
     print '  ok b';
   }
 }
