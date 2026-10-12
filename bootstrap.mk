@@ -4,27 +4,34 @@
 
 MAKEFLAGS += --no-print-directory
 MAKEFILE = bootstrap.mk
+BASICMAKEFILE = basic.mk
 # if pkgconf is installed, there is a pkg-config symlink
 PKGCONF = pkg-config
 
 QUIET=
+# MKC_DEBUG = -vvv
+MKC_DEBUG =
 
 MKC_REGEX_PKG = libpcre2-8
-MKC_REGEX_OBJ = mkc_regex_pcre.o
-MKC_REGEX_SRC = mkc_regex_pcre.c
 
-DIR_MAIN_TMP = tmp
+DIR_MAIN_TMP = mkc-tmp
 BOOTSTRAP_TMPDIR = $(DIR_MAIN_TMP)/bootstrap-tmpdir.txt
 BOOTSTRAP_MKC_DIRS = $(DIR_MAIN_TMP)/bootstrap-mkcfiles.txt
-BOOTSTRAP_PROCESS = $(DIR_MAIN_TMP)/bootstrap-process.txt
+
+DIR_PASS1 = $(DIR_MAIN_TMP)/pass1
+DIR_PASS2 = $(DIR_MAIN_TMP)/pass2
+# be sure to have trailing slash
+DIR_UP2 = ../../
 
 DIR_MKCFILES = mkc_files
 DIR_MKCF_TMP = $(DIR_MKCFILES)/tmp
+
+SRC_REL =
 PROJECT = mkc
 MKC_TARGET = $(DIR_MKCFILES)/$(PROJECT)/stage$(PREFIX)/bin/$(PROJECT)
 MKC_LOCAL = $(PROJECT)
-MKC_PASS1 = $(PROJECT)_1
-MKC_PASS2 = $(PROJECT)_2
+MKC_PASS1 = $(DIR_PASS1)/$(PROJECT)
+MKC_PASS2 = $(DIR_PASS2)/$(PROJECT)
 MKC_CONFIG_H = "$(PROJECT)_config.h"
 MKC_MKC = "$(PROJECT).mkc"
 MKC_EXEC = $(MKC_LOCAL)
@@ -32,13 +39,15 @@ MKC_EXEC = $(MKC_LOCAL)
 # base configuration for bootstrap
 
 BASE_OPTFLAGS = -g -O2
-BASE_CFLAGS = -Wall -Wextra -Wno-unused-parameter \
-	-I. -Iinclude
+BASE_CFLAGS = -Wall -Wextra -Wno-unused-parameter
+BASE_INCLUDE = -I. -Iinclude
 BASE_LDFLAGS = -Wall -Wextra
 BASE_LIBS =
 BASE_PROFILE =
 
 INIT_DEF = -DMKC_BOOTSTRAP=1 -D_have_regex=1 -D_package_pcre=1
+INIT_INCLUDE = -I../.. -I../../include
+PASS2_DEF = -DMKC_BOOTSTRAP_PASS2=1
 
 # standard build
 
@@ -87,7 +96,8 @@ EXEEXT =
 
 .PHONY: start
 start:
-	@$(MAKE) -f $(MAKEFILE) \
+	@echo "== start"
+	@$(MAKE) -f $(SRC_REL)$(MAKEFILE) \
 	    CFLAGS="$(CONF_CFLAGS)" \
 	    LDFLAGS="$(CONF_LDFLAGS)" \
 	    LIBS="$(CONF_LIBS)" \
@@ -96,25 +106,18 @@ start:
 
 .PHONY: sanitize
 sanitize:
-	@$(MAKE) -f $(MAKEFILE) \
+	@echo "== sanitize"
+	@$(MAKE) -f $(SRC_REL)$(MAKEFILE) \
 	    CFLAGS="$(SAN_CFLAGS)" \
 	    LDFLAGS="$(SAN_LDFLAGS)" \
 	    LIBS="$(SAN_LIBS)" \
 	    MKC_PROFILE=$(SAN_MKC_PROFILE) \
 	    real-start
 
-.PHONY: sanitize-local
-sanitize-local:
-	@$(MAKE) -f $(MAKEFILE) \
-	    CFLAGS="$(SAN_CFLAGS)" \
-	    LDFLAGS="$(SAN_LDFLAGS)" \
-	    LIBS="$(SAN_LIBS)" \
-	    MKC_PROFILE=$(SAN_MKC_PROFILE) \
-	    real-local
-
 .PHONY: debug
 debug:
-	@$(MAKE) -f $(MAKEFILE) \
+	@echo "== debug"
+	@$(MAKE) -f $(SRC_REL)$(MAKEFILE) \
 	    CFLAGS="$(DBG_CFLAGS)" \
 	    LDFLAGS="$(DBG_LDFLAGS)" \
 	    LIBS="$(DBG_LIBS)" \
@@ -123,86 +126,80 @@ debug:
 
 .PHONY: real-start
 real-start:
-	@$(MAKE) -f $(MAKEFILE) \
+	@echo "== real-start"
+	@$(MAKE) -f $(SRC_REL)$(MAKEFILE) \
 	    CFLAGS="$(CFLAGS)" \
 	    LDFLAGS="$(LDFLAGS)" \
 	    LIBS="$(LIBS)" \
 	    MKC_PROFILE=$(MKC_PROFILE) \
-	    $(BOOTSTRAP_PROCESS) \
 	    $(MKC_LOCAL)
 
-.PHONY: real-local
-real-local:
-	@$(MAKE) -f $(MAKEFILE) \
-	    CFLAGS="$(CFLAGS)" \
-	    LDFLAGS="$(LDFLAGS)" \
-	    LIBS="$(LIBS)" \
-	    MKC_PROFILE=$(MKC_PROFILE) \
-	    $(MKC_2))
+# source
+
+SOURCE_FILES = mkc_grammar.h mkc_grammar.c mkc_lex.h mkc_lex.c
 
 # bootstrap process
+
+# .PHONY: bootstrap-init
+bootstrap-init: $(BOOTSTRAP_TMPDIR) $(BOOTSTRAP_MKC_DIRS)
+	@echo "== bootstrap-init"
+	@:
 
 # pass1
 # the initial pass
 # there is no mkc_config.h file
 # MKC_BOOTSTRAP must be defined
 # _have_regex and _package_pcre are also defined
-$(MKC_PASS1): $(BOOTSTRAP_TMPDIR) $(BOOTSTRAP_MKC_DIRS)
+# .PHONY: bootstrap-pass1
+bootstrap-pass1: $(SOURCE_FILES) bootstrap-init
+	@echo "== pass1"
 	@echo "$(MAKEFILE): bootstrap mkc (pass1: initial)"
-	@$(MAKE) -f $(MAKEFILE) \
-	    CFLAGS="$(CFLAGS) $(INIT_DEF)" \
-	    MKC_EXEC=$(MKC_PASS1) \
-	    TARGET=bootstrap oscheck
-	@# at this point, 'mkc_1' exists with the internal bootstrap
+	$(MAKE) -C $(DIR_PASS1) -f $(DIR_UP2)$(BASICMAKEFILE) \
+	    CFLAGS="$(CFLAGS) $(INIT_INCLUDE) $(INIT_DEF)" \
+            SRC_REL=$(DIR_UP2) \
+            VPATH=$(DIR_UP2) \
+	    TARGET=bootstrap $(MKC_LOCAL)
+	@# at this point, 'tmp/pass1/mkc' exists with the internal bootstrap
 	@# flag set.
 
 # pass2
 # generate the mkc_config.h file using the 'mkc' built in 'pass1'
 # MKC_BOOTSTRAP was defined in the 'pass1' version, and the mkc.mkc
 # configuration will exit after 'mkc_config.h' is generated.
-$(MKC_PASS2): $(MKC_PASS1)
+bootstrap-pass2: bootstrap-pass1
+	@echo "== pass2"
 	@echo "$(MAKEFILE): bootstrap mkc (pass2: create mkc_config.h)"
+	@echo " pass2 cwd `pwd`"
+	@echo " pass2 config.h: `ls -l mkc_config.h mkc.mkc`"
 	@$(MAKE) -f $(MAKEFILE) \
-	    CFLAGS="$(CFLAGS) -DMKC_BOOTSTRAP_PASS2=1" \
-	    QUIET="@" \
 	    MKC_EXEC=$(MKC_PASS1) \
-	    bootstrap-pass2
-	@# the 'mkc_2' executable has no bootstrap flag
+	    bootstrap-config
+	$(MAKE) -C $(DIR_PASS2) -f $(DIR_UP2)$(BASICMAKEFILE) \
+	    CFLAGS="$(CFLAGS) $(INIT_INCLUDE) $(PASS2_DEF)" \
+	    QUIET="@" \
+	    SRC_REL=$(DIR_UP2) \
+	    VPATH=$(DIR_UP2) \
+	    TARGET=bootstrap $(MKC_LOCAL)
+	@# 'tmp/pass2/mkc' now exists.  no bootstrap flag is set
 
-# the initial mkc_config.h file is created (as a make dependency).
-# but 'mkc_1' still has the internal bootstrap flag set.
-# clean out the objects and build 'mkc_2'.
-.PHONY: bootstrap-pass2
-bootstrap-pass2: $(MKC_CONFIG_H)
-	@# all objects and the executable must be removed (bootstrap flag set)
-	@echo "$(MAKEFILE): bootstrap mkc (pass2: rebuild)"
-	@$(MAKE) -f $(MAKEFILE) basicclean
-	@$(MAKE) -f $(MAKEFILE) \
-	    CFLAGS="$(CFLAGS)" \
-	    MKC_EXEC=$(MKC_PASS2) \
-	    TARGET=bootstrap oscheck
+bootstrap-config: mkc_config.h
+	@echo "bootstrap-config"
+	@:
 
-$(BOOTSTRAP_PROCESS): $(MKC_PASS2)
-	@echo "$(MAKEFILE): bootstrap mkc (pass3: final)"
-	@# make sure mkc_config.h is re-built
-	@rm -f $(MKC_CONFIG_H)
-	@# objects in the current dir are no longer needed
-	@# mkc_2 is still needed
-	@$(MAKE) -f $(MAKEFILE) objectclean
+$(MKC_TARGET): bootstrap-pass2
+	@echo "== bootstrap-pass2"
 	@$(MAKE) -f $(MAKEFILE) \
 	    MKC_EXEC=$(MKC_PASS2) \
 	    bootstrap-process
-	@# on success, the old objects and mkc_1 and mkc_2 may be removed
-	@$(MAKE) -f $(MAKEFILE) basicclean
-	@$(MAKE) -f $(MAKEFILE) bootstrap-link
-	@touch $(BOOTSTRAP_PROCESS)
 
 .PHONY: bootstrap-process
-bootstrap-process: $(MKC_CONFIG_H)
-	@:
+bootstrap-process:
+	@echo "== bootstrap-process"
+	@./$(MKC_EXEC) --prefix '' \
+	    --profile $(MKC_PROFILE) $(MKC_DEBUG) $(MKC_MKC)
 
-.PHONY: bootstrap-link
-bootstrap-link:
+$(MKC_LOCAL): $(MKC_TARGET)
+	@echo "== local: $(MKC_LOCAL)"
 	@if [ $(WIN) = T ]; then \
 	  cp -pf $(MKC_TARGET) $(MKC_LOCAL) ; \
 	else \
@@ -213,22 +210,17 @@ bootstrap-link:
 # will only build the configuration file.
 # if the bootstrap flag is not set,
 # a complete build is performed using mkc.mkc.
-$(MKC_CONFIG_H): mkc.mkc
-	@./$(MKC_EXEC) --no-cache --clean --prefix '' \
-	    --profile $(MKC_PROFILE) $(MKC_MKC)
-
-.PHONY: $(MKC_LOCAL)
-$(MKC_LOCAL): $(MKC_TARGET)
-	@$(MAKE) -f $(MAKEFILE) bootstrap-link
-
-# always want this to be run
-.PHONY: $(MKC_TARGET)
-$(MKC_TARGET): mkc.mkc
-	@./$(MKC_EXEC) --prefix '' \
-	    --profile $(MKC_PROFILE) $(MKC_MKC)
+mkc_config.h: mkc.mkc
+	@echo "== config.h: $(MKC_CONFIG_H)"
+	@echo "== config.h: cwd `pwd`"
+	@echo "== config.h: `ls -l mkc_config.h mkc.mkc`"
+	$(MKC_EXEC) --no-cache --clean --prefix '' \
+	    --profile $(MKC_PROFILE) $(MKC_DEBUG) $(MKC_MKC)
 
 $(BOOTSTRAP_TMPDIR):
 	@test -d $(DIR_MAIN_TMP) || mkdir $(DIR_MAIN_TMP)
+	@test -d $(DIR_PASS1) || mkdir $(DIR_PASS1)
+	@test -d $(DIR_PASS2) || mkdir $(DIR_PASS2)
 	@touch $(BOOTSTRAP_TMPDIR)
 
 $(BOOTSTRAP_MKC_DIRS):
@@ -236,309 +228,41 @@ $(BOOTSTRAP_MKC_DIRS):
 	@test -d $(DIR_MKCF_TMP) || mkdir $(DIR_MKCF_TMP)
 	@touch $(BOOTSTRAP_MKC_DIRS)
 
-# clean the object files
-.PHONY: objectclean
-objectclean:
-	@rm -f $(MKCOBJECTS) mkc_grammar.output
-
-# clean the object files
-# do not clean the mkc_files/ directory
-.PHONY: basicclean
-basicclean:
-	@$(MAKE) -f $(MAKEFILE) objectclean
-	@rm -f mkc
-
 .PHONY: oscheck
 oscheck:
-	@if [ `./utils/chkforwin.sh` = T ]; then \
-	  $(MAKE) -f $(MAKEFILE) windows-$(TARGET) ; \
+	if [ `$(SRC_REL)utils/chkforwin.sh` = T ]; then \
+	  $(MAKE) -f $(SRC_REL)$(MAKEFILE) windows-$(TARGET) ; \
 	else \
-	  $(MAKE) -f $(MAKEFILE) other-$(TARGET) ; \
+	  $(MAKE) -f $(SRC_REL)$(MAKEFILE) other-$(TARGET) ; \
 	fi
 
 .PHONY: windows-bootstrap
 windows-bootstrap:
 	@# _WIN32 does not seem to be defined under cygwin
-	@$(MAKE) -f $(MAKEFILE) \
+	@$(MAKE) -f $(SRC_REL)$(MAKEFILE) \
 	    CFLAGS="$(CFLAGS) \
 	      -DMKC_BOOTSTRAP_WIN=1" \
 	    MKC_WIN_OBJ="$(WINOBJ)" \
 	    WIN=T \
 	    EXEEXT=".exe" \
-	    bootstrap-local
+	    $(MKC_LOCAL)
 
 .PHONY: other-bootstrap
 other-bootstrap:
-	@$(MAKE) -f $(MAKEFILE) bootstrap-local
-
-# for the bootstrap process
-
-# the MKCOBJECTS variable is re-generated
-# be sure it is followed by a blank line
-# MKCOBJECTS keep this line
-MKCOBJECTS = \
-	strutil.o \
-	tmppath.o \
-	mkc_error.o \
-	list.o \
-	dict.o \
-	chararr.o \
-	fileop.o \
-	value.o \
-	const.o \
-	mkc_log.o \
-	tmutil.o \
-	dictdict.o \
-	envutil.o \
-	var.o \
-	mkc_compiler.o \
-	os_process.o \
-	$(MKC_WIN_OBJ) \
-	pathutil.o \
-	scopedvar.o \
-	dirop.o \
-	$(MKC_REGEX_OBJ) \
-	compile.o \
-	dirmatch.o \
-	mkc_util.o \
-	toposort.o \
-	asttoken.o \
-	check.o \
-	context.o \
-	target.o \
-	process.o \
-	mkc_lex.o \
-	ast.o \
-	parse.o \
-	mkc_grammar.o \
-	mkc_main.o
-
-TOPOCHKOBJ = \
-	topochk.o \
-	toposort.o \
-	list.o \
-	strutil.o \
-	mkc_error.o
-
-# links the local objects to create a local mkc file
-.PHONY: bootstrap-local
-bootstrap-local: $(MKCOBJECTS)
-	$(QUIET)$(CC) $(LDFLAGS) -o $(MKC_EXEC) $(MKCOBJECTS) $(LIBS)
-
-topochk: $(TOPOCHKOBJ)
-	$(QUIET)$(CC) $(LDFLAGS) -o $@ $(TOPOCHKOBJ)
+	@$(MAKE) -f $(SRC_REL)$(MAKEFILE) $(MKC_LOCAL)
 
 # source
 
 # -d
 mkc_grammar.h mkc_grammar.c: mkc_grammar.y
-	bison -v -o mkc_grammar.c --defines=mkc_grammar.h mkc_grammar.y
-	cat mkc_grammar.c | \
-	  sed -e 's,yynerrs = 0;,yynerrs YY_ATTRIBUTE_UNUSED = 0;,' \
+	bison -v -o mkc_grammar.c \
+	    --defines=mkc_grammar.h mkc_grammar.y
+	sed -e 's,yynerrs = 0;,yynerrs YY_ATTRIBUTE_UNUSED = 0;,' \
+	  mkc_grammar.c \
 	  > mkc_grammar.c.n
 	mv mkc_grammar.c.n mkc_grammar.c
 
 mkc_lex.h mkc_lex.c: mkc_lex.l
-	flex --header-file=mkc_lex.h -o mkc_lex.c mkc_lex.l
+	flex --header-file=mkc_lex.h \
+	    -o mkc_lex.c mkc_lex.l
 
-# objects
-
-.c.o:
-	$(QUIET)$(CC) -c $(CFLAGS) $<
-
-asttoken.o: asttoken.c
-chararr.o: chararr.c
-compile.o: compile.c
-dict.o: dict.c
-dictdict.o: dictdict.c
-dirmatch.o: dirmatch.c
-dirop.o: dirop.c
-envutil.o: envutil.c
-fileop.o: fileop.c
-ast.o: ast.c
-check.o: check.c
-mkc_compiler.o: mkc_compiler.c
-const.o: const.c
-context.o: context.c
-mkc_grammar.o: mkc_grammar.c
-mkc_lex.o: mkc_lex.c mkc_grammar.h
-list.o: list.c
-mkc_log.o: mkc_log.c
-mkc_main.o: mkc_main.c
-parse.o: parse.c mkc_grammar.h mkc_lex.h
-process.o: process.c
-$(MKC_REGEX_OBJ): $(MKC_REGEX_SRC)
-mkc_util.o: mkc_util.c
-var.o: var.c
-os_process.o: os_process.c
-os_win_process.o: os_win_process.c
-pathutil.o: pathutil.c
-scopedvar.o: scopedvar.c
-strutil.o: strutil.c
-target.o: target.c
-tmppath.o: tmppath.c
-tmutil.o: tmutil.c
-toposort.o: toposort.c
-value.o: value.c
-
-topochk.o: topochk.c
-
-# the following is generated by the 'makedepend' program
-# DO NOT DELETE
-
-ast.o:   include/ast.h
-ast.o: include/asttoken.h include/mkc_error.h include/mkc_nodiscard.h
-ast.o: include/mkc_log.h  include/chararr.h
-ast.o: include/mkc_option.h include/var.h include/list.h include/value.h
-ast.o: include/dict.h include/scopedvar.h include/mkc_compiler.h
-ast.o: include/check.h include/attribute.h include/alternate.h
-ast.o: include/compile.h include/context.h include/mkc_def.h
-ast.o:   include/os_process.h
-ast.o: include/process.h include/strutil.h
-asttoken.o: include/asttoken.h
-chararr.o:   include/chararr.h
-chararr.o: include/mkc_error.h include/mkc_nodiscard.h include/strutil.h
-check.o:   include/alternate.h
-check.o: include/list.h  include/mkc_error.h
-check.o: include/mkc_nodiscard.h include/attribute.h include/mkc_compiler.h
-check.o: include/chararr.h include/check.h include/compile.h
-check.o: include/mkc_log.h  include/mkc_option.h
-check.o: include/scopedvar.h include/dict.h include/var.h include/value.h
-check.o: include/const.h include/mkc_def.h 
-check.o: include/envutil.h include/fileop.h include/os_process.h
-check.o: include/pathutil.h include/mkc_regex.h include/strutil.h
-check.o: include/tmppath.h include/tmutil.h
-compile.o: include/alternate.h include/list.h include/mkc_error.h
-compile.o: include/mkc_nodiscard.h include/attribute.h include/mkc_compiler.h
-compile.o: include/compile.h include/chararr.h include/mkc_log.h
-compile.o:  include/mkc_option.h include/scopedvar.h
-compile.o: include/dict.h include/var.h include/value.h include/const.h
-compile.o: include/fileop.h include/os_process.h 
-compile.o: include/pathutil.h include/mkc_def.h 
-compile.o: include/strutil.h
-context.o: include/context.h include/mkc_error.h include/mkc_nodiscard.h
-dict.o:   include/dict.h
-dict.o: include/mkc_error.h include/mkc_nodiscard.h include/list.h
-dict.o: include/mkc_log.h  include/chararr.h
-dict.o: include/mkc_def.h  
-dict.o: include/strutil.h
-dictdict.o:   include/dict.h
-dictdict.o: include/mkc_error.h include/mkc_nodiscard.h include/list.h
-dictdict.o: include/mkc_log.h  include/chararr.h
-dictdict.o: include/dictdict.h include/value.h include/mkc_def.h
-dirmatch.o:   include/dirop.h
-dirmatch.o: include/mkc_error.h  include/mkc_nodiscard.h
-dirmatch.o: include/list.h include/dirmatch.h include/mkc_regex.h
-dirop.o:   include/mkc_def.h
-dirop.o:   include/dirop.h
-dirop.o: include/mkc_error.h include/mkc_nodiscard.h include/list.h
-dirop.o: include/fileop.h  include/strutil.h
-envutil.o:   include/envutil.h
-envutil.o: include/strutil.h include/mkc_nodiscard.h
-fileop.o:  include/mkc_def.h include/mkc_error.h
-fileop.o: include/mkc_nodiscard.h include/fileop.h include/strutil.h
-list.o:   include/mkc_error.h
-list.o: include/mkc_nodiscard.h include/list.h include/strutil.h
-mkc_compiler.o:  include/mkc_compiler.h
-mkc_error.o:  include/mkc_error.h include/mkc_nodiscard.h
-mkc_error.o: include/strutil.h
-mkc_grammar.o: mkc_grammar.h  
-mkc_grammar.o: include/ast.h include/asttoken.h include/mkc_error.h
-mkc_grammar.o: include/mkc_nodiscard.h include/mkc_log.h 
-mkc_grammar.o: include/chararr.h include/mkc_option.h include/var.h
-mkc_grammar.o: include/list.h include/value.h include/dict.h
-mkc_grammar.o: include/scopedvar.h include/mkc_compiler.h include/mkc_def.h
-mkc_grammar.o:   include/fileop.h
-mkc_grammar.o: include/parse.h
-mkc_lex.o:   mkc_grammar.h
-mkc_lex.o:  include/ast.h include/asttoken.h
-mkc_lex.o: include/mkc_error.h include/mkc_nodiscard.h include/mkc_log.h
-mkc_lex.o:  include/chararr.h include/mkc_option.h
-mkc_lex.o: include/var.h include/list.h include/value.h include/dict.h
-mkc_lex.o: include/scopedvar.h include/mkc_compiler.h include/mkc_def.h
-mkc_lex.o:   include/fileop.h
-mkc_lex.o: include/parse.h 
-mkc_log.o:  include/chararr.h include/mkc_error.h
-mkc_log.o: include/mkc_nodiscard.h include/fileop.h include/mkc_log.h
-mkc_log.o: include/strutil.h
-mkc_main.o: include/ast.h include/asttoken.h include/mkc_error.h
-mkc_main.o: include/mkc_nodiscard.h include/mkc_log.h 
-mkc_main.o: include/chararr.h include/mkc_option.h include/var.h
-mkc_main.o: include/list.h include/value.h include/dict.h include/scopedvar.h
-mkc_main.o: include/mkc_compiler.h include/const.h include/mkc_def.h
-mkc_main.o:  include/dirop.h include/envutil.h
-mkc_main.o: include/fileop.h include/parse.h include/mkc_util.h
-mkc_main.o: include/pathutil.h include/strutil.h include/tmutil.h
-mkc_regex_pcre.o: include/mkc_def.h  include/mkc_error.h
-mkc_regex_pcre.o: include/mkc_nodiscard.h include/mkc_regex.h
-mkc_util.o:  include/dirop.h include/mkc_error.h
-mkc_util.o: include/mkc_nodiscard.h include/list.h include/mkc_compiler.h
-mkc_util.o: include/mkc_util.h include/pathutil.h include/mkc_def.h
-os_process.o: include/os_process.h include/mkc_nodiscard.h include/tmutil.h
-os_win_process.o: include/mkc_def.h  include/fileop.h
-os_win_process.o: include/mkc_error.h include/mkc_nodiscard.h
-os_win_process.o: include/os_process.h include/strutil.h include/tmutil.h
-parse.o: include/ast.h include/asttoken.h include/mkc_error.h
-parse.o: include/mkc_nodiscard.h include/mkc_log.h 
-parse.o:  include/chararr.h include/mkc_option.h
-parse.o: include/var.h include/list.h include/value.h include/dict.h
-parse.o: include/scopedvar.h include/mkc_compiler.h include/fileop.h
-parse.o: mkc_lex.h mkc_grammar.h  
-parse.o: include/mkc_def.h  
-parse.o: include/parse.h  include/strutil.h
-pathutil.o:  include/mkc_def.h 
-pathutil.o:  include/mkc_error.h include/mkc_nodiscard.h
-pathutil.o: include/fileop.h  include/pathutil.h
-pathutil.o: include/strutil.h
-process.o:  include/alternate.h include/list.h
-process.o: include/mkc_error.h include/mkc_nodiscard.h include/asttoken.h
-process.o: include/attribute.h include/mkc_compiler.h include/chararr.h
-process.o: include/compile.h include/mkc_log.h include/mkc_option.h
-process.o: include/scopedvar.h include/dict.h include/var.h include/value.h
-process.o: include/dictdict.h include/envutil.h include/fileop.h
-process.o: include/check.h include/const.h include/context.h
-process.o: include/mkc_def.h  include/dirmatch.h
-process.o: include/mkc_regex.h include/process.h include/strutil.h
-process.o: include/mkc_util.h include/pathutil.h include/target.h
-process.o: include/toposort.h include/tmppath.h include/tmutil.h
-scopedvar.o:   include/const.h
-scopedvar.o: include/dictdict.h include/dict.h include/mkc_error.h
-scopedvar.o: include/mkc_nodiscard.h include/list.h include/mkc_log.h
-scopedvar.o:  include/chararr.h include/value.h
-scopedvar.o: include/envutil.h include/mkc_compiler.h include/mkc_def.h
-scopedvar.o:   include/scopedvar.h
-scopedvar.o: include/mkc_option.h include/var.h include/strutil.h
-strutil.o:   include/strutil.h
-strutil.o: include/mkc_nodiscard.h
-target.o:   include/alternate.h
-target.o: include/list.h include/mkc_error.h include/mkc_nodiscard.h
-target.o: include/attribute.h include/mkc_compiler.h include/chararr.h
-target.o: include/compile.h include/mkc_log.h 
-target.o: include/mkc_option.h include/scopedvar.h include/dict.h
-target.o: include/var.h include/value.h include/const.h include/dirmatch.h
-target.o: include/mkc_regex.h include/dirop.h include/fileop.h
-target.o: include/mkc_def.h  
-target.o: include/mkc_util.h include/os_process.h include/pathutil.h
-target.o: include/strutil.h include/target.h include/toposort.h
-target.o: include/tmppath.h include/tmutil.h
-tmppath.o:   include/mkc_def.h
-tmppath.o:   include/mkc_error.h
-tmppath.o: include/mkc_nodiscard.h include/tmppath.h
-tmutil.o: include/tmutil.h
-topochk.o:  include/mkc_def.h 
-topochk.o:  include/mkc_error.h include/mkc_nodiscard.h
-topochk.o: include/toposort.h include/list.h include/strutil.h
-toposort.o:  include/mkc_def.h
-toposort.o:   include/mkc_error.h
-toposort.o: include/mkc_nodiscard.h include/list.h include/strutil.h
-toposort.o: include/toposort.h
-value.o:   include/const.h
-value.o: include/mkc_def.h  
-value.o: include/list.h include/mkc_error.h include/mkc_nodiscard.h
-value.o: include/strutil.h include/value.h 
-value.o: include/dict.h include/mkc_log.h include/chararr.h
-var.o:   include/const.h
-var.o: include/mkc_def.h  
-var.o: include/mkc_error.h include/mkc_nodiscard.h include/list.h
-var.o: include/var.h include/mkc_log.h  include/chararr.h
-var.o: include/value.h include/dict.h include/strutil.h

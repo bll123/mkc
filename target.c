@@ -98,7 +98,6 @@ target_free (target_t *target)
     return;
   }
 
-fprintf (stderr, "target\n");
   tmppath_free (target->tmppath);
   free (target);
 }

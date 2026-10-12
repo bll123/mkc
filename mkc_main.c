@@ -192,9 +192,10 @@ main (int argc, char *argv [])
 
   mkc_msg_set_level (mkcoptions.verbose);
   log = mkc_log_init (mkcerr);
-  path_build (MKC_PATH_MKCFILES, tbuff, sizeof (tbuff),
-      "internal-log.txt", mkcerr);
+  path_build (MKC_PATH_MKCFILES, tbuff, sizeof (tbuff), "internal-log.txt", mkcerr);
   mkc_log_open (log, tbuff, mkcoptions.loglevel);
+  path_build (MKC_PATH_CWD, tbuff, sizeof (tbuff), NULL, mkcerr);
+  mkc_log (log, MKC_LOG_GENERAL, "-- cwd: %s\n", tbuff);
 
   fnidx = optind;
   if (fnidx >= argcopy.nargc) {

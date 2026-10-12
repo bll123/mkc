@@ -316,6 +316,7 @@ path_init (void)
   char        *p = NULL;
   mkc_dir_t   dir;
   bool        islocal = false;
+  bool        iscwd = false;
 
   if (gmkcpathinit) {
     return;
@@ -346,8 +347,14 @@ path_init (void)
   if (fileop_is_directory (tbuff)) {
     islocal = true;
   }
+  /* this is a special case for development purposes */
+  p = stpecpy (tbuff, tbuff + MKC_PATH_MAX, mkc_dirs [MKC_IDIR_CWD]);
+  p = stpecpy (p, tbuff + MKC_PATH_MAX, "/templates");
+  if (fileop_is_directory (tbuff)) {
+    iscwd = true;
+  }
 
-  if (islocal) {
+  if (islocal || iscwd) {
     /* the local flag overrides any share-directory that is set */
     stpecpy (mkc_dirs [dir], mkc_dirs [dir] + MKC_PATH_MAX, "mkc_files");
   }
@@ -365,6 +372,10 @@ path_init (void)
   if (islocal) {
     /* the local flag overrides any share-directory that is set */
     p = stpecpy (mkc_dirs [dir], mkc_dirs [dir] + MKC_PATH_MAX, mkc_dirs [MKC_IDIR_EXEC]);
+  }
+  if (iscwd) {
+    /* the cwd flag overrides any share-directory that is set */
+    p = stpecpy (mkc_dirs [dir], mkc_dirs [dir] + MKC_PATH_MAX, mkc_dirs [MKC_IDIR_CWD]);
   }
   if (*mkc_dirs [dir] == '\0' && ! islocal) {
     p = stpecpy (mkc_dirs [dir], mkc_dirs [dir] + MKC_PATH_MAX, mkc_dirs [MKC_IDIR_EXEC_PREFIX]);

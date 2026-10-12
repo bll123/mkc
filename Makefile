@@ -2,6 +2,7 @@
 
 MAKEFLAGS += --no-print-directory
 BOOTSTRAPMAKE = bootstrap.mk
+BASICMAKE = basic.mk
 
 INST_BIN_DIR = $(DESTDIR)$(PREFIX)/bin
 INST_TMPL_DIR = $(DESTDIR)$(PREFIX)/share/mkc/templates
@@ -50,8 +51,8 @@ realclean:
 	@$(MAKE) clean
 	@-rm -f mkc_config.h
 	@-rm -f z
-	@# the tmp directory contains the bootstrap targets
-	@-rm -rf tmp
+	@# the mkc-tmp directory contains the bootstrap targets
+	@-rm -rf mkc-tmp
 
 .PHONY: clean
 clean:
@@ -74,19 +75,19 @@ tclean:
 
 .PHONY: depend
 depend:
-	-makedepend -f $(BOOTSTRAPMAKE) \
+	-makedepend -f $(BASICMAKE) \
 	    -Iinclude *.c 2>/dev/null
-	cat $(BOOTSTRAPMAKE) | \
-	    sed -e 's,[/]usr[/]include[/][^ ]*,,g' \
+	sed -e 's,[/]usr[/]include[/][^ ]*,,g' \
 	        -e '/^[a-z][a-z_]*\.o: / s, mkc_config.h,,g' \
 	        -e '/^[a-z][a-z_]*\.o:[ ]*$$/ d' \
-	    > $(BOOTSTRAPMAKE).n
-	mv $(BOOTSTRAPMAKE).n $(BOOTSTRAPMAKE)
+	    $(BASICMAKE)
+	    > $(BASICMAKE).n
+	mv $(BASICMAKE).n $(BASICMAKE)
 
 # sets the INITIALOBJ variable in bootstrap.mk
 .PHONY: bootstrapsetup
 bootstrapsetup:
-	./utils/bootstrapsetup.sh $(BOOTSTRAPMAKE)
+	./utils/bootstrapsetup.sh $(BASICMAKE)
 
 .PHONY: test-install
 test-install:

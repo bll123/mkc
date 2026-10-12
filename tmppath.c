@@ -48,7 +48,6 @@ tmppath_free (tmppath_t *tp)
   for (int i = 0; i < tp->allocsz; ++i) {
     free (tp->path [i]);
   }
-fprintf (stderr, "tmppath: max: %d\n", tp->maxinuse);
   free (tp->path);
   free (tp->avail);
   free (tp);

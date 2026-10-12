@@ -8,6 +8,7 @@
 ^dev
 ^examples/[^/]*/mkc_files/
 ^mkc$
+^mkc-tmp/
 ^mkc_1$
 ^mkc_2$
 ^mkc_config\.h$
@@ -19,7 +20,6 @@
 ^mkc_grammar\.output$
 ^pkg\.log$
 ^tests/tmp/
-^tmp/
 ^topochk$
 ^web/lastwiki\.txt$
 ^w$

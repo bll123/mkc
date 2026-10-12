@@ -364,9 +364,10 @@ process_init (scopedvar_t *sv,
   }
 
   mkc_log (process->log, MKC_LOG_CHECK, "== end internal checks\n");
-  path_build (MKC_PATH_MKCFILES, tbuff, sizeof (tbuff),
-      "log.txt", mkcerr);
+  path_build (MKC_PATH_MKCFILES, tbuff, sizeof (tbuff), "log.txt", mkcerr);
   mkc_log_open (log, tbuff, process->mkcoptions->loglevel);
+  path_build (MKC_PATH_CWD, tbuff, sizeof (tbuff), NULL, mkcerr);
+  mkc_log (log, MKC_LOG_GENERAL, "-- cwd: %s\n", tbuff);
 
   return process;
 }
@@ -408,7 +409,6 @@ process_free (process_t *process)
   }
   list_free (process->user_rx_list);
 
-fprintf (stderr, "process\n");
   tmppath_free (process->tmppath);
   free (process);
 }
@@ -1335,9 +1335,11 @@ process_stmt_configure (process_t *process)
       autooutnm, sizeof (autooutnm), outname, MKC_PATH_MAX);
   defzero = process->attr.define_zero;
 
-  if ((process->cacheloaded && process->cacheinvalidated) ||
+  if (! process->cacheloaded ||
+      process->cacheinvalidated ||
       process->mkc_changed) {
-    mkc_message (MKC_V_TMI, "config: cache-changed\n");
+    mkc_message (MKC_V_TMI, "config: cache-changed l:%d/i:%d/chg:%d\n",
+        process->cacheloaded, process->cacheinvalidated, process->mkc_changed);
     status = TARGET_OUT_OF_DATE;
   }
   if (status == TARGET_CURRENT) {
@@ -1654,7 +1656,7 @@ process_stmt_loadcache_post (process_t *process)
   process->cacheloaded = true;
   sv_set_fromcache (process->sv, false);
 
-  if (process->cacheloaded && process->cacheinvalidated) {
+  if (process->cacheinvalidated) {
     sv_reset (process->sv, process->mkcoptions);
 
     mkc_message (MKC_V_BASIC, "-- cache invalidated\n");

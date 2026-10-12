@@ -98,7 +98,6 @@ check_free (check_t *check)
 #endif
   }
   chararr_free (check->flags);
-fprintf (stderr, "check\n");
   tmppath_free (check->tmppath);
 
   free (check);

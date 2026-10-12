@@ -1351,6 +1351,7 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
       if (mkc_error_chk_err (astmain->mkcerr)) {
         break;
       }
+      process_save_cache (astmain->process);
       process_stmt_build (astmain->process, val);
       break;
     }
