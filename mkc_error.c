@@ -67,7 +67,8 @@ typedef struct mkc_error_t {
   int32_t         flineno;
   int32_t         lineno;
   int32_t         syserr;
-  int             colno;
+  int             col;
+  int             lastcol;
   mkc_err_code_t  err;
 } mkc_error_t;
 
@@ -87,7 +88,8 @@ mkc_error_init (void)
   mkcerr->syserr = 0;
   mkcerr->lineno = 0;
   mkcerr->flineno = 0;
-  mkcerr->colno = 0;
+  mkcerr->col = 0;
+  mkcerr->lastcol = -1;
 
   return mkcerr;
 }
@@ -135,7 +137,8 @@ mkc_error_set_line_col (mkc_error_t *mkcerr, int32_t lineno, int colno)
   }
 
   mkcerr->lineno = lineno;
-  mkcerr->colno = colno;
+  mkcerr->col = colno;
+  mkcerr->lastcol = -1;
 }
 
 bool
@@ -184,8 +187,8 @@ mkc_error_print (mkc_error_t *mkcerr)
     char    tbuff [40];
 
     mkc_error_line_disp (tbuff, sizeof (tbuff), mkcerr->lineno,
-        mkcerr->colno, -1);
-    fprintf (stderr, "%s", tbuff);
+        mkcerr->col, mkcerr->lastcol);
+    fprintf (stderr, "[%s] ", tbuff);
   }
   fprintf (stderr, "error: %s", mkcerrormsg [mkcerr->err]);
   if (mkcerr->err == MKC_ERR_USER_EXIT) {
@@ -208,16 +211,16 @@ mkc_error_print (mkc_error_t *mkcerr)
 
 char *
 mkc_error_line_disp (char *buff, size_t sz, int32_t lineno,
-    int colno, int lastcol)
+    int col, int lastcol)
 {
   if (buff == NULL) {
     return NULL;
   }
 
   if (lastcol >= 0) {
-    snprintf (buff, sz, "%" PRId32 ":%d:%d", lineno, colno, lastcol);
+    snprintf (buff, sz, "%" PRId32 ":%d:%d", lineno, col, lastcol);
   } else {
-    snprintf (buff, sz, "%" PRId32 ":%d", lineno, colno);
+    snprintf (buff, sz, "%" PRId32 ":%d", lineno, col);
   }
 
   return buff;

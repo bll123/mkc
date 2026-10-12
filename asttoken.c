@@ -23,6 +23,7 @@ char const * const typenames [MKC_T_MAX] = {
   [MKC_T_ATTR_NEGATE] = "attr_negate",
   [MKC_T_ATTR_OUTPUT] = "attr_output",
   [MKC_T_ATTR_PATH] = "attr_path",
+  [MKC_T_ATTR_REDIRECT] = "attr_redirect",
   [MKC_T_ATTR_REPLACE] = "attr_replace",
   [MKC_T_ATTR_RUN_COMMAND] = "attr_run_command",
   [MKC_T_ATTR_SOURCE] = "attr_source",
@@ -109,6 +110,7 @@ char const * const typenames [MKC_T_MAX] = {
   [MKC_T_VAL_STATIC_STRING] = "val_static_string",
   [MKC_T_VAL_TIMESTAMP] = "val_timestamp",
   [MKC_T_VAL_TRUE] = "val_true",
+  [MKC_T_VAL_UNASSOC_STRING] = "val_unassoc_string",
   [MKC_T_VALUE] = "value",
   [MKC_T_VARIABLE] = "variable",
 };

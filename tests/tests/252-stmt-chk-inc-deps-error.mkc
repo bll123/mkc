@@ -3,5 +3,5 @@
 add_compile_flag '-Itests/data/252-stmt-chk-inc-deps-err';
 
 check_include_dependencies {
-  match '\.h$';
+  match_pattern '\.h$';
 }

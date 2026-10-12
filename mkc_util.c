@@ -67,7 +67,7 @@ mkc_clean_mkcfiles (const char *project, char *tbuff, size_t tsz,
 }
 
 int
-mkc_create_mkcfiles_tmp (char *tbuff, size_t tsz, mkc_error_t *mkcerr)
+mkc_create_project_dir_tmp (char *tbuff, size_t tsz, mkc_error_t *mkcerr)
 {
   int     rc;
 
@@ -79,7 +79,7 @@ mkc_create_mkcfiles_tmp (char *tbuff, size_t tsz, mkc_error_t *mkcerr)
 }
 
 int
-mkc_create_mkcfiles (char *tbuff, size_t tsz, mkc_error_t *mkcerr)
+mkc_create_project_dir (char *tbuff, size_t tsz, mkc_error_t *mkcerr)
 {
   int     rc;
 

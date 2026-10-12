@@ -104,15 +104,16 @@
 %token <sval> T_VAL_INTEGER   "[0-9]+"
 %token <sval> T_VAL_TIMESTAMP "[0-9]+LL"
 %token T_VAL_TRUE             "true"
-%token T_VAL_BOOTSTRAP        "bootstrap"
+%token T_VAL_BOOTSTRAP        "mkcbootstrap"
 
 /* a T_VARIABLE is a ${...} complex */
 %token <sval> T_ID_PATH_NAME
 %token <sval> T_ID_VAR_NAME
-%token <sval> T_VAL_STATIC_STRING "'...'"
-%token <sval> T_VAL_ENV_VARIABLE  "$ENV{...}"
-%token <sval> T_VAL_QUOTED_STRING "..."
-%token <sval> T_VARIABLE          "${...}"
+%token <sval> T_VAL_STATIC_STRING   "'...'"
+%token <sval> T_VAL_ENV_VARIABLE    "$ENV{...}"
+%token <sval> T_VAL_QUOTED_STRING   "..."
+%token <sval> T_VARIABLE            "${...}"
+%token <sval> T_VAL_UNASSOC_STRING
 
 // keywords
 %token T_STMT_EXIT            "exit"
@@ -179,7 +180,7 @@
 %token T_ATTR_LIB_FLAGS       "library_flags"
 %token T_ATTR_LIBRARY_VERSION "library_version"
 %token T_ATTR_LINK_FLAGS      "link_flags"
-%token T_ATTR_MATCH           "match"
+%token T_ATTR_MATCH           "match_pattern"
 %token T_ATTR_METHOD          "method"
 %token T_ATTR_NAME            "name"
 %token T_ATTR_NEGATE          "negate"
@@ -216,6 +217,7 @@
 %type <astdict> dict
 
 /* valuelist: a list of varvalues */
+/* used to force the value to be a list */
 %type <astnode> valuelist
 /* dictvaluelist: a list of varname/varvalues */
 %type <astnode> dictvaluelist
@@ -223,6 +225,7 @@
 %type <astnode> pathname pathlist
 %type <astnode> expr
 %type <astnode> stmtblock_or_semi stmtblock stmtlist stmt
+%type <astnode> unassocstringlist unassocstring
 
 // program control
 %type <astnode> ifexpr stmt_if elseif elseclause loopcontrol
@@ -729,9 +732,9 @@ stmt_configure[v]:
   ;
 
 stmt_create_file[v]:
-    T_STMT_CREATE_FILE valuelist[a] stmtblock[b]
+    T_STMT_CREATE_FILE pathlist[l] stmtblock[b]
     {
-      $v = ast_mk_stmt_val_stmtblock (ast, $a, $b, MKC_T_STMT_CREATE_FILE,
+      $v = ast_mk_stmt_val_stmtblock (ast, $l, $b, MKC_T_STMT_CREATE_FILE,
           yylloc.first_line, yylloc.first_column);
     }
   ;
@@ -1099,9 +1102,16 @@ attr_replace[v]:
   ;
 
 attr_run_command[v]:
-    T_ATTR_RUN_COMMAND varvalue[a] T_SEMICOLON
+    T_ATTR_RUN_COMMAND unassocstringlist[a] T_SEMICOLON
     {
       $v = ast_mk_attribute (ast, $a, MKC_T_ATTR_RUN_COMMAND,
+          yylloc.first_line, yylloc.first_column);
+    }
+  | T_ATTR_RUN_COMMAND unassocstringlist[a] T_OP_NUM_GT pathname[b] T_SEMICOLON
+    {
+      $v = ast_mk_attribute (ast, $a, MKC_T_ATTR_RUN_COMMAND,
+          yylloc.first_line, yylloc.first_column);
+      $v = ast_mk_attribute (ast, $b, MKC_T_ATTR_REDIRECT,
           yylloc.first_line, yylloc.first_column);
     }
   ;
@@ -1436,9 +1446,39 @@ pathname[v]:
     {
       $v = $a;
     }
+  | unassocstring[a]
+    {
+      $v = $a;
+    }
   | variable[a]
     {
       $v = $a;
+    }
+  ;
+
+unassocstringlist[v]:
+    variablename[a]
+    {
+      $v = ast_mk_value_list (ast, NULL, $a,
+          yylloc.first_line, yylloc.first_column);
+    }
+  | pathname[a]
+    {
+      $v = ast_mk_value_list (ast, NULL, $a,
+          yylloc.first_line, yylloc.first_column);
+    }
+  | unassocstringlist[l] pathname[a]
+    {
+      $v = ast_mk_value_list (ast, $l, $a,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+unassocstring[v]:
+    T_VAL_UNASSOC_STRING[a]
+    {
+      $v = ast_mk_value (ast, MKC_T_VAL_STATIC_STRING, $a,
+          yylloc.first_line, yylloc.first_column);
     }
   ;
 

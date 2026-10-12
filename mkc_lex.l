@@ -128,7 +128,7 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 
 "true"|"TRUE"     { return T_VAL_TRUE; }
 "false"|"FALSE"   { return T_VAL_FALSE; }
-"bootstrap"       { return T_VAL_BOOTSTRAP; }
+"mkcbootstrap"    { return T_VAL_BOOTSTRAP; }
 
 "else"        { return T_STMT_ELSE; }
 "exit"        { return T_STMT_EXIT; }
@@ -189,7 +189,7 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 "library_flags"             { return T_ATTR_LIB_FLAGS; }
 "library_version"           { return T_ATTR_LIBRARY_VERSION; }
 "link_flags"                { return T_ATTR_LINK_FLAGS; }
-"match"                     { return T_ATTR_MATCH; }
+"match_pattern"             { return T_ATTR_MATCH; }
 "method"                    { return T_ATTR_METHOD; }
 "name"                      { return T_ATTR_NAME; }
 "negate"                    { return T_ATTR_NEGATE; }
@@ -239,8 +239,6 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
     return T_VAL_STATIC_STRING;
   }
 
-({WHITESPACE})+   { }
-
 "${"({VAR_INNER_UG})+"}"  {
     yytext [yyleng - 1] = '\0';
     yyleng -= 3;
@@ -255,6 +253,14 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
     yylval->sval = strdup (yytext + 5);
     return T_VAL_ENV_VARIABLE;
   }
+
+[^$;({ \t\r\n][^$;)} \t\r\n]* {
+    /* unassociated strings are used for run-command */
+    yylval->sval = strdup (yytext);
+    return T_VAL_UNASSOC_STRING;
+  }
+
+({WHITESPACE})+   { }
 
 . {
     fprintf (stderr, "[%d:%d:%d]: %s %s\n",

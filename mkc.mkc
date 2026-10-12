@@ -127,7 +127,7 @@ configuration_file {
   define_zero;
 }
 
-if (bootstrap) {
+if (mkcbootstrap) {
   # any configuration after this point is not needed
   # for the initial bootstrap process
   exit 0;
@@ -175,27 +175,28 @@ add_compile_flag ${pcre_COMPFLAGS};
 # include file checks
 
 check_include_compile {
-  match '\.h$';
+  match_pattern '\.h$';
 }
 check_include_dependencies {
-  match '\.h$';
+  match_pattern '\.h$';
 }
 check_include_guards {
-  match '\.h$';
+  match_pattern '\.h$';
 }
 
 # build
 
-create_file 'mkc_lex.c' 'mkc_lex.h' {
+create_file mkc_lex.c mkc_lex.h {
   with_source mkc_lex.l;
-  run_command 'flex --header-file=mkc_lex.h -o mkc_lex.c mkc_lex.l';
+  run_command flex --header-file=mkc_lex.h -o mkc_lex.c mkc_lex.l;
 }
 
-create_file 'mkc_grammar.c' 'mkc_grammar.h' {
+create_file mkc_grammar.c mkc_grammar.h {
   with_source mkc_grammar.y;
-  run_command 'bison -v -o mkc_grammar.c --defines=mkc_grammar.h mkc_grammar.y';
-  run_command 'sed -e "s,yynerrs = 0;,yynerrs YY_ATTRIBUTE_UNUSED = 0;," mkc_grammar.c > mkc_grammar.c.n';
-  run_command 'mv mkc_grammar.c.n mkc_grammar.c';
+  run_command bison -v -o mkc_grammar.c --defines=mkc_grammar.h mkc_grammar.y;
+  run_command sed -e 's,yynerrs = 0;,yynerrs YY_ATTRIBUTE_UNUSED = 0;,'
+      mkc_grammar.c > mkc_grammar.c.n;
+  run_command mv mkc_grammar.c.n mkc_grammar.c;
 }
 
 define_executable mkc {
@@ -205,7 +206,7 @@ define_executable mkc {
       mkc_error.c mkc_grammar.c mkc_lex.c
       mkc_log.c mkc_main.c mkc_regex_pcre.c mkc_util.c
       os_process.c parse.c pathutil.c process.c scopedvar.c
-      strutil.c target.c tmutil.c toposort.c value.c var.c;
+      strutil.c target.c tmppath.c tmutil.c toposort.c value.c var.c;
   if (${MKC_SYS_WINDOWS}) {
     with_source os_win_process.c;
   }

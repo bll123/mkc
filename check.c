@@ -30,6 +30,7 @@
 #include "mkc_regex.h"
 #include "strutil.h"
 #include "scopedvar.h"
+#include "tmppath.h"
 #include "tmutil.h"
 #include "value.h"
 
@@ -45,6 +46,7 @@ typedef struct check_t {
   mkc_regex_t       * rxargcount;
   mkc_regex_t       * rxcomma;
   chararr_t         * flags;
+  tmppath_t         * tmppath;
 } check_t;
 
 static mkc_err_code_t check_env_var_set (check_t *check, const char *nm);
@@ -66,9 +68,11 @@ check_init (scopedvar_t *sv, compile_t *compile,
   check->pkgname = NULL;
   check->rxargcount = NULL;
   check->rxcomma = NULL;
+  check->tmppath = tmppath_init (mkcerr);
 
   check->flags = chararr_init (mkcerr);
   if (check->flags == NULL) {
+    free (check);
     return NULL;
   }
 
@@ -94,6 +98,8 @@ check_free (check_t *check)
 #endif
   }
   chararr_free (check->flags);
+fprintf (stderr, "check\n");
+  tmppath_free (check->tmppath);
 
   free (check);
 }
@@ -164,13 +170,9 @@ check_system_type (check_t *check, mkc_compiler_t compiler)
 
   mkc_log (check->log, MKC_LOG_CHECK, "== chk: system-type\n");
 
-  inc = malloc (MKC_PATH_MAX);
-  if (inc == NULL) {
-    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return MKC_ISYS_UNKNOWN;
-  }
+  inc = tmppath_get (check->tmppath);
+  *inc = '\0';
   path_build (MKC_PATH_MKC_SHR_INCLUDE, inc, MKC_PATH_MAX, NULL, check->mkcerr);
-
 
   chararr_append (check->flags,
       compiler_get_flag (check->attr->compid, MKC_COMP_FLAG_INCLUDE));
@@ -185,7 +187,7 @@ check_system_type (check_t *check, mkc_compiler_t compiler)
   }
   compile_reset (check->compile);
   chararr_reset (check->flags, 0);
-  free (inc);
+  tmppath_release (check->tmppath, inc);
   return systype;
 }
 
@@ -194,14 +196,11 @@ check_system_id (check_t *check, mkc_compiler_t compiler)
 {
   int         rc = MKC_ERR_FAILURE;
   int         sysid = MKC_ERR_FAILURE;
-  char        *inc;
+  char        * inc = NULL;
   char        rbuff [MKC_VNAME_MAX];
 
-  inc = malloc (MKC_PATH_MAX);
-  if (inc == NULL) {
-    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return MKC_ISYS_ID_NOTSET;
-  }
+  inc = tmppath_get (check->tmppath);
+
   mkc_log (check->log, MKC_LOG_CHECK, "== chk: system-id\n");
   path_build (MKC_PATH_MKC_SHR_INCLUDE, inc, MKC_PATH_MAX, NULL, check->mkcerr);
   chararr_append (check->flags,
@@ -217,7 +216,7 @@ check_system_id (check_t *check, mkc_compiler_t compiler)
   }
   compile_reset (check->compile);
   chararr_reset (check->flags, 0);
-  free (inc);
+  tmppath_release (check->tmppath, inc);
   return sysid;
 }
 
@@ -243,14 +242,10 @@ check_library_location (check_t *check, mkc_compiler_t compiler)
 {
   int         rc = MKC_ERR_FAILURE;
   int         libloc = MKC_ERR_FAILURE;
-  char        *inc;
+  char        *inc = NULL;
   char        rbuff [MKC_VNAME_MAX];
 
-  inc = malloc (MKC_PATH_MAX);
-  if (inc == NULL) {
-    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return rc;
-  }
+  inc = tmppath_get (check->tmppath);
   mkc_log (check->log, MKC_LOG_CHECK, "== chk: lib-location\n");
   path_build (MKC_PATH_MKC_SHR_INCLUDE, inc, MKC_PATH_MAX, NULL, check->mkcerr);
   chararr_append (check->flags,
@@ -266,7 +261,7 @@ check_library_location (check_t *check, mkc_compiler_t compiler)
   }
   compile_reset (check->compile);
   chararr_reset (check->flags, 0);
-  free (inc);
+  tmppath_release (check->tmppath, inc);
   return libloc;
 }
 
@@ -275,14 +270,10 @@ check_compiler_id (check_t *check, mkc_compiler_t compiler)
 {
   int         rc = MKC_ERR_FAILURE;
   int         compid = MKC_ERR_FAILURE;
-  char        *inc;
+  char        *inc = NULL;
   char        rbuff [MKC_VNAME_MAX];
 
-  inc = malloc (MKC_PATH_MAX);
-  if (inc == NULL) {
-    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return rc;
-  }
+  inc = tmppath_get (check->tmppath);
   mkc_log (check->log, MKC_LOG_CHECK, "== chk: compiler-id\n");
   path_build (MKC_PATH_MKC_SHR_INCLUDE, inc, MKC_PATH_MAX, NULL, check->mkcerr);
   chararr_append (check->flags,
@@ -298,7 +289,7 @@ check_compiler_id (check_t *check, mkc_compiler_t compiler)
   }
   compile_reset (check->compile);
   chararr_reset (check->flags, 0);
-  free (inc);
+  tmppath_release (check->tmppath, inc);
   return compid;
 }
 
@@ -350,7 +341,7 @@ check_arg_count (check_t *check, mkc_compiler_t compiler,
   size_t          rsz = MKC_LARGE_BUFF_SZ;
 #if _have_regex
   char            pattern [MKC_VNAME_MAX];
-  char            **match;
+  char            ** match;
   int             matchcount = 0;
 #endif
 
@@ -518,18 +509,14 @@ check_package (check_t *check,
   char            * tpath;
   const char      * tmpnm;
   mkc_alternate_t * alt;
-  listidx_t   iteridx;
-  listidx_t   pathidx;
+  listidx_t       iteridx;
+  listidx_t       pathidx;
   char            tmpname [MKC_VNAME_MAX];
   char            * rbuff;
 
-  pkgconfpath = malloc (MKC_PATH_MAX);
-  if (pkgconfpath == NULL) {
-    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return MKC_ERR_FAILURE;
-  }
-
+  pkgconfpath = tmppath_get (check->tmppath);
   *pkgconfpath = '\0';
+
   /* if pkgconf is installed, pkg-config is a symlink. */
   /* use pkg-config by preference (pkgconf does not seem to work in macos macports) */
   value = sv_get_value (check->sv, SV_T_INTERNAL, MKC_C_PATH_PKGCONFIG, NULL);
@@ -542,7 +529,7 @@ check_package (check_t *check,
 
   if (! *pkgconfpath) {
     mkc_error_set (check->mkcerr, MKC_ERR_PKGCONF_NOT_FOUND, 0, NULL);
-    free (pkgconfpath);
+    tmppath_release (check->tmppath, pkgconfpath);
     return rc;
   }
 
@@ -557,20 +544,13 @@ check_package (check_t *check,
   }
   chararr_append (targv, pkgconfpath);
 
-  tpath = malloc (MKC_PATH_MAX);
-  if (tpath == NULL) {
-    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    free (pkgconfpath);
-    return MKC_ERR_FAILURE;
-  }
+  tpath = tmppath_get (check->tmppath);
 
   list_iter_start (check->attr->pathlist, &iteridx);
   while ((pathidx = list_iter_next (check->attr->pathlist, &iteridx)) != MKC_ITER_FINISH) {
     value_t   *path;
 
     if (mkc_error_chk_err (check->mkcerr)) {
-      free (pkgconfpath);
-      free (tpath);
       return MKC_ERR_FAILURE;
     }
 
@@ -583,18 +563,18 @@ check_package (check_t *check,
   }
 
   if (mkc_error_chk_err (check->mkcerr)) {
-    free (pkgconfpath);
-    free (tpath);
     chararr_free (targv);
+    tmppath_release (check->tmppath, pkgconfpath);
+    tmppath_release (check->tmppath, tpath);
     return MKC_ERR_FAILURE;
   }
 
   rbuff = malloc (MKC_SMALL_BUFF_SZ);
   if (rbuff == NULL) {
     mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    free (pkgconfpath);
-    free (tpath);
     chararr_free (targv);
+    tmppath_release (check->tmppath, pkgconfpath);
+    tmppath_release (check->tmppath, tpath);
     return MKC_ERR_FAILURE;
   }
 
@@ -610,10 +590,10 @@ check_package (check_t *check,
   rc = check_package_exec (check, pkgconfpath, "--exists", pkg,
       targv, rbuff, MKC_SMALL_BUFF_SZ, NULL);
   if (rc != MKC_OK) {
-    free (pkgconfpath);
-    free (tpath);
     free (rbuff);
     chararr_free (targv);
+    tmppath_release (check->tmppath, pkgconfpath);
+    tmppath_release (check->tmppath, tpath);
     return rc;
   }
 
@@ -632,9 +612,9 @@ check_package (check_t *check,
       targv, rbuff, MKC_SMALL_BUFF_SZ, tmpname);
 
   chararr_free (targv);
-  free (pkgconfpath);
-  free (tpath);
   free (rbuff);
+  tmppath_release (check->tmppath, pkgconfpath);
+  tmppath_release (check->tmppath, tpath);
   return rc;
 }
 
@@ -643,9 +623,12 @@ check_link_flag (check_t *check,
     mkc_compiler_t compiler, const char *flag)
 {
   int               rc;
-  char              *rbuff;
+  char              * rbuff;
+  size_t            rsz = MKC_SMALL_BUFF_SZ;
 
-  rbuff = malloc (MKC_SMALL_BUFF_SZ);
+
+  rsz = MKC_SMALL_BUFF_SZ;
+  rbuff = malloc (rsz);
   if (rbuff == NULL) {
     mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
     return MKC_ERR_FAILURE;
@@ -656,7 +639,7 @@ check_link_flag (check_t *check,
   compile_append_flag (check->compile, COMP_LINKFLAGS, NULL);
   compile_usetemplate (check->compile);
   rc = compile_exec (check->compile, COMPILE_COMPILE_LINK, compiler,
-      "c-main", rbuff, MKC_PATH_MAX);
+      "c-main", rbuff, rsz);
   compile_reset (check->compile);
   if (rc == 0) {
     /* clang does not return an error code on a unknown warning */
@@ -785,24 +768,19 @@ check_header (check_t *check, mkc_compiler_t compiler,
 static mkc_err_code_t
 check_env_var_set (check_t *check, const char *nm)
 {
-  char            *tbuff;
+  char            * tbuff;
   mkc_err_code_t  rc = MKC_OK;
 
-  tbuff = malloc (MKC_PATH_MAX);
-  if (tbuff == NULL) {
-    mkc_error_set (check->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return MKC_ERR_FAILURE;
-  }
-
+  tbuff = tmppath_get (check->tmppath);
   *tbuff = '\0';
+
   env_get (nm, tbuff, MKC_PATH_MAX);
   if (*tbuff) {
     rc = sv_set_str (check->sv, SV_T_INTERNAL, nm, NULL, tbuff,
         MKC_VCTXT_ENV);
   }
 
-  free (tbuff);
-
+  tmppath_release (check->tmppath, tbuff);
   return rc;
 }
 

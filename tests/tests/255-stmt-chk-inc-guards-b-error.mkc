@@ -3,5 +3,5 @@
 add_compile_flag '-Itests/data/255-stmt-chk-inc-guards-ng-b';
 
 check_include_guards {
-  match '\.h$';
+  match_pattern '\.h$';
 }

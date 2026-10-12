@@ -43,6 +43,7 @@
 #include "pathutil.h"
 #include "scopedvar.h"
 #include "target.h"
+#include "tmppath.h"
 #include "tmutil.h"
 #include "toposort.h"
 #include "value.h"
@@ -87,6 +88,7 @@ typedef struct process_t {
   mkc_regex_t       * rxshellvar;
   mkc_regex_t       * rxincguard;
   list_t            * user_rx_list;
+  tmppath_t         * tmppath;
   mkc_attribute_t   attr;
   /* internal */
   int64_t           mkc_ts;
@@ -158,6 +160,7 @@ static mkc_ctxt_val_t attrcontext [MKC_ATTR_MAX] = {
   [MKC_ATTR_METHOD] = MKC_CONTEXT_CONFIGURE,
   [MKC_ATTR_NAMESPACE] = MKC_CONTEXT_SET,
   [MKC_ATTR_OUTPUT] = MKC_CONTEXT_CONFIGURE,
+  [MKC_ATTR_REDIRECT] = MKC_CONTEXT_CREATE_FILE,
   [MKC_ATTR_VCONTEXT] = MKC_CONTEXT_SET,
   [MKC_ATTR_VOUTPUT] = MKC_CONTEXT_SET,
   [MKC_ATTR_VERSION] = MKC_CONTEXT_PROJECT,
@@ -224,6 +227,7 @@ static void process_list_to_flags (process_t *process, value_t *value, list_t *f
 static void process_check_mkc_timestamp (process_t *process);
 static void process_clean_check (process_t *process);
 static void process_init_build_vars (process_t *process);
+static void process_run_commands (process_t *process, const char *outfname);
 
 static void process_dbg_print_var (process_t *process, const char *pname);
 static void process_dbg_print_prof (process_t *process, sv_iter_flag_t sviterflag);
@@ -238,13 +242,18 @@ process_init (scopedvar_t *sv,
     mkc_log_t *log, context_t *context,
     mkc_option_t *mkcoptions, mkc_error_t *mkcerr)
 {
-  process_t     *process;
-  int               rc;
-  mstime_t          starttm;
-  char              tbuff [MKC_PATH_MAX];
+  process_t   * process;
+  int         rc;
+  mstime_t    starttm;
+  char        tbuff [MKC_PATH_MAX];
+
+  process = malloc (sizeof (process_t));
+  if (process == NULL) {
+    mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return NULL;
+  }
 
   mstimestart (&starttm);
-  process = malloc (sizeof (process_t));
 
   process->sv = sv;
   /* at this point, the default compiler is not known */
@@ -262,6 +271,7 @@ process_init (scopedvar_t *sv,
   process->user_rx_list = list_init (MKC_LIST_SORTED,
       process_user_regex_free, process_user_regex_comp,
       sizeof (mkc_user_regex_t), mkcerr);
+  process->tmppath = tmppath_init (mkcerr);
 
   process->attr.compid = process->compid;
   process->attr.currcompiler = process->dfltcompiler;
@@ -272,6 +282,8 @@ process_init (scopedvar_t *sv,
   process->attr.pathlist = list_init (MKC_LIST_UNSORTED, NULL, NULL,
       sizeof (value_t), mkcerr);
   process->attr.replacelist = list_init (MKC_LIST_UNSORTED, NULL, NULL,
+      sizeof (value_t), mkcerr);
+  process->attr.commandlist = list_init (MKC_LIST_UNSORTED, NULL, NULL,
       sizeof (value_t), mkcerr);
   process->attr.sourcelist = list_init (MKC_LIST_UNSORTED, NULL, NULL,
       sizeof (value_t), mkcerr);
@@ -353,7 +365,7 @@ process_init (scopedvar_t *sv,
 
   mkc_log (process->log, MKC_LOG_CHECK, "== end internal checks\n");
   path_build (MKC_PATH_MKCFILES, tbuff, sizeof (tbuff),
-      "mkc-log.txt", mkcerr);
+      "log.txt", mkcerr);
   mkc_log_open (log, tbuff, process->mkcoptions->loglevel);
 
   return process;
@@ -381,6 +393,7 @@ process_free (process_t *process)
   list_free (process->attr.alternates);
   list_free (process->attr.pathlist);
   list_free (process->attr.replacelist);
+  list_free (process->attr.commandlist);
   list_free (process->attr.sourcelist);
 
   if (process->rxshellvar != NULL) {
@@ -394,6 +407,9 @@ process_free (process_t *process)
 #endif
   }
   list_free (process->user_rx_list);
+
+fprintf (stderr, "process\n");
+  tmppath_free (process->tmppath);
   free (process);
 }
 
@@ -520,22 +536,27 @@ process_str_op (process_t *process, astnode_token_t asttype,
     value_t *vala, value_t *valb)
 {
   int32_t     result = 0;
-  char        stra [MKC_PATH_MAX];
-  char        strb [MKC_PATH_MAX];
   int         iasttype = asttype;
+  char        * stra = NULL;
+  char        * strb = NULL;
 
   if (process == NULL) {
     return 0;
   }
 
+  stra = tmppath_get (process->tmppath);
+  *stra = '\0';
+  strb = tmppath_get (process->tmppath);
+  *strb = '\0';
+
   if (mkc_log_check_flag (process->log, MKC_LOG_PROCESS)) {
     mkc_log (process->log, MKC_LOG_PROCESS, "  p-str-op-a: %s\n",
-        value_to_str (vala, stra, sizeof (stra), 0, false));
+        value_to_str (vala, stra, MKC_PATH_MAX, 0, false));
     mkc_log (process->log, MKC_LOG_PROCESS, "  p-str-op-b: %s\n",
-        value_to_str (valb, strb, sizeof (strb), 0, false));
+        value_to_str (valb, strb, MKC_PATH_MAX, 0, false));
   }
-  sv_value_get_str (process->sv, vala, stra, sizeof (stra));
-  sv_value_get_str (process->sv, valb, strb, sizeof (strb));
+  sv_value_get_str (process->sv, vala, stra, MKC_PATH_MAX);
+  sv_value_get_str (process->sv, valb, strb, MKC_PATH_MAX);
   if (mkc_error_chk_err (process->mkcerr)) {
     return 0;
   }
@@ -591,6 +612,8 @@ process_str_op (process_t *process, astnode_token_t asttype,
     }
   }
 
+  tmppath_release (process->tmppath, stra);
+  tmppath_release (process->tmppath, strb);
   return result;
 }
 
@@ -639,7 +662,7 @@ process_other_op (process_t *process, astnode_token_t asttype,
     value_t *vala)
 {
   int32_t     result = 0;
-  char        *tbuff;
+  char        *tbuff = NULL;
   int         iasttype = asttype;
 
   if (process == NULL) {
@@ -654,11 +677,7 @@ process_other_op (process_t *process, astnode_token_t asttype,
     return 0;
   }
 
-  tbuff = malloc (MKC_PATH_MAX);
-  if (tbuff == NULL) {
-    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return 0;
-  }
+  tbuff = tmppath_get (process->tmppath);
   *tbuff = '\0';
 
   switch (iasttype) {
@@ -694,7 +713,7 @@ process_other_op (process_t *process, astnode_token_t asttype,
     }
   }
 
-  free (tbuff);
+  tmppath_release (process->tmppath, tbuff);
   return result;
 }
 
@@ -703,9 +722,9 @@ process_include (process_t *process,
     value_t *valpath, value_t *valfn,
     char *buff, size_t sz)
 {
-  char      *p = buff;
-  char      *tbuff;
-  char      *fname;
+  char      * p = buff;
+  char      * tbuff = NULL;
+  char      * fname = NULL;
 
   *p = '\0';
 
@@ -717,34 +736,28 @@ process_include (process_t *process,
     return;
   }
 
-  fname = malloc (MKC_PATH_MAX);
-  if (fname == NULL) {
-    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return;
-  }
+  fname = tmppath_get (process->tmppath);
   *fname = '\0';
 
   sv_value_get_str (process->sv, valfn, fname, MKC_PATH_MAX);
   if (mkc_error_chk_err (process->mkcerr)) {
-    free (fname);
+    tmppath_release (process->tmppath, fname);
     return;
   }
   if (fileop_exists (fname)) {
     p = stpecpy (p, buff + sz, fname);
-    free (fname);
+    tmppath_release (process->tmppath, fname);
     return;
   }
 
-  tbuff = malloc (MKC_PATH_MAX);
-  if (tbuff == NULL) {
-    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return;
-  }
+  tbuff = tmppath_get (process->tmppath);
   *tbuff = '\0';
 
   if (valpath != NULL) {
     sv_value_get_str (process->sv, valpath, tbuff, MKC_PATH_MAX);
     if (mkc_error_chk_err (process->mkcerr)) {
+      tmppath_release (process->tmppath, fname);
+      tmppath_release (process->tmppath, tbuff);
       return;
     }
     p = stpecpy (p, buff + sz, tbuff);
@@ -762,8 +775,8 @@ process_include (process_t *process,
     }
   }
 
-  free (tbuff);
-  free (fname);
+  tmppath_release (process->tmppath, fname);
+  tmppath_release (process->tmppath, tbuff);
 }
 
 /* control statements */
@@ -855,9 +868,9 @@ process_stmt_chk_inc_compile (process_t *process)
 {
   int               rc = MKC_ERR_FAILURE;
 #if _have_regex
-  list_t        * hlist = NULL;
-  listidx_t     hiteridx;
-  char              * hdrpath;
+  list_t            * hlist = NULL;
+  listidx_t         hiteridx;
+  char              * hdrpath = NULL;
   const char        * hdr;
   chararr_t         * cflags = NULL;
   chararr_t         * include_paths = NULL;
@@ -875,18 +888,13 @@ process_stmt_chk_inc_compile (process_t *process)
     return rc;
   }
 
-  hdrpath = malloc (MKC_PATH_MAX);
-  if (hdrpath == NULL) {
-    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    process_attr_clear (process);
-    return rc;
-  }
+  hdrpath = tmppath_get (process->tmppath);
   *hdrpath = '\0';
 
   urx = process_user_regex_init (process, process->attr.str [MKC_ATTR_MATCH]);
   if (mkc_error_chk_err (process->mkcerr)) {
     process_attr_clear (process);
-    free (hdrpath);
+    tmppath_release (process->tmppath, hdrpath);
     return rc;
   }
 
@@ -914,7 +922,7 @@ process_stmt_chk_inc_compile (process_t *process)
     }
 
     if (chkinccompts > 0 && target_check_dependency_timestamp (
-        process->target, hdr, hdrpath) == TARGET_CURRENT) {
+        process->target, hdrpath) == TARGET_CURRENT) {
       continue;
     }
 
@@ -943,7 +951,7 @@ process_stmt_chk_inc_compile (process_t *process)
 
   chararr_free (cflags);
   chararr_free (include_paths);
-  free (hdrpath);
+  tmppath_release (process->tmppath, hdrpath);
 #endif
   process_attr_clear (process);
   return rc;
@@ -1007,14 +1015,7 @@ process_stmt_chk_inc_deps (process_t *process)
     return rc;
   }
 
-  hdrpath = malloc (MKC_PATH_MAX);
-  if (hdrpath == NULL) {
-    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    chararr_free (cflags);
-    chararr_free (include_paths);
-    process_attr_clear (process);
-    return rc;
-  }
+  hdrpath = tmppath_get (process->tmppath);
   *hdrpath = '\0';
 
   topo = toposort_init (process->mkcerr);
@@ -1028,12 +1029,12 @@ process_stmt_chk_inc_deps (process_t *process)
       chararr_free (include_paths);
       process_attr_clear (process);
       toposort_free (topo);
-      free (hdrpath);
+      tmppath_release (process->tmppath, hdrpath);
       return rc;
     }
 
     if (target_check_dependency_timestamp (
-        process->target, hdr, hdrpath) == TARGET_OUT_OF_DATE) {
+        process->target, hdrpath) == TARGET_OUT_OF_DATE) {
       target_flag_t   tgtflags = TARGET_IGNORE_SYS_INC;
 
       if (process->compiler_mm) {
@@ -1062,8 +1063,8 @@ process_stmt_chk_inc_deps (process_t *process)
   chararr_free (cflags);
   chararr_free (include_paths);
   toposort_free (topo);
-  free (hdrpath);
   process_attr_clear (process);
+  tmppath_release (process->tmppath, hdrpath);
   return rc;
 }
 
@@ -1144,15 +1145,7 @@ process_stmt_chk_inc_guards (process_t *process)
     return rc;
   }
 
-  hdrpath = malloc (MKC_PATH_MAX);
-  if (hdrpath == NULL) {
-    list_free (guardlist);
-    chararr_free (cflags);
-    chararr_free (include_paths);
-    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    process_attr_clear (process);
-    return rc;
-  }
+  hdrpath = tmppath_get (process->tmppath);
   *hdrpath = '\0';
 
   list_iter_start (hlist, &hiteridx);
@@ -1202,7 +1195,7 @@ process_stmt_chk_inc_guards (process_t *process)
   chararr_free (cflags);
   chararr_free (include_paths);
   list_free (guardlist);
-  free (hdrpath);
+  tmppath_release (process->tmppath, hdrpath);
 #endif
   process_attr_clear (process);
   return rc;
@@ -1212,33 +1205,27 @@ void
 process_stmt_autobuild (process_t *process)
 {
   list_t      * blist;
-  char        * tbuff;
+  char        * tbuff = NULL;
   dict_t      * dict;
   dictitem_t  * ditem;
   listidx_t   iteridx;
   value_t     * value;
   value_t     retvalue;
-  char        * vname;
+  char        * vname = NULL;
 
-  tbuff = malloc (MKC_PATH_MAX);
-  if (tbuff == NULL) {
-    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return;
-  }
+  tbuff = tmppath_get (process->tmppath);
+  *tbuff = '\0';
+  mkc_create_project_dir (tbuff, MKC_PATH_MAX, process->mkcerr);
 
-  mkc_create_mkcfiles (tbuff, MKC_PATH_MAX, process->mkcerr);
-  free (tbuff);
-
-  vname = malloc (MKC_PATH_MAX);
-  if (vname == NULL) {
-    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return;
-  }
+  vname = tmppath_get (process->tmppath);
+  *vname = '\0';
 
   blist = list_init (MKC_LIST_UNSORTED, value_free, NULL, sizeof (value_t), process->mkcerr);
 
   value = sv_get_value (process->sv, SV_T_INTERNAL, MKC_C_VAR_BUILD_DATA, NULL);
   if (value == NULL || value->vtype != MKC_VT_DICT) {
+    tmppath_release (process->tmppath, tbuff);
+    tmppath_release (process->tmppath, vname);
     return;
   }
   sv_value_get_value (process->sv, value, &retvalue);
@@ -1285,8 +1272,9 @@ process_stmt_autobuild (process_t *process)
 
   list_free (blist);
   process_attr_clear (process);
-  free (vname);
   value_free (&retvalue);
+  tmppath_release (process->tmppath, tbuff);
+  tmppath_release (process->tmppath, vname);
   return;
 }
 
@@ -1294,16 +1282,11 @@ void
 process_stmt_build (process_t *process, value_t *vallist)
 {
   list_t      * blist;
-  char        * tbuff;
+  char        * tbuff = NULL;
 
-  tbuff = malloc (MKC_PATH_MAX);
-  if (tbuff == NULL) {
-    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return;
-  }
 
-  mkc_create_mkcfiles (tbuff, MKC_PATH_MAX, process->mkcerr);
-  free (tbuff);
+  tbuff = tmppath_get (process->tmppath);
+  mkc_create_project_dir (tbuff, MKC_PATH_MAX, process->mkcerr);
 
   blist = list_init (MKC_LIST_UNSORTED, value_free, NULL, sizeof (value_t), process->mkcerr);
   process_list_to_flags (process, vallist, blist, false);
@@ -1314,6 +1297,7 @@ process_stmt_build (process_t *process, value_t *vallist)
 
   list_free (blist);
   process_attr_clear (process);
+  tmppath_release (process->tmppath, tbuff);
   return;
 }
 
@@ -1344,11 +1328,7 @@ process_stmt_configure (process_t *process)
     }
   }
 
-  outname = malloc (MKC_PATH_MAX);
-  if (outname == NULL) {
-    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return;
-  }
+  outname = tmppath_get (process->tmppath);
   *outname = '\0';
 
   process_configure_create_name (process,
@@ -1368,7 +1348,7 @@ process_stmt_configure (process_t *process)
 
   if (status == TARGET_CURRENT) {
     mkc_message (MKC_V_CACHED, "-- configuration_file: up to date\n");
-    free (outname);
+    tmppath_release (process->tmppath, outname);
     return;
   }
 
@@ -1380,6 +1360,71 @@ process_stmt_configure (process_t *process)
     mkc_error_set (process->mkcerr, MKC_ERR_PROC_INVALID_METHOD, 0, NULL);
   }
 
+  process_attr_clear (process);
+  tmppath_release (process->tmppath, outname);
+  return;
+}
+
+void
+process_stmt_create_file (process_t *process, value_t *value)
+{
+  char      * outname = NULL;
+  list_t    * flist;
+  listidx_t fiteridx;
+  listidx_t fidx;
+  listidx_t siteridx;
+  listidx_t sidx;
+  char      * filepath;
+  char      * srcpath;
+
+return;
+
+  process_check_mkc_timestamp (process);
+  process_clean_check (process);
+
+  value = sv_value_get_list_value (process->sv, value);
+  flist = value->list;
+
+  srcpath = malloc (MKC_PATH_MAX);
+  if (srcpath == NULL) {
+    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    return;
+  }
+  *srcpath = '\0';
+
+  filepath = malloc (MKC_PATH_MAX);
+  if (filepath == NULL) {
+    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    free (srcpath);
+    return;
+  }
+  *filepath = '\0';
+
+  list_iter_start (flist, &fiteridx);
+  while ((fidx = list_iter_next (flist, &fiteridx)) != MKC_ITER_FINISH) {
+    value_t     *file;
+
+    file = list_get_by_idx (flist, fidx);
+    sv_value_get_str (process->sv, file, filepath, MKC_PATH_MAX);
+
+    list_iter_start (process->attr.sourcelist, &siteridx);
+    while ((sidx = list_iter_next (process->attr.sourcelist, &siteridx)) != MKC_ITER_FINISH) {
+      value_t     *valsrc;
+
+      if (mkc_error_chk_err (process->mkcerr)) {
+        break;
+      }
+
+      valsrc = list_get_by_idx (process->attr.sourcelist, sidx);
+      sv_value_get_str (process->sv, valsrc, srcpath, MKC_PATH_MAX);
+
+//      target_executable_object (process->target, execnm, objnm);
+//      target_object_source (process->target, objnm, srcpath);
+    }
+  }
+
+  free (filepath);
+  free (srcpath);
   free (outname);
   process_attr_clear (process);
   return;
@@ -1427,10 +1472,12 @@ process_stmt_executable (process_t *process, value_t *valnm)
 {
   char            nm [MKC_VNAME_MAX];
   char            execnm [MKC_VNAME_MAX];
-  listidx_t   siteridx;
-  listidx_t   sidx;
-  char            * epath;
-  char            * srcpath;
+  listidx_t       siteridx;
+  listidx_t       sidx;
+  char            * epath = NULL;
+  char            * objpath = NULL;
+  char            * objnm = NULL;
+  char            * srcpath = NULL;
   bool            changed;
   mkc_alternate_t * curralt;
 
@@ -1441,11 +1488,7 @@ process_stmt_executable (process_t *process, value_t *valnm)
   sv_value_get_str (process->sv, valnm, nm, sizeof (nm));
   snprintf (execnm, sizeof (execnm), "%s%s", nm, process->exeext);
 
-  epath = malloc (MKC_PATH_MAX);
-  if (epath == NULL) {
-    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return;
-  }
+  epath = tmppath_get (process->tmppath);
   *epath = '\0';
 
   path_build (MKC_PATH_STAGE_BIN, epath, MKC_PATH_MAX, execnm, process->mkcerr);
@@ -1465,52 +1508,61 @@ process_stmt_executable (process_t *process, value_t *valnm)
       sv_is_defined (process->sv, SV_T_BUILD_DATA,
       epath, MKC_C_BVAR_DEPENDENCY)) {
     /* already in cache */
-    free (epath);
     process_attr_clear (process);
+    tmppath_release (process->tmppath, epath);
     return;
   }
 
-  srcpath = malloc (MKC_PATH_MAX);
-  if (srcpath == NULL) {
-    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return;
-  }
+  srcpath = tmppath_get (process->tmppath);
   *srcpath = '\0';
+
+  target_create_target (process->target, epath, TGT_T_USER_EXEC);
+
+  objpath = tmppath_get (process->tmppath);
+  *objpath = '\0';
+  objnm = tmppath_get (process->tmppath);
+  *objnm = '\0';
+
+  curralt = process->attr.curralt;
 
   list_iter_start (process->attr.sourcelist, &siteridx);
   while ((sidx = list_iter_next (process->attr.sourcelist, &siteridx)) != MKC_ITER_FINISH) {
-    value_t     *src;
-    char        objnm [MKC_VNAME_MAX];
-    char        *p;
+    value_t     * valsrc;
+    char        * p;
 
     if (mkc_error_chk_err (process->mkcerr)) {
       break;
     }
 
-    src = list_get_by_idx (process->attr.sourcelist, sidx);
-    sv_value_get_str (process->sv, src, srcpath, MKC_PATH_MAX);
-    stpecpy (objnm, objnm + sizeof (objnm), srcpath);
+    valsrc = list_get_by_idx (process->attr.sourcelist, sidx);
+    sv_value_get_str (process->sv, valsrc, srcpath, MKC_PATH_MAX);
+    stpecpy (objnm, objnm + MKC_PATH_MAX, srcpath);
     p = (char *) path_extension (objnm);
     if (p != NULL) {
       *p = '\0';
     }
-    stpecpy (p, objnm + sizeof (objnm), process->objext);
+    stpecpy (p, objnm + MKC_PATH_MAX, process->objext);
 
-    target_executable_object (process->target, execnm, objnm);
-    target_object_source (process->target, objnm, srcpath);
+    path_build (MKC_PATH_MKCF_OBJECTS, objpath, MKC_PATH_MAX, objnm, process->mkcerr);
+    sv_set_str (process->sv, SV_T_PATHS, objnm, NULL, objpath, MKC_VCTXT_MKC);
+    target_create_target (process->target, objpath, TGT_T_OBJECT);
+    target_create_dependency (process->target, epath, objpath);
+    target_create_dependency (process->target, objpath, srcpath);
+    sv_set_list (process->sv, SV_T_BUILD_DATA, objpath, MKC_C_BVAR_COMPFLAGS,
+        curralt->compflags, MKC_VCTXT_MKC);
+    target_object_source (process->target, objpath, srcpath);
   }
 
-  curralt = process->attr.curralt;
-  sv_set_list (process->sv, SV_T_BUILD_DATA, epath, MKC_C_BVAR_COMPFLAGS,
-      curralt->compflags, MKC_VCTXT_MKC);
   sv_set_list (process->sv, SV_T_BUILD_DATA, epath, MKC_C_BVAR_LINKFLAGS,
       curralt->linkflags, MKC_VCTXT_MKC);
   sv_set_list (process->sv, SV_T_BUILD_DATA, epath, MKC_C_BVAR_LIBS,
       curralt->libs, MKC_VCTXT_MKC);
 
-  free (srcpath);
-  free (epath);
   process_attr_clear (process);
+  tmppath_release (process->tmppath, epath);
+  tmppath_release (process->tmppath, objnm);
+  tmppath_release (process->tmppath, objpath);
+  tmppath_release (process->tmppath, srcpath);
   return;
 }
 
@@ -1665,8 +1717,8 @@ process_stmt_mark (process_t *process,
 void
 process_stmt_print (process_t *process, value_t *value, int depth)
 {
-  char      tbuff [MKC_PATH_MAX];
   value_t   retvalue;
+  char      * tbuff = NULL;
 
   if (process == NULL) {
     return;
@@ -1676,8 +1728,11 @@ process_stmt_print (process_t *process, value_t *value, int depth)
     return;
   }
 
+  tbuff = tmppath_get (process->tmppath);
+  *tbuff = '\0';
+
   sv_value_get_value (process->sv, value, &retvalue);
-  value_to_str (&retvalue, tbuff, sizeof (tbuff), 0, false);
+  value_to_str (&retvalue, tbuff, MKC_PATH_MAX, 0, false);
   fprintf (stdout, "%s", tbuff);
   value_free (&retvalue);
 
@@ -1685,6 +1740,8 @@ process_stmt_print (process_t *process, value_t *value, int depth)
     fprintf (stdout, "\n");
     fflush (stdout);
   }
+
+  tmppath_release (process->tmppath, tbuff);
 }
 
 void
@@ -1706,7 +1763,7 @@ process_stmt_profile_post (process_t *process)
 void
 process_stmt_project (process_t *process, value_t *valnm)
 {
-  char            projnm [MKC_VNAME_MAX];
+  char    projnm [MKC_VNAME_MAX];
 
   sv_value_get_str (process->sv, valnm, projnm, sizeof (projnm));
 
@@ -1737,7 +1794,7 @@ int
 process_stmt_set (process_t *process,
     value_t *valnm, value_t *value, bool local)
 {
-  char            *nm;
+  char            * nm = NULL;
   value_t         retvalue;
   mkc_err_code_t  trc = MKC_ERR_FAILURE;
   value_ctxt_t    vctxt = MKC_VCTXT_UNKNOWN;
@@ -1757,22 +1814,19 @@ process_stmt_set (process_t *process,
   changed = process->mkc_changed;
 
   /* internal names can be quite long */
-  nm = malloc (MKC_PATH_MAX);
-  if (nm == NULL) {
-    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return trc;
-  }
+  nm = tmppath_get (process->tmppath);
+  *nm = '\0';
 
   sv_value_get_str (process->sv, valnm, nm, MKC_PATH_MAX);
   if (mkc_error_chk_err (process->mkcerr)) {
     process_attr_clear (process);
-    free (nm);
+    tmppath_release (process->tmppath, nm);
     return trc;
   }
   if (*nm == '\0') {
     mkc_error_set (process->mkcerr, MKC_ERR_INVALID_ARGUMENT, 0, NULL);
     process_attr_clear (process);
-    free (nm);
+    tmppath_release (process->tmppath, nm);
     return trc;
   }
 
@@ -1780,9 +1834,9 @@ process_stmt_set (process_t *process,
 // ${unknown} will cause a failure
   sv_value_get_value (process->sv, value, &retvalue);
   if (mkc_error_chk_err (process->mkcerr)) {
-    free (nm);
     value_free (&retvalue);
     process_attr_clear (process);
+    tmppath_release (process->tmppath, nm);
     return trc;
   }
 
@@ -1826,8 +1880,8 @@ process_stmt_set (process_t *process,
   target_set_changed (process->target, changed);
 
   process_attr_clear (process);
-  free (nm);
   value_free (&retvalue);
+  tmppath_release (process->tmppath, nm);
   return trc;
 }
 
@@ -1855,6 +1909,7 @@ process_attribute (process_t *process, value_t *valname,
     case MKC_T_ATTR_METHOD:     { attrtype = MKC_ATTR_METHOD; break; }
     case MKC_T_ATTR_NAMESPACE:  { attrtype = MKC_ATTR_NAMESPACE; break; }
     case MKC_T_ATTR_OUTPUT:     { attrtype = MKC_ATTR_OUTPUT; break; }
+    case MKC_T_ATTR_REDIRECT:   { attrtype = MKC_ATTR_REDIRECT; break; }
     case MKC_T_ATTR_VERSION:    { attrtype = MKC_ATTR_VERSION; break; }
     case MKC_T_ATTR_VOUTPUT:    { attrtype = MKC_ATTR_VOUTPUT; break; }
   }
@@ -1867,6 +1922,7 @@ process_attribute (process_t *process, value_t *valname,
     case MKC_T_ATTR_METHOD:
     case MKC_T_ATTR_NAMESPACE:
     case MKC_T_ATTR_OUTPUT:
+    case MKC_T_ATTR_REDIRECT:
     case MKC_T_ATTR_VERSION:
     case MKC_T_ATTR_VOUTPUT: {
       ctxt = attrcontext [attrtype];
@@ -1910,6 +1966,7 @@ process_attribute (process_t *process, value_t *valname,
     case MKC_T_ATTR_METHOD:
     case MKC_T_ATTR_NAMESPACE:
     case MKC_T_ATTR_OUTPUT:
+    case MKC_T_ATTR_REDIRECT:
     case MKC_T_ATTR_VERSION:
     case MKC_T_ATTR_VOUTPUT: {
       p = &process->attr.str [attrtype];
@@ -2116,6 +2173,22 @@ process_attr_replace (process_t *process,
 
   list_set (process->attr.replacelist, str);
   list_set (process->attr.replacelist, name);
+  return;
+}
+
+void
+process_attr_run_command (process_t *process, value_t *str)
+{
+  if (process == NULL) {
+    return;
+  }
+
+  if (! context_check (process->context, MKC_CONTEXT_CONFIGURE)) {
+    mkc_error_set (process->mkcerr, MKC_ERR_STMT_NOT_ALLOWED, 0, NULL);
+    return;
+  }
+
+  list_set (process->attr.commandlist, str);
   return;
 }
 
@@ -2467,10 +2540,10 @@ process_chk_shell_extract (process_t *process, value_t *valpath)
 #if _have_regex
   char        *buff = NULL;
   size_t      fsz = 0;
-  char        *path;
+  char        * path = NULL;
   char        varname [MKC_VNAME_MAX];
-  char        *varvalue;
-  char        **match = NULL;
+  char        * varvalue;
+  char        ** match = NULL;
   int         matchcount;
   int         rc = MKC_ERR_FAILURE;
 
@@ -2478,16 +2551,13 @@ process_chk_shell_extract (process_t *process, value_t *valpath)
     return rc;
   }
 
-  path = malloc (MKC_PATH_MAX);
-  if (path == NULL) {
-    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return rc;
-  }
+  path = tmppath_get (process->tmppath);
   *path = '\0';
 
   sv_value_get_str (process->sv, valpath, path, MKC_PATH_MAX);
 
   if (! fileop_exists (path)) {
+    tmppath_release (process->tmppath, path);
     return rc;
   }
 
@@ -2503,14 +2573,15 @@ process_chk_shell_extract (process_t *process, value_t *valpath)
     /*  5: letter (inside of quotes) */
     /*  6: ... (no quotes) */
     if (mkc_error_chk_err (process->mkcerr)) {
+      tmppath_release (process->tmppath, path);
       return rc;
     }
   }
 
   varvalue = malloc (MKC_PATH_MAX);
   if (varvalue == NULL) {
-    free (path);
     mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+    tmppath_release (process->tmppath, path);
     return rc;
   }
   *varvalue = '\0';
@@ -2518,6 +2589,7 @@ process_chk_shell_extract (process_t *process, value_t *valpath)
   buff = fileop_read_file (path, &fsz, process->mkcerr);
   if (mkc_error_chk_err (process->mkcerr)) {
     datafree (buff);
+    tmppath_release (process->tmppath, path);
     return rc;
   }
 
@@ -2567,9 +2639,9 @@ process_chk_shell_extract (process_t *process, value_t *valpath)
     free (tvalue);
   }
 
-  free (path);
   free (varvalue);
   datafree (buff);
+  tmppath_release (process->tmppath, path);
 #endif
 
   process_attr_clear (process);
@@ -2618,7 +2690,7 @@ void
 process_save_cache (process_t *process)
 {
   scopedvar_t     * sv;
-  char            * cachename;
+  char            * cachename = NULL;
   const char      * profname;
   FILE            * fh;
   int             tcount = 0;
@@ -2629,18 +2701,14 @@ process_save_cache (process_t *process)
     return;
   }
 
-  cachename = malloc (MKC_PATH_MAX);
-  if (cachename == NULL) {
-    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return;
-  }
+  cachename = tmppath_get (process->tmppath);
   *cachename = '\0';
 
   path_build (MKC_PATH_MKCFILES, cachename, MKC_PATH_MAX,
       "cache.mkc", process->mkcerr);
   fh = fileop_open (cachename, "w");
   if (fh == NULL) {
-    free (cachename);
+    tmppath_release (process->tmppath, cachename);
     return;
   }
 
@@ -2652,6 +2720,7 @@ process_save_cache (process_t *process)
   sviter = sv_iter_start (sv, SV_ITER_PROFILES);
   while ((profname = sv_iter_next (sv, sviter)) != NULL) {
     if (mkc_error_chk_err (process->mkcerr)) {
+      tmppath_release (process->tmppath, cachename);
       return;
     }
 
@@ -2664,8 +2733,8 @@ process_save_cache (process_t *process)
   }
   fprintf (fh, "}\n");
 
-  free (cachename);
   fclose (fh);
+  tmppath_release (process->tmppath, cachename);
 }
 
 bool
@@ -2778,9 +2847,10 @@ process_initial_checks (process_t *process)
 {
   int     rc;
   int     isystype;
-  char    tbuff [MKC_PATH_MAX];
+  char    * tbuff = NULL;
 
   mkc_log (process->log, MKC_LOG_CHECK, "== internal checks\n");
+
 
   /* environment variables : default/comp */
 
@@ -2897,6 +2967,9 @@ process_initial_checks (process_t *process)
     mkc_log (process->log, MKC_LOG_GENERAL, "%s: %d\n", MKC_C_LIBLOCNAME, process->libloc);
     sv_set_integer (process->sv, SV_T_INTERNAL,
         MKC_C_LIBLOCNAME, NULL, process->libloc, MKC_VCTXT_MKC_BASE);
+    if (process->libloc == MKC_ILIB_LOC_LIB64) {
+      path_set_dir (MKC_IDIR_LIB, "lib64");
+    }
   }
 
   /* check if compiler supports the -MM flag */
@@ -2923,11 +2996,14 @@ process_initial_checks (process_t *process)
 
   /* make sure these variables exist */
 
+  tbuff = tmppath_get (process->tmppath);
+  *tbuff = '\0';
   path_build (MKC_PATH_PREFIX, tbuff, sizeof (tbuff), NULL, process->mkcerr);
   sv_set_str (process->sv, SV_T_INTERNAL,
       MKC_C_PREFIX, NULL, tbuff, MKC_VCTXT_MKC);
 
   process_attr_clear (process);
+  tmppath_release (process->tmppath, tbuff);
   return MKC_OK;
 }
 
@@ -3074,11 +3150,7 @@ process_configure_auto (process_t *process,
   fprintf (fh, "#define INC_%s_H\n", autooutnm);
   fprintf (fh, "\n");
 
-  tbuff = malloc (MKC_PATH_MAX);
-  if (tbuff == NULL) {
-    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return;
-  }
+  tbuff = tmppath_get (process->tmppath);
   *tbuff = '\0';
 
   sv = process->sv;
@@ -3137,8 +3209,8 @@ process_configure_auto (process_t *process,
   fprintf (fh, "\n");
   fprintf (fh, "#endif /* INC_%s_H */\n", autooutnm);
 
-  free (tbuff);
   fclose (fh);
+  tmppath_release (process->tmppath, tbuff);
 }
 
 static bool
@@ -3206,7 +3278,7 @@ process_get_path (process_t *process)
 static void
 process_find_executables (process_t *process)
 {
-  char            * testpath;
+  char            * testpath = NULL;
   mkc_prog_chk_t  * chk;
   char            * p;
   list_t          * pathlist;
@@ -3215,11 +3287,7 @@ process_find_executables (process_t *process)
   value_t         *valpath;
 
 
-  testpath = malloc (MKC_PATH_MAX);
-  if (testpath == NULL) {
-    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return;
-  }
+  testpath = tmppath_get (process->tmppath);
   *testpath = '\0';
 
   valpath = sv_get_value (process->sv, SV_T_INTERNAL, MKC_C_PATH, NULL);
@@ -3248,7 +3316,7 @@ process_find_executables (process_t *process)
     chk += 1;
   }
 
-  free (testpath);
+  tmppath_release (process->tmppath, testpath);
 }
 
 static void
@@ -3601,7 +3669,7 @@ process_check_mkc_timestamp (process_t *process)
 static void
 process_clean_check (process_t *process)
 {
-  char          tbuff [MKC_PATH_MAX];
+  char          * tbuff = NULL;
   scopedvar_t   * sv = process->sv;
 
   if (process->cleaned) {
@@ -3612,6 +3680,9 @@ process_clean_check (process_t *process)
     return;
   }
 
+  tbuff = tmppath_get (process->tmppath);
+  *tbuff = '\0';
+
   mkc_message (MKC_V_BASIC, "-- cleaning\n");
   mkc_clean_mkcfiles (process->projectname, tbuff, MKC_PATH_MAX, process->mkcerr);
   process->cleaned = true;
@@ -3619,6 +3690,7 @@ process_clean_check (process_t *process)
   sv_delete (sv, SV_T_INTERNAL, MKC_C_VAR_BUILD_DATA, NULL);
   sv_delete (sv, SV_T_INTERNAL, MKC_C_VAR_BUILD_PATHS, NULL);
   process_init_build_vars (process);
+  tmppath_release (process->tmppath, tbuff);
 }
 
 static void
@@ -3631,6 +3703,13 @@ process_init_build_vars (process_t *process)
   sv_set_dict (process->sv, SV_T_INTERNAL, MKC_C_VAR_BUILD_DATA, dict, MKC_VCTXT_MKC);
   dict_free (dict);
 }
+
+static void
+process_run_commands (process_t *process, const char *outfname)
+{
+  return;
+}
+
 
 /* debug processing */
 
@@ -3773,13 +3852,16 @@ process_dbg_print_prof (process_t *process, sv_iter_flag_t sviterflag)
 static void
 process_dbg_print_path (process_t *process)
 {
-  char    tbuff [MKC_PATH_MAX];
+  char    * tbuff = NULL;
 
   fprintf (stdout, "== paths\n");
+  tbuff = tmppath_get (process->tmppath);
+
   for (int i = 0; i < MKC_PATH_BUILD_MAX; ++i) {
-    path_build (i, tbuff, sizeof (tbuff), NULL, process->mkcerr);
+    path_build (i, tbuff, MKC_PATH_MAX, NULL, process->mkcerr);
     fprintf (stdout, "  %s %s\n", pathdesc [i], tbuff);
   }
+  tmppath_release (process->tmppath, tbuff);
 }
 
 static void

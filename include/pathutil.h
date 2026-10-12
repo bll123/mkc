@@ -23,8 +23,9 @@ typedef enum {
   MKC_PATH_EXEC_PREFIX,
   MKC_PATH_HOME,
   MKC_PATH_MKCFILES,            /* mkc_files */
-  MKC_PATH_MKCF_OBJECTS,        /* mkc_files/objects */
-  MKC_PATH_MKCF_STAGE,          /* mkc_files/stage */
+  MKC_PATH_MKCF_OBJECTS,        /* mkc_files/project/obj/ */
+  MKC_PATH_MKCF_PROJECT,        /* mkc_files/project/ */
+  MKC_PATH_MKCF_STAGE,          /* mkc_files/project/stage/ */
   MKC_PATH_MKCF_TMP,            /* mkc_files/tmp */
   MKC_PATH_MKC_SHR_INCLUDE,     /* .../share/mkc/include */
   MKC_PATH_MKC_SHR_UNITS,       /* .../share/mkc/units */
@@ -34,6 +35,7 @@ typedef enum {
   MKC_PATH_SHARE,               /* .../share */
   MKC_PATH_STAGE_BIN,           /* mkcf-stage/prefix/bin */
   MKC_PATH_STAGE_INCLUDE,       /* mkcf-stage/prefix/include */
+  MKC_PATH_STAGE_SHARE,         /* mkcf-stage/prefix/share */
   MKC_PATH_STAGE_LIB,           /* mkcf-stage/prefix/lib */
   MKC_PATH_BUILD_MAX,
 } mkc_path_t;
@@ -44,6 +46,7 @@ typedef enum {
   MKC_IDIR_EXEC_PREFIX,
   MKC_IDIR_HOME,
   MKC_IDIR_MKC_FILES,
+  MKC_IDIR_LIB,
   MKC_IDIR_ORIG_CWD,
   MKC_IDIR_PREFIX,
   MKC_IDIR_PREFIX_STRIP,

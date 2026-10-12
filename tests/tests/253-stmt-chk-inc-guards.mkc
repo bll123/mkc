@@ -3,5 +3,5 @@
 add_compile_flag '-Itests/data/253-stmt-chk-inc-guards-ok';
 
 check_include_guards {
-  match '\.h$';
+  match_pattern '\.h$';
 }

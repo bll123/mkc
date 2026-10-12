@@ -44,6 +44,7 @@ int process_stmt_chk_inc_guards (process_t *process);
 void process_stmt_autobuild (process_t *process);
 void process_stmt_build (process_t *process, value_t *vallist);
 void process_stmt_configure (process_t *process);
+void process_stmt_create_file (process_t *process, value_t *value);
 int process_stmt_debug (process_t *process, value_t *value, value_t *subvalue);
 void process_stmt_executable (process_t *process, value_t *valnm);
 void process_stmt_function_call (process_t *process, value_t *valparams, value_t *valfuncargs);
@@ -66,6 +67,7 @@ void process_attr_link_flags (process_t *process, value_t *value);
 void process_attr_lib_flags (process_t *process, value_t *value);
 void process_attr_path (process_t *process, value_t *path);
 void process_attr_replace (process_t *process, value_t *str, value_t *name);
+void process_attr_run_command (process_t *process, value_t *str);
 void process_attr_source (process_t *process, value_t *value);
 
 int32_t process_check (process_t *process, value_t *valtype, astnode_token_t asttype);

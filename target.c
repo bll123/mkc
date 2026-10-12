@@ -35,6 +35,7 @@
 #include "scopedvar.h"
 #include "strutil.h"
 #include "target.h"
+#include "tmppath.h"
 #include "tmutil.h"
 #include "toposort.h"
 #include "value.h"
@@ -45,6 +46,7 @@ typedef struct target_t {
   mkc_attribute_t     * attr;
   mkc_log_t           * log;
   mkc_error_t         * mkcerr;
+  tmppath_t           * tmppath;
   bool                create_stage_bin;
   bool                mkc_changed;
 } target_t;
@@ -84,6 +86,7 @@ target_init (scopedvar_t *sv, compile_t *compile,
   target->mkcerr = mkcerr;
   target->create_stage_bin = false;
   target->mkc_changed = false;
+  target->tmppath = tmppath_init (mkcerr);
 
   return target;
 }
@@ -95,6 +98,8 @@ target_free (target_t *target)
     return;
   }
 
+fprintf (stderr, "target\n");
+  tmppath_free (target->tmppath);
   free (target);
 }
 
@@ -103,18 +108,10 @@ chararr_t *
 target_get_flags (target_t *target, const char *flagname,
     chararr_t *include_paths)
 {
-  char            * str;
   scopedvar_t     * sv;
   sv_iter_t       * sviter = NULL;
   const char      * profnm;
   chararr_t       * flags;
-
-  str = malloc (MKC_PATH_MAX);
-  if (str == NULL) {
-    mkc_error_set (target->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return NULL;
-  }
-  *str = '\0';
 
   sv = target->sv;
 
@@ -143,8 +140,6 @@ target_get_flags (target_t *target, const char *flagname,
   }
   sv_iter_finish (sviter);
   chararr_append (flags, NULL);
-
-  free (str);
 
   return flags;
 }
@@ -184,11 +179,11 @@ void
 target_topo_add_deps (target_t *target,
     toposort_t *topo, const char *tgtname)
 {
-  value_t         * valdeplist;
+  value_t     * valdeplist;
   listidx_t   diteridx;
   listidx_t   didx;
-  value_t         tvalue;
-  char            * dep;
+  value_t     tvalue;
+  char        * dep;
 
   mkc_log (target->log, MKC_LOG_CHECK, "add-dep %s\n", tgtname);
   valdeplist = sv_get_value (target->sv, SV_T_BUILD_DATA,
@@ -199,11 +194,8 @@ target_topo_add_deps (target_t *target,
     return;
   }
 
-  dep = malloc (MKC_PATH_MAX);
-  if (dep == NULL) {
-    mkc_error_set (target->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return;
-  }
+  dep = tmppath_get (target->tmppath);
+  *dep = '\0';
 
   value_iter_start (valdeplist, &diteridx);
   while ((didx = value_iter_next (valdeplist, &tvalue, &diteridx)) != MKC_ITER_FINISH) {
@@ -213,15 +205,18 @@ target_topo_add_deps (target_t *target,
 
     sv_value_get_str (target->sv, &tvalue, dep, MKC_PATH_MAX);
     mkc_log (target->log, MKC_LOG_CHECK, "  %s\n", dep);
+    if (strcmp (tgtname, dep) == 0) {
+      continue;
+    }
     toposort_add_pair (topo, tgtname, dep);
   }
 
-  free (dep);
+  tmppath_release (target->tmppath, dep);
 }
 
 int
 target_check_dependency_timestamp (target_t *target,
-    const char *filename, const char *filepath)
+    const char *filepath)
 {
   int64_t       fts;
   int64_t       ts;
@@ -364,10 +359,11 @@ target_get_include_list (target_t *target, chararr_t * include_paths,
   const char    ** patharr;
   const char    * path = NULL;
   int64_t       newts = 0;
+  size_t        tnamesz = MKC_SMALL_BUFF_SZ;
   char          * p;
   int           count;
 
-  tname = malloc (MKC_SMALL_BUFF_SZ);
+  tname = malloc (tnamesz);
   if (tname == NULL) {
     mkc_error_set (target->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
     return NULL;
@@ -381,7 +377,7 @@ target_get_include_list (target_t *target, chararr_t * include_paths,
   /* there is no need to "clean" the */
   /* variable name, and cleaning it makes it much less specific */
   p = tname;
-  tend = tname + MKC_SMALL_BUFF_SZ;
+  tend = tname + tnamesz;
   p = stpecpy (p, tend, "matchts_");
 
   patharr = chararr_get_arr (include_paths);
@@ -412,12 +408,7 @@ target_get_include_list (target_t *target, chararr_t * include_paths,
     sv_delete (sv, SV_T_LOCAL, tname, NULL);
   }
 
-  hdrpath = malloc (MKC_PATH_MAX);
-  if (hdrpath == NULL) {
-    mkc_error_set (target->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    free (tname);
-    return NULL;
-  }
+  hdrpath = tmppath_get (target->tmppath);
   *hdrpath = '\0';
 
   count = 0;
@@ -495,7 +486,7 @@ target_get_include_list (target_t *target, chararr_t * include_paths,
   *ts = newts;
   sv_set_timestamp (sv, SV_T_LOCAL, tname, NULL, newts, MKC_VCTXT_MKC);
 
-  free (hdrpath);
+  tmppath_release (target->tmppath, hdrpath);
   free (tname);
 #endif
   return hlist;
@@ -561,95 +552,55 @@ target_iter_dependency_ts (target_t *target, const char *filepath,
 }
 
 void
-target_executable_object (target_t *target, const char *execnm,
-    const char *objnm)
+target_create_target (target_t *target, const char *path, int tgttype)
 {
-  char        * epath;
-  char        * opath;
+  target_get_timestamp (target, path);
+  sv_set_integer (target->sv, SV_T_BUILD_DATA, path,
+      MKC_C_BVAR_TYPE, tgttype, MKC_VCTXT_MKC);
+}
+
+void
+target_create_dependency (target_t *target, const char *path,
+    const char *deppath)
+{
   scopedvar_t * sv = target->sv;
 
-  epath = malloc (MKC_PATH_MAX);
-  if (epath == NULL) {
-    mkc_error_set (target->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return;
-  }
+  mkc_log (target->log, MKC_LOG_TARGET, "create-dep: %s %s\n", path, deppath);
 
-  opath = malloc (MKC_PATH_MAX);
-  if (opath == NULL) {
-    mkc_error_set (target->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    free (epath);
-    return;
-  }
-
-  mkc_log (target->log, MKC_LOG_TARGET, "exec-file: %s %s\n", execnm, objnm);
-
-  path_build (MKC_PATH_STAGE_BIN, epath, MKC_PATH_MAX, execnm, target->mkcerr);
-  sv_set_str (sv, SV_T_PATHS, execnm, NULL, epath, MKC_VCTXT_MKC);
-  target_get_timestamp (target, epath);
-  sv_set_integer (sv, SV_T_BUILD_DATA, epath, MKC_C_BVAR_TYPE, TGT_T_USER_EXEC, MKC_VCTXT_MKC);
-
-  path_build (MKC_PATH_MKCF_OBJECTS, opath, MKC_PATH_MAX, objnm, target->mkcerr);
-  sv_set_str (sv, SV_T_PATHS, objnm, NULL, opath, MKC_VCTXT_MKC);
-  target_get_timestamp (target, opath);
-  sv_set_integer (sv, SV_T_BUILD_DATA, opath, MKC_C_BVAR_TYPE, TGT_T_OBJECT, MKC_VCTXT_MKC);
-
-  mkc_log (target->log, MKC_LOG_TARGET, "  %s\n", objnm);
   sv_append_str_list (sv, SV_T_BUILD_DATA,
-      epath, MKC_C_BVAR_DEPENDENCY, opath, MKC_VCTXT_MKC);
+      path, MKC_C_BVAR_DEPENDENCY, deppath, MKC_VCTXT_MKC);
 
-  free (epath);
-  free (opath);
   return;
 }
 
 void
-target_object_source (target_t *target, const char *objnm,
+target_object_source (target_t *target, const char *objpath,
     const char *srcname)
 {
   target_flag_t   tgtflags = TARGET_NONE;
-  value_t         * value;
   value_t         tvalue;
   value_t         * valdeplist;
   listidx_t       diteridx;
   listidx_t       didx;
-  char            * path;
-  char            * opath;
 
-  opath = malloc (MKC_PATH_MAX);
-  if (opath == NULL) {
-    mkc_error_set (target->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return;
-  }
-
-  value = sv_get_value (target->sv, SV_T_PATHS, objnm, NULL);
-  sv_value_get_str (target->sv, value, opath, MKC_PATH_MAX);
-
-  mkc_log (target->log, MKC_LOG_TARGET, "object-file: %s %s\n", objnm, srcname);
+  mkc_log (target->log, MKC_LOG_TARGET, "object-file: %s %s\n", objpath, srcname);
 
   if (target_check_dependency_timestamp (
-      target, objnm, opath) == TARGET_OUT_OF_DATE) {
+      target, objpath) == TARGET_OUT_OF_DATE) {
     chararr_t   * compflags;
 
-    mkc_message (MKC_V_INFO, "getting dependencies for %s\n", objnm);
+    mkc_message (MKC_V_INFO, "getting dependencies for %s\n", objpath);
     compflags = target_get_flags (target, MKC_C_COMPFLAGS, NULL);
     target_get_dependencies (target,
-        target->attr->currcompiler, opath, srcname, tgtflags, compflags);
+        target->attr->currcompiler, objpath, srcname, tgtflags, compflags);
     chararr_free (compflags);
   }
 
   valdeplist = sv_get_value (target->sv, SV_T_BUILD_DATA,
-      opath, MKC_C_BVAR_DEPENDENCY);
+      objpath, MKC_C_BVAR_DEPENDENCY);
   if (valdeplist == NULL) {
     mkc_error_set (target->mkcerr, MKC_ERR_FATAL_ERROR, 0, "missing dependency list");
-    mkc_log (target->log, MKC_LOG_ERROR, "ERR: %s dependency list not found\n", opath);
-    free (opath);
-    return;
-  }
-
-  path = malloc (MKC_PATH_MAX);
-  if (path == NULL) {
-    mkc_error_set (target->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    free (opath);
+    mkc_log (target->log, MKC_LOG_ERROR, "ERR: %s dependency list not found\n", objpath);
     return;
   }
 
@@ -673,8 +624,6 @@ target_object_source (target_t *target, const char *objnm,
     target_get_timestamp (target, dep);
   }
 
-  free (path);
-  free (opath);
   return;
 }
 
@@ -732,20 +681,10 @@ target_build (target_t *target, list_t *blist)
     return;
   }
 
-  dep = malloc (MKC_PATH_MAX);
-  if (dep == NULL) {
-    mkc_error_set (target->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    toposort_free (topo);
-    return;
-  }
-
-  source = malloc (MKC_PATH_MAX);
-  if (source == NULL) {
-    mkc_error_set (target->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    free (dep);
-    toposort_free (topo);
-    return;
-  }
+  dep = tmppath_get (target->tmppath);
+  *dep = '\0';
+  source = tmppath_get (target->tmppath);
+  *source = '\0';
 
   compflags = target_get_flags (target, MKC_C_COMPFLAGS, NULL);
   linkflags = target_get_flags (target, MKC_C_LINKFLAGS, NULL);
@@ -759,7 +698,7 @@ target_build (target_t *target, list_t *blist)
     listidx_t     diteridx;
     listidx_t     didx;
     int           tgttype;
-    comp_type_t     comptype = COMPILE_COMPILE;
+    comp_type_t   comptype = COMPILE_COMPILE;
     const char    * buildtag = "";
 
     if (mkc_error_chk_err (target->mkcerr)) {
@@ -807,7 +746,7 @@ target_build (target_t *target, list_t *blist)
 
     if (tgttype != TGT_T_SOURCE) {
       if (target_check_dependency_timestamp (
-          target, builditem, builditem) == TARGET_CURRENT) {
+          target, builditem) == TARGET_CURRENT) {
         continue;
       }
 
@@ -883,8 +822,8 @@ target_build (target_t *target, list_t *blist)
   chararr_free (libs);
 
   toposort_free (topo);
-  free (dep);
-  free (source);
+  tmppath_release (target->tmppath, dep);
+  tmppath_release (target->tmppath, source);
   return;
 }
 
@@ -912,14 +851,10 @@ target_topo_add_items_deps (target_t *target, toposort_t *topo,
 {
   listidx_t   iteridx;
   listidx_t   idx;
-  char            * itemnm;
+  char        * itemnm;
   list_t      * ilist;
 
-  itemnm = malloc (MKC_PATH_MAX);
-  if (itemnm == NULL) {
-    mkc_error_set (target->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return;
-  }
+  itemnm = tmppath_get (target->tmppath);
 
   ilist = list_init (MKC_LIST_UNSORTED, NULL, NULL, sizeof (value_t), target->mkcerr);
 
@@ -982,7 +917,7 @@ target_topo_add_items_deps (target_t *target, toposort_t *topo,
   }
 
   list_free (ilist);
-  free (itemnm);
+  tmppath_release (target->tmppath, itemnm);
 }
 
 static void
@@ -994,16 +929,11 @@ target_create_stage_bin (target_t *target)
     return;
   }
 
-  epath = malloc (MKC_PATH_MAX);
-  if (epath == NULL) {
-    mkc_error_set (target->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return;
-  }
-
+  epath = tmppath_get (target->tmppath);
   path_build (MKC_PATH_STAGE_BIN, epath, MKC_PATH_MAX, NULL, target->mkcerr);
   dirop_make (epath, target->mkcerr);
-  free (epath);
   target->create_stage_bin = true;
+  tmppath_release (target->tmppath, epath);
 }
 
 static void
@@ -1036,19 +966,9 @@ target_append_flags (target_t *target, comp_flag_t ftype, value_t *value,
   incflag = compiler_get_flag (target->attr->compid, MKC_COMP_FLAG_INCLUDE);
   incflaglen = compiler_get_flag_len (target->attr->compid, MKC_COMP_FLAG_INCLUDE);
 
-  lastlibloc = malloc (MKC_PATH_MAX);
-  if (lastlibloc == NULL) {
-    mkc_error_set (target->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return;
-  }
+  lastlibloc = tmppath_get (target->tmppath);
   *lastlibloc = '\0';
-
-  str = malloc (MKC_PATH_MAX);
-  if (str == NULL) {
-    mkc_error_set (target->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    free (lastlibloc);
-    return;
-  }
+  str = tmppath_get (target->tmppath);
   *str = '\0';
 
   list_iter_start (value->list, &fiter);
@@ -1100,8 +1020,8 @@ target_append_flags (target_t *target, comp_flag_t ftype, value_t *value,
     compile_append_flag (target->compile, ftype, NULL);
   }
 
-  free (str);
-  free (lastlibloc);
+  tmppath_release (target->tmppath, lastlibloc);
+  tmppath_release (target->tmppath, str);
 }
 
 static int64_t

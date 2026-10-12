@@ -19,7 +19,8 @@ main (void)
   struct stat   statbuf;
 
   /* is there a better way to determine this? */
-  /* opinion: this should be added to /etc/os-release */
+
+  libloc = MKC_ILIB_LOC_LIB;
 
   rc = stat ("/lib64/libc.so", &statbuf);
   if (rc == 0) {
@@ -33,8 +34,6 @@ main (void)
   if (rc == 0) {
     libloc = MKC_ILIB_LOC_LIB64;
   }
-
-  libloc = MKC_ILIB_LOC_LIB;
 #endif
   fprintf (stdout, "%d\n", libloc);
   return 0;

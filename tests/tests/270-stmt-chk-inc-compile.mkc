@@ -14,5 +14,5 @@ mkcdebug printvar test;
 add_compile_flag '-Itests/data/270-stmt-chk-inc-compile';
 
 check_include_compile {
-  match '\.h$';
+  match_pattern '\.h$';
 }

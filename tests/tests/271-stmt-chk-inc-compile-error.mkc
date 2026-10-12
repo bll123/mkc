@@ -12,5 +12,5 @@ profile default {
 add_compile_flag '-Itests/data/271-stmt-chk-inc-compile-error';
 
 check_include_compile {
-  match '\.h$';
+  match_pattern '\.h$';
 }

@@ -46,7 +46,7 @@ static mkc_err_code_t mkc_cleanup (astmain_t *astmain, argcopy_t *argcopy, mkc_l
 void mkc_main_set_home (void);
 void mkc_main_set_prefix (mkc_error_t *mkcerr);
 void mkc_main_set_exec_path (argcopy_t *argcopy);
-static void mkc_main_print_version (void);
+static void mkc_main_print_version (mkc_option_t *mkcoptions);
 
 int
 main (int argc, char *argv [])
@@ -162,7 +162,7 @@ main (int argc, char *argv [])
         break;
       }
       case 'V': {
-        mkc_main_print_version ();
+        mkc_main_print_version (&mkcoptions);
         exit (0);
         break;
       }
@@ -184,7 +184,7 @@ main (int argc, char *argv [])
     }
   }
 
-  rc = mkc_create_mkcfiles_tmp (tbuff, sizeof (tbuff), mkcerr);
+  rc = mkc_create_project_dir_tmp (tbuff, sizeof (tbuff), mkcerr);
   if (rc != 0) {
     rc = mkc_cleanup (astmain, &argcopy, log, &mkcoptions, mkcerr);
     return rc;
@@ -400,9 +400,18 @@ mkc_main_set_exec_path (argcopy_t *argcopy)
 }
 
 static void
-mkc_main_print_version (void)
+mkc_main_print_version (mkc_option_t *mkcoptions)
 {
 #if defined (VERSION)
-  fprintf (stdout, "mkc version %s\n", VERSION);
+  if (mkcoptions->verbose > 0) {
+# if defined (MKC_BOOTSTRAP_PASS2)
+    fprintf (stdout, "mkc bootstrap 2 ");
+# else
+    fprintf (stdout, "mkc version ");
+#endif
+  }
+  fprintf (stdout, "%s\n", VERSION);
+#else
+  fprintf (stdout, "mkc bootstrap 1\n");
 #endif
 }

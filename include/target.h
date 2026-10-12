@@ -55,9 +55,10 @@ void target_set_changed (target_t *target, bool changed);
 void target_topo_add_items (target_t *target, toposort_t *topo, list_t *hlist);
 void target_topo_add_deps (target_t *target, toposort_t *topo, const char *filename);
 
-int target_check_dependency_timestamp (target_t *target, const char *filename, const char *filepath);
+int target_check_dependency_timestamp (target_t *target, const char *filepath);
 void target_get_dependencies (target_t *target, mkc_compiler_t compiler, const char *tgtname, const char *filepath, target_flag_t flags, chararr_t *cflags);
-void target_executable_object (target_t *target, const char *execnm, const char *objnm);
+void target_create_target (target_t *target, const char *path, int tgttype);
+void target_create_dependency (target_t *target, const char *path, const char *deppath);
 void target_object_source (target_t *target, const char *objnm, const char *srcname);
 int target_config_file (target_t *target, const char *outfile, const char *mkcfile, const char *infile);
 void target_build (target_t *target, list_t *blist);

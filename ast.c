@@ -1339,6 +1339,7 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
     /* statements */
 
     case MKC_T_STMT_AUTOBUILD: {
+      process_save_cache (astmain->process);
       process_stmt_autobuild (astmain->process);
       break;
     }
@@ -1388,6 +1389,15 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
     }
 
     case MKC_T_STMT_CREATE_FILE: {
+      value_t   * value;
+
+      if (astnode->stmt_stmtblock.stmtblock != NULL) {
+        context_push (astmain->context, MKC_CONTEXT_CREATE_FILE, astmain->mkcerr);
+        ast_process (astmain, astnode->stmt_stmtblock.stmtblock, ifcond, stmtcontrol, funcret, depth + 1);
+        context_pop (astmain->context);
+      }
+      value = ast_get_value (astmain, astnode->stmt_val_stmtblock.val);
+      process_stmt_create_file (astmain->process, value);
       break;
     }
 
@@ -1719,6 +1729,7 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
     case MKC_T_ATTR_COMP_FLAGS:
     case MKC_T_ATTR_LINK_FLAGS:
     case MKC_T_ATTR_LIB_FLAGS:
+    case MKC_T_ATTR_RUN_COMMAND:
     case MKC_T_ATTR_SOURCE: {
       value_t   *val;
 
@@ -1744,6 +1755,10 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
           process_attr_lib_flags (astmain->process, val);
           break;
         }
+        case MKC_T_ATTR_RUN_COMMAND: {
+          process_attr_run_command (astmain->process, val);
+          break;
+        }
         case MKC_T_ATTR_SOURCE: {
           process_attr_source (astmain->process, val);
           break;
@@ -1763,7 +1778,6 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
       break;
     }
 
-    case MKC_T_ATTR_VCONTEXT:
     case MKC_T_ATTR_DEFINE_ZERO:
     case MKC_T_ATTR_LIBRARY_VERSION:
     case MKC_T_ATTR_INPUT:
@@ -1773,6 +1787,7 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
     case MKC_T_ATTR_NAMESPACE:
     case MKC_T_ATTR_NEGATE:
     case MKC_T_ATTR_OUTPUT:
+    case MKC_T_ATTR_VCONTEXT:
     case MKC_T_ATTR_VERSION:
     case MKC_T_ATTR_VOUTPUT: {
       value_t   *valnm;
@@ -1841,10 +1856,6 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
         break;
       }
       process_attr_replace (astmain->process, str, val);
-      break;
-    }
-
-    case MKC_T_ATTR_RUN_COMMAND: {
       break;
     }
 

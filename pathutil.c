@@ -29,6 +29,7 @@ static char mkc_dirs [MKC_IDIR_MAX][MKC_PATH_MAX] = {
   [MKC_IDIR_EXEC] = "",
   [MKC_IDIR_EXEC_PREFIX] = "",
   [MKC_IDIR_HOME] = "",
+  [MKC_IDIR_LIB] = "lib",
   [MKC_IDIR_MKC_FILES] = "",
   [MKC_IDIR_ORIG_CWD] = "",
   [MKC_IDIR_PROJECT] = "default",
@@ -46,13 +47,14 @@ const char * const pathdesc [MKC_PATH_BUILD_MAX] = {
   [MKC_PATH_MKCF_OBJECTS] = "mkcf_obj",
   [MKC_PATH_MKCF_STAGE] = "mkcf_stage",
   [MKC_PATH_MKCF_TMP] = "mkcf_tmp",
-  [MKC_PATH_MKC_SHR_INCLUDE] = "mkc_include",
-  [MKC_PATH_MKC_SHR_UNITS] = "mkc_units",
-  [MKC_PATH_ORIG_CWD] = "mkc_orig_cwd",
+  [MKC_PATH_MKC_SHR_INCLUDE] = "mkc-include",
+  [MKC_PATH_MKC_SHR_UNITS] = "mkc-units",
+  [MKC_PATH_ORIG_CWD] = "orig_cwd",
   [MKC_PATH_PREFIX] = "prefix",
   [MKC_PATH_SHARE] = "share",
   [MKC_PATH_STAGE_BIN] = "stage-bin",
   [MKC_PATH_STAGE_INCLUDE] = "stage-include",
+  [MKC_PATH_STAGE_SHARE] = "stage-share",
   [MKC_PATH_STAGE_LIB] = "stage-lib",
 };
 
@@ -62,6 +64,7 @@ static void path_getcwd (char *buff, size_t sz);
 static void path_init (void);
 static char * path_config (char *buff, size_t sz);
 static char * path_build_stage (char *buff, size_t sz);
+static char * path_build_stage_dir (char *buff, size_t sz, const char *dir);
 
 void
 path_build (mkc_path_t pathtype, char *buff, size_t sz,
@@ -102,8 +105,15 @@ path_build (mkc_path_t pathtype, char *buff, size_t sz,
       p = stpecpy (p, buff + sz, "/obj");
       break;
     }
+    case MKC_PATH_MKCF_PROJECT: {
+      /* the project/ directory in mkc_files/ */
+      p = stpecpy (buff, buff + sz, mkc_dirs [MKC_IDIR_MKC_FILES]);
+      p = stpecpy (p, buff + sz, "/");
+      p = stpecpy (p, buff + sz, mkc_dirs [MKC_IDIR_PROJECT]);
+      break;
+    }
     case MKC_PATH_MKCF_STAGE: {
-      /* the project/stage/ directory in mkc_files/ */
+      /* the project/stage directory in mkc_files/ */
       p = path_build_stage (buff, sz);
       break;
     }
@@ -150,21 +160,19 @@ path_build (mkc_path_t pathtype, char *buff, size_t sz,
       break;
     }
     case MKC_PATH_STAGE_BIN: {
-      p = path_build_stage (buff, sz);
-      p = stpecpy (p, buff + sz, mkc_dirs [MKC_IDIR_PREFIX_STRIP]);
-      p = stpecpy (p, buff + sz, "/bin");
+      p = path_build_stage_dir (buff, sz, "bin");
       break;
     }
     case MKC_PATH_STAGE_INCLUDE: {
-      p = path_build_stage (buff, sz);
-      p = stpecpy (p, buff + sz, mkc_dirs [MKC_IDIR_PREFIX_STRIP]);
-      p = stpecpy (p, buff + sz, "/include");
+      p = path_build_stage_dir (buff, sz, "include");
+      break;
+    }
+    case MKC_PATH_STAGE_SHARE: {
+      p = path_build_stage_dir (buff, sz, mkc_dirs [MKC_IDIR_SHARE]);
       break;
     }
     case MKC_PATH_STAGE_LIB: {
-      p = path_build_stage (buff, sz);
-      p = stpecpy (p, buff + sz, mkc_dirs [MKC_IDIR_PREFIX_STRIP]);
-      p = stpecpy (p, buff + sz, "/lib");
+      p = path_build_stage_dir (buff, sz, mkc_dirs [MKC_IDIR_LIB]);
       break;
     }
     case MKC_PATH_BUILD_MAX: {
@@ -191,7 +199,7 @@ path_set_dir (mkc_dir_t dir, const char *path)
     const char    *p = mkc_dirs [dir];
 
     dir = MKC_IDIR_PREFIX_STRIP;
-    if ( strlen (p) > 2 && p[1] == ':') {
+    if (strlen (p) > 2 && p[1] == ':') {
       p += 2;
     }
     stpecpy (mkc_dirs [dir], mkc_dirs [dir] + MKC_PATH_MAX, p);
@@ -392,6 +400,19 @@ path_build_stage (char *buff, size_t sz)
   p = stpecpy (p, buff + sz, "/");
   p = stpecpy (p, buff + sz, mkc_dirs [MKC_IDIR_PROJECT]);
   p = stpecpy (p, buff + sz, "/stage");
+
+  return p;
+}
+
+static char *
+path_build_stage_dir (char *buff, size_t sz, const char *dir)
+{
+  char    *p;
+
+  p = path_build_stage (buff, sz);
+  p = stpecpy (p, buff + sz, mkc_dirs [MKC_IDIR_PREFIX_STRIP]);
+  p = stpecpy (p, buff + sz, "/");
+  p = stpecpy (p, buff + sz, dir);
 
   return p;
 }

@@ -19,6 +19,7 @@ typedef enum {
   MKC_CONTEXT_CHK_INC       = (1 << 4),
   MKC_CONTEXT_COMP_FLAG     = (1 << 5),
   MKC_CONTEXT_CONFIGURE     = (1 << 6),
+  MKC_CONTEXT_CREATE_FILE   = (1 << 7),
   MKC_CONTEXT_EXECUTABLE    = (1 << 8),
   MKC_CONTEXT_FUNCTION_CALL = (1 << 9),
   MKC_CONTEXT_GENERAL       = (1 << 10),
