@@ -68,7 +68,7 @@ check_init (scopedvar_t *sv, compile_t *compile,
   check->pkgname = NULL;
   check->rxargcount = NULL;
   check->rxcomma = NULL;
-  check->tmppath = tmppath_init (mkcerr);
+  check->tmppath = tmppath_init (mkcerr, 3);
 
   check->flags = chararr_init (mkcerr);
   if (check->flags == NULL) {
@@ -98,6 +98,7 @@ check_free (check_t *check)
 #endif
   }
   chararr_free (check->flags);
+fprintf (stderr, "check\n");
   tmppath_free (check->tmppath);
 
   free (check);

@@ -15,21 +15,26 @@
 #include "tmppath.h"
 
 typedef struct tmppath_t {
-  char    ** path;
-  bool    * avail;
-  int     allocsz;
-  int     inuse;
-  int     maxinuse;
+  char          ** path;
+  bool          * avail;
+  mkc_error_t   * mkcerr;
+  int           allocsz;
+  int           inuse;
+  int           maxinuse;
 } tmppath_t;
 
 MKC_NODISCARD
 tmppath_t *
-tmppath_init (mkc_error_t *mkcerr)
+tmppath_init (mkc_error_t *mkcerr, int initialalloc)
 {
   tmppath_t   *tp;
 
+  if (initialalloc <= 0) {
+    initialalloc = 5;
+  }
+
   tp = malloc (sizeof (tmppath_t));
-  tp->allocsz = 5;
+  tp->allocsz = initialalloc;
   tp->path = malloc (sizeof (char *) * tp->allocsz);
   tp->avail = malloc (sizeof (bool) * tp->allocsz);
   for (int i = 0; i < tp->allocsz; ++i) {
@@ -38,6 +43,7 @@ tmppath_init (mkc_error_t *mkcerr)
   }
   tp->inuse = 0;
   tp->maxinuse = 0;
+  tp->mkcerr = mkcerr;
 
   return tp;
 }
@@ -45,6 +51,8 @@ tmppath_init (mkc_error_t *mkcerr)
 void
 tmppath_free (tmppath_t *tp)
 {
+fprintf (stderr, "tmppath: max: %d\n", tp->maxinuse);
+
   for (int i = 0; i < tp->allocsz; ++i) {
     free (tp->path [i]);
   }
@@ -70,7 +78,15 @@ tmppath_get (tmppath_t *tp)
 
     tp->allocsz += 5;
     tp->path = realloc (tp->path, sizeof (char *) * tp->allocsz);
+    if (tp->path == NULL) {
+      mkc_error_set (tp->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+      return NULL;
+    }
     tp->avail = realloc (tp->avail, sizeof (bool) * tp->allocsz);
+    if (tp->avail == NULL) {
+      mkc_error_set (tp->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+      return NULL;
+    }
     for (int i = lastsz; i < tp->allocsz; ++i) {
       tp->path [i] = malloc (MKC_PATH_MAX);
       tp->avail [i] = true;

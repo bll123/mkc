@@ -24,6 +24,11 @@
 #include "pathutil.h"
 #include "strutil.h"
 
+typedef struct path_t {
+  mkc_error_t   * mkcerr;
+  bool          initialized;
+} path_t;
+
 static char mkc_dirs [MKC_IDIR_MAX][MKC_PATH_MAX] = {
   [MKC_IDIR_CWD] = "",
   [MKC_IDIR_EXEC] = "",
@@ -58,10 +63,10 @@ const char * const pathdesc [MKC_PATH_BUILD_MAX] = {
   [MKC_PATH_STAGE_LIB] = "stage-lib",
 };
 
-static bool gmkcpathinit = false;
+static path_t   gmkcpath = { NULL, false };
 
 static void path_getcwd (char *buff, size_t sz);
-static void path_init (void);
+static void path_init (mkc_error_t *mkcerr);
 static char * path_config (char *buff, size_t sz);
 static char * path_build_stage (char *buff, size_t sz);
 static char * path_build_stage_dir (char *buff, size_t sz, const char *dir);
@@ -72,7 +77,7 @@ path_build (mkc_path_t pathtype, char *buff, size_t sz,
 {
   char        *p = NULL;
 
-  path_init ();
+  path_init (mkcerr);
 
   switch (pathtype) {
     case MKC_PATH_CONFIG: {
@@ -223,6 +228,7 @@ path_realpath (char *path, size_t sz)
 
   tbuff = malloc (MKC_PATH_MAX);
   if (tbuff == NULL) {
+    mkc_error_set (gmkcpath.mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
     return;
   }
 
@@ -237,6 +243,7 @@ path_realpath (char *path, size_t sz)
 
   wto = malloc (MKC_PATH_MAX * sizeof (wchar_t));
   if (wto == NULL) {
+    mkc_error_set (gmkcpath.mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
     return;
   }
 
@@ -310,7 +317,7 @@ path_getcwd (char *buff, size_t sz)
 }
 
 static void
-path_init (void)
+path_init (mkc_error_t *mkcerr)
 {
   char        *tbuff;
   char        *p = NULL;
@@ -318,12 +325,13 @@ path_init (void)
   bool        islocal = false;
   bool        iscwd = false;
 
-  if (gmkcpathinit) {
+  if (gmkcpath.initialized) {
     return;
   }
 
   tbuff = malloc (MKC_PATH_MAX);
   if (tbuff == NULL) {
+    mkc_error_set (mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
     return;
   }
 
@@ -384,7 +392,8 @@ path_init (void)
 
   free (tbuff);
 
-  gmkcpathinit = true;
+  gmkcpath.mkcerr = mkcerr;
+  gmkcpath.initialized = true;
 }
 
 static char *

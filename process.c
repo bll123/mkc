@@ -271,7 +271,7 @@ process_init (scopedvar_t *sv,
   process->user_rx_list = list_init (MKC_LIST_SORTED,
       process_user_regex_free, process_user_regex_comp,
       sizeof (mkc_user_regex_t), mkcerr);
-  process->tmppath = tmppath_init (mkcerr);
+  process->tmppath = tmppath_init (mkcerr, 5);
 
   process->attr.compid = process->compid;
   process->attr.currcompiler = process->dfltcompiler;
@@ -409,6 +409,7 @@ process_free (process_t *process)
   }
   list_free (process->user_rx_list);
 
+fprintf (stderr, "process\n");
   tmppath_free (process->tmppath);
   free (process);
 }
@@ -1387,19 +1388,13 @@ return;
   value = sv_value_get_list_value (process->sv, value);
   flist = value->list;
 
-  srcpath = malloc (MKC_PATH_MAX);
-  if (srcpath == NULL) {
-    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return;
-  }
+  outname = tmppath_get (process->tmppath);
+  *outname = '\0';
+
+  srcpath = tmppath_get (process->tmppath);
   *srcpath = '\0';
 
-  filepath = malloc (MKC_PATH_MAX);
-  if (filepath == NULL) {
-    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    free (srcpath);
-    return;
-  }
+  filepath = tmppath_get (process->tmppath);
   *filepath = '\0';
 
   list_iter_start (flist, &fiteridx);
@@ -1425,10 +1420,10 @@ return;
     }
   }
 
-  free (filepath);
-  free (srcpath);
-  free (outname);
   process_attr_clear (process);
+  tmppath_release (process->tmppath, srcpath);
+  tmppath_release (process->tmppath, filepath);
+  tmppath_release (process->tmppath, outname);
   return;
 }
 
@@ -2580,20 +2575,15 @@ process_chk_shell_extract (process_t *process, value_t *valpath)
     }
   }
 
-  varvalue = malloc (MKC_PATH_MAX);
-  if (varvalue == NULL) {
-    mkc_error_set (process->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    tmppath_release (process->tmppath, path);
-    return rc;
-  }
-  *varvalue = '\0';
-
   buff = fileop_read_file (path, &fsz, process->mkcerr);
   if (mkc_error_chk_err (process->mkcerr)) {
     datafree (buff);
     tmppath_release (process->tmppath, path);
     return rc;
   }
+
+  varvalue = tmppath_get (process->tmppath);
+  *varvalue = '\0';
 
   mkc_regex_get_reset (process->rxshellvar);
   while (true) {
@@ -2641,9 +2631,9 @@ process_chk_shell_extract (process_t *process, value_t *valpath)
     free (tvalue);
   }
 
-  free (varvalue);
   datafree (buff);
   tmppath_release (process->tmppath, path);
+  tmppath_release (process->tmppath, varvalue);
 #endif
 
   process_attr_clear (process);
@@ -3603,8 +3593,8 @@ process_save_cache_profile (process_t *process, FILE *fh,
     if (value->vout == MKC_VOUT_ENABLE) {
       vtmpstr = value_out_str (value->vout);
       snprintf (tmp, tmpsz, "voutput %s; ", vtmpstr);
+      p = stpecpy (p, scend, tmp);
     }
-    p = stpecpy (p, scend, tmp);
     if (value->vtype == MKC_VT_LIST ||
         value->vtype == MKC_VT_DICT) {
       p = stpecpy (p, scend, "\n    }\n");

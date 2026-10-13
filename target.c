@@ -86,7 +86,7 @@ target_init (scopedvar_t *sv, compile_t *compile,
   target->mkcerr = mkcerr;
   target->create_stage_bin = false;
   target->mkc_changed = false;
-  target->tmppath = tmppath_init (mkcerr);
+  target->tmppath = tmppath_init (mkcerr, 5);
 
   return target;
 }
@@ -98,6 +98,7 @@ target_free (target_t *target)
     return;
   }
 
+fprintf (stderr, "target\n");
   tmppath_free (target->tmppath);
   free (target);
 }

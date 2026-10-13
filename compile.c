@@ -20,6 +20,7 @@
 #include "os_process.h"
 #include "pathutil.h"
 #include "strutil.h"
+#include "tmppath.h"
 
 typedef struct compile_t {
   scopedvar_t       * sv;
@@ -27,6 +28,7 @@ typedef struct compile_t {
   mkc_option_t      * mkcoptions;
   mkc_error_t       * mkcerr;
   mkc_log_t         * log;
+  tmppath_t         * tmppath;
   chararr_t         * objects;
   chararr_t         * compflags;
   chararr_t         * addcompflags;
@@ -71,6 +73,7 @@ compile_init (scopedvar_t *sv,
   compile->log = log;
   compile->mkcoptions = mkcoptions;
   compile->mkcerr = mkcerr;
+  compile->tmppath = tmppath_init (mkcerr, 4);
 
   compile->objects = chararr_init (mkcerr);
   if (compile->objects == NULL) {
@@ -107,6 +110,8 @@ compile_free (compile_t *compile)
     return;
   }
 
+fprintf (stderr, "compile\n");
+  tmppath_free (compile->tmppath);
   chararr_free (compile->objects);
   chararr_free (compile->targv);
   chararr_free (compile->addcompflags);
@@ -205,11 +210,7 @@ compile_create_header_var (compile_t *compile)
   char            * tbuff;
 
 
-  tbuff = malloc (MKC_PATH_MAX);
-  if (tbuff == NULL) {
-    mkc_error_set (compile->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return;
-  }
+  tbuff = tmppath_get (compile->tmppath);
 
   alt = compile->attr->curralt;
   list_iter_start (alt->hdrlist, &iteridx);
@@ -244,7 +245,7 @@ compile_create_header_var (compile_t *compile)
       MKC_VCTXT_TEMP);
 
   datafree (hdrtxt);
-  free (tbuff);
+  tmppath_release (compile->tmppath, tbuff);
 }
 
 const char *
@@ -266,17 +267,13 @@ compile_file_sub_copy (compile_t *compile,
     const char *fname, const char *origsfx, const char *sfx)
 {
   char    tfn [MKC_VNAME_MAX];
-  char    *fbuff;
-  char    *data;
-  char    *ndata;
-  FILE    *fh;
+  char    * fbuff;
+  char    * data;
+  char    * ndata;
+  FILE    * fh;
   size_t  fsz;
 
-  fbuff = malloc (MKC_PATH_MAX);
-  if (fbuff == NULL) {
-    mkc_error_set (compile->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return;
-  }
+  fbuff = tmppath_get (compile->tmppath);
 
   snprintf (tfn, sizeof (tfn), "%s%s", fname, origsfx);
   path_build (MKC_PATH_MKC_TEMPLATES, fbuff, MKC_PATH_MAX, tfn, compile->mkcerr);
@@ -303,7 +300,7 @@ compile_file_sub_copy (compile_t *compile,
     fclose (fh);
   }
   free (ndata);
-  free (fbuff);
+  tmppath_release (compile->tmppath, fbuff);
 }
 
 int
@@ -452,19 +449,6 @@ compile_compile (compile_t *compile, mkc_compiler_t compiler,
     mkc_error_set (compile->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
     return MKC_ERR_FAILURE;
   }
-  compstr = malloc (MKC_PATH_MAX);
-  if (compstr == NULL) {
-    mkc_error_set (compile->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    free (tbuff);
-    return MKC_ERR_FAILURE;
-  }
-  outfile = malloc (MKC_PATH_MAX);
-  if (outfile == NULL) {
-    mkc_error_set (compile->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    free (tbuff);
-    free (compstr);
-    return MKC_ERR_FAILURE;
-  }
 
   if (rbuff == NULL) {
     rsz = MKC_LARGE_BUFF_SZ;
@@ -472,13 +456,14 @@ compile_compile (compile_t *compile, mkc_compiler_t compiler,
     if (rbuff == NULL) {
       mkc_error_set (compile->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
       free (tbuff);
-      free (compstr);
-      free (outfile);
       return MKC_ERR_FAILURE;
     }
     *rbuff = '\0';
     rallocated = true;
   }
+
+  compstr = tmppath_get (compile->tmppath);
+  outfile = tmppath_get (compile->tmppath);
 
   compile_get_compstr (compile, compiler, compstr, MKC_PATH_MAX);
   chararr_append (compile->targv, compstr);
@@ -516,8 +501,8 @@ compile_compile (compile_t *compile, mkc_compiler_t compiler,
   chararr_append (compile->targv, tbuff);
   if (mkc_error_chk_err (compile->mkcerr)) {
     free (tbuff);
-    free (compstr);
-    free (outfile);
+    tmppath_release (compile->tmppath, compstr);
+    tmppath_release (compile->tmppath, outfile);
     if (rallocated) {
       free (rbuff);
     }
@@ -537,8 +522,8 @@ compile_compile (compile_t *compile, mkc_compiler_t compiler,
   compile_display_output (compile, rbuff, retsz, "compile log", rc);
 
   free (tbuff);
-  free (compstr);
-  free (outfile);
+  tmppath_release (compile->tmppath, compstr);
+  tmppath_release (compile->tmppath, outfile);
   if (rallocated) {
     free (rbuff);
   }
@@ -581,24 +566,9 @@ compile_link (compile_t *compile, mkc_compiler_t compiler,
     }
   }
 
-  compstr = malloc (MKC_PATH_MAX);
-  if (compstr == NULL) {
-    mkc_error_set (compile->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return MKC_ERR_FAILURE;
-  }
-  objfile = malloc (MKC_PATH_MAX);
-  if (objfile == NULL) {
-    mkc_error_set (compile->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    free (compstr);
-    return MKC_ERR_FAILURE;
-  }
-  outfile = malloc (MKC_PATH_MAX);
-  if (outfile == NULL) {
-    mkc_error_set (compile->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    free (objfile);
-    free (compstr);
-    return MKC_ERR_FAILURE;
-  }
+  compstr = tmppath_get (compile->tmppath);
+  objfile = tmppath_get (compile->tmppath);
+  outfile = tmppath_get (compile->tmppath);
 
   compile_get_compstr (compile, compiler, compstr, MKC_PATH_MAX);
   chararr_append (compile->targv, compstr);
@@ -631,6 +601,9 @@ compile_link (compile_t *compile, mkc_compiler_t compiler,
   chararr_append (compile->targv, NULL);
 
   if (mkc_error_chk_err (compile->mkcerr)) {
+    tmppath_release (compile->tmppath, compstr);
+    tmppath_release (compile->tmppath, objfile);
+    tmppath_release (compile->tmppath, outfile);
     if (rallocated) {
       free (rbuff);
     }
@@ -647,9 +620,9 @@ compile_link (compile_t *compile, mkc_compiler_t compiler,
 
   compile_display_output (compile, rbuff, retsz, "link log", rc);
 
-  free (objfile);
-  free (outfile);
-  free (compstr);
+  tmppath_release (compile->tmppath, compstr);
+  tmppath_release (compile->tmppath, objfile);
+  tmppath_release (compile->tmppath, outfile);
   if (rallocated) {
     free (rbuff);
   }
@@ -673,34 +646,31 @@ compile_link_run (compile_t *compile, mkc_compiler_t compiler,
     return rc;
   }
 
-  exefile = malloc (MKC_PATH_MAX);
-  if (exefile == NULL) {
-    mkc_error_set (compile->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
-    return MKC_ERR_FAILURE;
-  }
+  exefile = tmppath_get (compile->tmppath);
 
   chararr_reset (compile->targv, 0);
   path_build (MKC_PATH_MKCF_TMP, exefile, MKC_PATH_MAX, "mkctest.exe", compile->mkcerr);
   chararr_append (compile->targv, exefile);
   if (mkc_error_chk_err (compile->mkcerr)) {
-    free (exefile);
+    tmppath_release (compile->tmppath, exefile);
     return MKC_ERR_FAILURE;
   }
   chararr_append (compile->targv, NULL);
-
-  mkc_log_chararr (compile->log, "run: cmd:", compile->targv);
-  if (compile->attr->display) {
-    mkc_message_chararr (MKC_V_INFO, NULL, compile->targv);
-  }
 
   if (rbuff == NULL) {
     rsz = MKC_LARGE_BUFF_SZ;
     rbuff = malloc (rsz);
     if (rbuff == NULL) {
       mkc_error_set (compile->mkcerr, MKC_ERR_OUT_OF_MEMORY, 0, NULL);
+      tmppath_release (compile->tmppath, exefile);
       return MKC_ERR_FAILURE;
     }
     rallocated = true;
+  }
+
+  mkc_log_chararr (compile->log, "run: cmd:", compile->targv);
+  if (compile->attr->display) {
+    mkc_message_chararr (MKC_V_INFO, NULL, compile->targv);
   }
 
   rc = os_process_pipe (chararr_get_arr (compile->targv),
@@ -709,7 +679,7 @@ compile_link_run (compile_t *compile, mkc_compiler_t compiler,
   rbuff [retsz] = '\0';
   compile_display_output (compile, rbuff, retsz, "run log", rc);
 
-  free (exefile);
+  tmppath_release (compile->tmppath, exefile);
   if (rallocated) {
     free (rbuff);
   }
