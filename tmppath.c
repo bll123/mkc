@@ -51,8 +51,6 @@ tmppath_init (mkc_error_t *mkcerr, int initialalloc)
 void
 tmppath_free (tmppath_t *tp)
 {
-fprintf (stderr, "tmppath: max: %d\n", tp->maxinuse);
-
   for (int i = 0; i < tp->allocsz; ++i) {
     free (tp->path [i]);
   }

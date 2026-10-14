@@ -78,9 +78,9 @@ depend:
 	-makedepend -f $(BASICMAKE) \
 	    -Iinclude *.c 2>/dev/null
 	sed -e 's,[/]usr[/]include[/][^ ]*,,g' \
-	        -e '/^[a-z][a-z_]*\.o: / s, mkc_config.h,,g' \
-	        -e '/^[a-z][a-z_]*\.o:[ ]*$$/ d' \
-	    $(BASICMAKE)
+	    -e '/^[a-z][a-z_]*\.o: / s, mkc_config.h,,g' \
+	    -e '/^[a-z][a-z_]*\.o:[ ]*$$/ d' \
+	    $(BASICMAKE) \
 	    > $(BASICMAKE).n
 	mv $(BASICMAKE).n $(BASICMAKE)
 

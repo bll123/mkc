@@ -16,10 +16,12 @@ if [ $# -ne 1 ]; then
   exit 1
 fi
 
-BOOTSTRAPMAKE=$1
-TMPFILE=tmp/bootstrapsetup-tmp.txt
-TMPVARLIST=tmp/tmpvarlist.txt
-TMPFLIST=tmp/tmpfilelist.txt
+MAKEFILE=$1
+TMPDIR=mkc-tmp
+TMPFILE=${TMPDIR}/bootstrapsetup-tmp.txt
+TMPVARLIST=${TMPDIR}/tmpvarlist.txt
+TMPFLIST=${TMPDIR}/tmpfilelist.txt
+OBJDIR=mkc_files/mkc/obj
 
 LORDER=`which lorder`
 if [ "$LORDER" = "" ]; then
@@ -35,11 +37,10 @@ fi
 updbootstrapmake () {
   name=$1
 
-  cat ${BOOTSTRAPMAKE} | \
-      sed -e "/^${name} = /,/^$/ d" | \
-      sed -e "/^# ${name} keep/ r ${TMPFILE}" \
-      > ${BOOTSTRAPMAKE}.n
-  mv ${BOOTSTRAPMAKE}.n ${BOOTSTRAPMAKE}
+  sed -e "/^${name} = /,/^$/ d" ${MAKEFILE} | \
+  sed -e "/^# ${name} keep/ r ${TMPFILE}" \
+      > ${MAKEFILE}.n
+  mv ${MAKEFILE}.n ${MAKEFILE}
   rm -f ${TMPFILE}
 }
 
@@ -47,7 +48,7 @@ updbootstrapmake () {
 if [ -f mkc ]; then
   nm=MKCOBJECTS
   echo "${nm} = \\" > ${TMPFILE}
-  ${LORDER} *.o |
+  ${LORDER} ${OBJDIR}/*.o |
       grep -v 'topochk' |
       tsort |
       ${TAC} |
@@ -56,6 +57,7 @@ if [ -f mkc ]; then
           -e '/mkc_regex_pcre/ s,mkc_regex_pcre\.o,$(MKC_REGEX_OBJ),' \
           -e 's,^,\t,' \
           -e '$ ! s,$, \\,' \
+          -e "s,${OBJDIR}/,," \
       >> ${TMPFILE}
   echo '' >> ${TMPFILE}
   updbootstrapmake ${nm}

@@ -8,7 +8,7 @@
 #  include <stdint.h>
 
 #  include "mkc_grammar.h"
-#  include "parse.h"
+#  include "parsefn.h"
 
   /* no idea if this is the right way to work around this */
 #  define YYSTYPE MKCYYSTYPE
@@ -87,6 +87,8 @@ SINGLE_QUOTE          [']
 COMMENT               ("//"|"#")[^\r\n]*[\r\n]
 WHITESPACE            [ \t\r\n]|{COMMENT}
 
+%s RUN_COMMAND
+
 %%
 
 "=="            { return T_OP_NUM_EQ; }
@@ -124,7 +126,10 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 ")"             { return T_RIGHT_PAREN; }
 "[["            { return T_DOUBLE_LEFT_BRACKET; }
 "]]"            { return T_DOUBLE_RIGHT_BRACKET; }
-";"             { return T_SEMICOLON; }
+";" {
+    BEGIN(INITIAL);
+    return T_SEMICOLON;
+  }
 
 "true"|"TRUE"     { return T_VAL_TRUE; }
 "false"|"FALSE"   { return T_VAL_FALSE; }
@@ -196,7 +201,10 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 "output"                    { return T_ATTR_OUTPUT; }
 "path"                      { return T_ATTR_PATH; }
 "replace"                   { return T_ATTR_REPLACE; }
-"run_command"               { return T_ATTR_RUN_COMMAND; }
+"run_command" {
+    BEGIN(RUN_COMMAND);
+    return T_ATTR_RUN_COMMAND;
+  }
 "on_success"                { return T_ATTR_SUCCESS; }
 "vcontext"                  { return T_ATTR_VCONTEXT; }
 "version"                   { return T_ATTR_VERSION; }
@@ -254,13 +262,14 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
     return T_VAL_ENV_VARIABLE;
   }
 
-[^$;({ \t\r\n][^$;)} \t\r\n]* {
-    /* unassociated strings are used for run-command */
+({WHITESPACE})+   { }
+
+<RUN_COMMAND>{
+  [^$;({ \t\r\n][^;)} \t\r\n]* {
     yylval->sval = strdup (yytext);
     return T_VAL_UNASSOC_STRING;
   }
-
-({WHITESPACE})+   { }
+}
 
 . {
     fprintf (stderr, "[%d:%d:%d]: %s %s\n",
@@ -272,7 +281,7 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 
 <<EOF>> {
     yypop_buffer_state (yyscanner);
-    parse_pop (parse);
+    parsefn_pop (parsefn);
     if (! YY_CURRENT_BUFFER) {
       yyterminate ();
     }

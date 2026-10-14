@@ -409,7 +409,6 @@ process_free (process_t *process)
   }
   list_free (process->user_rx_list);
 
-fprintf (stderr, "process\n");
   tmppath_free (process->tmppath);
   free (process);
 }
@@ -879,7 +878,9 @@ process_stmt_chk_inc_compile (process_t *process)
   int64_t           chkinccompts = 0;
   int               count = 0;
   mkc_user_regex_t  * urx;
+  mstime_t          starttm;
 
+  mstimestart (&starttm);
   process_check_mkc_timestamp (process);
   process_clean_check (process);
 
@@ -955,6 +956,17 @@ process_stmt_chk_inc_compile (process_t *process)
   tmppath_release (process->tmppath, hdrpath);
 #endif
   process_attr_clear (process);
+
+  {
+    char      tbuff [80];
+    int64_t   etm;
+
+    etm = mstimeend (&starttm);
+    mkc_elapsed_disp (etm, tbuff, sizeof (tbuff));
+    mkc_log (process->log, MKC_LOG_STATISTICS,
+        "-- chk-include-compile: %s\n", tbuff);
+  }
+
   return rc;
 }
 
@@ -972,8 +984,9 @@ process_stmt_chk_inc_deps (process_t *process)
   chararr_t         * cflags;
   chararr_t         * include_paths;
   int64_t           cachedts;
+  mstime_t          starttm;
 
-
+  mstimestart (&starttm);
   process_check_mkc_timestamp (process);
   process_clean_check (process);
 
@@ -1066,6 +1079,17 @@ process_stmt_chk_inc_deps (process_t *process)
   toposort_free (topo);
   process_attr_clear (process);
   tmppath_release (process->tmppath, hdrpath);
+
+  {
+    char      tbuff [80];
+    int64_t   etm;
+
+    etm = mstimeend (&starttm);
+    mkc_elapsed_disp (etm, tbuff, sizeof (tbuff));
+    mkc_log (process->log, MKC_LOG_STATISTICS,
+        "-- chk-include-dependencies: %s\n", tbuff);
+  }
+
   return rc;
 }
 
@@ -1088,8 +1112,9 @@ process_stmt_chk_inc_guards (process_t *process)
   chararr_t         * cflags;
   chararr_t         * include_paths;
   int64_t           cachedts;
+  mstime_t          starttm;
 
-
+  mstimestart (&starttm);
   process_check_mkc_timestamp (process);
   process_clean_check (process);
 
@@ -1199,6 +1224,17 @@ process_stmt_chk_inc_guards (process_t *process)
   tmppath_release (process->tmppath, hdrpath);
 #endif
   process_attr_clear (process);
+
+  {
+    char      tbuff [80];
+    int64_t   etm;
+
+    etm = mstimeend (&starttm);
+    mkc_elapsed_disp (etm, tbuff, sizeof (tbuff));
+    mkc_log (process->log, MKC_LOG_STATISTICS,
+        "-- chk-include-guards: %s\n", tbuff);
+  }
+
   return rc;
 }
 

@@ -26,29 +26,30 @@
 #  include "fileop.h"
 #  include "list.h"
 #  include "parse.h"
+#  include "parsefn.h"
 
   typedef void *mkcyyscan_t;
 
 #  define MKCYYPARSE_PARAM mkcyyscan_t scanner
-#  define MKCYYLEX_PARAM scanner parse
+#  define MKCYYLEX_PARAM scanner parsefn
   /* define YY_BUF_SIZE so that the definition */
   /* from mkc_lex.h is not needed, and a consistent size is ensured */
 #  define YY_BUF_SIZE 32768
 #  define YY_DECL int mkcyylex \
-      (MKCYYSTYPE* yylval_param, MKCYYLTYPE* yylloc_param, mkcyyscan_t yyscanner, parse_t *parse)
+      (MKCYYSTYPE* yylval_param, MKCYYLTYPE* yylloc_param, mkcyyscan_t yyscanner, parsefn_t *parsefn)
 }
 
 %code {
   /* mkc_lex.h could be included, but it introduces a dependency loop */
 
-  void mkcyyerror (MKCYYLTYPE* mkcyyllocp, mkcyyscan_t unused, parse_t *parse, astmain_t *ast, mkc_error_t *mkcerr, const char* msg);
+  void mkcyyerror (MKCYYLTYPE* mkcyyllocp, mkcyyscan_t unused, parse_t *parse, astmain_t *ast, mkc_error_t *mkcerr, parsefn_t *parsefn, const char* msg);
   YY_DECL;
   typedef struct yy_buffer_state *YY_BUFFER_STATE;
   YY_BUFFER_STATE mkcyy_create_buffer ( FILE *file, int size , mkcyyscan_t yyscanner );
   void mkcyypush_buffer_state ( YY_BUFFER_STATE new_buffer , mkcyyscan_t yyscanner );
   void mkcyypop_buffer_state ( mkcyyscan_t yyscanner );
 
-  static void parse_process_include (MKCYYLTYPE* mkcyyllocp, parse_t *parse, astmain_t *ast, astnode_t *path, astnode_t *node);
+  static void parse_process_include (MKCYYLTYPE* mkcyyllocp, parse_t *parse, astmain_t *ast, astnode_t *path, astnode_t *node, parsefn_t *parsefn);
 }
 
 %union {
@@ -58,8 +59,8 @@
   astnode_t * astdict;
 }
 
-%lex-param {void *scanner} {parse_t * parse}
-%parse-param {void *scanner} {parse_t * parse} {astmain_t * ast} {mkc_error_t * mkcerr}
+%lex-param {void *scanner} {parsefn_t * parsefn}
+%parse-param {void *scanner} {parse_t * parse} {astmain_t * ast} {mkc_error_t * mkcerr} {parsefn_t * parsefn}
 
 %start mkc
 
@@ -225,7 +226,7 @@
 %type <astnode> pathname pathlist
 %type <astnode> expr
 %type <astnode> stmtblock_or_semi stmtblock stmtlist stmt
-%type <astnode> unassocstringlist unassocstring
+%type <astnode> unassocstringlist unassocvalue unassocstring
 
 // program control
 %type <astnode> ifexpr stmt_if elseif elseclause loopcontrol
@@ -763,11 +764,11 @@ stmt_function_call[v]:
 stmt_include:
     T_STMT_INCLUDE pathname[a] pathname[b] T_SEMICOLON
     {
-      parse_process_include (&yyloc, parse, ast, $a, $b);
+      parse_process_include (&yyloc, parse, ast, $a, $b, parsefn);
     }
   | T_STMT_INCLUDE pathname[a] T_SEMICOLON
     {
-      parse_process_include (&yyloc, parse, ast, NULL, $a);
+      parse_process_include (&yyloc, parse, ast, NULL, $a, parsefn);
     }
   ;
 
@@ -1446,31 +1447,9 @@ pathname[v]:
     {
       $v = $a;
     }
-  | unassocstring[a]
-    {
-      $v = $a;
-    }
   | variable[a]
     {
       $v = $a;
-    }
-  ;
-
-unassocstringlist[v]:
-    variablename[a]
-    {
-      $v = ast_mk_value_list (ast, NULL, $a,
-          yylloc.first_line, yylloc.first_column);
-    }
-  | pathname[a]
-    {
-      $v = ast_mk_value_list (ast, NULL, $a,
-          yylloc.first_line, yylloc.first_column);
-    }
-  | unassocstringlist[l] pathname[a]
-    {
-      $v = ast_mk_value_list (ast, $l, $a,
-          yylloc.first_line, yylloc.first_column);
     }
   ;
 
@@ -1478,6 +1457,43 @@ unassocstring[v]:
     T_VAL_UNASSOC_STRING[a]
     {
       $v = ast_mk_value (ast, MKC_T_VAL_STATIC_STRING, $a,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+unassocvalue[v]:
+    variablename[a]
+    {
+      $v = ast_mk_value_list (ast, NULL, $a,
+          yylloc.first_line, yylloc.first_column);
+    }
+  | pathname[a]
+    {
+      /* includes variable, string */
+      $v = ast_mk_value_list (ast, NULL, $a,
+          yylloc.first_line, yylloc.first_column);
+    }
+  | integer[a]
+    {
+      $v = ast_mk_value_list (ast, NULL, $a,
+          yylloc.first_line, yylloc.first_column);
+    }
+  | unassocstring[a]
+    {
+      $v = ast_mk_value_list (ast, NULL, $a,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
+unassocstringlist[v]:
+    unassocvalue[a]
+    {
+      $v = ast_mk_value_list (ast, NULL, $a,
+          yylloc.first_line, yylloc.first_column);
+    }
+  | unassocstringlist[l] unassocvalue[a]
+    {
+      $v = ast_mk_value_list (ast, $l, $a,
           yylloc.first_line, yylloc.first_column);
     }
   ;
@@ -1597,11 +1613,11 @@ integer[v]:
 void
 mkcyyerror (MKCYYLTYPE* mkcyyllocp, mkcyyscan_t unused,
     parse_t *parse, astmain_t *ast, mkc_error_t *mkcerr,
-    const char * msg)
+    parsefn_t *parsefn, const char * msg)
 {
   char    tmp [40];
 
-  fprintf (stderr, "%s: ", parse_get_filename (parse));
+  fprintf (stderr, "%s: ", parsefn_get (parsefn));
   mkc_error_line_disp (tmp, sizeof (tmp), mkcyyllocp->first_line, mkcyyllocp->first_column, mkcyyllocp->last_column);
   fprintf (stderr, "[%s] ", tmp);
   fprintf (stderr, "%s\n", msg);
@@ -1609,11 +1625,11 @@ mkcyyerror (MKCYYLTYPE* mkcyyllocp, mkcyyscan_t unused,
 
 int
 parse_process (parse_t *parse, void *scanner,
-    astmain_t *astmain, mkc_error_t *mkcerr)
+    astmain_t *astmain, mkc_error_t *mkcerr, parsefn_t *parsefn)
 {
   int     rc;
 
-  rc = mkcyyparse (scanner, parse, astmain, mkcerr);
+  rc = mkcyyparse (scanner, parse, astmain, mkcerr, parsefn);
   if (rc == 1) {
     mkc_error_set (mkcerr, MKC_ERR_PARSE_FAILURE, 0, NULL);
   }
@@ -1635,7 +1651,7 @@ parse_debug (parse_t *parse, bool debug)
 
 static void
 parse_process_include (MKCYYLTYPE* mkcyyllocp, parse_t *parse,
-    astmain_t *astmain, astnode_t *path, astnode_t *node)
+    astmain_t *astmain, astnode_t *path, astnode_t *node, parsefn_t *parsefn)
 {
   char    fn [MKC_PATH_MAX];
 
@@ -1646,7 +1662,7 @@ parse_process_include (MKCYYLTYPE* mkcyyllocp, parse_t *parse,
   if (*fn) {
     FILE    *fh;
 
-    parse_set_filename (parse, fn);
+    parsefn_set (parsefn, fn);
     fh = fileop_open (fn, "r");
     if (fh != NULL) {
       parse_start (parse, fh);

@@ -15,10 +15,13 @@
 #include "strutil.h"
 
 typedef struct chararr_t {
-  mkc_error_t *mkcerr;
-  char        ** targv;
-  int         sz;
-  int         allocsz;
+  mkc_error_t * mkcerr;
+  union {
+    const char  ** targv;
+    char  ** targvf;
+  };
+  int32_t     sz;
+  int32_t     allocsz;
   bool        freeinternals;
 } chararr_t;
 
@@ -52,14 +55,14 @@ chararr_free (chararr_t *carr)
 
   if (carr->freeinternals && carr->targv != NULL) {
     for (int i = 0; i < carr->sz; ++i) {
-      free (carr->targv [i]);
+      free (carr->targvf [i]);
     }
   }
   datafree (carr->targv);
   free (carr);
 }
 
-int
+int32_t
 chararr_size (chararr_t *carr)
 {
   if (carr == NULL) {
@@ -70,20 +73,15 @@ chararr_size (chararr_t *carr)
 }
 
 void
-chararr_reset (chararr_t *carr, int idx)
+chararr_reset (chararr_t *carr, int32_t idx)
 {
   if (carr == NULL) {
     return;
   }
 
-  if (carr->freeinternals) {
-    /* doesn't make sense to do a reset if the internals need to be freed */
-    return;
-  }
-
   if (carr->freeinternals && carr->targv != NULL) {
     for (int i = idx; i < carr->sz; ++i) {
-      free (carr->targv [i]);
+      free (carr->targvf [i]);
     }
   }
 
@@ -113,7 +111,7 @@ chararr_append (chararr_t *carr, const char *txt)
     }
   }
 
-  carr->targv [carr->sz] = (char *) txt;
+  carr->targv [carr->sz] = txt;
   carr->sz += 1;
 }
 
@@ -137,3 +135,11 @@ chararr_get_arr (chararr_t *carr)
   return (const char **) carr->targv;
 }
 
+void
+chararr_dump (chararr_t *carr, const char *tag)  /* DEBUG */
+{
+  fprintf (stderr, "=== carr: get %s\n", tag);
+  for (int i = 0; i < carr->sz; ++i) {
+    fprintf (stderr, "   %s\n", carr->targv [i]);
+  }
+}

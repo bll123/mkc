@@ -9,15 +9,8 @@
 
 #include "ast.h"
 #include "mkc_error.h"
-#include "fileop.h"
 #include "mkc_lex.h"
-#include "mkc_log.h"
 #include "parse.h"
-#include "strutil.h"
-
-typedef struct parse_file_t {
-  char        * filename;
-} parse_file_t;
 
 typedef struct parse_t {
   /* temporary buffer variable */
@@ -25,16 +18,11 @@ typedef struct parse_t {
   mkcyyscan_t         scanner;
   astmain_t           * astmain;
   mkc_error_t         * mkcerr;
-  mkc_log_t           * log;
-  parse_file_t        * parsefile;
-  int                 pfsize;
-  int                 pfallocsz;
 } parse_t;
 
 MKC_NODISCARD
 parse_t *
-parse_init (astmain_t *astmain, mkc_log_t *log,
-    mkc_error_t *mkcerr)
+parse_init (astmain_t *astmain, mkc_error_t *mkcerr)
 {
   parse_t   *parse;
 
@@ -44,12 +32,8 @@ parse_init (astmain_t *astmain, mkc_log_t *log,
     return NULL;
   }
   parse->astmain = astmain;
-  parse->log = log;
   parse->mkcerr = mkcerr;
   parse->buffer = NULL;
-  parse->pfallocsz = 0;
-  parse->pfsize = 0;
-  parse->parsefile = NULL;
 
   mkcyylex_init (&parse->scanner);
 
@@ -63,10 +47,6 @@ parse_free (parse_t *parse)
     return;
   }
 
-  for (int i = 0; i < parse->pfsize; ++i) {
-    datafree (parse->parsefile [i].filename);
-  }
-  datafree (parse->parsefile);
   mkcyylex_destroy (parse->scanner);
   free (parse);
 }
@@ -98,64 +78,3 @@ parse_get_scanner (parse_t *parse)
   return parse->scanner;
 }
 
-void
-parse_set_filename (parse_t *parse, const char *fname)
-{
-  const char    * p;
-  parse_file_t  * pf;
-  int           idx;
-
-  if (parse == NULL) {
-    return;
-  }
-
-  idx = parse->pfsize;
-  parse->pfsize += 1;
-  if (parse->pfsize >= parse->pfallocsz) {
-    parse->pfallocsz += 5;
-    parse->parsefile = realloc (parse->parsefile,
-        sizeof (parse_file_t) * parse->pfallocsz);
-    for (int i = idx; i < parse->pfallocsz; ++i) {
-      parse->parsefile [i].filename = NULL;
-    }
-  }
-
-  pf = &parse->parsefile [idx];
-
-  p = strrchr (fname, '/');
-  if (p != NULL) {
-    p += 1;
-    pf->filename = strdup (p);
-  } else {
-    pf->filename = strdup (fname);
-  }
-  mkc_log_set_disp_filename (parse->log, pf->filename);
-}
-
-const char *
-parse_get_filename (parse_t *parse)
-{
-  parse_file_t  * pf;
-
-  if (parse == NULL) {
-    return NULL;
-  }
-
-  pf = &parse->parsefile [parse->pfsize - 1];
-  return pf->filename;
-}
-
-void
-parse_pop (parse_t *parse)
-{
-  parse_file_t    * pf;
-
-  pf = &parse->parsefile [parse->pfsize - 1];
-  datafree (pf->filename);
-  parse->pfsize -= 1;
-  if (parse->pfsize > 0) {
-    pf = &parse->parsefile [parse->pfsize - 1];
-    mkc_log_set_disp_filename (parse->log, pf->filename);
-  }
-  return;
-}

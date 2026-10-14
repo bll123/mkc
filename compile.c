@@ -110,7 +110,6 @@ compile_free (compile_t *compile)
     return;
   }
 
-fprintf (stderr, "compile\n");
   tmppath_free (compile->tmppath);
   chararr_free (compile->objects);
   chararr_free (compile->targv);
@@ -714,9 +713,10 @@ static bool
 compile_append_chararr (compile_t *compile, chararr_t *flags)
 {
   bool        cpreprocess = false;
-  const char  * p;
-  const char  ** flagarr;
-  int         count = 0;
+  const char  * p = NULL;
+  const char  ** flagarr = NULL;
+  int32_t     count = 0;
+  int32_t     sz;
   const char  * preprocess;
 
   if (flags == NULL) {
@@ -727,10 +727,17 @@ compile_append_chararr (compile_t *compile, chararr_t *flags)
   if (flagarr == NULL) {
     return false;
   }
+  sz = chararr_size (flags);
+  if (sz == 0) {
+    return false;
+  }
 
   preprocess = compiler_get_flag (compile->attr->compid, MKC_COMP_FLAG_PREPROCESS);
 
   while ((p = flagarr [count++]) != NULL) {
+    if (p == NULL) {
+      break;
+    }
     if (strcmp (p, preprocess) == 0) {
       cpreprocess = true;
     }

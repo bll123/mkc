@@ -96,7 +96,6 @@ EXEEXT =
 
 .PHONY: start
 start:
-	@echo "== start"
 	@$(MAKE) -f $(SRC_REL)$(MAKEFILE) \
 	    CFLAGS="$(CONF_CFLAGS)" \
 	    LDFLAGS="$(CONF_LDFLAGS)" \
@@ -106,7 +105,6 @@ start:
 
 .PHONY: sanitize
 sanitize:
-	@echo "== sanitize"
 	@$(MAKE) -f $(SRC_REL)$(MAKEFILE) \
 	    CFLAGS="$(SAN_CFLAGS)" \
 	    LDFLAGS="$(SAN_LDFLAGS)" \
@@ -116,7 +114,6 @@ sanitize:
 
 .PHONY: debug
 debug:
-	@echo "== debug"
 	@$(MAKE) -f $(SRC_REL)$(MAKEFILE) \
 	    CFLAGS="$(DBG_CFLAGS)" \
 	    LDFLAGS="$(DBG_LDFLAGS)" \
@@ -126,7 +123,6 @@ debug:
 
 .PHONY: real-start
 real-start:
-	@echo "== real-start"
 	@$(MAKE) -f $(SRC_REL)$(MAKEFILE) \
 	    CFLAGS="$(CFLAGS)" \
 	    LDFLAGS="$(LDFLAGS)" \
@@ -142,7 +138,6 @@ SOURCE_FILES = mkc_grammar.h mkc_grammar.c mkc_lex.h mkc_lex.c
 
 # .PHONY: bootstrap-init
 bootstrap-init: $(BOOTSTRAP_TMPDIR) $(BOOTSTRAP_MKC_DIRS)
-	@echo "== bootstrap-init"
 	@:
 
 # pass1
@@ -152,7 +147,6 @@ bootstrap-init: $(BOOTSTRAP_TMPDIR) $(BOOTSTRAP_MKC_DIRS)
 # _have_regex and _package_pcre are also defined
 # .PHONY: bootstrap-pass1
 bootstrap-pass1: $(SOURCE_FILES) bootstrap-init
-	@echo "== pass1"
 	@echo "$(MAKEFILE): bootstrap mkc (pass1: initial)"
 	$(MAKE) -C $(DIR_PASS1) -f $(DIR_UP2)$(BASICMAKEFILE) \
 	    CFLAGS="$(CFLAGS) $(INIT_INCLUDE) $(INIT_DEF)" \
@@ -167,10 +161,7 @@ bootstrap-pass1: $(SOURCE_FILES) bootstrap-init
 # MKC_BOOTSTRAP was defined in the 'pass1' version, and the mkc.mkc
 # configuration will exit after 'mkc_config.h' is generated.
 bootstrap-pass2: bootstrap-pass1
-	@echo "== pass2"
 	@echo "$(MAKEFILE): bootstrap mkc (pass2: create mkc_config.h)"
-	@echo " pass2 cwd `pwd`"
-	@echo " pass2 config.h: `ls -l mkc_config.h mkc.mkc`"
 	@$(MAKE) -f $(MAKEFILE) \
 	    MKC_EXEC=$(MKC_PASS1) \
 	    bootstrap-config
@@ -187,19 +178,16 @@ bootstrap-config: mkc_config.h
 	@:
 
 $(MKC_TARGET): bootstrap-pass2
-	@echo "== bootstrap-pass2"
 	@$(MAKE) -f $(MAKEFILE) \
 	    MKC_EXEC=$(MKC_PASS2) \
 	    bootstrap-process
 
 .PHONY: bootstrap-process
 bootstrap-process:
-	@echo "== bootstrap-process"
 	@./$(MKC_EXEC) --prefix '' \
 	    --profile $(MKC_PROFILE) $(MKC_DEBUG) $(MKC_MKC)
 
 $(MKC_LOCAL): $(MKC_TARGET)
-	@echo "== local: $(MKC_LOCAL)"
 	@if [ $(WIN) = T ]; then \
 	  cp -pf $(MKC_TARGET) $(MKC_LOCAL) ; \
 	else \
@@ -211,9 +199,6 @@ $(MKC_LOCAL): $(MKC_TARGET)
 # if the bootstrap flag is not set,
 # a complete build is performed using mkc.mkc.
 mkc_config.h: mkc.mkc
-	@echo "== config.h: $(MKC_CONFIG_H)"
-	@echo "== config.h: cwd `pwd`"
-	@echo "== config.h: `ls -l mkc_config.h mkc.mkc`"
 	$(MKC_EXEC) --no-cache --clean --prefix '' \
 	    --profile $(MKC_PROFILE) $(MKC_DEBUG) $(MKC_MKC)
 

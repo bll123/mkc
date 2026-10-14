@@ -205,7 +205,7 @@ define_executable mkc {
       fileop.c list.c mkc_compiler.c
       mkc_error.c mkc_grammar.c mkc_lex.c
       mkc_log.c mkc_main.c mkc_regex_pcre.c mkc_util.c
-      os_process.c parse.c pathutil.c process.c scopedvar.c
+      os_process.c parse.c parsefn.c pathutil.c process.c scopedvar.c
       strutil.c target.c tmppath.c tmutil.c toposort.c value.c var.c;
   if (${MKC_SYS_WINDOWS}) {
     with_source os_win_process.c;

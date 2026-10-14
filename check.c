@@ -98,7 +98,6 @@ check_free (check_t *check)
 #endif
   }
   chararr_free (check->flags);
-fprintf (stderr, "check\n");
   tmppath_free (check->tmppath);
 
   free (check);
@@ -414,11 +413,11 @@ check_compiler_flag (check_t *check,
 {
   int               rc;
   char              tbuff [MKC_VNAME_MAX];
-  char              *rbuff;
+  char              * rbuff;
   size_t            rsz;
-  static const char *negprefix;
-  static const char *warnprefix;
-  static size_t     neglen;
+  const char        * negprefix;
+  const char        * warnprefix;
+  size_t            neglen;
 
   negprefix = compiler_get_flag (check->attr->compid, MKC_COMP_FLAG_WARN_NEGATE);
   neglen = compiler_get_flag_len (check->attr->compid, MKC_COMP_FLAG_WARN_NEGATE);
@@ -505,7 +504,7 @@ check_package (check_t *check,
   char            * pkgconfpath;
   value_t         * value;
   chararr_t       * targv;
-  int             btargc;
+  int32_t         btargc;
   char            * tpath;
   const char      * tmpnm;
   mkc_alternate_t * alt;

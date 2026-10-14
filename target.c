@@ -98,7 +98,6 @@ target_free (target_t *target)
     return;
   }
 
-fprintf (stderr, "target\n");
   tmppath_free (target->tmppath);
   free (target);
 }
@@ -796,6 +795,7 @@ target_build (target_t *target, list_t *blist)
         tgttype == TGT_T_USER_OBJECT) {
       int         rc;
 
+      compile_append_object (target->compile, NULL);
       compile_set_flags (target->compile, compflags, linkflags, libs);
 
       target_set_target_flags (target, builditem,

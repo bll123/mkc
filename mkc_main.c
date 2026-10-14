@@ -30,6 +30,7 @@
 #include "fileop.h"
 #include "mkc_log.h"
 #include "parse.h"
+#include "parsefn.h"
 #include "mkc_util.h"
 #include "pathutil.h"
 #include "strutil.h"
@@ -54,6 +55,7 @@ main (int argc, char *argv [])
   argcopy_t       argcopy;
   mkc_option_t    mkcoptions;
   parse_t         * parse = NULL;
+  parsefn_t       * parsefn = NULL;
   FILE            * fh = NULL;
   astmain_t       * astmain = NULL;
   mkc_error_t     * mkcerr = NULL;
@@ -219,7 +221,8 @@ main (int argc, char *argv [])
   }
 
   mstimestart (&starttm);
-  parse = parse_init (astmain, log, mkcerr);
+  parsefn = parsefn_init (log, mkcerr);
+  parse = parse_init (astmain, mkcerr);
   parse_debug (parse, parsedebug);
 
   if (! loadcache) {
@@ -227,6 +230,7 @@ main (int argc, char *argv [])
   }
 
   parse_start (parse, fh);
+  parsefn_set (parsefn, argcopy.utf8argv [fnidx]);
   if (mkc_error_chk_err (mkcerr)) {
     rc = mkc_cleanup (astmain, &argcopy, log, &mkcoptions, mkcerr);
     return rc;
@@ -240,15 +244,15 @@ main (int argc, char *argv [])
     cfh = fileop_open (cachename, "r");
     if (cfh != NULL) {
       mkc_message (MKC_V_BASIC, "-- loading cache\n");
-      parse_set_filename (parse, cachename);
+      parsefn_set (parsefn, cachename);
       parse_start (parse, cfh);
     }
   }
 
-  parse_set_filename (parse, argcopy.utf8argv [fnidx]);
-  rc = parse_process (parse, parse_get_scanner (parse), astmain, mkcerr);
+  rc = parse_process (parse, parse_get_scanner (parse), astmain, mkcerr, parsefn);
 
   parse_free (parse);
+  parsefn_free (parsefn);
 
   if (mkc_error_chk_err (mkcerr)) {
     rc = mkc_cleanup (astmain, &argcopy, log, &mkcoptions, mkcerr);
