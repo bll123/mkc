@@ -33,17 +33,21 @@ typedef enum {
 enum {
   TARGET_CURRENT,
   TARGET_OUT_OF_DATE,
-  TGT_T_EXEC,
-  TGT_T_FILE,
-  TGT_T_INCLUDE,
-  TGT_T_LIBRARY,
-  TGT_T_OBJECT,
-  TGT_T_SOURCE,
-  TGT_T_USER_EXEC,
-  TGT_T_USER_FILE,
-  TGT_T_USER_LIBRARY,
-  TGT_T_USER_OBJECT,
 };
+
+/* use values that will not change when new target types are added */
+typedef enum {
+  TGT_T_EXEC = 'e',
+  TGT_T_FILE = 'f',
+  TGT_T_INCLUDE = 'i',
+  TGT_T_LIBRARY = 'l',
+  TGT_T_OBJECT = 'o',
+  TGT_T_SOURCE = 's',
+  TGT_T_USER_EXEC = 'E',
+  TGT_T_USER_FILE = 'F',
+  TGT_T_USER_LIBRARY = 'L',
+  TGT_T_USER_OBJECT = 'O',
+} tgt_type_t;
 
 typedef struct target_t target_t;
 
@@ -53,11 +57,11 @@ chararr_t *target_get_flags (target_t *target, const char *flagname, chararr_t *
 void target_set_changed (target_t *target, bool changed);
 
 void target_topo_add_items (target_t *target, toposort_t *topo, list_t *hlist);
-void target_topo_add_deps (target_t *target, toposort_t *topo, const char *filename);
+void target_topo_add_deps (target_t *target, toposort_t *topo, const char *filename, sv_type_t svtype);
 
-int target_check_dependency_timestamp (target_t *target, const char *filepath);
-void target_get_dependencies (target_t *target, mkc_compiler_t compiler, const char *tgtname, const char *filepath, target_flag_t flags, chararr_t *cflags);
-void target_create_target (target_t *target, const char *path, int tgttype);
+int target_check_dependency_timestamp (target_t *target, const char *filepath, sv_type_t svtype);
+void target_get_dependencies (target_t *target, mkc_compiler_t compiler, const char *tgtname, const char *filepath, target_flag_t flags, chararr_t *cflags, sv_type_t svtype);
+void target_create_target (target_t *target, const char *path, tgt_type_t tgttype, const char *srcpath);
 void target_create_dependency (target_t *target, const char *path, const char *deppath);
 void target_object_source (target_t *target, const char *objnm, const char *srcname);
 int target_config_file (target_t *target, const char *outfile, const char *mkcfile, const char *infile);
@@ -66,8 +70,10 @@ void target_build (target_t *target, list_t *blist);
 MKC_NODISCARD list_t * target_get_include_list (target_t *target, chararr_t * include_paths, mkc_regex_t *rx, int64_t *ts);
 const char * target_iter_includes (target_t *target, list_t *hlist, listidx_t *hiteridx, char *hdr, size_t hsz);
 
-void target_iter_dependency_ts_start (target_t *target, const char *filename, listidx_t *iteridx);
-int64_t target_iter_dependency_ts (target_t *target, const char *filename, listidx_t *iteridx);
+void target_iter_dependency_ts_start (target_t *target, const char *filename, listidx_t *iteridx, sv_type_t svtype);
+int64_t target_iter_dependency_ts (target_t *target, const char *filename, listidx_t *iteridx, sv_type_t svtype);
+
+const char * target_disp_type (tgt_type_t tgttype);
 
 #if defined (__cplusplus) || defined (c_plusplus)
 }

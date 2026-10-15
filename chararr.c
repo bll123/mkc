@@ -138,7 +138,7 @@ chararr_get_arr (chararr_t *carr)
 void
 chararr_dump (chararr_t *carr, const char *tag)  /* DEBUG */
 {
-  fprintf (stderr, "=== carr: get %s\n", tag);
+  fprintf (stderr, "=== carr: %s\n", tag);
   for (int i = 0; i < carr->sz; ++i) {
     fprintf (stderr, "   %s\n", carr->targv [i]);
   }

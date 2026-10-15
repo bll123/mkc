@@ -1392,9 +1392,9 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
     case MKC_T_STMT_CREATE_FILE: {
       value_t   * value;
 
-      if (astnode->stmt_stmtblock.stmtblock != NULL) {
+      if (astnode->stmt_val_stmtblock.stmtblock != NULL) {
         context_push (astmain->context, MKC_CONTEXT_CREATE_FILE, astmain->mkcerr);
-        ast_process (astmain, astnode->stmt_stmtblock.stmtblock, ifcond, stmtcontrol, funcret, depth + 1);
+        ast_process (astmain, astnode->stmt_val_stmtblock.stmtblock, ifcond, stmtcontrol, funcret, depth + 1);
         context_pop (astmain->context);
       }
       value = ast_get_value (astmain, astnode->stmt_val_stmtblock.val);

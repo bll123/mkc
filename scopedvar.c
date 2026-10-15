@@ -72,6 +72,7 @@ static char const * const svtypenames [] = {
   [SV_T_CURR_PROF_COMPILER] = "curr_prof_compiler",
   [SV_T_CURR_PROF] = "curr_prof",
   [SV_T_DFLT_PROF] = "dflt_prof",
+  [SV_T_INCLUDE_DATA] = "includedata",
   [SV_T_INTERNAL] = "internal",
   [SV_T_LOCAL] = "local",
   [SV_T_NOT_SET] = "not_in_use",
@@ -100,6 +101,7 @@ static void sv_init_vars (scopedvar_t *sv, mkc_option_t *mkcoptions);
 static void sv_push_hierarchy (scopedvar_t *sv, sv_profile_t *svprof);
 static const char * sv_get_active_name (scopedvar_t *sv);
 static varlist_t *sv_get_varlist (scopedvar_t *sv, sv_type_t svtype, const char *vname);
+static const char * sv_get_dict_name (sv_type_t svtype);
 
 scopedvar_t *
 sv_init (mkc_log_t *log, mkc_error_t *mkcerr, mkc_option_t *mkcoptions)
@@ -540,7 +542,7 @@ sv_get_timestamp (scopedvar_t *sv, sv_type_t svtype,
   value_t     *value;
   const char  *tag = NULL;
 
-  if (svtype == SV_T_BUILD_DATA) {
+  if (svtype == SV_T_BUILD_DATA || svtype == SV_T_INCLUDE_DATA) {
     tag = MKC_C_BVAR_TIMESTAMP;
   }
   value = sv_get_value (sv, svtype, vname, tag);
@@ -564,10 +566,13 @@ sv_get_value (scopedvar_t *sv, sv_type_t svtype,
   }
 
   /* handle special type to variable mappings */
-  if (svtype == SV_T_BUILD_DATA) {
-    value_t   * dictval;
+  if (svtype == SV_T_BUILD_DATA ||
+      svtype == SV_T_INCLUDE_DATA) {
+    value_t     * dictval;
+    const char  * dname = NULL;
 
-    dictval = sv_get_value (sv, SV_T_INTERNAL, MKC_C_VAR_BUILD_DATA, NULL);
+    dname = sv_get_dict_name (svtype);
+    dictval = sv_get_value (sv, SV_T_INTERNAL, dname, NULL);
     if (dictval == NULL || dictval->vtype != MKC_VT_DICT) {
       return NULL;
     }
@@ -1027,11 +1032,14 @@ sv_set (scopedvar_t *sv, sv_type_t svtype,
   /* handle special dictionary types */
   /* build-data is a dictionary of dictionaries */
   /* the tag argument is used */
-  if (svtype == SV_T_BUILD_DATA) {
-    value_t   * dictval;
-    value_t   tvalue;
+  if (svtype == SV_T_BUILD_DATA ||
+      svtype == SV_T_INCLUDE_DATA) {
+    value_t     * dictval;
+    value_t     tvalue;
+    const char  * dname = NULL;
 
-    dictval = sv_get_value (sv, SV_T_INTERNAL, MKC_C_VAR_BUILD_DATA, NULL);
+    dname = sv_get_dict_name (svtype);
+    dictval = sv_get_value (sv, SV_T_INTERNAL, dname, NULL);
     if (dictval == NULL || dictval->vtype != MKC_VT_DICT) {
       mkc_error_set (sv->mkcerr, MKC_ERR_FATAL_ERROR, 0, "missing dict");
       return rc;
@@ -1255,14 +1263,18 @@ sv_delete (scopedvar_t *sv, sv_type_t svtype,
     return;
   }
 
-  if (svtype == SV_T_BUILD_DATA) {
+  if (svtype == SV_T_BUILD_DATA ||
+      svtype == SV_T_INCLUDE_DATA) {
     value_t   * dictval;
+    const char  * dname = NULL;
+
+    dname = sv_get_dict_name (svtype);
 
     if (tag == NULL) {
       mkc_error_set (sv->mkcerr, MKC_ERR_NULL_ARGUMENT, 0, NULL);
       return;
     }
-    dictval = sv_get_value (sv, SV_T_INTERNAL, MKC_C_VAR_BUILD_DATA, NULL);
+    dictval = sv_get_value (sv, SV_T_INTERNAL, dname, NULL);
     if (dictval == NULL) {
       return;
     }
@@ -1978,4 +1990,19 @@ sv_get_varlist (scopedvar_t *sv, sv_type_t svtype, const char *vname)
   }
 
   return varlist;
+}
+
+static const char *
+sv_get_dict_name (sv_type_t svtype)
+{
+  const char  *dname = NULL;
+
+  if (svtype == SV_T_BUILD_DATA) {
+    dname = MKC_C_VAR_BUILD_DATA;
+  }
+  if (svtype == SV_T_INCLUDE_DATA) {
+    dname = MKC_C_VAR_INCLUDE_DATA;
+  }
+
+  return dname;
 }

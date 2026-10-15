@@ -59,7 +59,7 @@ typedef enum {
 static const char * const dependency_delim = " \n\r\\";
 
 static bool target_chk_last_libloc (mkc_compiler_id_t compid, char *lastlibloc, size_t sz, const char *str);
-static void target_topo_add_items_deps (target_t *target, toposort_t *topo, list_t *itemlist);
+static void target_topo_add_items_deps (target_t *target, toposort_t *topo, list_t *itemlist, sv_type_t svtype);
 static void target_create_stage_bin (target_t *target);
 static void target_set_target_flags (target_t *target, const char *builditem, const char *bvarname, comp_flag_t ftype);
 static void target_append_flags (target_t *target, comp_flag_t ftype, value_t *value, chararr_t *flags, chararr_t *include_paths);
@@ -176,7 +176,7 @@ target_topo_add_items (target_t *target, toposort_t *topo, list_t *itemlist)
 
 void
 target_topo_add_deps (target_t *target,
-    toposort_t *topo, const char *tgtname)
+    toposort_t *topo, const char *tgtname, sv_type_t svtype)
 {
   value_t     * valdeplist;
   listidx_t   diteridx;
@@ -185,7 +185,7 @@ target_topo_add_deps (target_t *target,
   char        * dep;
 
   mkc_log (target->log, MKC_LOG_CHECK, "add-dep %s\n", tgtname);
-  valdeplist = sv_get_value (target->sv, SV_T_BUILD_DATA,
+  valdeplist = sv_get_value (target->sv, svtype,
       tgtname, MKC_C_BVAR_DEPENDENCY);
   if (valdeplist == NULL) {
     mkc_error_set (target->mkcerr, MKC_ERR_FATAL_ERROR, 0, tgtname);
@@ -215,7 +215,7 @@ target_topo_add_deps (target_t *target,
 
 int
 target_check_dependency_timestamp (target_t *target,
-    const char *filepath)
+    const char *filepath, sv_type_t svtype)
 {
   int64_t       fts;
   int64_t       ts;
@@ -223,7 +223,7 @@ target_check_dependency_timestamp (target_t *target,
 
 
   mkc_message (MKC_V_TMI, "chk-dep-ts: %s\n", filepath);
-  if (! sv_is_defined (target->sv, SV_T_BUILD_DATA,
+  if (! sv_is_defined (target->sv, svtype,
       filepath, MKC_C_BVAR_DEPENDENCY)) {
     mkc_message (MKC_V_TMI, "chk-dep-ts: %s no-dep-def ood\n", filepath);
     return TARGET_OUT_OF_DATE;
@@ -237,8 +237,8 @@ target_check_dependency_timestamp (target_t *target,
   }
 
   mkc_message (MKC_V_WTMI, "chk-dep-ts: %s fts: %" PRId64 "\n", filepath, fts);
-  target_iter_dependency_ts_start (target, filepath, &iteridx);
-  while ((ts = target_iter_dependency_ts (target, filepath, &iteridx)) != MKC_ITER_FINISH) {
+  target_iter_dependency_ts_start (target, filepath, &iteridx, svtype);
+  while ((ts = target_iter_dependency_ts (target, filepath, &iteridx, svtype)) != MKC_ITER_FINISH) {
     if (mkc_error_chk_err (target->mkcerr)) {
       break;
     }
@@ -256,7 +256,7 @@ target_check_dependency_timestamp (target_t *target,
 void
 target_get_dependencies (target_t *target,
     mkc_compiler_t compiler, const char *tgtname, const char *filepath,
-    target_flag_t flags, chararr_t *compflags)
+    target_flag_t flags, chararr_t *compflags, sv_type_t svtype)
 {
   int             rc;
   char            * rbuff;
@@ -264,7 +264,9 @@ target_get_dependencies (target_t *target,
   char            * tokstr;
   char            * p;
   bool            first = true;
+  mstime_t        starttm;
 
+  mstimestart (&starttm);
   mkc_message (MKC_V_TMI, "get-deps: %s\n", filepath);
 
   rsz = MKC_LARGE_BUFF_SZ;
@@ -275,7 +277,8 @@ target_get_dependencies (target_t *target,
   }
   *rbuff = '\0';
 
-  if ((flags & TARGET_USE_MM) == TARGET_USE_MM) {
+  if ((flags & TARGET_IGNORE_SYS_INC) == TARGET_IGNORE_SYS_INC &&
+      (flags & TARGET_USE_MM) == TARGET_USE_MM) {
     compile_append_flag (target->compile, COMP_COMPFLAGS,
         compiler_get_flag (target->attr->compid, MKC_COMP_FLAG_DEPS_USER));
   } else {
@@ -294,10 +297,10 @@ target_get_dependencies (target_t *target,
     return;
   }
 
-  sv_delete (target->sv, SV_T_BUILD_DATA, tgtname, MKC_C_BVAR_DEPENDENCY);
+  sv_delete (target->sv, svtype, tgtname, MKC_C_BVAR_DEPENDENCY);
 
   /* the dependency list must exist */
-  sv_create_empty_list (target->sv, SV_T_BUILD_DATA,
+  sv_create_empty_list (target->sv, svtype,
       tgtname, MKC_C_BVAR_DEPENDENCY, MKC_VCTXT_MKC);
 
   mkc_log (target->log, MKC_LOG_TARGET, "get-dep: %s\n", filepath);
@@ -319,7 +322,8 @@ target_get_dependencies (target_t *target,
     /* system include files */
     if ((flags & TARGET_IGNORE_SYS_INC) == TARGET_IGNORE_SYS_INC &&
         (flags & TARGET_USE_MM) != TARGET_USE_MM) {
-      /* a big assumption */
+      /* a bad assumption */
+      /* this code is untested */
       if (*p == '/') {
         p = str_token (NULL, dependency_delim, &tokstr);
         continue;
@@ -329,13 +333,22 @@ target_get_dependencies (target_t *target,
     if (strcmp (tgtname, p) != 0) {
       /* do not add self as a dependency */
       mkc_log (target->log, MKC_LOG_TARGET, "  %s\n", p);
-      sv_append_str_list (target->sv, SV_T_BUILD_DATA,
+      sv_append_str_list (target->sv, svtype,
           tgtname, MKC_C_BVAR_DEPENDENCY, p, MKC_VCTXT_MKC);
     }
     p = str_token (NULL, dependency_delim, &tokstr);
   }
 
   free (rbuff);
+
+  {
+    char    tmp [80];
+    int64_t etm;
+
+    etm = mstimeend (&starttm);
+    mkc_elapsed_disp (etm, tmp, sizeof (tmp));
+    mkc_message (MKC_V_TMI, "get-deps: %s %s\n", filepath, tmp);
+  }
 }
 
 /* creates a list of include files given the paths and match regex */
@@ -450,19 +463,19 @@ target_get_include_list (target_t *target, chararr_t * include_paths,
       /* is out of date and must be cleared */
       /* header dependencies are used for the 'check_include_...' tests */
 
-      tvalue = sv_get_value (sv, SV_T_BUILD_DATA, hdrpath, MKC_C_BVAR_TIMESTAMP);
+      tvalue = sv_get_value (sv, SV_T_INCLUDE_DATA, hdrpath, MKC_C_BVAR_TIMESTAMP);
       if (tvalue != NULL) {
         int64_t     cachedts;
 
         cachedts = sv_value_get_timestamp (sv, tvalue);
         if (tts > cachedts) {
-          sv_delete (sv, SV_T_BUILD_DATA, hdrpath, MKC_C_BVAR_DEPENDENCY);
+          sv_delete (sv, SV_T_INCLUDE_DATA, hdrpath, MKC_C_BVAR_DEPENDENCY);
         }
       }
 
-      sv_set_timestamp (sv, SV_T_BUILD_DATA, hdrpath, MKC_C_BVAR_TIMESTAMP,
+      sv_set_timestamp (sv, SV_T_INCLUDE_DATA, hdrpath, MKC_C_BVAR_TIMESTAMP,
           tts, MKC_VCTXT_MKC);
-      sv_set_integer (sv, SV_T_BUILD_DATA, hdrpath, MKC_C_BVAR_TYPE,
+      sv_set_integer (sv, SV_T_INCLUDE_DATA, hdrpath, MKC_C_BVAR_TYPE,
           TGT_T_INCLUDE, MKC_VCTXT_MKC);
       if (tts > *ts) {
         sv_append_str_list (sv, SV_T_LOCAL,
@@ -518,17 +531,17 @@ target_iter_includes (target_t *target, list_t *hlist,
 
 void
 target_iter_dependency_ts_start (target_t *target, const char *filename,
-    listidx_t *iteridx)
+    listidx_t *iteridx, sv_type_t svtype)
 {
   value_t     *value;
 
-  value = sv_get_value (target->sv, SV_T_BUILD_DATA, filename, MKC_C_BVAR_DEPENDENCY);
+  value = sv_get_value (target->sv, svtype, filename, MKC_C_BVAR_DEPENDENCY);
   value_iter_start (value, iteridx);
 }
 
 int64_t
 target_iter_dependency_ts (target_t *target, const char *filepath,
-    listidx_t *iteridx)
+    listidx_t *iteridx, sv_type_t svtype)
 {
   value_t       *value;
   value_t       tvalue;
@@ -536,7 +549,7 @@ target_iter_dependency_ts (target_t *target, const char *filepath,
   int64_t       ts;
   char          dep [MKC_VNAME_MAX];
 
-  value = sv_get_value (target->sv, SV_T_BUILD_DATA, filepath, MKC_C_BVAR_DEPENDENCY);
+  value = sv_get_value (target->sv, svtype, filepath, MKC_C_BVAR_DEPENDENCY);
   didx = value_iter_next (value, &tvalue, iteridx);
   if (didx == MKC_ITER_FINISH) {
     return didx;
@@ -551,11 +564,17 @@ target_iter_dependency_ts (target_t *target, const char *filepath,
 }
 
 void
-target_create_target (target_t *target, const char *path, int tgttype)
+target_create_target (target_t *target, const char *path, tgt_type_t tgttype,
+    const char *srcpath)
 {
   target_get_timestamp (target, path);
+  mkc_message (MKC_V_WTMI, "create-target: %c %s\n", tgttype, path);
   sv_set_integer (target->sv, SV_T_BUILD_DATA, path,
       MKC_C_BVAR_TYPE, tgttype, MKC_VCTXT_MKC);
+  if (srcpath != NULL) {
+    sv_set_str (target->sv, SV_T_BUILD_DATA, path, MKC_C_BVAR_SOURCE,
+        srcpath, MKC_VCTXT_MKC);
+  }
 }
 
 void
@@ -572,6 +591,9 @@ target_create_dependency (target_t *target, const char *path,
   return;
 }
 
+/* gets the dependencies for an object file if out of date */
+/* these will include all of the header files */
+/* makes sure all timestamps for the dependencies are populated */
 void
 target_object_source (target_t *target, const char *objpath,
     const char *srcname)
@@ -585,13 +607,14 @@ target_object_source (target_t *target, const char *objpath,
   mkc_log (target->log, MKC_LOG_TARGET, "object-file: %s %s\n", objpath, srcname);
 
   if (target_check_dependency_timestamp (
-      target, objpath) == TARGET_OUT_OF_DATE) {
+      target, objpath, SV_T_BUILD_DATA) == TARGET_OUT_OF_DATE) {
     chararr_t   * compflags;
 
     mkc_message (MKC_V_INFO, "getting dependencies for %s\n", objpath);
     compflags = target_get_flags (target, MKC_C_COMPFLAGS, NULL);
     target_get_dependencies (target,
-        target->attr->currcompiler, objpath, srcname, tgtflags, compflags);
+        target->attr->currcompiler, objpath, srcname, tgtflags, compflags,
+        SV_T_BUILD_DATA);
     chararr_free (compflags);
   }
 
@@ -603,8 +626,17 @@ target_object_source (target_t *target, const char *objpath,
     return;
   }
 
-  sv_set_integer (target->sv, SV_T_BUILD_DATA, srcname, MKC_C_BVAR_TYPE,
-      TGT_T_SOURCE, MKC_VCTXT_MKC);
+  {
+    value_t   * tmpvalue;
+
+    tmpvalue = sv_get_value (target->sv, SV_T_BUILD_DATA, srcname, MKC_C_BVAR_TYPE);
+    if (tmpvalue == NULL) {
+      /* only set the source type if it is not already in the build-data */
+      mkc_message (MKC_V_WTMI, "target: %c %s\n", TGT_T_SOURCE, srcname);
+      sv_set_integer (target->sv, SV_T_BUILD_DATA, srcname, MKC_C_BVAR_TYPE,
+          TGT_T_SOURCE, MKC_VCTXT_MKC);
+    }
+  }
 
   value_iter_start (valdeplist, &diteridx);
   while ((didx = value_iter_next (valdeplist, &tvalue, &diteridx)) != MKC_ITER_FINISH) {
@@ -669,7 +701,7 @@ target_build (target_t *target, list_t *blist)
 
   topo = toposort_init (target->mkcerr);
 
-  target_topo_add_items_deps (target, topo, blist);
+  target_topo_add_items_deps (target, topo, blist, SV_T_BUILD_DATA);
   if (mkc_error_chk_err (target->mkcerr)) {
     return;
   }
@@ -696,7 +728,7 @@ target_build (target_t *target, list_t *blist)
     value_t       tvalue;
     listidx_t     diteridx;
     listidx_t     didx;
-    int           tgttype;
+    tgt_type_t    tgttype;
     comp_type_t   comptype = COMPILE_COMPILE;
     const char    * buildtag = "";
 
@@ -745,7 +777,7 @@ target_build (target_t *target, list_t *blist)
 
     if (tgttype != TGT_T_SOURCE) {
       if (target_check_dependency_timestamp (
-          target, builditem) == TARGET_CURRENT) {
+          target, builditem, SV_T_BUILD_DATA) == TARGET_CURRENT) {
         continue;
       }
 
@@ -757,7 +789,7 @@ target_build (target_t *target, list_t *blist)
         builditem, MKC_C_BVAR_DEPENDENCY);
     value_iter_start (valdeplist, &diteridx);
     while ((didx = value_iter_next (valdeplist, &tvalue, &diteridx)) != MKC_ITER_FINISH) {
-      int       ttgttype;
+      tgt_type_t    ttgttype;
 
       if (mkc_error_chk_err (target->mkcerr)) {
         break;
@@ -780,11 +812,23 @@ target_build (target_t *target, list_t *blist)
         tmp = strdup (dep);
         compile_append_object (target->compile, tmp);
       }
-      if ((tgttype == TGT_T_OBJECT ||
-          tgttype == TGT_T_USER_OBJECT) &&
-          ttgttype == TGT_T_SOURCE) {
+#if 0
+      if ((ttgttype == TGT_T_SOURCE ||
+           ttgttype == TGT_T_USER_FILE) &&
+          (tgttype == TGT_T_OBJECT ||
+          tgttype == TGT_T_USER_OBJECT||
+          tgttype == TGT_T_USER_FILE)) {
         stpecpy (source, source + MKC_PATH_MAX, dep);
       }
+#endif
+    }
+
+    if (tgttype == TGT_T_USER_FILE) {
+//      list_t    * cmdlist;
+//      cmdlist = sv_get_value (target->sv, SV_T_BUILD_DATA, builditem, MKC_C_BVAR_COMMANDS);
+// ### get run-commands...
+//      target_run_command (target);
+      target_update_timestamp (target, builditem);
     }
 
     if (tgttype == TGT_T_EXEC ||
@@ -804,6 +848,13 @@ target_build (target_t *target, list_t *blist)
           MKC_C_BVAR_LINKFLAGS, COMP_LINKFLAGS);
       target_set_target_flags (target, builditem,
           MKC_C_BVAR_LIBS, COMP_LIBS);
+
+      *source = '\0';
+      value = sv_get_value (target->sv, SV_T_BUILD_DATA, builditem,
+          MKC_C_BVAR_SOURCE);
+      if (value != NULL) {
+        sv_value_get_str (target->sv, value, source, MKC_PATH_MAX);
+      }
 
       target->attr->printerrors = true;
       rc = compile_exec (target->compile, comptype, target->attr->currcompiler,
@@ -847,7 +898,7 @@ target_chk_last_libloc (mkc_compiler_id_t compid,
 
 static void
 target_topo_add_items_deps (target_t *target, toposort_t *topo,
-    list_t *itemlist)
+    list_t *itemlist, sv_type_t svtype)
 {
   listidx_t   iteridx;
   listidx_t   idx;
@@ -890,16 +941,16 @@ target_topo_add_items_deps (target_t *target, toposort_t *topo,
     value = list_get_by_idx (ilist, idx);
     sv_value_get_str (target->sv, value, itemnm, MKC_PATH_MAX);
 
-    valdeplist = sv_get_value (target->sv, SV_T_BUILD_DATA,
+    valdeplist = sv_get_value (target->sv, svtype,
         itemnm, MKC_C_BVAR_DEPENDENCY);
     if (valdeplist == NULL) {
       /* items without dependency lists are include files */
       continue;
     }
 
-    value = sv_get_value (target->sv, SV_T_BUILD_DATA, itemnm, MKC_C_BVAR_TYPE);
+    value = sv_get_value (target->sv, svtype, itemnm, MKC_C_BVAR_TYPE);
     if (value != NULL) {
-      int             tgttype;
+      tgt_type_t    tgttype;
 
       tgttype = sv_value_get_integer (target->sv, value);
       if (tgttype == TGT_T_INCLUDE) {
@@ -907,13 +958,13 @@ target_topo_add_items_deps (target_t *target, toposort_t *topo,
       }
     }
 
-    target_topo_add_items_deps (target, topo, valdeplist->list);
+    target_topo_add_items_deps (target, topo, valdeplist->list, svtype);
 
     if (! sv_is_defined (target->sv, SV_T_BUILD_DATA, itemnm, MKC_C_BVAR_DEPENDENCY)) {
       continue;
     }
 
-    target_topo_add_deps (target, topo, itemnm);
+    target_topo_add_deps (target, topo, itemnm, svtype);
   }
 
   list_free (ilist);
@@ -1053,3 +1104,4 @@ target_update_timestamp (target_t *target, const char *filepath)
   sv_set_timestamp (target->sv, SV_T_BUILD_DATA, filepath, MKC_C_BVAR_TIMESTAMP, ts, MKC_VCTXT_MKC);
   mkc_message (MKC_V_WTMI, "t: ts-upd: %s ts: %" PRId64 "\n", filepath, ts);
 }
+

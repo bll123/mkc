@@ -208,10 +208,15 @@ compile_create_header_var (compile_t *compile)
   mkc_alternate_t * alt;
   char            * tbuff;
 
+  alt = compile->attr->curralt;
+  if (list_size (alt->hdrlist) == 0) {
+    sv_set_str (compile->sv, SV_T_LOCAL, MKC_C_TEST_HDR_LIST, NULL, "",
+        MKC_VCTXT_TEMP);
+    return;
+  }
 
   tbuff = tmppath_get (compile->tmppath);
 
-  alt = compile->attr->curralt;
   list_iter_start (alt->hdrlist, &iteridx);
   while ((lidx = list_iter_next (alt->hdrlist, &iteridx)) != MKC_ITER_FINISH) {
     value_t   * lvalue;

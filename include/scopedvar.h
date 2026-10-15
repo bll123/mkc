@@ -42,6 +42,7 @@ typedef enum {
   /* paths data is stored in the paths dictionary */
   SV_T_SPECIAL,
   SV_T_BUILD_DATA,
+  SV_T_INCLUDE_DATA,
   SV_T_PATHS,
 } sv_type_t;
 

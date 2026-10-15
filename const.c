@@ -8,14 +8,17 @@ char const * const MKC_C_PROF_NAME_INTERNAL = "internal";
 /* some of these get allocated many times, keep them short */
 /* as these are only used internally in the cache, readability is */
 /* not an issue */
+char const * const MKC_C_BVAR_COMMANDS = "cmd";
 char const * const MKC_C_BVAR_COMPFLAGS = "cf";
 char const * const MKC_C_BVAR_DEPENDENCY = "dep";
 char const * const MKC_C_BVAR_LIBS = "lib";
 char const * const MKC_C_BVAR_LINKFLAGS = "lf";
+char const * const MKC_C_BVAR_SOURCE = "src";
 char const * const MKC_C_BVAR_TIMESTAMP = "ts";
 char const * const MKC_C_BVAR_TYPE = "typ";
 char const * const MKC_C_VAR_BUILD_DATA = "MKC_BUILD_DATA";
 char const * const MKC_C_VAR_BUILD_PATHS = "MKC_BUILD_PATHS";
+char const * const MKC_C_VAR_INCLUDE_DATA = "MKC_INCLUDE_DATA";
 
 /* these are duplicated in process.c */
 char const * const MKC_C_PATH_GETCONF = "MKC_PATH_GETCONF";

@@ -17,7 +17,7 @@ extern "C" {
 /* the first alternate in the list is the base context */
 /* and stores the name for the check */
 typedef struct mkc_alternate_t {
-  char            * name;
+  char        * name;
   list_t      * hdrlist;
   list_t      * compflags;
   list_t      * linkflags;

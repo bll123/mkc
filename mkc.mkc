@@ -174,14 +174,16 @@ add_compile_flag ${pcre_COMPFLAGS};
 
 # include file checks
 
-check_include_compile {
-  match_pattern '\.h$';
-}
-check_include_dependencies {
-  match_pattern '\.h$';
-}
-check_include_guards {
-  match_pattern '\.h$';
+profile do_checks {
+  check_include_compile {
+    match_pattern '\.h$';
+  }
+  check_include_dependencies {
+    match_pattern '\.h$';
+  }
+  check_include_guards {
+    match_pattern '\.h$';
+  }
 }
 
 # build

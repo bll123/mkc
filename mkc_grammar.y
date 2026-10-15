@@ -1108,13 +1108,6 @@ attr_run_command[v]:
       $v = ast_mk_attribute (ast, $a, MKC_T_ATTR_RUN_COMMAND,
           yylloc.first_line, yylloc.first_column);
     }
-  | T_ATTR_RUN_COMMAND unassocstringlist[a] T_OP_NUM_GT pathname[b] T_SEMICOLON
-    {
-      $v = ast_mk_attribute (ast, $a, MKC_T_ATTR_RUN_COMMAND,
-          yylloc.first_line, yylloc.first_column);
-      $v = ast_mk_attribute (ast, $b, MKC_T_ATTR_REDIRECT,
-          yylloc.first_line, yylloc.first_column);
-    }
   ;
 
 /* a list of source files */
@@ -1465,6 +1458,16 @@ unassocvalue[v]:
     variablename[a]
     {
       $v = ast_mk_value_list (ast, NULL, $a,
+          yylloc.first_line, yylloc.first_column);
+    }
+  | T_OP_NUM_GT[a]
+    {
+      astnode_t   *t;
+
+      /* redirect */
+      t = ast_mk_value (ast, MKC_T_VAL_STATIC_STRING, strdup (">"),
+          yylloc.first_line, yylloc.first_column);
+      $v = ast_mk_value_list (ast, NULL, t,
           yylloc.first_line, yylloc.first_column);
     }
   | pathname[a]

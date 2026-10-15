@@ -11,14 +11,17 @@ extern "C" {
 extern char const * const MKC_C_PROF_NAME_DEFAULT;
 extern char const * const MKC_C_PROF_NAME_INTERNAL;
 
+extern char const * const MKC_C_BVAR_COMMANDS;
 extern char const * const MKC_C_BVAR_COMPFLAGS;
 extern char const * const MKC_C_BVAR_DEPENDENCY;
 extern char const * const MKC_C_BVAR_LIBS;
 extern char const * const MKC_C_BVAR_LINKFLAGS;
+extern char const * const MKC_C_BVAR_SOURCE;
 extern char const * const MKC_C_BVAR_TIMESTAMP;
 extern char const * const MKC_C_BVAR_TYPE;
 extern char const * const MKC_C_VAR_BUILD_DATA;
 extern char const * const MKC_C_VAR_BUILD_PATHS;
+extern char const * const MKC_C_VAR_INCLUDE_DATA;
 
 extern char const * const MKC_C_PATH_GETCONF;
 extern char const * const MKC_C_PATH_PKGCONF;
