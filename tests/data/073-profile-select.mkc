@@ -2,9 +2,9 @@
 
 # profile select
 
-project mkctest;
+.project mkctest;
 
-set a 1;
+.set a 1;
 
-mkcdebug printvar debug;
-mkcdebug printvar default;
+.mkcdebug printvar debug;
+.mkcdebug printvar default;

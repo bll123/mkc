@@ -101,11 +101,11 @@
 %token T_RIGHT_PAREN          ")"
 %token T_SEMICOLON            ";"
 
-%token T_VAL_FALSE            "false"
+%token T_VAL_FALSE            ".false"
 %token <sval> T_VAL_INTEGER   "[0-9]+"
 %token <sval> T_VAL_TIMESTAMP "[0-9]+LL"
-%token T_VAL_TRUE             "true"
-%token T_VAL_BOOTSTRAP        "mkcbootstrap"
+%token T_VAL_TRUE             ".true"
+%token T_VAL_BOOTSTRAP        ".mkcbootstrap"
 
 /* a T_VARIABLE is a ${...} complex */
 %token <sval> T_ID_PATH_NAME
@@ -117,82 +117,82 @@
 %token <sval> T_VAL_UNASSOC_STRING
 
 // keywords
-%token T_STMT_EXIT            "exit"
-%token T_STMT_ELSE            "else"
-%token T_STMT_FOREACH         "foreach"
-%token T_STMT_IF              "if"
-%token T_STMT_SET             "set"
-%token T_STMT_WHILE           "while"
+%token T_STMT_EXIT            ".exit"
+%token T_STMT_ELSE            ".else"
+%token T_STMT_FOREACH         ".foreach"
+%token T_STMT_IF              ".if"
+%token T_STMT_SET             ".set"
+%token T_STMT_WHILE           ".while"
 
-%token T_LOOP_BREAK           "break"
-%token T_LOOP_CONTINUE        "continue"
+%token T_LOOP_BREAK           ".break"
+%token T_LOOP_CONTINUE        ".continue"
 
-%token T_IN                   "in"
-%token T_LOCAL                "local"
-%token T_RANGE                "range"
-%token T_RETURN               "return"
+%token T_IN                   ".in"
+%token T_LOCAL                ".local"
+%token T_RANGE                ".range"
+%token T_RETURN               ".return"
 
 // statements and directives
-%token T_STMT_AUTOBUILD       "auto_build"
-%token T_STMT_BUILD           "build"
-%token T_STMT_CHK_INC_COMPILE "check_include_compile"
-%token T_STMT_CHK_INC_DEPS    "check_include_dependencies"
-%token T_STMT_CHK_INC_GUARDS  "check_include_guards"
-%token T_STMT_CONFIGURE       "configuration_file"
-%token T_STMT_CREATE_FILE     "create_file"
-%token T_STMT_EXECUTABLE      "define_executable"
-%token T_STMT_DEBUG           "mkcdebug"
-%token T_STMT_INCLUDE         "include"
-%token T_STMT_LOADCACHE       "load_cache"
-%token T_STMT_MARK_VAR        "mark_variable"
-%token T_STMT_PROJECT         "project"
+%token T_STMT_AUTOBUILD       ".auto_build"
+%token T_STMT_BUILD           ".build"
+%token T_STMT_CHK_INC_COMPILE ".check_include_compile"
+%token T_STMT_CHK_INC_DEPS    ".check_include_dependencies"
+%token T_STMT_CHK_INC_GUARDS  ".check_include_guards"
+%token T_STMT_CONFIGURE       ".configuration_file"
+%token T_STMT_CREATE_FILE     ".create_file"
+%token T_STMT_EXECUTABLE      ".executable"
+%token T_STMT_DEBUG           ".mkcdebug"
+%token T_STMT_INCLUDE         ".include"
+%token T_STMT_LOADCACHE       ".load_cache"
+%token T_STMT_MARK_VAR        ".mark"
+%token T_STMT_PROJECT         ".project"
 
 // commands
-%token T_STMT_FUNCTION        "function"
-%token T_STMT_PRINT           "print"
-%token T_STMT_PROFILE         "profile"
+%token T_STMT_FUNCTION        ".function"
+%token T_STMT_PRINT           ".print"
+%token T_STMT_PROFILE         ".profile"
 
-%token T_CHK_ARG_COUNT        "check_arg_count"
-%token T_CHK_COMP_FLAG        "check_compile_flag"
-%token T_CHK_CONST            "check_const"
-%token T_CHK_DEFINE           "check_define"
-%token T_CHK_FUNCTION         "check_function"
-%token T_CHK_HEADER           "check_header"
-%token T_CHK_LINK_FLAG        "check_link_flag"
-%token T_CHK_PACKAGE          "check_package"
-%token T_CHK_SIZE             "check_size"
-%token T_CHK_STRUCT_MEMBER    "check_struct_member"
-%token T_CHK_TYPE             "check_type"
-%token T_CHK_SHELL_EXTRACT    "shell_extract"
+%token T_CHK_ARG_COUNT        ".check_arg_count"
+%token T_CHK_COMP_FLAG        ".check_compile_flag"
+%token T_CHK_CONST            ".check_const"
+%token T_CHK_DEFINE           ".check_define"
+%token T_CHK_FUNCTION         ".check_function"
+%token T_CHK_HEADER           ".check_header"
+%token T_CHK_LINK_FLAG        ".check_link_flag"
+%token T_CHK_PACKAGE          ".check_package"
+%token T_CHK_SIZE             ".check_size"
+%token T_CHK_STRUCT_MEMBER    ".check_struct_member"
+%token T_CHK_TYPE             ".check_type"
+%token T_CHK_SHELL_EXTRACT    ".shell_extract"
 
-%token T_ADD_COMP_FLAG        "add_compile_flag"
-%token T_ADD_LIBRARY          "add_library"
-%token T_ADD_LINK_FLAG        "add_link_flag"
+%token T_ADD_COMP_FLAG        ".add_compile_flag"
+%token T_ADD_LIBRARY          ".add_library"
+%token T_ADD_LINK_FLAG        ".add_link_flag"
 
 // attributes
-%token T_ATTR_ALTERNATE       "alternate"
-%token T_ATTR_COMP_FLAGS      "compiler_flags"
-%token T_ATTR_COMPILER        "compiler"
-%token T_ATTR_VCONTEXT        "vcontext"
-%token T_ATTR_DEFINE_ZERO     "define_zero"
-%token T_ATTR_FAILURE         "on_failure"
-%token T_ATTR_HEADER          "header"
-%token T_ATTR_INPUT           "input"
-%token T_ATTR_LIB_FLAGS       "library_flags"
-%token T_ATTR_LIBRARY_VERSION "library_version"
-%token T_ATTR_LINK_FLAGS      "link_flags"
-%token T_ATTR_MATCH           "match_pattern"
-%token T_ATTR_METHOD          "method"
-%token T_ATTR_NAME            "name"
-%token T_ATTR_NEGATE          "negate"
-%token T_ATTR_OUTPUT          "output"
-%token T_ATTR_PATH            "path"
-%token T_ATTR_REPLACE         "replace"
-%token T_ATTR_RUN_COMMAND     "run_command"
-%token T_ATTR_SOURCE          "with_source"
-%token T_ATTR_SUCCESS         "on_success"
-%token T_ATTR_VERSION         "version"
-%token T_ATTR_VOUTPUT         "voutput"
+%token T_ATTR_ALTERNATE       ".alternate"
+%token T_ATTR_COMP_FLAGS      ".compiler_flags"
+%token T_ATTR_COMPILER        ".compiler"
+%token T_ATTR_VCONTEXT        ".vcontext"
+%token T_ATTR_DEFINE_ZERO     ".define_zero"
+%token T_ATTR_FAILURE         ".on_failure"
+%token T_ATTR_HEADER          ".header"
+%token T_ATTR_INPUT           ".input"
+%token T_ATTR_LIB_FLAGS       ".library_flags"
+%token T_ATTR_LIBRARY_VERSION ".library_version"
+%token T_ATTR_LINK_FLAGS      ".link_flags"
+%token T_ATTR_MATCH           ".match"
+%token T_ATTR_METHOD          ".method"
+%token T_ATTR_NAME            ".name"
+%token T_ATTR_NEGATE          ".negate"
+%token T_ATTR_OUTPUT          ".output"
+%token T_ATTR_PATH            ".path"
+%token T_ATTR_REPLACE         ".replace"
+%token T_ATTR_RUN_COMMAND     ".command"
+%token T_ATTR_SOURCE          ".source"
+%token T_ATTR_SUCCESS         ".on_success"
+%token T_ATTR_VERSION         ".version"
+%token T_ATTR_VOUTPUT         ".voutput"
 
 %type <astnode> integer variable string
 
@@ -248,7 +248,7 @@
 %type <astnode> attr_define_zero attr_failure attr_header
 %type <astnode> attr_input attr_lib_flags attr_libversion attr_linkflags
 %type <astnode> attr_match attr_method attr_name attr_negate
-%type <astnode> attr_output attr_path attr_replace attr_run_command attr_source
+%type <astnode> attr_output attr_path attr_replace attr_command attr_source
 %type <astnode> attr_success attr_vcontext attr_version attr_voutput
 
 // precedence rules: the lowest precedence comes first
@@ -462,7 +462,7 @@ attr[v]:
     {
       $v = $a;
     }
-  | attr_run_command[a]
+  | attr_command[a]
     {
       $v = $a;
     }
@@ -1102,7 +1102,7 @@ attr_replace[v]:
     }
   ;
 
-attr_run_command[v]:
+attr_command[v]:
     T_ATTR_RUN_COMMAND unassocstringlist[a] T_SEMICOLON
     {
       $v = ast_mk_attribute (ast, $a, MKC_T_ATTR_RUN_COMMAND,
@@ -1457,34 +1457,26 @@ unassocstring[v]:
 unassocvalue[v]:
     variablename[a]
     {
-      $v = ast_mk_value_list (ast, NULL, $a,
-          yylloc.first_line, yylloc.first_column);
+      $v = $a;
     }
   | T_OP_NUM_GT[a]
     {
-      astnode_t   *t;
-
       /* redirect */
-      t = ast_mk_value (ast, MKC_T_VAL_STATIC_STRING, strdup (">"),
-          yylloc.first_line, yylloc.first_column);
-      $v = ast_mk_value_list (ast, NULL, t,
+      $v = ast_mk_value (ast, MKC_T_VAL_STATIC_STRING, strdup (">"),
           yylloc.first_line, yylloc.first_column);
     }
   | pathname[a]
     {
       /* includes variable, string */
-      $v = ast_mk_value_list (ast, NULL, $a,
-          yylloc.first_line, yylloc.first_column);
+      $v = $a;
     }
   | integer[a]
     {
-      $v = ast_mk_value_list (ast, NULL, $a,
-          yylloc.first_line, yylloc.first_column);
+      $v = $a;
     }
   | unassocstring[a]
     {
-      $v = ast_mk_value_list (ast, NULL, $a,
-          yylloc.first_line, yylloc.first_column);
+      $v = $a;
     }
   ;
 

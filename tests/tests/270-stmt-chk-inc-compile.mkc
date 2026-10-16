@@ -1,18 +1,18 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
-project mkctest {
-  compiler c;
+.project mkctest {
+  .compiler c;
 }
 
-profile default {
-  compiler c;
-  add_compile_flag '-DMKCTEST=1';
+.profile default {
+  .compiler c;
+  .add_compile_flag '-DMKCTEST=1';
 }
 
-mkcdebug printvar test;
+.mkcdebug printvar test;
 
-add_compile_flag '-Itests/data/270-stmt-chk-inc-compile';
+.add_compile_flag '-Itests/data/270-stmt-chk-inc-compile';
 
-check_include_compile {
-  match_pattern '\.h$';
+.check_include_compile {
+  .match '\.h$';
 }

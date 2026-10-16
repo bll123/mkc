@@ -1,12 +1,12 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
-project mkctest;
+.project mkctest;
 
-check_size int32_t {
-  header stdint.h;
+.check_size int32_t {
+  .header stdint.h;
 }
 
-configuration_file {
-  method auto;
-  define_zero;
+.configuration_file {
+  .method auto;
+  .define_zero;
 }

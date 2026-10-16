@@ -1,26 +1,26 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
-check_struct_member 'struct stat' st_mode {
-  header sys/stat.h;
-  on_success {
-    print '  ok a';
+.check_struct_member 'struct stat' st_mode {
+  .header sys/stat.h;
+  .on_success {
+    .print '  ok a';
   }
-  on_failure {
-    print '  fail a';
-  }
-}
-
-check_struct_member 'struct stat' st_something {
-  on_success {
-    print '  fail b';
-  }
-  on_failure {
-    print '  ok b';
+  .on_failure {
+    .print '  fail a';
   }
 }
 
-if (${_member_struct_stat_st_mode} == 1) {
-  print '  ok';
-} else {
-  print '  fail struct stat.st_mode';
+.check_struct_member 'struct stat' st_something {
+  .on_success {
+    .print '  fail b';
+  }
+  .on_failure {
+    .print '  ok b';
+  }
+}
+
+.if (${_member_struct_stat_st_mode} == 1) {
+  .print '  ok';
+} .else {
+  .print '  fail struct stat.st_mode';
 }

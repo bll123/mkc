@@ -2,29 +2,29 @@
 
 # test function return
 
-function a {
-  print 'a1';
+.function a {
+  .print 'a1';
   b;
-  print 'a2';
+  .print 'a2';
 }
 
-function b {
-  foreach t in [ 1 2 3 ] {
-    print "b${t}";
+.function b {
+  .foreach t .in [ 1 2 3 ] {
+    .print "b${t}";
     c;
-    return;
+    .return;
   }
-  print 'b2';
+  .print 'b2';
 }
 
-function c {
-  foreach tt in [ 1 2 3 4 5 ] {
-    print "c${tt}";
-    if (${tt} == 2) {
-      return;
+.function c {
+  .foreach tt .in [ 1 2 3 4 5 ] {
+    .print "c${tt}";
+    .if (${tt} == 2) {
+      .return;
     }
   }
-  print 'c2';
+  .print 'c2';
 }
 
 a;

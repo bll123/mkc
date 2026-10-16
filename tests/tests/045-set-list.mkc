@@ -1,15 +1,15 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
-set a [ 'a' 'b' 'c' 'd' ];
-set b [ 1 2 3 4 ];
-set c ${a};
-set d ${b};
-set e [ 'e' ];
-set f [ 5 ];
-set g ${e};
-set h ${f};
-set i 6;
-set j 7;
-set k [ ${i} ${j} ];
+.set a [ 'a' 'b' 'c' 'd' ];
+.set b [ 1 2 3 4 ];
+.set c ${a};
+.set d ${b};
+.set e [ 'e' ];
+.set f [ 5 ];
+.set g ${e};
+.set h ${f};
+.set i 6;
+.set j 7;
+.set k [ ${i} ${j} ];
 
-mkcdebug printvar test;
+.mkcdebug printvar test;

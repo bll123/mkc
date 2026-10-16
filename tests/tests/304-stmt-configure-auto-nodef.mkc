@@ -1,18 +1,18 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
-project mkctest;
+.project mkctest;
 
-check_function malloc;
-check_function fstat {
-  header sys/stat.h;
+.check_function malloc;
+.check_function fstat {
+  .header sys/stat.h;
 }
-check_function sqrt {
-  header math.h;
-  library_flags '-lm';
+.check_function sqrt {
+  .header math.h;
+  .library_flags '-lm';
 }
-check_function other;
+.check_function other;
 
-configuration_file {
-  method auto;
-  output 'tests/tmp/304-stmt-configure-auto-nodef.h';
+.configuration_file {
+  .method auto;
+  .output 'tests/tmp/304-stmt-configure-auto-nodef.h';
 }

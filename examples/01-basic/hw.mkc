@@ -1,10 +1,10 @@
 
-project hw {
-  compiler c;
+.project hw {
+  .compiler c;
 }
 
-define_executable hw {
-  with_source hw.c;
+.executable hw {
+  .source hw.c;
 }
 
-auto_build;
+.auto_build;

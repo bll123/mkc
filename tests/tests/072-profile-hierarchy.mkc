@@ -3,118 +3,118 @@
 # profile hierarchy
 # only default/internal at this testing level
 
-project mkctest {
-  compiler c;
+.project mkctest {
+  .compiler c;
 }
 
-set d 4;
-set c 3;
+.set d 4;
+.set c 3;
 
-profile default {
-  compiler general;
-  set f 6;
-  set e 5;
+.profile default {
+  .compiler general;
+  .set f 6;
+  .set e 5;
 }
 
-profile default {
-  compiler c;
-  set h 8;
-  set g 7;
-}
-
-# not active, should not run
-profile debug {
-  compiler c;
-  set a 1;
-  set b 2;
-}
-
-profile default {
-  compiler c++;
-  set m 13;
-  set l 12;
+.profile default {
+  .compiler c;
+  .set h 8;
+  .set g 7;
 }
 
 # not active, should not run
-profile internal {
-  set i 9;
+.profile debug {
+  .compiler c;
+  .set a 1;
+  .set b 2;
 }
 
-if (is_defined (a)) {
-  print '  fail a';
-  exit 1;
-}
-if (is_defined (b)) {
-  print '  fail b';
-  exit 1;
-}
-profile default {
-  compiler c;
-  if (is_defined (a)) {
-    print '  fail a2';
-    exit 1;
-  }
-  if (is_defined (b)) {
-    print '  fail b2';
-    exit 1;
-  }
-}
-if (${c} == 3) {
-  # default c
-  print '  ok 3';
-}
-if (${d} == 4) {
-  # default c
-  print '  ok 4';
-}
-if (${e} == 5) {
-  # default c
-  print '  ok 5';
-}
-if (${f} == 6) {
-  # default c
-  print '  ok 6';
-}
-if (${g} == 7) {
-  # default c
-  print '  ok 7';
-}
-if (${h} == 8) {
-  # default c
-  print '  ok 8';
+.profile default {
+  .compiler c++;
+  .set m 13;
+  .set l 12;
 }
 
-if (is_defined (i)) {
+# not active, should not run
+.profile internal {
+  .set i 9;
+}
+
+.if (is_defined (a)) {
+  .print '  fail a';
+  .exit 1;
+}
+.if (is_defined (b)) {
+  .print '  fail b';
+  .exit 1;
+}
+.profile default {
+  .compiler c;
+  .if (is_defined (a)) {
+    .print '  fail a2';
+    .exit 1;
+  }
+  .if (is_defined (b)) {
+    .print '  fail b2';
+    .exit 1;
+  }
+}
+.if (${c} == 3) {
+  # default c
+  .print '  ok 3';
+}
+.if (${d} == 4) {
+  # default c
+  .print '  ok 4';
+}
+.if (${e} == 5) {
+  # default c
+  .print '  ok 5';
+}
+.if (${f} == 6) {
+  # default c
+  .print '  ok 6';
+}
+.if (${g} == 7) {
+  # default c
+  .print '  ok 7';
+}
+.if (${h} == 8) {
+  # default c
+  .print '  ok 8';
+}
+
+.if (is_defined (i)) {
   # internal general
-  print '  fail 9';
-} else {
-  print '  ok 9';
+  .print '  fail 9';
+} .else {
+  .print '  ok 9';
 }
 
-if (is_defined (l)) {
+.if (is_defined (l)) {
   # default c++
   # will not print, as the compiler is set to 'c'
-  print '  ng 12';
-  exit 1;
+  .print '  ng 12';
+  .exit 1;
 }
-if (is_defined (m)) {
+.if (is_defined (m)) {
   # default c++
   # will not print, as the compiler is set to 'c'
-  print '  ng 13';
-  exit 1;
+  .print '  ng 13';
+  .exit 1;
 }
-profile default {
-  compiler c++;
-  if (${l} == 12) {
-    print '  ok l';
-  } else {
-    print '  fail l';
+.profile default {
+  .compiler c++;
+  .if (${l} == 12) {
+    .print '  ok l';
+  } .else {
+    .print '  fail l';
   }
-  if (${m} == 13) {
-    print '  ok m';
-  } else {
-    print '  fail m';
+  .if (${m} == 13) {
+    .print '  ok m';
+  } .else {
+    .print '  fail m';
   }
 }
 
-mkcdebug printvar test;
+.mkcdebug printvar test;

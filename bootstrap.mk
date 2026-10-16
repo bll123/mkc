@@ -174,7 +174,6 @@ bootstrap-pass2: bootstrap-pass1
 	@# 'tmp/pass2/mkc' now exists.  no bootstrap flag is set
 
 bootstrap-config: mkc_config.h
-	@echo "bootstrap-config"
 	@:
 
 $(MKC_TARGET): bootstrap-pass2

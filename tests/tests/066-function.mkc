@@ -1,42 +1,42 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
-function fa {
-  print '== fa';
+.function fa {
+  .print '== fa';
 }
-function fb (a1) {
-  print "== fb ${a1}";
+.function fb (a1) {
+  .print "== fb ${a1}";
 }
-function fc (a1 a2) {
-  print "== fc ${a1} ${a2}";
+.function fc (a1 a2) {
+  .print "== fc ${a1} ${a2}";
 }
-function fd (a1 a2 a3) {
-  print "== fd ${a1} ${a2} ${a3}";
+.function fd (a1 a2 a3) {
+  .print "== fd ${a1} ${a2} ${a3}";
 }
 
-fa;
-fb 'b1';
-fc 'c1a' 'c1b';
-fd 'd1a' 'd1b' 'd1c';
+.fa;
+.fb 'b1';
+.fc 'c1a' 'c1b';
+.fd 'd1a' 'd1b' 'd1c';
 
 # test return (basic)
 
-function a {
-  print 'a1';
-  b;
-  print 'a2';
+.function a {
+  .print 'a1';
+  .b;
+  .print 'a2';
 }
 
-function b {
-  print 'b1';
-  c;
-  return;
-  print 'b2';
+.function b {
+  .print 'b1';
+  .c;
+  .return;
+  .print 'b2';
 }
 
-function c {
-  print 'c1';
-  return;
-  print 'c2';
+.function c {
+  .print 'c1';
+  .return;
+  .print 'c2';
 }
 
-a;
+.a;

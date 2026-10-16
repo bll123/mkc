@@ -1,19 +1,19 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
-set fff "111";
-set ddd '222';
-set iii '333';
-set aaa '444';
-set ggg 555;
-set bbb 7;
-set hhh 'abc';
-set ccc 'def';
-set ccc 'ghi';
+.set fff "111";
+.set ddd '222';
+.set iii '333';
+.set aaa '444';
+.set ggg 555;
+.set bbb 7;
+.set hhh 'abc';
+.set ccc 'def';
+.set ccc 'ghi';
 # other valid variable names
-set v-1 'a';
-set v_2 'b';
+.set v-1 'a';
+.set v_2 'b';
 # set a variable to another variable.
 # check for memory issues.
-set AAA ${fff};
+.set AAA ${fff};
 
-mkcdebug printvar test;
+.mkcdebug printvar test;

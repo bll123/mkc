@@ -31,7 +31,7 @@
 static void mkc_os_win_create_cmd (char *buff, size_t sz, const char *targv []);
 
 pid_t
-os_process_start (const char *targv[], int flags, char *outfname)
+os_process_start (const char *targv[], int flags, const char *outfname)
 {
   pid_t               pid;
   STARTUPINFOW        si;

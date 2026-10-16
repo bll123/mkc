@@ -1,19 +1,19 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
-project mkctest;
+.project mkctest;
 
-check_function malloc;
-check_function fstat {
-  header sys/stat.h;
+.check_function malloc;
+.check_function fstat {
+  .header sys/stat.h;
 }
-check_function sqrt {
-  header math.h;
-  library_flags '-lm';
+.check_function sqrt {
+  .header math.h;
+  .library_flags '-lm';
 }
-check_function other;
+.check_function other;
 
-configuration_file {
-  method manual;
-  input 'tests/data/302-stmt-configure-manual.h';
-  output 'tests/tmp/302-stmt-configure-manual.h';
+.configuration_file {
+  .method manual;
+  .input 'tests/data/302-stmt-configure-manual.h';
+  .output 'tests/tmp/302-stmt-configure-manual.h';
 }

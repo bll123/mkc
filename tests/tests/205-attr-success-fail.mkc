@@ -2,19 +2,19 @@
 
 # checks the on_success/fail attribute
 
-check_size unknown_t {
-  on_success {
-    print '  fail a';
+.check_size unknown_t {
+  .on_success {
+    .print '  fail a';
   }
-  on_failure {
-    print '  ok a';
+  .on_failure {
+    .print '  ok a';
   }
 }
-check_size int {
-  on_success {
-    print '  ok b';
+.check_size int {
+  .on_success {
+    .print '  ok b';
   }
-  on_failure {
-    print '  fail b';
+  .on_failure {
+    .print '  fail b';
   }
 }

@@ -31,16 +31,17 @@ enum {
   MKC_LOG_VAR           = (1 << 10),
   MKC_LOG_TARGET        = (1 << 11),
   MKC_LOG_NORMAL        = (
-                         MKC_LOG_CACHE |
-                         MKC_LOG_CHECK |
-                         MKC_LOG_ERROR |
-                         MKC_LOG_GENERAL |
-                         MKC_LOG_TARGET |
-                         MKC_LOG_STATISTICS
-                         ),
+                          MKC_LOG_CACHE |
+                          MKC_LOG_CHECK |
+                          MKC_LOG_ERROR |
+                          MKC_LOG_GENERAL |
+                          MKC_LOG_TARGET |
+                          MKC_LOG_STATISTICS
+                          ),
   MKC_LOG_ALL           = (~ 0),
 };
 
+/* verbosity levels */
 typedef enum {
   MKC_V_QUIET     = 0,
   MKC_V_BASIC     = 1,
@@ -48,8 +49,9 @@ typedef enum {
   MKC_V_CACHED    = 2,
   MKC_V_INFO      = 3,
   MKC_V_OUTPUT    = 4,
-  MKC_V_TMI       = 5,    // too much information, always last - 1
-  MKC_V_WTMI      = 6,    // way too much information, always last
+  MKC_V_MORE_INFO = 5,
+  MKC_V_TMI       = 6,    // too much information, always last - 1
+  MKC_V_WTMI      = 7,    // way too much information, always last
 } log_verbose_t;
 
 typedef struct mkc_log_t mkc_log_t;

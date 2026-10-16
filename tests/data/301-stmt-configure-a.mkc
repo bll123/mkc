@@ -1,5 +1,5 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
-project mkctest;
+.project mkctest;
 
-include 'tests/data/301-stmt-configure-b.mkc';
+.include 'tests/data/301-stmt-configure-b.mkc';

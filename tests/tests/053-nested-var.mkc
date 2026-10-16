@@ -1,14 +1,14 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
-set a [ 1 ];
-set b [ 2 ];
-set c [[ 'x' 3 ]];
-set d [[ 'w' 4 ]];
-set e [ ${a} ${b} ];
-set f [ ${c} ${d} ];
-set g [ [ 5 ] [ 6 ] ];
-set h [[ 'k' [ 7 ] 'l' [ 8 ] ]];
-set i [ [[ 's' 9 ]] [[ 't' 10 ]] ];
-set j [[ 'm' [[ 'u' 11 ]] 'n' [[ 'v' 12 ]] ]];
+.set a [ 1 ];
+.set b [ 2 ];
+.set c [[ 'x' 3 ]];
+.set d [[ 'w' 4 ]];
+.set e [ ${a} ${b} ];
+.set f [ ${c} ${d} ];
+.set g [ [ 5 ] [ 6 ] ];
+.set h [[ 'k' [ 7 ] 'l' [ 8 ] ]];
+.set i [ [[ 's' 9 ]] [[ 't' 10 ]] ];
+.set j [[ 'm' [[ 'u' 11 ]] 'n' [[ 'v' 12 ]] ]];
 
-mkcdebug printvar test;
+.mkcdebug printvar test;

@@ -5,40 +5,40 @@
 # not testing regular expressions, testing if the operator works
 
 # eq~
-if ('a' eq~ 'a') {
-  print '  ok a';
-} else {
-  print '  fail a';
+.if ('a' eq~ 'a') {
+  .print '  ok a';
+} .else {
+  .print '  fail a';
 }
 # re-use same pattern
-if ('b' eq~ 'a') {
-  print '  fail b1';
-} else {
-  print '  ok b1';
+.if ('b' eq~ 'a') {
+  .print '  fail b1';
+} .else {
+  .print '  ok b1';
 }
-if ('b' eq~ '.') {
-  print '  ok b2';
-} else {
-  print '  fail b2';
+.if ('b' eq~ '.') {
+  .print '  ok b2';
+} .else {
+  .print '  fail b2';
 }
-if ('c' eq~ '[abc]') {
-  print '  ok c';
-} else {
-  print '  fail c';
+.if ('c' eq~ '[abc]') {
+  .print '  ok c';
+} .else {
+  .print '  fail c';
 }
 
-if ('d' ne~ 'd') {
-  print '  fail d';
-} else {
-  print '  ok d';
+.if ('d' ne~ 'd') {
+  .print '  fail d';
+} .else {
+  .print '  ok d';
 }
-if ('e' ne~ '.') {
-  print '  fail e';
-} else {
-  print '  ok e';
+.if ('e' ne~ '.') {
+  .print '  fail e';
+} .else {
+  .print '  ok e';
 }
-if ('f' ne~ '[def]') {
-  print '  fail f';
-} else {
-  print '  ok f';
+.if ('f' ne~ '[def]') {
+  .print '  fail f';
+} .else {
+  .print '  ok f';
 }

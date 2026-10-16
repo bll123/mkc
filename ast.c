@@ -311,7 +311,7 @@ ast_start (astmain_t *astmain)
   astmain->rdepth = 0;
   astmain->nodecount = 0;
   ast_process (astmain, astmain->mainnode, &ifcond, &stmtcontrol, &funcret, 0);
-  process_save_cache (astmain->process);
+  process_save_cache (astmain->process, NULL, MKC_V_WRITE_NO_TS);
   return mkc_error_value (astmain->mkcerr);
 }
 
@@ -1260,7 +1260,7 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
         mkc_log_loc (astmain->log, MKC_LOG_AST,
             astnode->lineno, astnode->colno, -1,
             "%*s%s\n", astmain->depth * 2, " ",
-            value_to_str (value, tbuff, MKC_PATH_MAX, 0, false));
+            value_to_str (value, tbuff, MKC_PATH_MAX, 0, MKC_V_WRITE_ALL));
         free (tbuff);
       }
 
@@ -1339,7 +1339,7 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
     /* statements */
 
     case MKC_T_STMT_AUTOBUILD: {
-      process_save_cache (astmain->process);
+      process_save_cache (astmain->process, NULL, MKC_V_WRITE_NO_TS);
       process_stmt_autobuild (astmain->process);
       break;
     }
@@ -1351,7 +1351,7 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
       if (mkc_error_chk_err (astmain->mkcerr)) {
         break;
       }
-      process_save_cache (astmain->process);
+      process_save_cache (astmain->process, NULL, MKC_V_WRITE_NO_TS);
       process_stmt_build (astmain->process, val);
       break;
     }
@@ -1532,7 +1532,11 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
       /* the list is a list of pointers to astnode_t */
       fidx = list_find (astmain->funclist, &func);
       if (fidx == MKC_LIST_NOTFOUND) {
-        mkc_error_set (astmain->mkcerr, MKC_ERR_FUNCTION_NOT_FOUND, 0, NULL);
+        value_t   * tvalue;
+
+        tvalue = ast_get_value (astmain, tfunc.stmt_function.nm);
+        mkc_error_set (astmain->mkcerr, MKC_ERR_FUNCTION_NOT_FOUND, 0,
+            tvalue == NULL ? NULL : tvalue->sval);
         break;
       }
 
@@ -1757,7 +1761,7 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
           break;
         }
         case MKC_T_ATTR_RUN_COMMAND: {
-          process_attr_run_command (astmain->process, val);
+          process_attr_command (astmain->process, val);
           break;
         }
         case MKC_T_ATTR_SOURCE: {

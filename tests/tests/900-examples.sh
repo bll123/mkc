@@ -49,13 +49,15 @@ chk900() {
 
 for e in examples/*; do
   cd ${e}
+
+  enm=`basename ${e}`
+
   rc=$?
   if [ $rc -ne 0 ]]; then
     echo "   fail: test: ${enm} (chdir) $tnm"
+    cd ${cwd}
     exit $rc
   fi
-
-  enm=`basename ${e}`
 
   chk900 '--no-cache'
   chk900

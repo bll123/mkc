@@ -3,54 +3,54 @@
 
 # windows has '__max' defined, unix-like systems have 'MAX' in sys/param.h
 # these are both macros
-if (${MKC_SYS_WINDOWS}) {
-  check_define __max {
-    name _def_max;
+.if (${MKC_SYS_WINDOWS}) {
+  .check_define __max {
+    .name _def_max;
   }
-} else {
-  check_define MAX {
-    header sys/param.h;
-    name _def_max;
-  }
-}
-
-check_define EPERM {
-  header errno.h;
-  on_success {
-    print '  ok a';
-  }
-  on_failure {
-    print '  fail a';
+} .else {
+  .check_define MAX {
+    .header sys/param.h;
+    .name _def_max;
   }
 }
 
-check_define UNKNOWN {
-  on_success {
-    print '  fail b';
+.check_define EPERM {
+  .header errno.h;
+  .on_success {
+    .print '  ok a';
   }
-  on_failure {
-    print '  ok b';
+  .on_failure {
+    .print '  fail a';
   }
 }
 
-check_define ABC {
-  compiler_flags '-DABC="hello world"';
+.check_define UNKNOWN {
+  .on_success {
+    .print '  fail b';
+  }
+  .on_failure {
+    .print '  ok b';
+  }
 }
 
-if (${_def_max} == 1) {
-  print '  ok max';
-} else {
-  print '  fail max';
+.check_define ABC {
+  .compiler_flags '-DABC="hello world"';
 }
 
-if (${_define_EPERM} == 1) {
-  print '  ok EPERM';
-} else {
-  print '  fail eperm';
+.if (${_def_max} == 1) {
+  .print '  ok max';
+} .else {
+  .print '  fail max';
 }
 
-if (${_define_ABC} == 1) {
-  print '  ok ABC';
-} else {
-  print '  fail ABC';
+.if (${_define_EPERM} == 1) {
+  .print '  ok EPERM';
+} .else {
+  .print '  fail eperm';
+}
+
+.if (${_define_ABC} == 1) {
+  .print '  ok ABC';
+} .else {
+  .print '  fail ABC';
 }

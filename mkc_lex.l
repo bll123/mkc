@@ -131,85 +131,85 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
     return T_SEMICOLON;
   }
 
-"true"|"TRUE"     { return T_VAL_TRUE; }
-"false"|"FALSE"   { return T_VAL_FALSE; }
-"mkcbootstrap"    { return T_VAL_BOOTSTRAP; }
+".true"|".TRUE"   { return T_VAL_TRUE; }
+".false"|".FALSE" { return T_VAL_FALSE; }
+".mkcbootstrap"   { return T_VAL_BOOTSTRAP; }
 
-"else"        { return T_STMT_ELSE; }
-"exit"        { return T_STMT_EXIT; }
-"foreach"     { return T_STMT_FOREACH; }
-"function"    { return T_STMT_FUNCTION; }
-"if"          { return T_STMT_IF; }
-"print"       { return T_STMT_PRINT; }
-"profile"     { return T_STMT_PROFILE; }
-"set"         { return T_STMT_SET; }
-"while"       { return T_STMT_WHILE; }
+".else"        { return T_STMT_ELSE; }
+".exit"        { return T_STMT_EXIT; }
+".foreach"     { return T_STMT_FOREACH; }
+".function"    { return T_STMT_FUNCTION; }
+".if"          { return T_STMT_IF; }
+".print"       { return T_STMT_PRINT; }
+".profile"     { return T_STMT_PROFILE; }
+".set"         { return T_STMT_SET; }
+".while"       { return T_STMT_WHILE; }
 
-"break"       { return T_LOOP_BREAK; }
-"continue"    { return T_LOOP_CONTINUE; }
+".break"       { return T_LOOP_BREAK; }
+".continue"    { return T_LOOP_CONTINUE; }
 
-"in"          { return T_IN; }
-"local"       { return T_LOCAL; }
-"range"       { return T_RANGE; }
-"return"      { return T_RETURN; }
+".in"          { return T_IN; }
+".local"       { return T_LOCAL; }
+".range"       { return T_RANGE; }
+".return"      { return T_RETURN; }
 
-"auto_build"                  { return T_STMT_AUTOBUILD; }
-"build"                       { return T_STMT_BUILD; }
-"check_include_compile"       { return T_STMT_CHK_INC_COMPILE; }
-"check_include_dependencies"  { return T_STMT_CHK_INC_DEPS; }
-"check_include_guards"        { return T_STMT_CHK_INC_GUARDS; }
-"configuration_file"          { return T_STMT_CONFIGURE; }
-"create_file"                 { return T_STMT_CREATE_FILE; }
-"define_executable"           { return T_STMT_EXECUTABLE; }
-"load_cache"                  { return T_STMT_LOADCACHE; }
-"mark_variable"               { return T_STMT_MARK_VAR; }
-"include"                     { return T_STMT_INCLUDE; }
-"mkcdebug"                    { return T_STMT_DEBUG; }
-"project"                     { return T_STMT_PROJECT; }
+".auto_build"                  { return T_STMT_AUTOBUILD; }
+".build"                       { return T_STMT_BUILD; }
+".check_include_compile"       { return T_STMT_CHK_INC_COMPILE; }
+".check_include_dependencies"  { return T_STMT_CHK_INC_DEPS; }
+".check_include_guards"        { return T_STMT_CHK_INC_GUARDS; }
+".configuration_file"          { return T_STMT_CONFIGURE; }
+".create_file"                 { return T_STMT_CREATE_FILE; }
+".executable"           { return T_STMT_EXECUTABLE; }
+".load_cache"                  { return T_STMT_LOADCACHE; }
+".mark"               { return T_STMT_MARK_VAR; }
+".include"                     { return T_STMT_INCLUDE; }
+".mkcdebug"                    { return T_STMT_DEBUG; }
+".project"                     { return T_STMT_PROJECT; }
 
-"check_arg_count"           { return T_CHK_ARG_COUNT; }
-"check_compile_flag"        { return T_CHK_COMP_FLAG; }
-"check_constant"            { return T_CHK_CONST; }
-"check_define"              { return T_CHK_DEFINE; }
-"check_function"            { return T_CHK_FUNCTION; }
-"check_header"              { return T_CHK_HEADER; }
-"check_link_flag"           { return T_CHK_LINK_FLAG; }
-"check_package"             { return T_CHK_PACKAGE; }
-"check_size"                { return T_CHK_SIZE; }
-"check_struct_member"       { return T_CHK_STRUCT_MEMBER; }
-"check_type"                { return T_CHK_TYPE; }
-"check_shell_extract"       { return T_CHK_SHELL_EXTRACT; }
+".check_arg_count"           { return T_CHK_ARG_COUNT; }
+".check_compile_flag"        { return T_CHK_COMP_FLAG; }
+".check_constant"            { return T_CHK_CONST; }
+".check_define"              { return T_CHK_DEFINE; }
+".check_function"            { return T_CHK_FUNCTION; }
+".check_header"              { return T_CHK_HEADER; }
+".check_link_flag"           { return T_CHK_LINK_FLAG; }
+".check_package"             { return T_CHK_PACKAGE; }
+".check_size"                { return T_CHK_SIZE; }
+".check_struct_member"       { return T_CHK_STRUCT_MEMBER; }
+".check_type"                { return T_CHK_TYPE; }
+".check_shell_extract"       { return T_CHK_SHELL_EXTRACT; }
 
-"add_compile_flag"          { return T_ADD_COMP_FLAG; }
-"add_library"               { return T_ADD_LIBRARY; }
-"add_link_flag"             { return T_ADD_LINK_FLAG; }
+".add_compile_flag"          { return T_ADD_COMP_FLAG; }
+".add_library"               { return T_ADD_LIBRARY; }
+".add_link_flag"             { return T_ADD_LINK_FLAG; }
 
-"alternate"                 { return T_ATTR_ALTERNATE; }
-"compiler"                  { return T_ATTR_COMPILER; }
-"compiler_flags"            { return T_ATTR_COMP_FLAGS; }
-"define_zero"               { return T_ATTR_DEFINE_ZERO; }
-"on_failure"                { return T_ATTR_FAILURE; }
-"header"                    { return T_ATTR_HEADER; }
-"input"                     { return T_ATTR_INPUT; }
-"library_flags"             { return T_ATTR_LIB_FLAGS; }
-"library_version"           { return T_ATTR_LIBRARY_VERSION; }
-"link_flags"                { return T_ATTR_LINK_FLAGS; }
-"match_pattern"             { return T_ATTR_MATCH; }
-"method"                    { return T_ATTR_METHOD; }
-"name"                      { return T_ATTR_NAME; }
-"negate"                    { return T_ATTR_NEGATE; }
-"output"                    { return T_ATTR_OUTPUT; }
-"path"                      { return T_ATTR_PATH; }
-"replace"                   { return T_ATTR_REPLACE; }
-"run_command" {
+".alternate"                 { return T_ATTR_ALTERNATE; }
+".compiler"                  { return T_ATTR_COMPILER; }
+".compiler_flags"            { return T_ATTR_COMP_FLAGS; }
+".define_zero"               { return T_ATTR_DEFINE_ZERO; }
+".on_failure"                { return T_ATTR_FAILURE; }
+".header"                    { return T_ATTR_HEADER; }
+".input"                     { return T_ATTR_INPUT; }
+".library_flags"             { return T_ATTR_LIB_FLAGS; }
+".library_version"           { return T_ATTR_LIBRARY_VERSION; }
+".link_flags"                { return T_ATTR_LINK_FLAGS; }
+".match"             { return T_ATTR_MATCH; }
+".method"                    { return T_ATTR_METHOD; }
+".name"                      { return T_ATTR_NAME; }
+".negate"                    { return T_ATTR_NEGATE; }
+".output"                    { return T_ATTR_OUTPUT; }
+".path"                      { return T_ATTR_PATH; }
+".replace"                   { return T_ATTR_REPLACE; }
+".command" {
     BEGIN(RUN_COMMAND);
     return T_ATTR_RUN_COMMAND;
   }
-"on_success"                { return T_ATTR_SUCCESS; }
-"vcontext"                  { return T_ATTR_VCONTEXT; }
-"version"                   { return T_ATTR_VERSION; }
-"voutput"                   { return T_ATTR_VOUTPUT; }
-"with_source"               { return T_ATTR_SOURCE; }
+".on_success"                { return T_ATTR_SUCCESS; }
+".vcontext"                  { return T_ATTR_VCONTEXT; }
+".version"                   { return T_ATTR_VERSION; }
+".voutput"                   { return T_ATTR_VOUTPUT; }
+".source"                    { return T_ATTR_SOURCE; }
 
 ({DIGIT}+) {
     yylval->sval = strdup (yytext);

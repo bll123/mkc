@@ -1,56 +1,56 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
-project mkctest {
-  compiler c;
+.project mkctest {
+  .compiler c;
 }
 
-check_compile_flag    '-Wunreachable-code';
+.check_compile_flag    '-Wunreachable-code';
 
-check_compile_flag    '-Wno-unreachable-code' { negate; }
+.check_compile_flag    '-Wno-unreachable-code' { .negate; }
 
 # unknown flag
-check_compile_flag    '-Wsomething-bad';
+.check_compile_flag    '-Wsomething-bad';
 
 # unknown flag, negated, with the negate flag
-check_compile_flag    '-Wno-stuff' { negate; }
+.check_compile_flag    '-Wno-stuff' { .negate; }
 
 # make sure a list works
-check_compile_flag    [ '-Iabc' '-Idef' ];
+.check_compile_flag    [ '-Iabc' '-Idef' ];
 
-check_compile_flag    '-Werror' {
-  name HAVE_CF_ERROR;
+.check_compile_flag    '-Werror' {
+  .name HAVE_CF_ERROR;
 }
-if (${HAVE_CF_ERROR}) {
-  print '  ok n';
-} else {
-  print '  fail n';
+.if (${HAVE_CF_ERROR}) {
+  .print '  ok n';
+} .else {
+  .print '  fail n';
 }
-if (is_defined (cf_error)) {
-  print '  fail';
+.if (is_defined (cf_error)) {
+  .print '  fail';
 }
 
-profile default {
-  compiler c;
-  check_compile_flag  '-g' {
-    name C_CF_G;
+.profile default {
+  .compiler c;
+  .check_compile_flag  '-g' {
+    .name C_CF_G;
   }
 }
 
-if (${C_CF_G}) {
-  print '  ok c';
-} else {
-  print '  fail c';
+.if (${C_CF_G}) {
+  .print '  ok c';
+} .else {
+  .print '  fail c';
 }
 
-if (! ${cf_no_stuff}) {
-  print '  ok d';
-} else {
-  print '  fail d';
+.if (! ${cf_no_stuff}) {
+  .print '  ok d';
+} .else {
+  .print '  fail d';
 }
-if (! ${cf_something_bad}) {
-  print '  ok e';
-} else {
-  print '  fail e';
+.if (! ${cf_something_bad}) {
+  .print '  ok e';
+} .else {
+  .print '  fail e';
 }
 
-mkcdebug printvar test;
+.mkcdebug printvar test;

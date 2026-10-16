@@ -1024,7 +1024,7 @@ sv_set (scopedvar_t *sv, sv_type_t svtype,
   if (mkc_msg_check_level (MKC_V_TMI)) {
     char    tmp [80];
 
-    value_to_str (value, tmp, sizeof (tmp), 0, false);
+    value_to_str (value, tmp, sizeof (tmp), 0, MKC_V_WRITE_ALL);
     mkc_message (MKC_V_TMI, "set %s %s (%s): %s\n",
         vname, tag == NULL ? "" : tag, svtypenames [svtype], tmp);
   }
@@ -1481,7 +1481,7 @@ sv_substitute (scopedvar_t *sv, const char *data,
         value = sv_get_value (sv, SV_T_SEARCH, tstr, NULL);
 //fprintf (stderr, "%*svalue-null? %d\n", depth * 2, "", value == NULL ? 1 : 0);
         if (value != NULL) {
-          value_to_str (value, tbuff, sizeof (tbuff), 0, false);
+          value_to_str (value, tbuff, sizeof (tbuff), 0, MKC_V_WRITE_ALL);
           tval = tbuff;
         }
 //fprintf (stderr, "%*s got %s\n", depth * 2, "", tval);
@@ -1718,7 +1718,7 @@ sv_get_variable_str (scopedvar_t *sv, value_t *value,
     char    dbuff [MKC_PATH_MAX];
 
     mkc_log (sv->log, MKC_LOG_PROCESS, "  scope-get-var-str: %s\n",
-        value_to_str (tvalue, dbuff, sizeof (dbuff), 0, false));
+        value_to_str (tvalue, dbuff, sizeof (dbuff), 0, MKC_V_WRITE_ALL));
   }
 }
 

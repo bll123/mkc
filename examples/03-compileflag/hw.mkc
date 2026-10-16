@@ -1,13 +1,13 @@
 
-project hw {
-  compiler c;
+.project hw {
+  .compiler c;
 }
 
-add_compile_flag '-DHW_HELLO=1';
+.add_compile_flag '-DHW_HELLO=1';
 
-define_executable hw {
-  with_source hw.c;
-  compiler_flags '-DHW_WORLD=1';
+.executable hw {
+  .source hw.c;
+  .compiler_flags '-DHW_WORLD=1';
 }
 
-auto_build;
+.auto_build;

@@ -1,65 +1,65 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
-set fff "111";
-set ddd '222';
-set iii '333';
-set aaa '444';
-set ggg 555;
-set bbb 7;
-set hhh 'abc';
-set ccc 'def';
-set ccc 'ghi';
-set jjj '';
+.set fff "111";
+.set ddd '222';
+.set iii '333';
+.set aaa '444';
+.set ggg 555;
+.set bbb 7;
+.set hhh 'abc';
+.set ccc 'def';
+.set ccc 'ghi';
+.set jjj '';
 
-if (${aaa} eq '444') {
-  print '  ok aaa';
-} else {
-  print '  fail aaa';
+.if (${aaa} eq '444') {
+  .print '  ok aaa';
+} .else {
+  .print '  fail aaa';
 }
-if (${bbb} == 7) {
-  print '  ok bbb';
-} else {
-  print '  fail bbb';
+.if (${bbb} == 7) {
+  .print '  ok bbb';
+} .else {
+  .print '  fail bbb';
 }
-if (${ccc} eq 'ghi') {
-  print '  ok ccc';
-} else {
-  print '  fail ccc';
+.if (${ccc} eq 'ghi') {
+  .print '  ok ccc';
+} .else {
+  .print '  fail ccc';
 }
-if (${ddd} eq '222') {
-  print '  ok ddd';
-} else {
-  print '  fail ddd';
+.if (${ddd} eq '222') {
+  .print '  ok ddd';
+} .else {
+  .print '  fail ddd';
 }
-if (${fff} eq "111") {
-  print '  ok fff';
-} else {
-  print '  fail fff';
+.if (${fff} eq "111") {
+  .print '  ok fff';
+} .else {
+  .print '  fail fff';
 }
-if (${ggg} == 555) {
-  print '  ok ggg-n';
-} else {
-  print '  fail ggg-n';
+.if (${ggg} == 555) {
+  .print '  ok ggg-n';
+} .else {
+  .print '  fail ggg-n';
 }
-if (${hhh} eq 'abc') {
-  print '  ok hhh';
-} else {
-  print '  fail hhh';
+.if (${hhh} eq 'abc') {
+  .print '  ok hhh';
+} .else {
+  .print '  fail hhh';
 }
-if (${iii} eq '333') {
-  print '  ok iii';
-} else {
-  print '  fail iii';
+.if (${iii} eq '333') {
+  .print '  ok iii';
+} .else {
+  .print '  fail iii';
 }
-if (${jjj} eq '') {
-  print '  ok jjj';
-} else {
-  print '  fail jjj';
+.if (${jjj} eq '') {
+  .print '  ok jjj';
+} .else {
+  .print '  fail jjj';
 }
 
-set a ${aaa};
-if (${a} eq ${aaa}) {
-  print '  ok variable';
-} else {
-  print '  fail variable';
+.set a ${aaa};
+.if (${a} eq ${aaa}) {
+  .print '  ok variable';
+} .else {
+  .print '  fail variable';
 }

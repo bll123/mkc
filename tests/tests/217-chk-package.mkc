@@ -1,78 +1,78 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
-check_package unknown {
-  on_success {
-    print '  fail a';
+.check_package unknown {
+  .on_success {
+    .print '  fail a';
   }
-  on_failure {
-    print '  ok a';
+  .on_failure {
+    .print '  ok a';
   }
 }
-check_package zlib;
-check_package zlib {
-  name z;
-  on_success {
-    print '  ok b';
+.check_package zlib;
+.check_package zlib {
+  .name z;
+  .on_success {
+    .print '  ok b';
   }
-  on_failure {
-    print '  fail b';
+  .on_failure {
+    .print '  fail b';
   }
 }
 
-if (${_package_unknown} == 0) {
-  print '  ok u';
-} else {
-  print '  fail u';
+.if (${_package_unknown} == 0) {
+  .print '  ok u';
+} .else {
+  .print '  fail u';
 }
-if (! is_defined (unknown_COMPFLAGS)) {
-  print '  ok u';
-} else {
-  print '  fail u';
+.if (! is_defined (unknown_COMPFLAGS)) {
+  .print '  ok u';
+} .else {
+  .print '  fail u';
 }
-if (! is_defined (unknown_LIBS)) {
-  print '  ok u';
-} else {
-  print '  fail u';
-}
-
-if (${_package_zlib} == 1) {
-  print '  ok zlib';
-} else {
-  print '  fail zlib';
+.if (! is_defined (unknown_LIBS)) {
+  .print '  ok u';
+} .else {
+  .print '  fail u';
 }
 
-set a ${zlib_COMPFLAGS};
-set b ${zlib_LIBS};
+.if (${_package_zlib} == 1) {
+  .print '  ok zlib';
+} .else {
+  .print '  fail zlib';
+}
+
+.set a ${zlib_COMPFLAGS};
+.set b ${zlib_LIBS};
 # zlib_CFLAGS [ ]
 # zlib_LIBS [ -lz ]
-if (is_list (a)) {
-  print '  ok zlib';
-} else {
-  print '  fail zlib';
+.if (is_list (a)) {
+  .print '  ok zlib';
+} .else {
+  .print '  fail zlib';
 }
-if (is_list (b)) {
-  print '  ok zlib';
-} else {
-  print '  fail zlib';
-}
-
-if (${_package_z} == 1) {
-  print '  ok z';
-} else {
-  print '  fail z';
+.if (is_list (b)) {
+  .print '  ok zlib';
+} .else {
+  .print '  fail zlib';
 }
 
-set a ${z_COMPFLAGS};
-set b ${z_LIBS};
+.if (${_package_z} == 1) {
+  .print '  ok z';
+} .else {
+  .print '  fail z';
+}
+
+.set a ${z_COMPFLAGS};
+.set b ${z_LIBS};
 # z_CFLAGS [ ]
 # z_LIBS [ -lz ]
-if (is_list (a)) {
-  print '  ok z';
-} else {
-  print '  fail z';
+.if (is_list (a)) {
+  .print '  ok z';
+} .else {
+  .print '  fail z';
 }
-if (is_list (b)) {
-  print '  ok z';
-} else {
-  print '  fail z';
+.if (is_list (b)) {
+  .print '  ok z';
+} .else {
+  .print '  fail z';
 }

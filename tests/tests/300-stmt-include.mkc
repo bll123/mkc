@@ -3,24 +3,24 @@
 # the statements before, included, and after the include statement
 # should all work.
 
-set a 5;
-include tests/data/300-stmt-include.mkc;
-set b 6;
+.set a 5;
+.include tests/data/300-stmt-include.mkc;
+.set b 6;
 
-if (${a} == 5) {
-  print '  ok 5';
-} else {
-  print '  fail 5';
+.if (${a} == 5) {
+  .print '  ok 5';
+} .else {
+  .print '  fail 5';
 }
 
-if (${b} == 6) {
-  print '  ok 6';
-} else {
-  print '  fail 6';
+.if (${b} == 6) {
+  .print '  ok 6';
+} .else {
+  .print '  fail 6';
 }
 
-if (${c} == 7) {
-  print '  ok 7';
-} else {
-  print '  fail 7';
+.if (${c} == 7) {
+  .print '  ok 7';
+} .else {
+  .print '  fail 7';
 }

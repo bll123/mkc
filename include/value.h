@@ -51,6 +51,11 @@ typedef enum {
   MKC_VOUT_MAX,
 } value_out_t;
 
+typedef enum {
+  MKC_V_WRITE_ALL,
+  MKC_V_WRITE_NO_TS,
+} value_write_t;
+
 typedef struct range_t {
   int32_t     beg;
   int32_t     end;
@@ -77,7 +82,7 @@ typedef struct value_t {
 value_t * value_alloc (mkc_error_t *mkcerr);
 void value_init (value_t *value);
 void value_free (void *value);
-const char *value_to_str (value_t *value, char *buff, size_t sz, int depth, bool cachewrite);
+const char *value_to_str (value_t *value, char *buff, size_t sz, int depth, value_write_t writets);
 void value_range_init (value_t *value, int32_t beg, int32_t end, int32_t incr);
 void value_range_iter_start (value_t *value, listidx_t *iteridx);
 int value_range_iter_next (value_t *value, value_t *rval, listidx_t *iteridx);

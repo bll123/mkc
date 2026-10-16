@@ -2,60 +2,60 @@
 
 # checks the header attribute, uses check_size to test it.
 
-check_size 'DIR *' {
-  name chka;
-  header dirent.h;
+.check_size 'DIR *' {
+  .name chka;
+  .header dirent.h;
 }
 
-check_size 'DIR *' {
-  name chkb;
-  header fcntl.h;
+.check_size 'DIR *' {
+  .name chkb;
+  .header fcntl.h;
 }
 
-check_size 'DIR *' {
-  name chkc;
-  header fcntl.h dirent.h;
+.check_size 'DIR *' {
+  .name chkc;
+  .header fcntl.h dirent.h;
 }
 
-check_size 'DIR *' {
-  name chkd;
+.check_size 'DIR *' {
+  .name chkd;
   # all headers should be processed
   # put these out of order for the test
-  header dirent.h;
-  header fcntl.h;
+  .header dirent.h;
+  .header fcntl.h;
 }
 
-check_size 'DIR *' {
-  name  chke;
-  header 'dirent.h';
+.check_size 'DIR *' {
+  .name  chke;
+  .header 'dirent.h';
 }
 
-if (${chka} != 0) {
-  print '  ok chka';
-} else {
-  print '  fail chka';
+.if (${chka} != 0) {
+  .print '  ok chka';
+} .else {
+  .print '  fail chka';
 }
 
-if (${chkb} == 0) {
-  print '  ok chkb';
-} else {
-  print '  fail chkb';
+.if (${chkb} == 0) {
+  .print '  ok chkb';
+} .else {
+  .print '  fail chkb';
 }
 
-if (${chkc} != 0) {
-  print '  ok chkc';
-} else {
-  print '  fail chkc';
+.if (${chkc} != 0) {
+  .print '  ok chkc';
+} .else {
+  .print '  fail chkc';
 }
 
-if (${chkd} != 0) {
-  print '  ok chkd';
-} else {
-  print '  fail chkd';
+.if (${chkd} != 0) {
+  .print '  ok chkd';
+} .else {
+  .print '  fail chkd';
 }
 
-if (${chke} != 0) {
-  print '  ok chke';
-} else {
-  print '  fail chke';
+.if (${chke} != 0) {
+  .print '  ok chke';
+} .else {
+  .print '  fail chke';
 }

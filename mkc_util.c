@@ -63,6 +63,7 @@ mkc_clean_mkcfiles (const char *project, char *tbuff, size_t tsz,
   path_build (MKC_PATH_MKCF_OBJECTS, tbuff, tsz, NULL, mkcerr);
   dirop_delete (tbuff, DIROP_ALL, mkcerr);
   path_build (MKC_PATH_MKCF_STAGE, tbuff, tsz, NULL, mkcerr);
+fprintf (stderr, "clean: %s\n", tbuff);
   dirop_delete (tbuff, DIROP_ALL, mkcerr);
 }
 

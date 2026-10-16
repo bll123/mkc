@@ -1,37 +1,37 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
 
-check_constant EPERM {
-  header errno.h;
-  on_success {
-    print '  ok a';
+.check_constant EPERM {
+  .header errno.h;
+  .on_success {
+    .print '  ok a';
   }
-  on_failure {
-    print '  fail a';
-  }
-}
-
-check_constant O_RDONLY {
-  header fcntl.h;
-}
-
-check_constant UNKNOWN {
-  on_success {
-    print '  fail b';
-  }
-  on_failure {
-    print '  ok b';
+  .on_failure {
+    .print '  fail a';
   }
 }
 
-if (${_constant_EPERM} == 1) {
-  print '  ok';
-} else {
-  print '  fail eperm';
+.check_constant O_RDONLY {
+  .header fcntl.h;
 }
 
-if (${_constant_O_RDONLY} == 1) {
-  print '  ok';
-} else {
-  print '  fail o_rdonly';
+.check_constant UNKNOWN {
+  .on_success {
+    .print '  fail b';
+  }
+  .on_failure {
+    .print '  ok b';
+  }
+}
+
+.if (${_constant_EPERM} == 1) {
+  .print '  ok';
+} .else {
+  .print '  fail eperm';
+}
+
+.if (${_constant_O_RDONLY} == 1) {
+  .print '  ok';
+} .else {
+  .print '  fail o_rdonly';
 }

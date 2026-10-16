@@ -13,6 +13,7 @@
 #include "mkc_log.h"
 #include "mkc_nodiscard.h"
 #include "mkc_option.h"
+#include "value.h"
 #include "var.h"
 #include "scopedvar.h"
 
@@ -67,7 +68,7 @@ void process_attr_link_flags (process_t *process, value_t *value);
 void process_attr_lib_flags (process_t *process, value_t *value);
 void process_attr_path (process_t *process, value_t *path);
 void process_attr_replace (process_t *process, value_t *str, value_t *name);
-void process_attr_run_command (process_t *process, value_t *str);
+void process_attr_command (process_t *process, value_t *str);
 void process_attr_source (process_t *process, value_t *value);
 
 int32_t process_check (process_t *process, value_t *valtype, astnode_token_t asttype);
@@ -77,7 +78,7 @@ int32_t process_chk_shell_extract (process_t *process, value_t *valpath);
 
 void process_local_set (process_t *process, value_t *nmval, value_t *argval);
 int32_t process_get_loop_limit (process_t *process);
-void process_save_cache (process_t *process);
+void process_save_cache (process_t *process, const char *outfile, value_write_t flag);
 bool process_profile_is_current (process_t *process, value_t *valnm);
 
 #if defined (__cplusplus) || defined (c_plusplus)

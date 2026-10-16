@@ -1,11 +1,11 @@
 
-project hw {
-  compiler c;
+.project hw {
+  .compiler c;
 }
 
-define_executable hw {
-  with_source hw.c;
-  library_flags '-lm';
+.executable hw {
+  .source hw.c;
+  .library_flags '-lm';
 }
 
-auto_build;
+.auto_build;

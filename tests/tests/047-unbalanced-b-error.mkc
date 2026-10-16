@@ -1,6 +1,6 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
-set aaa 1;
-set bbb 2;
+.set aaa 1;
+.set bbb 2;
 
-set a ${${aaa${bbb}};
+.set a ${${aaa${bbb}};

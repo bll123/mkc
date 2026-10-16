@@ -47,7 +47,7 @@ static int mkc_os_process_wait (int wstatus);
 
 /* handles redirection to a file */
 pid_t
-os_process_start (const char *targv[], int flags, char *outfname)
+os_process_start (const char *targv[], int flags, const char *outfname)
 {
   pid_t       pid;
   pid_t       tpid;

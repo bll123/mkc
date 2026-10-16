@@ -25,7 +25,7 @@
 #
 
 {
-  function check_libintl {
+  .function check_libintl {
     # libintl has various macros to prevent linking issues.
     # These make it difficult to find a function, as the
     # functions may or may not have the 'libintl_' prefix.
@@ -35,126 +35,126 @@
     # will succeed without linking a library even though the library is needed.
     # Therefore, check for 'libintl_bindtextdomain' first.
 
-    if (! is_defined (MKC_COMMON_INCLUDE)) {
+    .if (! is_defined (MKC_COMMON_INCLUDE)) {
       # these need to be set to something
-      set MKC_COMMON_INCLUDE '';
-      set MKC_COMMON_LIB '';
+      .set MKC_COMMON_INCLUDE '';
+      .set MKC_COMMON_LIB '';
     }
 
-    set _package_libintl false;
-    set libintl_LIBS [];
+    .set _package_libintl .false;
+    .set libintl_LIBS [];
 
-    set local mkc_libintl_rc false;
-    set local mkc_libintl_prefixed false;
-    set local mkc_libintl_intl '';
-    set local mkc_libintl_intl_iconv '';
+    .set .local mkc_libintl_rc .false;
+    .set .local mkc_libintl_prefixed .false;
+    .set .local mkc_libintl_intl '';
+    .set .local mkc_libintl_intl_iconv '';
 
-    check_function libintl_bindtextdomain {
-      alternate {
-        header libintl.h;
-        compiler_flags ${MKC_COMMON_INCLUDE};
-        link_flags ${MKC_COMMON_LIB};
+    .check_function libintl_bindtextdomain {
+      .alternate {
+        .header libintl.h;
+        .compiler_flags ${MKC_COMMON_INCLUDE};
+        .link_flags ${MKC_COMMON_LIB};
       }
-      alternate {
-        name mkc_libintl_intl;
-        header libintl.h;
-        compiler_flags ${MKC_COMMON_INCLUDE};
-        link_flags ${MKC_COMMON_LIB};
-        library_flags '-lintl';
+      .alternate {
+        .name mkc_libintl_intl;
+        .header libintl.h;
+        .compiler_flags ${MKC_COMMON_INCLUDE};
+        .link_flags ${MKC_COMMON_LIB};
+        .library_flags '-lintl';
       }
-      alternate {
-        name mkc_libintl_intl_iconv;
-        header libintl.h;
-        compiler_flags ${MKC_COMMON_INCLUDE};
-        link_flags ${MKC_COMMON_LIB};
-        library_flags '-lintl' '-liconv';
+      .alternate {
+        .name mkc_libintl_intl_iconv;
+        .header libintl.h;
+        .compiler_flags ${MKC_COMMON_INCLUDE};
+        .link_flags ${MKC_COMMON_LIB};
+        .library_flags '-lintl' '-liconv';
       }
-      on_success {
-        set mkc_libintl_rc true;
-        set mkc_libintl_prefixed true;
+      .on_success {
+        .set mkc_libintl_rc true;
+        .set mkc_libintl_prefixed true;
       }
     }
 
     if (! ${mkc_libintl_rc}) {
-      check_function bindtextdomain {
-        alternate {
-          header libintl.h;
-          compiler_flags ${MKC_COMMON_INCLUDE};
-          library_flags ${MKC_COMMON_LIB};
+      .check_function bindtextdomain {
+        .alternate {
+          .header libintl.h;
+          .compiler_flags ${MKC_COMMON_INCLUDE};
+          .library_flags ${MKC_COMMON_LIB};
         }
-        alternate {
-          name mkc_libintl_intl;
-          header libintl.h;
-          compiler_flags ${MKC_COMMON_INCLUDE};
-          link_flags ${MKC_COMMON_LIB};
-          library_flags '-lintl';
+        .alternate {
+          .name mkc_libintl_intl;
+          .header libintl.h;
+          .compiler_flags ${MKC_COMMON_INCLUDE};
+          .link_flags ${MKC_COMMON_LIB};
+          .library_flags '-lintl';
         }
-        alternate {
-          name mkc_libintl_intl_iconv;
-          header libintl.h;
-          compiler_flags ${MKC_COMMON_INCLUDE};
-          link_flags ${MKC_COMMON_LIB};
-          library_flags '-lintl' '-liconv';
+        .alternate {
+          .name mkc_libintl_intl_iconv;
+          .header libintl.h;
+          .compiler_flags ${MKC_COMMON_INCLUDE};
+          .link_flags ${MKC_COMMON_LIB};
+          .library_flags '-lintl' '-liconv';
         }
-        on_success {
-          set mkc_libintl_rc true;
-          set mkc_libintl_prefixed false;
+        .on_success {
+          .set mkc_libintl_rc true;
+          .set mkc_libintl_prefixed .false;
         }
       }
     }
 
-    if (${mkc_libintl_rc}) {
-      set _package_libintl true;
+    .if (${mkc_libintl_rc}) {
+      .set _package_libintl true;
 
-      if (${mkc_libintl_intl} ne '') {
-        set libintl_LIBS [ '-lintl' ];
+      .if (${mkc_libintl_intl} ne '') {
+        .set libintl_LIBS [ '-lintl' ];
       }
-      if (${mkc_libintl_intl_iconv} ne '') {
-        set libintl_LIBS [ '-lintl' '-liconv' ];
+      .if (${mkc_libintl_intl_iconv} ne '') {
+        .set libintl_LIBS [ '-lintl' '-liconv' ];
       }
 
       # if one libintl function exists, presumably they all exist.
       # set the checks for a few of the common ones.
-      set _function_bindtextdomain true;
-      set _function_gettext true;
-      set _function_textdomain true;
-      set _header_libintl true;
-      mark_variable _header_libintl enable-output;
+      .set _function_bindtextdomain true;
+      .set _function_gettext true;
+      .set _function_textdomain true;
+      .set _header_libintl true;
+      .mark _header_libintl enable;
 
-      if (${mkc_libintl_prefixed}) {
-        check_function libintl_wbindtextdomain {
-          name _function_wbindtextdomain;
-          header libintl.h;
-          compiler_flags ${MKC_COMMON_INCLUDE};
-          link_flags ${MKC_COMMON_LIB};
-          library_flags ${libintl_LIBS};
+      .if (${mkc_libintl_prefixed}) {
+        .check_function libintl_wbindtextdomain {
+          .name _function_wbindtextdomain;
+          .header libintl.h;
+          .compiler_flags ${MKC_COMMON_INCLUDE};
+          .link_flags ${MKC_COMMON_LIB};
+          .library_flags ${libintl_LIBS};
         }
-      } else {
-        check_function wbindtextdomain {
-          header libintl.h;
-          compiler_flags ${MKC_COMMON_INCLUDE};
-          link_flags ${MKC_COMMON_LIB};
-          library_flags ${libintl_LIBS};
+      } .else {
+        .check_function wbindtextdomain {
+          .header libintl.h;
+          .compiler_flags ${MKC_COMMON_INCLUDE};
+          .link_flags ${MKC_COMMON_LIB};
+          .library_flags ${libintl_LIBS};
         }
       }
-    } else {
-      set _function_wbindtextdomain false;
-      set _function_bindtextdomain false;
-      set _function_gettext false;
-      set _function_textdomain false;
+    } .else {
+      .set _function_wbindtextdomain .false;
+      .set _function_bindtextdomain .false;
+      .set _function_gettext .false;
+      .set _function_textdomain .false;
     }
 
-    mark_variable _function_wbindtextdomain enable-output;
-    mark_variable _function_bindtextdomain enable-output;
-    mark_variable _function_gettext enable-output;
-    mark_variable _function_textdomain enable-output;
-    mark_variable _function_libintl_bindtextdomain disable-output;
+    .mark _function_wbindtextdomain enable;
+    .mark _function_bindtextdomain enable;
+    .mark _function_gettext enable;
+    .mark _function_textdomain enable;
+    .mark _function_libintl_bindtextdomain disable;
   }
 
-  profile mkc_test_libintl {
-    check_libintl;
-    mkcdebug printvar test;
-    exit 0;
+  .profile mkc_test_libintl {
+    .check_libintl;
+    .mkcdebug printvar test;
+    .exit 0;
   }
 
   check_libintl;

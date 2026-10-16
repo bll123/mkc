@@ -29,7 +29,6 @@
 #include "mkc_log.h"
 #include "mkc_nodiscard.h"
 #include "mkc_util.h"
-#include "mkc_util.h"
 #include "os_process.h"
 #include "pathutil.h"
 #include "scopedvar.h"
@@ -65,6 +64,7 @@ static void target_set_target_flags (target_t *target, const char *builditem, co
 static void target_append_flags (target_t *target, comp_flag_t ftype, value_t *value, chararr_t *flags, chararr_t *include_paths);
 static int64_t target_get_timestamp (target_t *target, const char *filepath);
 static void target_update_timestamp (target_t *target, const char *filepath);
+static int target_command (target_t *target, value_t *cmdlist);
 
 MKC_NODISCARD
 target_t *
@@ -699,6 +699,10 @@ target_build (target_t *target, list_t *blist)
   chararr_t     * linkflags;
   chararr_t     * libs;
 
+  source = tmppath_get (target->tmppath);
+  *source = '\0';
+  mkc_create_project_dir (source, MKC_PATH_MAX, target->mkcerr);
+
   topo = toposort_init (target->mkcerr);
 
   target_topo_add_items_deps (target, topo, blist, SV_T_BUILD_DATA);
@@ -714,8 +718,6 @@ target_build (target_t *target, list_t *blist)
 
   dep = tmppath_get (target->tmppath);
   *dep = '\0';
-  source = tmppath_get (target->tmppath);
-  *source = '\0';
 
   compflags = target_get_flags (target, MKC_C_COMPFLAGS, NULL);
   linkflags = target_get_flags (target, MKC_C_LINKFLAGS, NULL);
@@ -759,7 +761,6 @@ target_build (target_t *target, list_t *blist)
       case TGT_T_USER_LIBRARY: {
         break;
       }
-      case TGT_T_FILE:
       case TGT_T_USER_FILE: {
         buildtag = "create";
         break;
@@ -812,22 +813,23 @@ target_build (target_t *target, list_t *blist)
         tmp = strdup (dep);
         compile_append_object (target->compile, tmp);
       }
-#if 0
-      if ((ttgttype == TGT_T_SOURCE ||
-           ttgttype == TGT_T_USER_FILE) &&
-          (tgttype == TGT_T_OBJECT ||
-          tgttype == TGT_T_USER_OBJECT||
-          tgttype == TGT_T_USER_FILE)) {
-        stpecpy (source, source + MKC_PATH_MAX, dep);
-      }
-#endif
     }
 
     if (tgttype == TGT_T_USER_FILE) {
-//      list_t    * cmdlist;
-//      cmdlist = sv_get_value (target->sv, SV_T_BUILD_DATA, builditem, MKC_C_BVAR_COMMANDS);
-// ### get run-commands...
-//      target_run_command (target);
+      value_t   * cmdval;
+      list_t    * cmdlist;
+      listidx_t citeridx;
+      listidx_t cidx;
+
+      cmdval = sv_get_value (target->sv, SV_T_BUILD_DATA, builditem, MKC_C_BVAR_COMMANDS);
+      /* cmdval is a list of commands */
+      cmdlist = cmdval->list;
+
+      list_iter_start (cmdlist, &citeridx);
+      while ((cidx = list_iter_next (cmdlist, &citeridx)) != MKC_ITER_FINISH) {
+        cmdval = list_get_by_idx (cmdlist, cidx);
+        target_command (target, cmdval);
+      }
       target_update_timestamp (target, builditem);
     }
 
@@ -1105,3 +1107,65 @@ target_update_timestamp (target_t *target, const char *filepath)
   mkc_message (MKC_V_WTMI, "t: ts-upd: %s ts: %" PRId64 "\n", filepath, ts);
 }
 
+static int
+target_command (target_t *target, value_t *cmdlist)
+{
+  list_t      * clist;
+  listidx_t   citeridx;
+  listidx_t   cidx;
+  chararr_t   * cmds;
+  int         rc = MKC_ERR_FAILURE;
+  int         hasredirect = 0;
+  char        * outfile = NULL;
+  const char  ** targv;
+  char        * cmd;
+
+  if (cmdlist == NULL) {
+    return rc;
+  }
+  if (cmdlist->vtype != MKC_VT_LIST) {
+    return rc;
+  }
+
+  cmd = tmppath_get (target->tmppath);
+  *cmd = '\0';
+  clist = cmdlist->list;
+  cmds = chararr_init (target->mkcerr);
+  chararr_set_freeinternals (cmds);
+
+  /* each command is a list of strings */
+  list_iter_start (clist, &citeridx);
+  while ((cidx = list_iter_next (clist, &citeridx)) != MKC_ITER_FINISH) {
+    value_t   * cmdstr;
+
+    cmdstr = list_get_by_idx (clist, cidx);
+    sv_value_get_str (target->sv, cmdstr, cmd, MKC_PATH_MAX);
+
+    if (hasredirect > 0) {
+      ++hasredirect;
+      if (hasredirect == 2) {
+        outfile = strdup (cmd);
+      }
+    } else if (strcmp (cmd, ">") == 0) {
+      ++hasredirect;
+    } else {
+      chararr_append (cmds, strdup (cmd));
+    }
+  }
+  chararr_append (cmds, NULL);
+  mkc_message_chararr (MKC_V_INFO, "    command:", cmds);
+
+  if (hasredirect > 2) {
+    tmppath_release (target->tmppath, cmd);
+    return rc;
+  }
+  targv = chararr_get_arr (cmds);
+  rc = os_process_start (targv,
+      OS_PROC_WAIT | OS_PROC_NOSTDERR | OS_PROC_NOWINDOW,
+      outfile);
+
+  datafree (outfile);
+  chararr_free (cmds);
+  tmppath_release (target->tmppath, cmd);
+  return rc;
+}

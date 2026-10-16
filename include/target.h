@@ -38,10 +38,10 @@ enum {
 /* use values that will not change when new target types are added */
 typedef enum {
   TGT_T_EXEC = 'e',
-  TGT_T_FILE = 'f',
   TGT_T_INCLUDE = 'i',
   TGT_T_LIBRARY = 'l',
   TGT_T_OBJECT = 'o',
+  /* source is any source file that already exists */
   TGT_T_SOURCE = 's',
   TGT_T_USER_EXEC = 'E',
   TGT_T_USER_FILE = 'F',

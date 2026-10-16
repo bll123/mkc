@@ -2,6 +2,6 @@
 
 # test the print statement
 # test single quoted string, double quoted string, integer
-print 'mkc-a';
-print "mkc-b";
-print 555;
+.print 'mkc-a';
+.print "mkc-b";
+.print 555;

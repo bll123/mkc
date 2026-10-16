@@ -1,220 +1,220 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
-check_shell_extract VERSION.txt;
-mark_variable VERSION enable;
-mark_variable BUILD enable;
-mark_variable BUILDDATE enable;
-mark_variable RELEASELEVEL enable;
+.check_shell_extract VERSION.txt;
+.mark VERSION enable;
+.mark BUILD enable;
+.mark BUILDDATE enable;
+.mark RELEASELEVEL enable;
 
-project mkc {
-  compiler c;
-  version ${VERSION};
+.project mkc {
+  .compiler c;
+  .version ${VERSION};
 }
 
 # configure
 
-check_package 'libpcre2-8' {
-  name pcre;
+.check_package 'libpcre2-8' {
+  .name pcre;
 }
 
-check_function confstr {
-  header unistd.h;
+.check_function confstr {
+  .header unistd.h;
 }
-check_function geteuid {
-  header unistd.h;
+.check_function geteuid {
+  .header unistd.h;
 }
-check_function fork {
-  header unistd.h;
+.check_function fork {
+  .header unistd.h;
 }
-check_function nanosleep {
-  header time.h;
+.check_function nanosleep {
+  .header time.h;
 }
-check_function realpath;
-check_function setenv;
-check_function stpecpy;
-check_function symlink {
-  header unistd.h;
+.check_function realpath;
+.check_function setenv;
+.check_function stpecpy;
+.check_function symlink {
+  .header unistd.h;
 }
 
 # windows functions
-check_function CopyFileW {
-  compiler_flags '-DWIN32_LEAN_AND_MEAN=1';
-  header windows.h;
+.check_function CopyFileW {
+  .compiler_flags '-DWIN32_LEAN_AND_MEAN=1';
+  .header windows.h;
 }
-check_function FindFirstFileW {
-  compiler_flags '-DWIN32_LEAN_AND_MEAN=1';
-  header windows.h;
+.check_function FindFirstFileW {
+  .compiler_flags '-DWIN32_LEAN_AND_MEAN=1';
+  .header windows.h;
 }
-check_function GetCommandLineW {
-  compiler_flags '-DNOCRYPT=1' '-DNOGDI=1';
-  header windows.h;
+.check_function GetCommandLineW {
+  .compiler_flags '-DNOCRYPT=1' '-DNOGDI=1';
+  .header windows.h;
 }
-check_function GetFullPathNameW {
-  compiler_flags '-DWIN32_LEAN_AND_MEAN=1';
-  header windows.h;
+.check_function GetFullPathNameW {
+  .compiler_flags '-DWIN32_LEAN_AND_MEAN=1';
+  .header windows.h;
 }
-check_function MultiByteToWideChar {
-  compiler_flags '-DWIN32_LEAN_AND_MEAN=1';
-  header windows.h;
+.check_function MultiByteToWideChar {
+  .compiler_flags '-DWIN32_LEAN_AND_MEAN=1';
+  .header windows.h;
 }
-check_function Sleep {
-  compiler_flags '-DWIN32_LEAN_AND_MEAN=1';
-  header windows.h;
+.check_function Sleep {
+  .compiler_flags '-DWIN32_LEAN_AND_MEAN=1';
+  .header windows.h;
 }
-check_function WideCharToMultiByte {
-  compiler_flags '-DWIN32_LEAN_AND_MEAN=1';
-  header windows.h;
+.check_function WideCharToMultiByte {
+  .compiler_flags '-DWIN32_LEAN_AND_MEAN=1';
+  .header windows.h;
 }
-check_function _wgetcwd {
-  header wchar.h;
+.check_function _wgetcwd {
+  .header wchar.h;
 }
-check_function _wgetenv_s {
-  compiler_flags '-DWIN32_LEAN_AND_MEAN=1';
-  header windows.h;
+.check_function _wgetenv_s {
+  .compiler_flags '-DWIN32_LEAN_AND_MEAN=1';
+  .header windows.h;
 }
-check_function _wputenv_s {
-  compiler_flags '-DWIN32_LEAN_AND_MEAN=1';
-  header windows.h;
+.check_function _wputenv_s {
+  .compiler_flags '-DWIN32_LEAN_AND_MEAN=1';
+  .header windows.h;
 }
-check_function _wrename {
-  header io.h;
+.check_function _wrename {
+  .header io.h;
 }
-check_function _wstat64 {
-  header wchar.h;
+.check_function _wstat64 {
+  .header wchar.h;
 }
-check_function _wunlink {
-  header io.h;
+.check_function _wunlink {
+  .header io.h;
 }
 
 # mkdir() differs on unix and windows
-check_arg_count mkdir {
-  header sys/stat.h;
+.check_arg_count mkdir {
+  .header sys/stat.h;
 }
-check_define S_IRWXU {
-  header sys/stat.h;
+.check_define S_IRWXU {
+  .header sys/stat.h;
 }
-check_struct_member 'struct stat' st_mtim {
-  header sys/stat.h;
+.check_struct_member 'struct stat' st_mtim {
+  .header sys/stat.h;
 }
-check_struct_member 'struct stat' st_mtimespec {
-  header sys/stat.h;
+.check_struct_member 'struct stat' st_mtimespec {
+  .header sys/stat.h;
 }
-check_define _CS_LFS_CFLAGS {
-  header unistd.h;
+.check_define _CS_LFS_CFLAGS {
+  .header unistd.h;
 }
 
 # windows
-check_type HANDLE {
-  compiler_flags '-DWIN32_LEAN_AND_MEAN=1';
-  header windows.h;
+.check_type HANDLE {
+  .compiler_flags '-DWIN32_LEAN_AND_MEAN=1';
+  .header windows.h;
 }
 
 # since other regular expression packages
 # could be used in the future, set a variable indicating that
 # regular expressions are available.
-set _have_regex false;
-if (${_package_pcre}) {
-  set _have_regex true;
+.set _have_regex .false;
+.if (${_package_pcre}) {
+  .set _have_regex .true;
 }
-mark_variable _have_regex enable;
+.mark _have_regex enable;
 
-mark_variable MKC_SYS_WINDOWS enable;
+.mark MKC_SYS_WINDOWS enable;
 
 # configure
 
-configuration_file {
-  method auto;
-  define_zero;
+.configuration_file {
+  .method auto;
+  .define_zero;
 }
 
-if (mkcbootstrap) {
+.if (.mkcbootstrap) {
   # any configuration after this point is not needed
   # for the initial bootstrap process
-  exit 0;
+  .exit 0;
 }
 
 # set compile and link flags
 
-add_compile_flag '-g';
-add_link_flag '-g';
+.add_compile_flag '-g';
+.add_link_flag '-g';
 
-profile default {
-  add_compile_flag '-O2';
+.profile default {
+  .add_compile_flag '-O2';
 }
-profile debug {
-  add_compile_flag '-O0';
+.profile debug {
+  .add_compile_flag '-O0';
 }
-profile sanitize {
-  add_compile_flag '-O0';
-}
-
-check_compile_flag '-pedantic';
-check_compile_flag '-pedantic-errors';
-check_compile_flag '-Wall';
-check_compile_flag '-Wextra';
-check_compile_flag '-Wno-unused-parameter' { negate; }
-check_compile_flag '-Wdeprecated-declarations';
-check_compile_flag '-Wformat';
-if (${MKC_COMP_ID_CLANG}) {
-  check_compile_flag '-Wformat-security';
-  check_compile_flag '-Werror=format-security';
-}
-if (${MKC_COMP_ID_GCC}) {
-  check_compile_flag '-Wmaybe-uninitialized';
-  check_compile_flag '-Wdiscarded-qualifiers';
+.profile sanitize {
+  .add_compile_flag '-O0';
 }
 
-include sanitize_flags.mkc;
+.check_compile_flag '-pedantic';
+.check_compile_flag '-pedantic-errors';
+.check_compile_flag '-Wall';
+.check_compile_flag '-Wextra';
+.check_compile_flag '-Wno-unused-parameter' { .negate; }
+.check_compile_flag '-Wdeprecated-declarations';
+.check_compile_flag '-Wformat';
+.if (${MKC_COMP_ID_CLANG}) {
+  .check_compile_flag '-Wformat-security';
+  .check_compile_flag '-Werror=format-security';
+}
+.if (${MKC_COMP_ID_GCC}) {
+  .check_compile_flag '-Wmaybe-uninitialized';
+  .check_compile_flag '-Wdiscarded-qualifiers';
+}
+
+.include sanitize_flags.mkc;
 sanitize_flags 'sanitize';
 set_fortify_flags;
 
-add_compile_flag '-Iinclude';
-add_compile_flag '-I.';
-add_compile_flag ${pcre_COMPFLAGS};
+.add_compile_flag '-Iinclude';
+.add_compile_flag '-I.';
+.add_compile_flag ${pcre_COMPFLAGS};
 
 # include file checks
 
-profile do_checks {
-  check_include_compile {
-    match_pattern '\.h$';
+.profile do_checks {
+  .check_include_compile {
+    .match '\.h$';
   }
-  check_include_dependencies {
-    match_pattern '\.h$';
+  .check_include_dependencies {
+    .match '\.h$';
   }
-  check_include_guards {
-    match_pattern '\.h$';
+  .check_include_guards {
+    .match '\.h$';
   }
 }
 
 # build
 
-create_file mkc_lex.c mkc_lex.h {
-  with_source mkc_lex.l;
-  run_command flex --header-file=mkc_lex.h -o mkc_lex.c mkc_lex.l;
+.create_file mkc_lex.c mkc_lex.h {
+  .source mkc_lex.l;
+  .command flex --header-file=mkc_lex.h -o mkc_lex.c mkc_lex.l;
 }
 
-create_file mkc_grammar.c mkc_grammar.h {
-  with_source mkc_grammar.y;
-  run_command bison -v -o mkc_grammar.c --defines=mkc_grammar.h mkc_grammar.y;
-  run_command sed -e 's,yynerrs = 0;,yynerrs YY_ATTRIBUTE_UNUSED = 0;,'
+.create_file mkc_grammar.c mkc_grammar.h {
+  .source mkc_grammar.y;
+  .command bison -v -o mkc_grammar.c --defines=mkc_grammar.h mkc_grammar.y;
+  .command sed -e 's,yynerrs = 0;,yynerrs YY_ATTRIBUTE_UNUSED = 0;,'
       mkc_grammar.c > mkc_grammar.c.n;
-  run_command mv mkc_grammar.c.n mkc_grammar.c;
+  .command mv mkc_grammar.c.n mkc_grammar.c;
 }
 
-define_executable mkc {
-  with_source ast.c asttoken.c chararr.c check.c compile.c const.c
+.executable mkc {
+  .source ast.c asttoken.c chararr.c check.c compile.c const.c
       context.c dict.c dictdict.c dirmatch.c dirop.c envutil.c
       fileop.c list.c mkc_compiler.c
       mkc_error.c mkc_grammar.c mkc_lex.c
       mkc_log.c mkc_main.c mkc_regex_pcre.c mkc_util.c
       os_process.c parse.c parsefn.c pathutil.c process.c scopedvar.c
       strutil.c target.c tmppath.c tmutil.c toposort.c value.c var.c;
-  if (${MKC_SYS_WINDOWS}) {
-    with_source os_win_process.c;
+  .if (${MKC_SYS_WINDOWS}) {
+    .source os_win_process.c;
   }
-  library_flags ${pcre_LIBS};
+  .library_flags ${pcre_LIBS};
 }
 
-auto_build;
+.auto_build;
 
 # install

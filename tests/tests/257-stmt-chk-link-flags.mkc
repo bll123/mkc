@@ -1,34 +1,34 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
-project mkctest {
-  compiler c;
+.project mkctest {
+  .compiler c;
 }
 
-check_link_flag '-fPIC';
+.check_link_flag '-fPIC';
 # make sure a list works
-check_link_flag [ '-g' '-fPIC' ];
-add_library '-lm';
+.check_link_flag [ '-g' '-fPIC' ];
+.add_library '-lm';
 
-profile default {
-  compiler c;
+.profile default {
+  .compiler c;
 
-  check_link_flag '-O0';
+  .check_link_flag '-O0';
 }
 
-if (${lf_fPIC}) {
-  print '  ok p';
-} else {
-  print '  fail p';
+.if (${lf_fPIC}) {
+  .print '  ok p';
+} .else {
+  .print '  fail p';
 }
-if (${lf_g}) {
-  print '  ok g';
-} else {
-  print '  fail g';
+.if (${lf_g}) {
+  .print '  ok g';
+} .else {
+  .print '  fail g';
 }
-if (${lf_O0}) {
-  print '  ok o';
-} else {
-  print '  fail o';
+.if (${lf_O0}) {
+  .print '  ok o';
+} .else {
+  .print '  fail o';
 }
 
-mkcdebug printvar test;
+.mkcdebug printvar test;

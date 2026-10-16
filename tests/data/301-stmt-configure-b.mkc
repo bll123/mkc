@@ -1,10 +1,10 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
-check_size int32_t {
-  header stdint.h;
+.check_size int32_t {
+  .header stdint.h;
 }
 
-configuration_file {
-  method auto;
-  define_zero;
+.configuration_file {
+  .method auto;
+  .define_zero;
 }

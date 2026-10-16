@@ -1,27 +1,27 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
-project mkctest {
-  compiler c;
+.project mkctest {
+  .compiler c;
 }
 
 # these go into the current profile
-check_function fprintf;
-check_function malloc;
+.check_function fprintf;
+.check_function malloc;
 
-check_function fstat {
-  header sys/stat.h;
+.check_function fstat {
+  .header sys/stat.h;
 }
-check_function sqrt {
-  header math.h;
-  library_flags '-lm';
+.check_function sqrt {
+  .header math.h;
+  .library_flags '-lm';
 }
-check_function other;
+.check_function other;
 
-mark_variable _function_malloc disable;
-mark_variable MKC_SYS_UNKNOWN enable;
+.mark _function_malloc disable;
+.mark MKC_SYS_UNKNOWN enable;
 
-configuration_file {
-  method auto;
-  define_zero;
-  output 'tests/tmp/305-stmt-configure-mark.h';
+.configuration_file {
+  .method auto;
+  .define_zero;
+  .output 'tests/tmp/305-stmt-configure-mark.h';
 }

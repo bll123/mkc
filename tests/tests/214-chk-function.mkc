@@ -1,65 +1,65 @@
 # Copyright 2026 Brad Lanam Pleasant Hill CA
 
-check_function malloc;
+.check_function malloc;
 
-check_function fstat {
-  header sys/stat.h;
-  on_success {
-    print '  ok a';
+.check_function fstat {
+  .header sys/stat.h;
+  .on_success {
+    .print '  ok a';
   }
-  on_failure {
-    print '  fail a';
+  .on_failure {
+    .print '  fail a';
   }
 }
 
-check_function unknown {
-  on_success {
-    print '  fail b';
+.check_function unknown {
+  .on_success {
+    .print '  fail b';
   }
-  on_failure {
-    print '  ok b';
+  .on_failure {
+    .print '  ok b';
   }
 }
 
 # windows has '__max' defined, unix-like systems have 'MAX' in sys/param.h
 # these are both macros
-if (${MKC_SYS_WINDOWS}) {
-  check_function __max {
-    name _function_max;
+.if (${MKC_SYS_WINDOWS}) {
+  .check_function __max {
+    .name _function_max;
   }
-} else {
-  check_function MAX {
-    header sys/param.h;
-    name _function_max;
+} .else {
+  .check_function MAX {
+    .header sys/param.h;
+    .name _function_max;
   }
 }
 
-check_function sqrt {
-  header math.h;
-  library_flags '-lm';
+.check_function sqrt {
+  .header math.h;
+  .library_flags '-lm';
 }
 
-if (${_function_malloc} == 1) {
-  print '  ok';
-} else {
-  print '  fail malloc';
+.if (${_function_malloc} == 1) {
+  .print '  ok';
+} .else {
+  .print '  fail malloc';
 }
 
-if (${_function_fstat} == 1) {
-  print '  ok';
-} else {
-  print '  fail fstat';
+.if (${_function_fstat} == 1) {
+  .print '  ok';
+} .else {
+  .print '  fail fstat';
 }
 
-if (${_function_max} == 1) {
-  print '  ok';
-} else {
-  print '  fail max';
+.if (${_function_max} == 1) {
+  .print '  ok';
+} .else {
+  .print '  fail max';
 }
 
-if (${_function_sqrt} == 1) {
-  print '  ok';
-} else {
-  print '  fail sqrt';
+.if (${_function_sqrt} == 1) {
+  .print '  ok';
+} .else {
+  .print '  fail sqrt';
 }
 

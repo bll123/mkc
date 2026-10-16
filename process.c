@@ -184,7 +184,7 @@ static char const * const MKC_C_CHK_INC_DEPS_TS = "MKC_I_CHK_INC_DEPS_TS";
 static char const * const MKC_C_CHK_INC_COMPILE_TS = "MKC_I_CHK_INC_COMPILE_TS";
 static char const * const MKC_C_CHK_INC_GUARDS_TS = "MKC_I_CHK_INC_GUARDS_TS";
 
-static void process_save_cache_profile (process_t *process, FILE *fh, sv_iter_t *sviter, const char *profname, int *tcount);
+static void process_save_cache_profile (process_t *process, FILE *fh, sv_iter_t *sviter, const char *profname, int *tcount, value_write_t flag);
 
 /* these are duplicated */
 /* so that the static aggregator can be initialized */
@@ -454,9 +454,9 @@ process_num_op (process_t *process, astnode_token_t asttype,
 
   if (mkc_log_check_flag (process->log, MKC_LOG_PROCESS)) {
     mkc_log (process->log, MKC_LOG_PROCESS, "  p-num-op-a: %s\n",
-        value_to_str (vala, tbuff, sizeof (tbuff), 0, false));
+        value_to_str (vala, tbuff, sizeof (tbuff), 0, MKC_V_WRITE_ALL));
     mkc_log (process->log, MKC_LOG_PROCESS, "  p-num-op-b: %s\n",
-        value_to_str (valb, tbuff, sizeof (tbuff), 0, false));
+        value_to_str (valb, tbuff, sizeof (tbuff), 0, MKC_V_WRITE_ALL));
   }
   ivala = sv_value_get_integer (process->sv, vala);
   ivalb = sv_value_get_integer (process->sv, valb);
@@ -549,9 +549,9 @@ process_str_op (process_t *process, astnode_token_t asttype,
 
   if (mkc_log_check_flag (process->log, MKC_LOG_PROCESS)) {
     mkc_log (process->log, MKC_LOG_PROCESS, "  p-str-op-a: %s\n",
-        value_to_str (vala, stra, MKC_PATH_MAX, 0, false));
+        value_to_str (vala, stra, MKC_PATH_MAX, 0, MKC_V_WRITE_ALL));
     mkc_log (process->log, MKC_LOG_PROCESS, "  p-str-op-b: %s\n",
-        value_to_str (valb, strb, MKC_PATH_MAX, 0, false));
+        value_to_str (valb, strb, MKC_PATH_MAX, 0, MKC_V_WRITE_ALL));
   }
   sv_value_get_str (process->sv, vala, stra, MKC_PATH_MAX);
   sv_value_get_str (process->sv, valb, strb, MKC_PATH_MAX);
@@ -1454,6 +1454,8 @@ process_stmt_create_file (process_t *process, value_t *value)
     }
   }
 
+  target_build (process->target, flist);
+
   process_attr_clear (process);
   tmppath_release (process->tmppath, srcpath);
   tmppath_release (process->tmppath, filepath);
@@ -1492,6 +1494,10 @@ process_stmt_debug (process_t *process,
   }
   if (strcmp (tbuff, "printinfo") == 0) {
     process_dbg_print_info (process);
+  }
+  if (strcmp (tbuff, "savecache") == 0) {
+    sv_value_get_str (process->sv, subvalue, tbuff, sizeof (tbuff));
+    process_save_cache (process, tbuff, MKC_V_WRITE_ALL);
   }
 
   return false;
@@ -1761,7 +1767,7 @@ process_stmt_print (process_t *process, value_t *value, int depth)
   *tbuff = '\0';
 
   sv_value_get_value (process->sv, value, &retvalue);
-  value_to_str (&retvalue, tbuff, MKC_PATH_MAX, 0, false);
+  value_to_str (&retvalue, tbuff, MKC_PATH_MAX, 0, MKC_V_WRITE_ALL);
   fprintf (stdout, "%s", tbuff);
   value_free (&retvalue);
 
@@ -2203,7 +2209,7 @@ process_attr_replace (process_t *process,
 }
 
 void
-process_attr_run_command (process_t *process, value_t *str)
+process_attr_command (process_t *process, value_t *str)
 {
   if (process == NULL) {
     return;
@@ -2415,7 +2421,7 @@ process_check_flag (process_t *process,
     if (mkc_error_chk_err (process->mkcerr)) {
       char    tmp [MKC_VNAME_MAX];
 
-      value_to_str (&retvalue, tmp, sizeof (tmp), 0, false);
+      value_to_str (&retvalue, tmp, sizeof (tmp), 0, MKC_V_WRITE_ALL);
       mkc_error_set (process->mkcerr, MKC_ERR_UNKNOWN_VARIABLE, 0, tmp);
       value_free (&retvalue);
       continue;
@@ -2709,7 +2715,8 @@ process_get_loop_limit (process_t *process)
 }
 
 void
-process_save_cache (process_t *process)
+process_save_cache (process_t *process, const char *outfile,
+    value_write_t flag)
 {
   scopedvar_t     * sv;
   char            * cachename = NULL;
@@ -2726,8 +2733,11 @@ process_save_cache (process_t *process)
   cachename = tmppath_get (process->tmppath);
   *cachename = '\0';
 
+  if (outfile == NULL) {
+    outfile = "cache.mkc";
+  }
   path_build (MKC_PATH_MKCFILES, cachename, MKC_PATH_MAX,
-      "cache.mkc", process->mkcerr);
+      outfile, process->mkcerr);
   fh = fileop_open (cachename, "w");
   if (fh == NULL) {
     tmppath_release (process->tmppath, cachename);
@@ -2737,7 +2747,7 @@ process_save_cache (process_t *process)
   sv = process->sv;
 
   /* version 1 */
-  fprintf (fh, "load_cache %d {\n", MKC_CACHE_VERS_1);
+  fprintf (fh, ".load_cache %d {\n", MKC_CACHE_VERS_1);
 
   sviter = sv_iter_start (sv, SV_ITER_PROFILES);
   while ((profname = sv_iter_next (sv, sviter)) != NULL) {
@@ -2746,7 +2756,7 @@ process_save_cache (process_t *process)
       return;
     }
 
-    process_save_cache_profile (process, fh, sviter, profname, &tcount);
+    process_save_cache_profile (process, fh, sviter, profname, &tcount, flag);
   }
   sv_iter_finish (sviter);
 
@@ -3221,7 +3231,7 @@ process_configure_auto (process_t *process,
           fprintf (fh, "#define %s %" PRId64 "\n", nm, tmval);
         }
       } else {
-        value_to_str (value, tbuff, MKC_PATH_MAX, 0, false);
+        value_to_str (value, tbuff, MKC_PATH_MAX, 0, MKC_V_WRITE_ALL);
         fprintf (fh, "#define %s \"%s\"\n", nm, tbuff);
       }
     }
@@ -3547,7 +3557,8 @@ process_list_to_flags (process_t *process, value_t *value,
 
 static void
 process_save_cache_profile (process_t *process, FILE *fh,
-    sv_iter_t *sviter, const char *profname, int *tcount)
+    sv_iter_t *sviter, const char *profname, int *tcount,
+    value_write_t flag)
 {
   scopedvar_t   *sv;
   mkc_varidx_t  viter;
@@ -3598,14 +3609,14 @@ process_save_cache_profile (process_t *process, FILE *fh,
   p = scbuff;
   scend = scbuff + scbuffsz;
 
-  snprintf (tmp, tmpsz, "  profile %s {\n", profname);
+  snprintf (tmp, tmpsz, "  .profile %s {\n", profname);
   p = stpecpy (p, scend, tmp);
   if (svtype == SV_T_CURR_PROF_COMPILER) {
     mkc_compiler_t    compiler;
 
     compiler = sv_iter_get_compiler (sv, sviter);
     if (compiler != MKC_COMPILER_GENERAL) {
-      snprintf (tmp, tmpsz, "    compiler %s;\n", compiler_get_name (compiler));
+      snprintf (tmp, tmpsz, "    .compiler %s;\n", compiler_get_name (compiler));
       p = stpecpy (p, scend, tmp);
     }
   }
@@ -3618,12 +3629,12 @@ process_save_cache_profile (process_t *process, FILE *fh,
 
     nm = sv_var_iter_get_name (sv, sviter, vidx);
     value = sv_var_iter_get_value (sv, sviter, vidx);
-    value_to_str (value, tbuff, tbuffsz, 0, true);
+    value_to_str (value, tbuff, tbuffsz, 0, flag);
 
     if (value_is_string_type (value)) {
-      snprintf (tmp, tmpsz, "    set '%s' '%s' ", nm, tbuff);
+      snprintf (tmp, tmpsz, "    .set '%s' '%s' ", nm, tbuff);
     } else {
-      snprintf (tmp, tmpsz, "    set '%s' %s ", nm, tbuff);
+      snprintf (tmp, tmpsz, "    .set '%s' %s ", nm, tbuff);
     }
     p = stpecpy (p, scend, tmp);
     p = stpecpy (p, scend, "{");
@@ -3634,11 +3645,11 @@ process_save_cache_profile (process_t *process, FILE *fh,
       p = stpecpy (p, scend, " ");
     }
     vtmpstr = value_ctxt_str (value->vctxt);
-    snprintf (tmp, tmpsz, "vcontext %s; ", vtmpstr);
+    snprintf (tmp, tmpsz, ".vcontext %s; ", vtmpstr);
     p = stpecpy (p, scend, tmp);
     if (value->vout == MKC_VOUT_ENABLE) {
       vtmpstr = value_out_str (value->vout);
-      snprintf (tmp, tmpsz, "voutput %s; ", vtmpstr);
+      snprintf (tmp, tmpsz, ".voutput %s; ", vtmpstr);
       p = stpecpy (p, scend, tmp);
     }
     if (value->vtype == MKC_VT_LIST ||
@@ -3831,7 +3842,7 @@ process_dbg_print_var (process_t *process, const char *profname)
         }
       }
 
-      value_to_str (value, tbuff, MKC_LARGE_BUFF_SZ, 0, false);
+      value_to_str (value, tbuff, MKC_LARGE_BUFF_SZ, 0, MKC_V_WRITE_ALL);
       if (value_is_string_type (value)) {
         fprintf (stdout, "  %s '%s'\n", nm, tbuff);
       } else {
