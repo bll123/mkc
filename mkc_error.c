@@ -151,9 +151,6 @@ mkc_error_chk_err (mkc_error_t *mkcerr)
       mkcerr->err == MKC_OK_CHANGE) {
     return false;
   }
-  if (mkcerr->err == MKC_ERR_USER_EXIT && mkcerr->syserr == 0) {
-    return false;
-  }
   return true;
 }
 
@@ -179,7 +176,11 @@ mkc_error_print (mkc_error_t *mkcerr)
     return;
   }
   if (mkcerr->err == MKC_ERR_USER_EXIT && mkcerr->syserr == 0) {
-    fprintf (stderr, "-- %s\n", mkcerrormsg [mkcerr->err]);
+    fprintf (stderr, "-- %s", mkcerrormsg [mkcerr->err]);
+    if (mkcerr->str != NULL) {
+      fprintf (stderr, "; %s", mkcerr->str);
+    }
+    fprintf (stderr, "\n");
     return;
   }
 

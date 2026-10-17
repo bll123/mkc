@@ -130,7 +130,7 @@
 .if (.mkcbootstrap) {
   # any configuration after this point is not needed
   # for the initial bootstrap process
-  .exit 0;
+  .exit 0 'bootstrap';
 }
 
 # set compile and link flags

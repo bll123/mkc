@@ -3752,7 +3752,7 @@ process_clean_check (process_t *process)
   mkc_clean_mkcfiles (tbuff, MKC_PATH_MAX, process->mkcerr);
   process->cleaned = true;
 
-  if (process->mkcoptions->cleanstop) {
+  if (process->mkcoptions->cleanexit) {
     mkc_error_set (process->mkcerr, MKC_ERR_USER_EXIT, 0, NULL);
   }
 

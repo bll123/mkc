@@ -21,7 +21,7 @@ typedef struct mkc_option_t {
   int32_t       loglevel;
   log_verbose_t verbose;
   bool          clean;
-  bool          cleanstop;
+  bool          cleanexit;
   bool          retest;
   bool          loadcache;
   bool          parsedebug;

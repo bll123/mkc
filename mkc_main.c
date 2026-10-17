@@ -73,7 +73,7 @@ main (int argc, char *argv [])
   mkcoptions.prefix = NULL;
   mkcoptions.verbose = MKC_V_STATS;
   mkcoptions.clean = false;
-  mkcoptions.cleanstop = false;
+  mkcoptions.cleanexit = false;
   mkcoptions.retest = false;
   mkcoptions.loglevel = MKC_LOG_NORMAL;
   mkcoptions.loadcache = true;
@@ -370,7 +370,7 @@ main_process_arguments (mkc_option_t *mkcoptions,
 
   static struct option mkc_cli_opts [] = {
     { "clean",                no_argument,        NULL, 4   },
-    { "cleanstop",            no_argument,        NULL, 7   },
+    { "cleanexit",            no_argument,        NULL, 7   },
     { "loglevel",             required_argument,  NULL, 3   },
     { "mkc-dir",              required_argument,  NULL, 5   },
     { "no-cache",             no_argument,        NULL, 1   },
@@ -447,7 +447,7 @@ main_process_arguments (mkc_option_t *mkcoptions,
       }
       case 7: {
         mkcoptions->clean = true;
-        mkcoptions->cleanstop = true;
+        mkcoptions->cleanexit = true;
         break;
       }
       default: {
