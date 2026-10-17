@@ -56,14 +56,12 @@ mkc_flag_is_lib (mkc_compiler_id_t compid, const char *str)
 
 /* only cleans the <project>/obj and <project>/stage directories */
 void
-mkc_clean_mkcfiles (const char *project, char *tbuff, size_t tsz,
-    mkc_error_t *mkcerr)
+mkc_clean_mkcfiles (char *tbuff, size_t tsz, mkc_error_t *mkcerr)
 {
   /* clean out the obj/ and stage/ directory trees */
   path_build (MKC_PATH_MKCF_OBJECTS, tbuff, tsz, NULL, mkcerr);
   dirop_delete (tbuff, DIROP_ALL, mkcerr);
   path_build (MKC_PATH_MKCF_STAGE, tbuff, tsz, NULL, mkcerr);
-fprintf (stderr, "clean: %s\n", tbuff);
   dirop_delete (tbuff, DIROP_ALL, mkcerr);
 }
 

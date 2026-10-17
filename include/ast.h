@@ -30,18 +30,14 @@ MKC_NODISCARD astnode_t * ast_mk_op (astmain_t *astmain, astnode_t *vala, astnod
 MKC_NODISCARD astnode_t * ast_mk_value_range (astmain_t *astmain, astnode_t *beg, astnode_t *end, astnode_t *incr, int32_t lineno, int colno);
 MKC_NODISCARD astnode_t * ast_mk_unary_op (astmain_t *astmain, astnode_t *value, int op, int32_t lineno, int colno);
 
-MKC_NODISCARD astnode_t * ast_mk_elseif (astmain_t *astmain, astnode_t *expr, astnode_t *stmtblock, int32_t lineno, int colno);
 MKC_NODISCARD astnode_t * ast_mk_foreach (astmain_t *astmain, astnode_t *nm, astnode_t *list, astnode_t *stmtblock, int32_t lineno, int colno);
 MKC_NODISCARD astnode_t * ast_mk_foreach_range (astmain_t *astmain, astnode_t *nm, astnode_t *range, astnode_t *stmtblock, int32_t lineno, int colno);
 MKC_NODISCARD astnode_t * ast_mk_function (astmain_t *astmain, astnode_t *nm, astnode_t *argnames, astnode_t *stmtblock, int32_t lineno, int colno);
-MKC_NODISCARD astnode_t * ast_mk_function_call (astmain_t *astmain, astnode_t *nm, astnode_t *funcargs, int32_t lineno, int colno);
 MKC_NODISCARD astnode_t * ast_mk_func_return (astmain_t *astmain, int32_t lineno, int colno);
 MKC_NODISCARD astnode_t * ast_mk_if (astmain_t *astmain, astnode_t *expr, astnode_t *stmtblock, astnode_t *elseif, astnode_t *elseblock, int32_t lineno, int colno);
 MKC_NODISCARD astnode_t * ast_mk_loop_control (astmain_t *astmain, astnode_token_t type, int32_t lineno, int colno);
 astnode_t * ast_mk_main (astmain_t *astmain, astnode_t *stmtlist, int32_t lineno, int colno);
 MKC_NODISCARD astnode_t * ast_mk_stmtlist (astmain_t *astmain, astnode_t *list, astnode_t *vala, int32_t lineno, int colno);
-MKC_NODISCARD astnode_t * ast_mk_while (astmain_t *astmain, astnode_t *expr, astnode_t *stmtblock, int32_t lineno, int colno);
-MKC_NODISCARD astnode_t * ast_mk_exit (astmain_t *astmain, astnode_t *vala, int32_t lineno, int colno);
 void ast_process_include (astmain_t *astmain, astnode_t *path, astnode_t *fn, char *tbuff, size_t sz, int32_t lineno, int colno);
 
 /* generics */
@@ -51,7 +47,6 @@ MKC_NODISCARD astnode_t * ast_mk_stmt_val_val (astmain_t *astmain, astnode_t *va
 MKC_NODISCARD astnode_t * ast_mk_stmt_val (astmain_t *astmain, astnode_t *vala, astnode_token_t asttype, int32_t lineno, int colno);
 
 MKC_NODISCARD astnode_t * ast_mk_stmt_executable (astmain_t *astmain, astnode_t *name, astnode_t *stmtblock, int32_t lineno, int colno);
-MKC_NODISCARD astnode_t * ast_mk_loadcache (astmain_t *astmain, astnode_t *vers, astnode_t *stmtblock, int32_t lineno, int colno);
 MKC_NODISCARD astnode_t * ast_mk_set (astmain_t *astmain, astnode_t *nm, astnode_t *expr, astnode_t *stmtblock, bool local, int32_t lineno, int colno);
 MKC_NODISCARD astnode_t * ast_mk_set_value (astmain_t *astmain, astnode_t *nm, astnode_t *vala, int32_t lineno, int colno);
 

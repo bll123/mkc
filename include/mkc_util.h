@@ -15,7 +15,7 @@ extern "C" {
 
 bool mkc_flag_is_libloc (mkc_compiler_id_t compid, const char *str);
 bool mkc_flag_is_lib (mkc_compiler_id_t compid, const char *str);
-void mkc_clean_mkcfiles (const char *project, char *tbuff, size_t tsz, mkc_error_t *mkcerr);
+void mkc_clean_mkcfiles (char *tbuff, size_t tsz, mkc_error_t *mkcerr);
 int mkc_create_project_dir_tmp (char *tbuff, size_t tsz, mkc_error_t *mkcerr);
 int mkc_create_project_dir (char *tbuff, size_t tsz, mkc_error_t *mkcerr);
 

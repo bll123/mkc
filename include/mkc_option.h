@@ -21,7 +21,10 @@ typedef struct mkc_option_t {
   int32_t       loglevel;
   log_verbose_t verbose;
   bool          clean;
+  bool          cleanstop;
   bool          retest;
+  bool          loadcache;
+  bool          parsedebug;
 } mkc_option_t;
 
 #if defined (__cplusplus) || defined (c_plusplus)

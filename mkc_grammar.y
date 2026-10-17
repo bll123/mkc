@@ -230,8 +230,8 @@
 
 // program control
 %type <astnode> ifexpr stmt_if elseif elseclause loopcontrol
-%type <astnode> stmt_foreach stmt_function funcreturn stmt_while
-%type <astnode> stmt_function_call
+%type <astnode> stmt_exit stmt_foreach stmt_function funcreturn
+%type <astnode> stmt_function_call stmt_while
 // statements
 %type <astnode> stmt_autobuild stmt_build stmt_chk_inc_compile
 %type <astnode> stmt_chk_inc_deps stmt_chk_inc_guards
@@ -278,10 +278,9 @@ stmt[v]:
       $v = NULL;
     }
 // control statements
-  | T_STMT_EXIT integer[a] T_SEMICOLON
+  | stmt_exit[a]
     {
-      $v = ast_mk_exit (ast, $a,
-          yylloc.first_line, yylloc.first_column);
+      $v = $a;
     }
   | stmtblock[a]
     {
@@ -625,18 +624,18 @@ elseif[v]:
     {
       astnode_t   *elseif;
 
-      elseif = ast_mk_elseif (ast, $a, $b,
+      elseif = ast_mk_stmt_val_stmtblock (ast, $a, $b, MKC_T_STMT_ELSEIF,
           yylloc.first_line, yylloc.first_column);
       $v = ast_mk_stmtlist (ast, NULL, elseif,
           yylloc.first_line, yylloc.first_column);
     }
-  | elseif[a] T_STMT_ELSE ifexpr[b] stmtblock[c]
+  | elseif[l] T_STMT_ELSE ifexpr[b] stmtblock[c]
     {
       astnode_t   *elseif;
 
-      elseif = ast_mk_elseif (ast, $b, $c,
+      elseif = ast_mk_stmt_val_stmtblock (ast, $b, $c, MKC_T_STMT_ELSEIF,
           yylloc.first_line, yylloc.first_column);
-      $v = ast_mk_stmtlist (ast, $v, elseif,
+      $v = ast_mk_stmtlist (ast, $l, elseif,
           yylloc.first_line, yylloc.first_column);
     }
   ;
@@ -652,6 +651,19 @@ elseclause[v]:
     }
   ;
 
+stmt_exit[v]:
+    T_STMT_EXIT integer[a] T_SEMICOLON
+    {
+      $v = ast_mk_stmt_val_val (ast, $a, NULL, MKC_T_STMT_EXIT,
+          yylloc.first_line, yylloc.first_column);
+    }
+  | T_STMT_EXIT integer[a] varname[b] T_SEMICOLON
+    {
+      $v = ast_mk_stmt_val_val (ast, $a, $b, MKC_T_STMT_EXIT,
+          yylloc.first_line, yylloc.first_column);
+    }
+  ;
+
 stmt_foreach[v]:
     T_STMT_FOREACH varnamelist[a] T_IN varvalue[b] stmtblock[c]
     {
@@ -663,7 +675,7 @@ stmt_foreach[v]:
 stmt_while[v]:
     T_STMT_WHILE T_LEFT_PAREN expr[a] T_RIGHT_PAREN stmtblock[b]
     {
-      $v = ast_mk_while (ast, $a, $b,
+      $v = ast_mk_stmt_val_stmtblock (ast, $a, $b, MKC_T_STMT_WHILE,
           yylloc.first_line, yylloc.first_column);
     }
   ;
@@ -751,12 +763,12 @@ stmt_executable[v]:
 stmt_function_call[v]:
     varname[a] T_SEMICOLON
     {
-      $v = ast_mk_function_call (ast, $a, NULL,
+      $v = ast_mk_stmt_val_val (ast, $a, NULL, MKC_T_STMT_FUNCTION_CALL,
           yylloc.first_line, yylloc.first_column);
     }
   | varname[a] valuelist[l] T_SEMICOLON
     {
-      $v = ast_mk_function_call (ast, $a, $l,
+      $v = ast_mk_stmt_val_val (ast, $a, $l, MKC_T_STMT_FUNCTION_CALL,
           yylloc.first_line, yylloc.first_column);
     }
   ;
@@ -822,7 +834,7 @@ stmt_set[v]:
 stmt_loadcache[v]:
     T_STMT_LOADCACHE integer[a] stmtblock[b]
     {
-      $v = ast_mk_loadcache (ast, $a, $b,
+      $v = ast_mk_stmt_val_stmtblock (ast, $a, $b, MKC_T_STMT_LOADCACHE,
           yylloc.first_line, yylloc.first_column);
     }
   ;

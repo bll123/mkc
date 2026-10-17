@@ -1685,6 +1685,8 @@ void
 process_stmt_loadcache_post (process_t *process)
 {
   bool        changed = false;
+  char        * tbuff;
+  value_t     * value;
 
   process->cacheloaded = true;
   sv_set_fromcache (process->sv, false);
@@ -1703,6 +1705,20 @@ process_stmt_loadcache_post (process_t *process)
     changed = true;
     process->mkc_changed = true;
     process->reset_stage = true;
+  }
+
+  /* set various internal variables from the cache */
+  tbuff = tmppath_get (process->tmppath);
+
+  *tbuff = '\0';
+  value = sv_get_value (process->sv, SV_T_INTERNAL, MKC_C_PROJECT_NAME, NULL);
+  if (value != NULL) {
+    sv_value_get_str (process->sv, value, tbuff, MKC_PATH_MAX);
+    if (*tbuff) {
+      datafree (process->projectname);
+      process->projectname = strdup (tbuff);
+      path_set_dir_relative (MKC_IDIR_PROJECT, tbuff);
+    }
   }
 
   process_check_mkc_timestamp (process);
@@ -1798,7 +1814,7 @@ process_stmt_profile_post (process_t *process)
 void
 process_stmt_project (process_t *process, value_t *valnm)
 {
-  char    projnm [MKC_VNAME_MAX];
+  char      projnm [MKC_VNAME_MAX];
 
   sv_value_get_str (process->sv, valnm, projnm, sizeof (projnm));
 
@@ -3719,7 +3735,7 @@ static void
 process_clean_check (process_t *process)
 {
   char          * tbuff = NULL;
-  scopedvar_t   * sv = process->sv;
+//  scopedvar_t   * sv = process->sv;
 
   if (process->cleaned) {
     return;
@@ -3733,12 +3749,17 @@ process_clean_check (process_t *process)
   *tbuff = '\0';
 
   mkc_message (MKC_V_BASIC, "-- cleaning\n");
-  mkc_clean_mkcfiles (process->projectname, tbuff, MKC_PATH_MAX, process->mkcerr);
+  mkc_clean_mkcfiles (tbuff, MKC_PATH_MAX, process->mkcerr);
   process->cleaned = true;
 
-  sv_delete (sv, SV_T_INTERNAL, MKC_C_VAR_BUILD_DATA, NULL);
-  sv_delete (sv, SV_T_INTERNAL, MKC_C_VAR_BUILD_PATHS, NULL);
-  process_init_build_vars (process);
+  if (process->mkcoptions->cleanstop) {
+    mkc_error_set (process->mkcerr, MKC_ERR_USER_EXIT, 0, NULL);
+  }
+
+//fprintf (stderr, "=== delete build data\n");
+//  sv_delete (sv, SV_T_INTERNAL, MKC_C_VAR_BUILD_DATA, NULL);
+//  sv_delete (sv, SV_T_INTERNAL, MKC_C_VAR_BUILD_PATHS, NULL);
+//  process_init_build_vars (process);
   tmppath_release (process->tmppath, tbuff);
 }
 

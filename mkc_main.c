@@ -38,7 +38,7 @@
 
 typedef struct {
   int       nargc;
-  char      **utf8argv;
+  char      ** utf8argv;
 } argcopy_t;
 
 static void copyargs (argcopy_t *argcopy, int argc, char *argv [], mkc_error_t *mkcerr);
@@ -48,6 +48,7 @@ void mkc_main_set_home (void);
 void mkc_main_set_prefix (mkc_error_t *mkcerr);
 void mkc_main_set_exec_path (argcopy_t *argcopy);
 static void mkc_main_print_version (mkc_option_t *mkcoptions);
+static void main_process_arguments (mkc_option_t *mkcoptions, int argc, char * const * targv);
 
 int
 main (int argc, char *argv [])
@@ -65,34 +66,18 @@ main (int argc, char *argv [])
   mstime_t        proctm;
   int64_t         etm;
   int             rc = 0;
-  int             c;
-  int             option_index;
   int             fnidx;
-  bool            loadcache = true;
-  bool            parsedebug = false;
-
-  static struct option mkc_cli_opts [] = {
-    { "clean",                no_argument,        NULL, 4   },
-    { "loglevel",             required_argument,  NULL, 3   },
-    { "mkc-dir",              required_argument,  NULL, 5   },
-    { "no-cache",             no_argument,        NULL, 1   },
-    { "parsedebug",           no_argument,        NULL, 2   },
-    { "prefix",               required_argument,  NULL, 6   },
-    { "profile",              required_argument,  NULL, 'p' },
-    { "quiet",                no_argument,        NULL, 'q' },
-    { "retest",               no_argument,        NULL, 'r' },
-    { "verbose",              no_argument,        NULL, 'v' },
-    { "version",              no_argument,        NULL, 'V' },
-    { NULL,                   no_argument,        NULL, 0   },
-  };
 
   mkcoptions.currprofile = strdup (MKC_C_PROF_NAME_DEFAULT);
   mkcoptions.stage = NULL;
   mkcoptions.prefix = NULL;
   mkcoptions.verbose = MKC_V_STATS;
   mkcoptions.clean = false;
+  mkcoptions.cleanstop = false;
   mkcoptions.retest = false;
   mkcoptions.loglevel = MKC_LOG_NORMAL;
+  mkcoptions.loadcache = true;
+  mkcoptions.parsedebug = false;
 
   mkcerr = mkc_error_init ();
   copyargs (&argcopy, argc, argv, mkcerr);
@@ -119,72 +104,26 @@ main (int argc, char *argv [])
   mkc_main_set_home ();
   mkc_main_set_prefix (mkcerr);
 
-  while ((c = getopt_long_only (argcopy.nargc, argcopy.utf8argv,
-      "p:rvV", mkc_cli_opts, &option_index)) != -1) {
-    switch (c) {
-      case 'p': {
-        if (optarg != NULL) {
-          datafree (mkcoptions.currprofile);
-          mkcoptions.currprofile = strdup (optarg);
-        }
-        break;
-      }
-      case 'q': {
-        mkcoptions.verbose = MKC_V_QUIET;
-        break;
-      }
-      case 'r': {
-        mkcoptions.retest = true;
-        break;
-      }
-      case 'v': {
-        mkcoptions.verbose += 1;
-        break;
-      }
-      case 1: {
-        loadcache = false;
-        break;
-      }
-      case 2: {
-        parsedebug = true;
-        break;
-      }
-      case 3: {
-        if (optarg != NULL) {
-          if (strcmp (optarg, "all") == 0) {
-            mkcoptions.loglevel = MKC_LOG_ALL;
-          } else {
-            mkcoptions.loglevel = atol (optarg);
-          }
-        }
-        break;
-      }
-      case 4: {
-        mkcoptions.clean = true;
-        break;
-      }
-      case 'V': {
-        mkc_main_print_version (&mkcoptions);
-        exit (0);
-        break;
-      }
-      case 5: {
-        if (optarg != NULL) {
-          path_set_dir (MKC_IDIR_MKC_FILES, optarg);
-        }
-        break;
-      }
-      case 6: {
-        if (optarg != NULL) {
-          path_set_dir (MKC_IDIR_PREFIX, optarg);
-        }
-        break;
-      }
-      default: {
-        break;
-      }
+  *tbuff = '\0';
+  env_get ("MKC_ARGS", tbuff, sizeof (tbuff));
+  if (*tbuff) {
+    chararr_t   * carr;
+    char        * p;
+    char        * tokstr;
+    const char  ** targv;
+    int32_t     sz;
+
+    carr = chararr_init (mkcerr);
+    while ((p = str_token (tbuff, " ", &tokstr)) != NULL) {
+      chararr_append (carr, p);
     }
+    targv = chararr_get_arr (carr);
+    sz = chararr_size (carr);
+    main_process_arguments (&mkcoptions, sz, (char * const *) targv);
+    chararr_free (carr);
   }
+
+  main_process_arguments (&mkcoptions, argcopy.nargc, argcopy.utf8argv);
 
   rc = mkc_create_project_dir_tmp (tbuff, sizeof (tbuff), mkcerr);
   if (rc != 0) {
@@ -223,9 +162,9 @@ main (int argc, char *argv [])
   mstimestart (&starttm);
   parsefn = parsefn_init (log, mkcerr);
   parse = parse_init (astmain, mkcerr);
-  parse_debug (parse, parsedebug);
+  parse_debug (parse, mkcoptions.parsedebug);
 
-  if (! loadcache) {
+  if (! mkcoptions.loadcache) {
     mkc_message (MKC_V_BASIC, "-- cache disabled by user\n");
   }
 
@@ -236,7 +175,7 @@ main (int argc, char *argv [])
     return rc;
   }
 
-  if (loadcache) {
+  if (mkcoptions.loadcache) {
     char    cachename [MKC_PATH_MAX];
     FILE    *cfh;
 
@@ -419,4 +358,101 @@ mkc_main_print_version (mkc_option_t *mkcoptions)
 #else
   fprintf (stdout, "mkc bootstrap 1\n");
 #endif
+}
+
+/* targv has to match what getopt_long expects */
+static void
+main_process_arguments (mkc_option_t *mkcoptions,
+    int targc, char * const *targv)
+{
+  int     c;
+  int     option_index;
+
+  static struct option mkc_cli_opts [] = {
+    { "clean",                no_argument,        NULL, 4   },
+    { "cleanstop",            no_argument,        NULL, 7   },
+    { "loglevel",             required_argument,  NULL, 3   },
+    { "mkc-dir",              required_argument,  NULL, 5   },
+    { "no-cache",             no_argument,        NULL, 1   },
+    { "parsedebug",           no_argument,        NULL, 2   },
+    { "prefix",               required_argument,  NULL, 6   },
+    { "profile",              required_argument,  NULL, 'p' },
+    { "quiet",                no_argument,        NULL, 'q' },
+    { "retest",               no_argument,        NULL, 'r' },
+    { "verbose",              no_argument,        NULL, 'v' },
+    { "version",              no_argument,        NULL, 'V' },
+    { NULL,                   no_argument,        NULL, 0   },
+  };
+
+  while ((c = getopt_long_only (targc, targv,
+      "p:rvV", mkc_cli_opts, &option_index)) != -1) {
+    switch (c) {
+      case 'p': {
+        if (optarg != NULL) {
+          datafree (mkcoptions->currprofile);
+          mkcoptions->currprofile = strdup (optarg);
+        }
+        break;
+      }
+      case 'q': {
+        mkcoptions->verbose = MKC_V_QUIET;
+        break;
+      }
+      case 'r': {
+        mkcoptions->retest = true;
+        break;
+      }
+      case 'v': {
+        mkcoptions->verbose += 1;
+        break;
+      }
+      case 'V': {
+        mkc_main_print_version (mkcoptions);
+        exit (0);
+        break;
+      }
+      case 1: {
+        mkcoptions->loadcache = false;
+        break;
+      }
+      case 2: {
+        mkcoptions->parsedebug = true;
+        break;
+      }
+      case 3: {
+        if (optarg != NULL) {
+          if (strcmp (optarg, "all") == 0) {
+            mkcoptions->loglevel = MKC_LOG_ALL;
+          } else {
+            mkcoptions->loglevel = atol (optarg);
+          }
+        }
+        break;
+      }
+      case 4: {
+        mkcoptions->clean = true;
+        break;
+      }
+      case 5: {
+        if (optarg != NULL) {
+          path_set_dir (MKC_IDIR_MKC_FILES, optarg);
+        }
+        break;
+      }
+      case 6: {
+        if (optarg != NULL) {
+          path_set_dir (MKC_IDIR_PREFIX, optarg);
+        }
+        break;
+      }
+      case 7: {
+        mkcoptions->clean = true;
+        mkcoptions->cleanstop = true;
+        break;
+      }
+      default: {
+        break;
+      }
+    }
+  }
 }
