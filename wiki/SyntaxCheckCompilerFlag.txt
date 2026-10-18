@@ -4,22 +4,22 @@
 
 [TOC]
 
-### check\_compile\_flag
+### .check\_compile\_flag
 
 Checks to see if a compiler flag is valid, and if so, adds it to
 CFLAGS for the current profile.
 
-    check_compile_flag '-Wmissing-prototypes';
-    check_compile_flag '-Wno-missing-prototypes' { negate; }
+    .check_compile_flag '-Wmissing-prototypes';
+    .check_compile_flag '-Wno-missing-prototypes' { .negate; }
 
 Because _gcc_ will not create a warning or error when a compiler flag
 is prefixed with '-Wno-', it is necessary to check the compiler flag
 without the '-Wno-' prefix.  To do this, append a statement block to
-the [check](SyntaxCheck), and add the __negate__ attribute.
+the [check](SyntaxCheck), and add the __.negate__ attribute.
 
 But be aware that some warning flags such as
 '-Wno-poison-system-directories' for MacOS/clang do not have an
-opposite and cannot be tested with the __negate__ attribute.
+opposite and cannot be tested with the __.negate__ attribute.
 
 Generated Name: Prefix: __cf\___
 <br>The leading '-' or '-W' is removed from the name.
@@ -27,21 +27,21 @@ Generated Name: Prefix: __cf\___
 
 ##### Adding a Compiler Flag
 
-    add-compile-flag '-DNO_DEPRECATED';
+    .add_compile_flag '-DNO_DEPRECATED';
 
 Adds a compiler flag without any validation.
 
 ##### Examples
 
-    check_compile_flag '-Wall';
-    check_compile_flag '-Wformat';
+    .check_compile_flag '-Wall';
+    .check_compile_flag '-Wformat';
 
 ##### Attributes
 
-* [header](SyntaxAttrHeader)
-* [name](SyntaxAttrName)
-* negate
-* [compiler\_flags](SyntaxAttrCompileFlag)
+* [.header](SyntaxAttrHeader)
+* [.name](SyntaxAttrName)
+* .negate
+* [.compiler\_flags](SyntaxAttrCompileFlag)
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

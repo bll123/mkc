@@ -2,28 +2,28 @@
 <br>[Syntax](Syntax)
 <br>[Checks](SyntaxCheck)
 
-### check\_struct\_member
+### .check\_struct\_member
 
 Checks to see if _member-name_ exists in _struct-name_.
 
-    check_struct_member <struct-name> <member-name>;
-    check_struct_member <struct-name> <member-name> { <attribute-statements> }
+    .check_struct_member <struct-name> <member-name>;
+    .check_struct_member <struct-name> <member-name> { <attribute-statements> }
 
 Generated Name: Prefix: __\_member\___
 <br>Example: \_member\_struct\_stat\_st\_mode
 
 ##### Examples
 
-    check_struct_member 'struct stat' st_mode {
-      header sys/stat.h;
+    .check_struct_member 'struct stat' st_mode {
+      .header sys/stat.h;
     }
 
 ##### Attributes
 
-* [alternate](SyntaxAttrAlternate)
-* [header](SyntaxAttrHeader)
-* [name](SyntaxAttrName)
-* [compiler\_flags](SyntaxAttrCompileFlag)
+* [.alternate](SyntaxAttrAlternate)
+* [.header](SyntaxAttrHeader)
+* [.name](SyntaxAttrName)
+* [.compiler\_flags](SyntaxAttrCompileFlag)
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

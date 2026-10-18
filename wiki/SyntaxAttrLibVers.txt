@@ -1,14 +1,14 @@
 [Wiki Home](Home)
 <br>[Syntax](Syntax)
 
-### library\_version (attribute)
+### .library\_version (attribute)
 
 Not yet implemented.
 
-The __library\_version__ attribute is an attribute
+The __.library\_version__ attribute is an attribute
 for something.
 
-    library_version <version-string>;
+    .library_version <version-string>;
 
 Repeatable: no
 

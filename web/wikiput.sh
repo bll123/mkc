@@ -8,10 +8,11 @@ project=mkconf
 baseurl=https://sourceforge.net/rest/p/${project}/wiki
 accessurl=${baseurl}/has_access
 useragent=mkc-wikiput.sh
-cookiejar=tmp/cookiejar.txt
+tmpdir=mkc-tmp
+cookiejar=${tmpdir}/cookiejar.txt
 bearer=""
-tmpfile=tmp/wiki-tmp.txt
-filelist=tmp/wiki-files.txt
+tmpfile=${tmpdir}/wiki-tmp.txt
+filelist=${tmpdir}/wiki-files.txt
 lastwiki=web/lastwiki.txt
 
 function gettitle {
@@ -183,7 +184,7 @@ function dispfilelist {
   cat ${filelist}
 }
 
-test -d tmp || mkdir tmp
+test -d ${tmpdir} || mkdir ${tmpdir}
 
 getaccesstoken
 

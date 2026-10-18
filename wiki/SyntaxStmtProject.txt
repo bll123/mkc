@@ -1,0 +1,38 @@
+[Wiki Home](Home)
+<br>[Syntax](Syntax)
+
+### Syntax: .project
+
+The _.project_ statement sets the project name and defines attributes
+for the project.
+
+    .project <project-name>;
+
+    .project <project-name> {
+      .compiler <default-compiler>;
+      .version <version-string>;
+    }
+
+The default compiler is defined with the [.compiler](SyntaxCompiler)
+attribute.
+
+##### Examples
+
+    .project mkctest;
+
+    .project mkctest {
+      .compiler c;
+    }
+
+    .project mkctest {
+      .compiler objc;
+      .version '0.3';
+    }
+
+##### Attributes
+
+* [.compiler](SyntaxAttrCompiler)
+* [.version](SyntaxAttrVersion)
+
+[Wiki Home](Home)
+<br>[Syntax](Syntax)

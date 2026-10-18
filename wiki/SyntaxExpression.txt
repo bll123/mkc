@@ -9,7 +9,7 @@ other string operators.
 
 Listed by precedence (high to low):
 
-* __is\_defined is\_list__
+* __file\_exists is\_defined is\_dictionary is\_directory is\_list__
 * Unary: __&plus; &#8209; !__
 * __* / %__
 * __&plus; &#8209;__
@@ -41,21 +41,28 @@ false is returned.
 
 Internal Functions
 
-__is\_defined is\_list__
+__file\_exists (_path_)__ returns true if _path_ exists and is a
+file.
 
 __is\_defined (_variable&#8209;name_)__ returns true if the variable
-is defined.
+is define.
+
+__is\_dictionary (_variable&#8209;name_)__ returns true if the variable is
+defined and is a dictionary.
+
+__is\_directory (_path_)__ return true if _path_ exists and is a
+directory.
 
 __is\_list (_variable&#8209;name_)__ returns true if the variable is
 defined and is a list.
 
-Examples
+##### Examples
 
-    set a 1 - 2;
-    set b 0;
-    set c ${a} && ${b};
-    if (${a} || ${b}) {
-       print 'hello';
+    .set a 1 - 2;
+    .set b 0;
+    .set c ${a} && ${b};
+    .if (${a} || ${b}) {
+       .print 'hello';
     }
 
 [Wiki Home](Home)

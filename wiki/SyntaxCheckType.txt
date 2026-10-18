@@ -2,29 +2,29 @@
 <br>[Syntax](Syntax)
 <br>[Checks](SyntaxCheck)
 
-### check\_type
+### .check\_type
 
 Checks if _type-name_ exists.
 
-    check_type <type-name>;
-    check_type <type-name> { <attribute-statements> }
+    .check_type <type-name>;
+    .check_type <type-name> { <attribute-statements> }
 
 Generated Name: Prefix __\_type\___
 <br>Example: \_type\_uid\_t
 
 ##### Examples
 
-    check_type int64_t;
-    check_type uid_t {
-      header unistd.h;
+    .check_type int64_t;
+    .check_type uid_t {
+      .header unistd.h;
     }
 
 ##### Attributes
 
-* [alternate](SyntaxAttrAlternate)
-* [compiler_flags](SyntaxAttrCompileFlag)
-* [header](SyntaxAttrHeader)
-* [name](SyntaxAttrName)
+* [.alternate](SyntaxAttrAlternate)
+* [.compiler_flags](SyntaxAttrCompileFlag)
+* [.header](SyntaxAttrHeader)
+* [.name](SyntaxAttrName)
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

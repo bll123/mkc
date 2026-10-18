@@ -3,14 +3,14 @@
 
 [TOC]
 
-### Syntax: function and Function Calls
+### Syntax: .function and Function Calls
 
 ##### Defining a Function
 
-    function <function-name> { <statements> }
-    function <function-name> ( <parameter-list> ) { <statements> }
+    .function <function-name> { <statements> }
+    .function <function-name> ( <parameter-list> ) { <statements> }
 
-The __function__ statement associates an optional
+The __.function__ statement associates an optional
 _parameter&#8209;list_ and a set of statements with
 _function&#8209;name_.
 
@@ -19,17 +19,17 @@ These variables are local to the function's statement block.
 
 ##### Function Examples
 
-    function helloworld {
-      print 'hello world';
+    .function helloworld {
+      .print 'hello world';
     }
 
-    function hello (arg) {
+    .function hello (arg) {
       # remember to use double quotes
-      print "hello ${arg}";
+      .print "hello ${arg}";
     }
 
-    function print2 (a b) {
-      print "${a} ${b}";
+    .function print2 (a b) {
+      .print "${a} ${b}";
     }
 
 ##### Calling a Function
@@ -43,7 +43,7 @@ A function call with arguments is passed the arguments as separate
 values.
 
     hello 'to you';
-    set a 'to them';
+    .set a 'to them';
     hello ${a};
 
     print2 'hello' 'world';

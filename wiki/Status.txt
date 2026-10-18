@@ -2,17 +2,17 @@
 
 ### Status
 
-##### 2026-10-1 pre-alpha 0.7
+##### 2026-10-18 pre-alpha 0.8
 
-Currently, the pre-alpha code will only create a configuration file.
+Currently, the pre-alpha code can do basic builds.
 
-Version 0.7 can now do a basic build.
+Version 0.8 can now do a basic build and can build _mkc_ itself.
 
 To do list (major tasks):
 - fix 'return' statement (local scopes).
 - foreach for dictionaries
 
-2026-10-1: progress is slow right now, there's a lot of work to
+2026-10-18: progress is slow right now, there's a lot of work to
 be done, and many things to fix.
 
 ##### Testing
@@ -38,6 +38,7 @@ If you have a system that you want regularly tested, please
 * Phase 1
     * Check for compiler flags. (partial)
     * Check for link flags. (partial)
+    * Check for libraries. (partial)
     * __Complete__: Check for headers.
       Mostly not needed for modern systems.
     * Check for library functions. (c: complete; c&plus;&plus; not implemented)
@@ -57,13 +58,17 @@ If you have a system that you want regularly tested, please
         * __Complete__: compile flags
         * __Complete__: headers
         * __Complete__: link flags
+        * __Complete__: libraries
     * Statements:
         * __Complete__: check_include_compilation
         * __Complete__: check_include_dependencies
         * __Complete__: check_include_guards
-        * __Complete__: foreach
-        * __Complete__: function
-        * __Complete__: include
+        * foreach
+          Needs to be extended to handle dictionaries.
+        * function
+          Return statement needs work.
+        * include
+          Sub-directories are not implemented.
         * __Complete__: print
         * __Complete__: set
         * __Complete__: while

@@ -1,10 +1,13 @@
 [Wiki Home](Home)
 <br>[Syntax](Syntax)
 
-### Syntax: check\_include\_guards
+### Syntax: .check\_include\_guards
 
-__check\_include\_guards__ checks the include files to make sure
+__.check\_include\_guards__ checks the include files to make sure
 a guard exists, and that there are no duplicate include guards.
+
+__.check\_include\_guards__ uses the compiler flags set by the user
+for compilation of the include files.
 
 The following pattern is used to check for an include guard.
 
@@ -13,25 +16,21 @@ The following pattern is used to check for an include guard.
 
 In the _.mkc_ file, use the following code to check the include guards.
 
-    check_include_guards {
-      path '<path>';
+    .check_include_guards {
       # note that the match expression is a full regular expression
       # and not a basic regular expression.
-      match <pattern>;
+      .match <pattern>;
     }
 
 ##### Examples
 
-    check_include_guards {
-      path 'include';
-      path '.';
-      match '\.h$';
+    .check_include_guards {
+      .match '\.h$';
     }
 
 ##### Attributes
 
-* [match](SyntaxAttrMatch)
-* [path](SyntaxAttrPath)
+* [.match](SyntaxAttrMatch)
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

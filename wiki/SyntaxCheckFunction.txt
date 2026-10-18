@@ -2,38 +2,39 @@
 <br>[Syntax](Syntax)
 <br>[Checks](SyntaxCheck)
 
-### check\_function
+### .check\_function
 
 Checks if _function&#8209;name_ exists.  The function is determined to
 exist if there is a macro defined with that name, or if the function
 is found.
 
-    check_function <function-name>;
-    check_function <function-name> { <attribute-statements> }
+    .check_function <function-name>;
+    .check_function <function-name> { <attribute-statements> }
 
 Generated Name: Prefix: __\_function\___
 <br>Example: \_function\_statvfs
 
 ##### Examples
 
-    check_function malloc;
-    check_function fstat {
-      header sys/stat.h;
+    .check_function malloc;
+    .check_function fstat {
+      .header sys/stat.h;
     }
-    if (! MKC_SYS_WINDOWS) {
-      check_function MAX {
-        header sys/param.h;
-        name _function_max;
+    if (! ${MKC_SYS_WINDOWS}) {
+      .check_function MAX {
+        .header sys/param.h;
+        .name _function_max;
       }
     }
 
 ##### Attributes
 
-* [alternate](SyntaxAttrAlternate)
-* [header](SyntaxAttrHeader)
-* [name](SyntaxAttrName)
-* [compiler\_flags](SyntaxAttrCompileFlag)
-* [link\_flags](SyntaxAttrLinkFlag)
+* [.alternate](SyntaxAttrAlternate)
+* [.header](SyntaxAttrHeader)
+* [.name](SyntaxAttrName)
+* [.compiler\_flags](SyntaxAttrCompileFlag)
+* [.link\_flags](SyntaxAttrLinkFlag)
+* [.libraries](SyntaxAttrLibraries)
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

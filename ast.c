@@ -1624,7 +1624,7 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
     case MKC_T_ATTR_HEADER:
     case MKC_T_ATTR_COMP_FLAGS:
     case MKC_T_ATTR_LINK_FLAGS:
-    case MKC_T_ATTR_LIB_FLAGS:
+    case MKC_T_ATTR_LIBRARIES:
     case MKC_T_ATTR_RUN_COMMAND:
     case MKC_T_ATTR_SOURCE: {
       value_t   *val;
@@ -1647,7 +1647,7 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
           process_attr_link_flags (astmain->process, val);
           break;
         }
-        case MKC_T_ATTR_LIB_FLAGS: {
+        case MKC_T_ATTR_LIBRARIES: {
           process_attr_lib_flags (astmain->process, val);
           break;
         }
@@ -1973,7 +1973,7 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
 
     case MKC_T_OP_FILE_EXISTS:
     case MKC_T_OP_IS_DEFINED:
-    case MKC_T_OP_IS_DICT:
+    case MKC_T_OP_IS_DICTIONARY:
     case MKC_T_OP_IS_DIRECTORY:
     case MKC_T_OP_IS_LIST: {
       ast_process (astmain, astnode->unary_op.vala,

@@ -1,12 +1,12 @@
 [Wiki Home](Home)
 <br>[Syntax](Syntax)
 
-### replace (attribute)
+### .replace (attribute)
 
-The __replace__ attribute is used to configure replacement text.
-It is used in the [configuration_file](SyntaxConfigure) statement.
+The __.replace__ attribute is used to configure replacement text.
+It is used in the [.configuration_file](SyntaxStmtConfigure) statement.
 
-    replace <str> <value>;
+    .replace <str> <value>;
 
 _value_ will be substituted for _str_ during input file processing.
 

@@ -1,0 +1,81 @@
+[Wiki Home](Home)
+<br>[Syntax](Syntax)
+
+[TOC]
+
+### Syntax: Control Statements
+
+##### .if Statements
+
+    .if (<expr>) {
+      <statement-list>
+    }
+
+    .if (<expr>) {
+      <statement-list>
+    } .else {
+      <statement-list>
+    }
+
+    .if (<expr>) {
+      <statement-list>
+    } .else .if (<expr>) {
+      <statement-list>
+    }
+
+    .if (<expr>) {
+      <statement-list>
+    } .else .if (<expr>) {
+      <statement-list>
+    } .else .if (<expr>) {
+      <statement-list>
+    } .else {
+      <statement-list>
+    }
+
+##### .exit statement
+
+Stops processing.  Used when debugging a .mkc configuration file.
+Statements after the __.exit__ will be checked for syntax, but will not
+be executed.
+
+    .exit <return-value>;
+    .exit <return-value> <message>;
+
+_return-value_ is an integer value.
+if _message_ is specified, it will be printed.
+
+##### while statement
+
+    .while (<expr>) {
+      <statement-list>
+    }
+
+__.break__ and __.continue__ statements may appear in while loops.
+
+    .break;
+    .continue;
+
+##### foreach statement
+
+    .foreach <var-list> .in <list> {
+      <statement-list>
+    }
+
+    .foreach <var-list> .in .range (<begin> <end>) {
+      <statement-list>
+    }
+
+    .foreach <var-list> .in .range (<begin> <end> <increment>) {
+      <statement-list>
+    }
+
+Where _var-list_ is one or more variable names.
+
+__.break__ and __.continue__ statements may appear in foreach loops.
+
+    .break;
+    .continue;
+
+[Wiki Home](Home)
+<br>[Syntax](Syntax)

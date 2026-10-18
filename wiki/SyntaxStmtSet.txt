@@ -1,0 +1,53 @@
+[Wiki Home](Home)
+<br>[Syntax](Syntax)
+
+### Syntax: .set
+
+Variable names may contain any valid UTF-8 character.  There are no
+validity checks to exclude unusual UTF-8 characters.
+
+Variable names may not contain spaces.
+
+    .set [.local] variable_name <value>;
+
+_value_ may be an integer, quoted string, single quoted string,
+a variable, an expression, a list, or a dictionary.
+
+The __.local__ option puts the variable into the local scope.
+These variables can be accessed as usual, and once a variable is in
+the local scope, it can be set and used as usual.
+
+A new scope is generated for each statement list grouped by __{...}__.
+A new scope can be forced by adding __{...}__ around a list of
+statements.
+
+    if (true) {
+      .set .local b 2
+      # b is visible within the if statement block.
+    }
+
+    {
+      .set .local a 1
+      # a is only visible within this block of {...}
+    }
+
+<br>See [Syntax: Variables](SyntaxVariable)
+
+##### Examples
+
+    .set a 1;
+    .set b 'hello';
+    .set c 'world';
+    .set d "${b} ${c}";
+    .set h $ENV{HOME};
+    .print ${d};
+
+    .set local tt 14;
+    .set tt 15;
+
+##### References
+
+[Syntax: Variables](SyntaxVariable)
+
+[Wiki Home](Home)
+<br>[Syntax](Syntax)

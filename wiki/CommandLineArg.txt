@@ -2,8 +2,15 @@
 
 ### __mkc__ command line arguments
 
-* --compiler _compiler_
-  Select the default compiler.
+The MKC_ARGS environment variables may also be used to set command
+line options.
+
+* --clean
+  Clean the object and staging directories first.
+* --cleanexit
+  Clean the object and staging directories and exit.
+* --loglevel &lt;level&gt;|all
+  Select the loglevel.
 * --mkc-dir _mkc-dir_
   Sets the location of the temporary mkc_files directory.
 * --no-cache
@@ -11,12 +18,18 @@
 * --parsedebug
   Turn on bison parser debugging.
 * --prefix _prefix_
-  Not implemented.
+  Set the prefix for staging and installation.
 * --profile _profile_ (-p)
   Select the profile to use.
+* --quiet
+  Set the verbosity level to 0.
 * --retest (-r)
   The cache will be loaded, but checks that failed will be re-run.
-* --version (-v)
+* --verbose (-v)
+  Increment the verbosity level.
+* --verboselevel &lt;level&gt;|all
+  Set the verbosity level.
+* --version (-V)
   Print the _mkc_ version.
 
 [Wiki Home](Home)

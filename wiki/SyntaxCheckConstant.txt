@@ -2,10 +2,10 @@
 <br>[Syntax](Syntax)
 <br>[Checks](SyntaxCheck)
 
-### check\_constant
+### .check\_constant
 
-    check_constant <constant-name>;
-    check_constant <constant-name> { <attribute-statements> }
+    .check_constant <constant-name>;
+    .check_constant <constant-name> { <attribute-statements> }
 
 Checks if _constant-name_ exists and is numeric.
 
@@ -14,16 +14,16 @@ Generated Name: Prefix __\_constant\___
 
 ##### Examples
 
-    check_constant EPERM {
-      header errno.h;
+    .check_constant EPERM {
+      .header errno.h;
     }
 
 ##### Attributes
 
-* [alternate](SyntaxAttrAlternate)
-* [header](SyntaxAttrHeader)
-* [name](SyntaxAttrName)
-* [compiler\_flags](SyntaxAttrCompileFlag)
+* [.alternate](SyntaxAttrAlternate)
+* [.header](SyntaxAttrHeader)
+* [.name](SyntaxAttrName)
+* [.compiler\_flags](SyntaxAttrCompileFlag)
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

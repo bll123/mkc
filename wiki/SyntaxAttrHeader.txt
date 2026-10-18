@@ -1,18 +1,18 @@
 [Wiki Home](Home)
 <br>[Syntax](Syntax)
 
-### header (attribute)
+### .header (attribute)
 
-The __header__ attribute specifies the required headers for a
+The __.header__ attribute specifies the required headers for a
 [check](SyntaxCheck). The headers specified will be added to the
 [check](SyntaxCheck).
 
-    header <header-name> [<header-name> ...];
+    .header <header-name> [<header-name> ...];
 
-The __header__ attribute is used with a [check](SyntaxCheck)
-statement or with an [alternate](SyntaxAttrAlternate) attribute.
+The __.header__ attribute is used with a [check](SyntaxCheck)
+statement or with an [.alternate](SyntaxAttrAlternate) attribute.
 
-Multiple __header__ attribute statements may be included.
+Multiple __.header__ attribute statements may be included.
 
 Repeatable: __yes__
 

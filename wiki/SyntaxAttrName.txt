@@ -1,17 +1,17 @@
 [Wiki Home](Home)
 <br>[Syntax](Syntax)
 
-### name (attribute)
+### .name (attribute)
 
-The __name__ attribute is an attribute for [check](SyntaxCheck)
-statements, and [alternate](SyntaxAttrAlternate) attributes.
+The __.name__ attribute is an attribute for [check](SyntaxCheck)
+statements, and [.alternate](SyntaxAttrAlternate) attributes.
 
     name <name>;
 
-For [check](SyntaxCheck) statements, the __name__ attribute replaces
+For [check](SyntaxCheck) statements, the __.name__ attribute replaces
 the generated name of the [check](SyntaxCheck) with _name_.
 
-For [alternate](SyntaxAttrAlternate) attributes, the __name__
+For [.alternate](SyntaxAttrAlternate) attributes, the __name__
 attribute specifies an additional name that will be set if the
 alternate succeeds.
 

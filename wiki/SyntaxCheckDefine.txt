@@ -2,28 +2,28 @@
 <br>[Syntax](Syntax)
 <br>[Checks](SyntaxCheck)
 
-### check\_define
+### .check\_define
 
 Checks if _macro-name_ exists as a macro.
 
-    check_define <macro-name>;
-    check_define <macro-name> { <attribute-statements> }
+    .check_define <macro-name>;
+    .check_define <macro-name> { <attribute-statements> }
 
 Generated Name: Prefix: __\_define\___
 <br>Example: \_define\_EPERM
 
 ##### Examples
 
-    check_define MAX {
-      header sys/param.h;
+    .check_define MAX {
+      .header sys/param.h;
     }
 
 ##### Attributes
 
-* [alternate](SyntaxAttrAlternate)
-* [header](SyntaxAttrHeader)
-* [name](SyntaxAttrName)
-* [compiler\_flags](SyntaxAttrCompileFlag)
+* [.alternate](SyntaxAttrAlternate)
+* [.header](SyntaxAttrHeader)
+* [.name](SyntaxAttrName)
+* [.compiler\_flags](SyntaxAttrCompileFlag)
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

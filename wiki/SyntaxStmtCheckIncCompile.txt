@@ -1,32 +1,29 @@
 [Wiki Home](Home)
 <br>[Syntax](Syntax)
 
-### Syntax: check\_include\_compile
+### Syntax: .check\_include\_compile
 
-__check\_include\_compile__ checks to make sure the specified include
+__.check\_include\_compile__ checks to make sure the specified include
 files will compile without any dependencies.
 
-    check_include_compile {
-      path '<path>';
+__.check\_include\_compile__ uses the compiler flags set by the user
+for the include compilation tests.
+
+    .check_include_compile {
       # note that the match expression is a full regular expression
       # and not a basic regular expression.
-      match <pattern>;
+      .match <pattern>;
     }
 
 ##### Examples
 
-    check_include_compile {
-      compiler_flags '-Iinclude' '-I.';
-      path 'include';
-      path '.';
-      match '\.h$';
+    .check_include_compile {
+      .match '\.h$';
     }
 
 ##### Attributes
 
-* [compiler_flags](SyntaxAttrCompileFlag)
-* [match](SyntaxAttrMatch)
-* [path](SyntaxAttrPath)
+* [.match](SyntaxAttrMatch)
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

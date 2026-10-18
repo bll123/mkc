@@ -2,7 +2,7 @@
 <br>[Syntax](Syntax)
 <br>[Checks](SyntaxCheck)
 
-### check\_arg\_count
+### .check\_arg\_count
 
 Checks the number of arguments a function requires.  This _check_ does
 not work on macros.  This _check_ provides a way to distinguish function
@@ -12,25 +12,26 @@ A function that exists but is declared as `func (void)` will
 return a value of 1.  A function that does not exist will return a
 value of 0.
 
-    check_arg_count <function-name>;
-    check_arg_count <function-name> { <attribute-statements> }
+    .check_arg_count <function-name>;
+    .check_arg_count <function-name> { <attribute-statements> }
 
 Generated Name: Prefix: __\_arg\_count\___
 <br>Example: \_arg\_count\_mkdir 2
 
 ##### Examples
 
-    check_arg_count mkdir {
-      header sys/stat.h;
+    .check_arg_count mkdir {
+      .header sys/stat.h;
     }
 
 ##### Attributes
 
-* [alternate](SyntaxAttrAlternate)
-* [header](SyntaxAttrHeader)
-* [name](SyntaxAttrName)
-* [compiler\_flags](SyntaxAttrCompileFlag)
-* [link\_flags](SyntaxAttrLinkFlag)
+* [.alternate](SyntaxAttrAlternate)
+* [.header](SyntaxAttrHeader)
+* [.name](SyntaxAttrName)
+* [.compiler\_flags](SyntaxAttrCompileFlag)
+* [.link\_flags](SyntaxAttrLinkFlag)
+* [.libraries](SyntaxLibraries)
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

@@ -1,30 +1,30 @@
 [Wiki Home](Home)
 <br>[Syntax](Syntax)
 
-### alternate (attribute)
+### .alternate (attribute)
 
-The __alternate__ attribute allows a [check](SyntaxCheck) to test with
+The __.alternate__ attribute allows a [check](SyntaxCheck) to test with
 different compiler flags, link flags and headers.
 
-    alternate { <attribute-statements> }
+    .alternate { <attribute-statements> }
 
-The __alternate__ attribute is used with a [check](SyntaxCheck)
+The __.alternate__ attribute is used with a [check](SyntaxCheck)
 statement.
 
 Repeatable: __yes__
 
 ##### Examples
 
-    check_function statfs {
-      alternate {
+    .check_function statfs {
+      .alternate {
         # linux
-        name _header_sys_vfs;
-        header sys/vfs.h;
+        .name _header_sys_vfs;
+        .header sys/vfs.h;
       }
-      alternate {
+      .alternate {
         # macos, freebsd
-        name _header_sys_mount;
-        header sys/mount.h;
+        .name _header_sys_mount;
+        .header sys/mount.h;
       }
     }
 

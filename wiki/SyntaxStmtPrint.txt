@@ -1,11 +1,11 @@
 [Wiki Home](Home)
 <br>[Syntax](Syntax)
 
-### Syntax: print
+### Syntax: .print
 
-__print__ prints a value to stdout.
+__.print__ prints a value to stdout.
 
-    print <value>;
+    .print <value>;
 
 _value_ may be an integer, quoted string, single quoted string,
 environment variable or a variable;

@@ -60,14 +60,14 @@
         .header libintl.h;
         .compiler_flags ${MKC_COMMON_INCLUDE};
         .link_flags ${MKC_COMMON_LIB};
-        .library_flags '-lintl';
+        .libraries '-lintl';
       }
       .alternate {
         .name mkc_libintl_intl_iconv;
         .header libintl.h;
         .compiler_flags ${MKC_COMMON_INCLUDE};
         .link_flags ${MKC_COMMON_LIB};
-        .library_flags '-lintl' '-liconv';
+        .libraries '-lintl' '-liconv';
       }
       .on_success {
         .set mkc_libintl_rc true;
@@ -80,21 +80,21 @@
         .alternate {
           .header libintl.h;
           .compiler_flags ${MKC_COMMON_INCLUDE};
-          .library_flags ${MKC_COMMON_LIB};
+          .libraries ${MKC_COMMON_LIB};
         }
         .alternate {
           .name mkc_libintl_intl;
           .header libintl.h;
           .compiler_flags ${MKC_COMMON_INCLUDE};
           .link_flags ${MKC_COMMON_LIB};
-          .library_flags '-lintl';
+          .libraries '-lintl';
         }
         .alternate {
           .name mkc_libintl_intl_iconv;
           .header libintl.h;
           .compiler_flags ${MKC_COMMON_INCLUDE};
           .link_flags ${MKC_COMMON_LIB};
-          .library_flags '-lintl' '-liconv';
+          .libraries '-lintl' '-liconv';
         }
         .on_success {
           .set mkc_libintl_rc true;
@@ -127,14 +127,14 @@
           .header libintl.h;
           .compiler_flags ${MKC_COMMON_INCLUDE};
           .link_flags ${MKC_COMMON_LIB};
-          .library_flags ${libintl_LIBS};
+          .libraries ${libintl_LIBS};
         }
       } .else {
         .check_function wbindtextdomain {
           .header libintl.h;
           .compiler_flags ${MKC_COMMON_INCLUDE};
           .link_flags ${MKC_COMMON_LIB};
-          .library_flags ${libintl_LIBS};
+          .libraries ${libintl_LIBS};
         }
       }
     } .else {

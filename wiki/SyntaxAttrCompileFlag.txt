@@ -1,15 +1,16 @@
 [Wiki Home](Home)
 <br>[Syntax](Syntax)
 
-### compiler_flags (attribute)
+### .compiler_flags (attribute)
 
-    compiler_flags '-flag' ['-flag' ...];
+    .compiler_flags '-flag' ['-flag' ...];
 
 Note that if you use `'-I some/path'`, each individual argument must be
 quoted: `'-I' 'some/path'`.  Or use `'-Isome/path'`.
 
-The __compiler\_flags__ attribute is used with a [check](SyntaxCheck)
-statement or with an [alternate](SyntaxAttrAlternate) attribute.
+The __.compiler\_flags__ attribute is used with a [check](SyntaxCheck)
+statement, an [.alternate](SyntaxAttrAlternate) attribute or
+with an [.executable](SyntaxStmtExecutable) statement.
 
 The flags specified will be added to the check.
 

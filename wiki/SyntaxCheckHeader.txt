@@ -2,12 +2,12 @@
 <br>[Syntax](Syntax)
 <br>[Checks](SyntaxCheck)
 
-### check\_header
+### .check\_header
 
 Checks if _header_ exists and can be compiled.
 
-    check_header <header>;
-    check_header <header> { <attribute-statements> }
+    .check_header <header>;
+    .check_header <header> { <attribute-statements> }
 
 On modern system this is generally not needed, as the following
 code can be used:
@@ -21,26 +21,26 @@ Generated Name: Prefix: __\_header\___
 
 ##### Examples
 
-    check_header sys/stat.h;
+    .check_header sys/stat.h;
 
-    check_header someheader.h {
-      alternate {
-        compiler_flags '-I/opt/include';
+    .check_header someheader.h {
+      .alternate {
+        .compiler_flags '-I/opt/include';
       }
-      alternate {
-        compiler_flags '-I/usr/local/include';
+      .alternate {
+        .compiler_flags '-I/usr/local/include';
       }
-      alternate {
-        compiler_flags '-I/opt/homebrew/include';
+      .alternate {
+        .compiler_flags '-I/opt/homebrew/include';
       }
     }
 
 ##### Attributes
 
-* [alternate](SyntaxAttrAlternate)
-* [header](SyntaxAttrHeader)
-* [name](SyntaxAttrName)
-* [compiler\_flags](SyntaxAttrCompileFlag)
+* [.alternate](SyntaxAttrAlternate)
+* [.header](SyntaxAttrHeader)
+* [.name](SyntaxAttrName)
+* [.compiler\_flags](SyntaxAttrCompileFlag)
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

@@ -1,12 +1,12 @@
 [Wiki Home](Home)
 <br>[Syntax](Syntax)
 
-### output (attribute)
+### .output (attribute)
 
-The __output__ attribute is used to define an output file.
-It is used in the [configuration_file](SyntaxConfigure) statement.
+The __.output__ attribute is used to define an output file.
+It is used in the [.configuration_file](SyntaxStmtConfigure) statement.
 
-    output <path>;
+    ..output <path>;
 
 Repeatable: no
 

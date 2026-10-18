@@ -1,14 +1,14 @@
 [Wiki Home](Home)
 <br>[Syntax](Syntax)
 
-### success, failure (attribute)
+### .on_success, .on_failure (attribute)
 
-The __success__ or __failure__ attribute specifies a block of
+The __.on_success__ or __.on_failure__ attribute specifies a block of
 statements to run on success or failure of a [check](SyntaxCheck). It
 is used in all [check](SyntaxCheck) statements.
 
-    success { <statement-list> }
-    failure { <statement-list> }
+    .on_success { <statement-list> }
+    .on_failure { <statement-list> }
 
 Repeatable: no
 

@@ -1,36 +1,35 @@
 [Wiki Home](Home)
 <br>[Syntax](Syntax)
 
-### Syntax: check\_include\_dependencies
+### Syntax: .check\_include\_dependencies
 
-__check\_include\_dependencies__ checks for dependency loops in the
+__.check\_include\_dependencies__ checks for dependency loops in the
 include files.  The include files to be processed are located by
 processing each path specified and matching against the specified
 match pattern.
+
+__.check\_include\_dependencies__ uses the compiler flags set by the
+user for compilation of the include files.
 
 Dependents are located by searching each include file for a `#include`
 or `#import` statement.  System include files (enclosed in
 &lt;...&gt;) are ignored.
 
-    check_include_dependencies {
-      path '<path>';
+    .check_include_dependencies {
       # note that the match expression is a full regular expression
       # and not a basic regular expression.
-      match <pattern>;
+      .match <pattern>;
     }
 
 ##### Examples
 
-    check_include_dependencies {
-      path 'include';
-      path '.';
-      match '\.h$';
+    .check_include_dependencies {
+      .match '\.h$';
     }
 
 ##### Attributes
 
-* [match](SyntaxAttrMatch)
-* [path](SyntaxAttrPath)
+* [.match](SyntaxAttrMatch)
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

@@ -1,37 +1,43 @@
 [Wiki Home](Home)
 <br>[Syntax](Syntax)
 
-### Syntax: executable
+### Syntax: .executable
 
-__executable__ defines an executable to be built.  This is not an
+__.executable__ defines an executable to be built.  This is not an
 imperative statement.  The build is started with the
-[build](SyntaxStmtBuild) statement.
+[.build](SyntaxStmtBuild) or [.auto_build](SyntaxStmtAutoBuild)
+statement.
 
-    executable helloworld {
-      source helloworld.c;
+    .executable helloworld {
+      .source helloworld.c;
     }
 
 ##### Examples
 
-    executable helloworld {
-      source 'helloworld.c';
+    .executable helloworld {
+      .source 'helloworld.c';
     }
 
-    executable helloworld {
-      source 'helloworld.c';
-      compiler_flags '-g';
+    .executable helloworld {
+      .source 'helloworld.c';
+      .compiler_flags '-g';
     }
 
-    executable helloworld {
-      source hello.c world.c;
+    .executable helloworld {
+      .source 'helloworld.c';
+      .libraries '-lm';
+    }
+
+    .executable helloworld {
+      .source hello.c world.c;
     }
 
 ##### Attributes
 
-* [source](SyntaxAttrSource)
-* [compiler_flags](SyntaxAttrCompileFlag)
-* [link_flags](SyntaxAttrLinkFlag)
-* [libraries](SyntaxAttrLibraries)
+* [.source](SyntaxAttrSource)
+* [.compiler_flags](SyntaxAttrCompileFlag)
+* [.link_flags](SyntaxAttrLinkFlag)
+* [.libraries](SyntaxAttrLibraries)
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

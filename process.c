@@ -693,7 +693,7 @@ process_other_op (process_t *process, astnode_token_t asttype,
       result = fileop_is_directory (tbuff);
       break;
     }
-    case MKC_T_OP_IS_DICT: {
+    case MKC_T_OP_IS_DICTIONARY: {
       sv_value_get_str (process->sv, vala, tbuff, MKC_PATH_MAX);
       result = sv_var_is_dict (process->sv, tbuff);
       break;
@@ -1500,24 +1500,24 @@ process_stmt_debug (process_t *process,
   if (strcmp (tbuff, "null") == 0) {
     /* do nothing */ ;
   }
-  if (strcmp (tbuff, "printprof") == 0) {
-    process_dbg_print_prof (process, SV_ITER_PROFILES);
-  }
   if (strcmp (tbuff, "printhierarchy") == 0) {
     process_dbg_print_prof (process, SV_ITER_HIERARCHY);
   }
-  if (strcmp (tbuff, "printvar") == 0) {
-    sv_value_get_str (process->sv, subvalue, tbuff, sizeof (tbuff));
-    process_dbg_print_var (process, tbuff);
-  }
-  if (strcmp (tbuff, "printpath") == 0) {
-    process_dbg_print_path (process);
+  if (strcmp (tbuff, "printinfo") == 0) {
+    process_dbg_print_info (process);
   }
   if (strcmp (tbuff, "printinternal") == 0) {
     process_dbg_print_int_var (process);
   }
-  if (strcmp (tbuff, "printinfo") == 0) {
-    process_dbg_print_info (process);
+  if (strcmp (tbuff, "printpath") == 0) {
+    process_dbg_print_path (process);
+  }
+  if (strcmp (tbuff, "printprof") == 0) {
+    process_dbg_print_prof (process, SV_ITER_PROFILES);
+  }
+  if (strcmp (tbuff, "printvar") == 0) {
+    sv_value_get_str (process->sv, subvalue, tbuff, sizeof (tbuff));
+    process_dbg_print_var (process, tbuff);
   }
   if (strcmp (tbuff, "savecache") == 0) {
     sv_value_get_str (process->sv, subvalue, tbuff, sizeof (tbuff));

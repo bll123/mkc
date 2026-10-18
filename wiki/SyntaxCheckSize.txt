@@ -2,10 +2,10 @@
 <br>[Syntax](Syntax)
 <br>[Checks](SyntaxCheck)
 
-### check\_size
+### .check\_size
 
-    check_size <type-name>;
-    check_size <type-name> { <attribute-statements> }
+    .check_size <type-name>;
+    .check_size <type-name> { <attribute-statements> }
 
 Checks the size of _type-name_.  The check-name will be set to the
 size of the type or zero if the type does not exist.
@@ -15,17 +15,18 @@ Generated Name: Prefix: __\_size\___
 
 ##### Examples
 
-    check_size int64_t {
-      header stdint.h;
+    .check_size int64_t {
+      .header stdint.h;
     }
 
 ##### Attributes
 
-* [alternate](SyntaxAttrAlternate)
-* [header](SyntaxAttrHeader)
-* [name](SyntaxAttrName)
-* [compiler\_flags](SyntaxAttrCompileFlag)
-* [link\_flags](SyntaxAttrLinkFlag)
+* [.alternate](SyntaxAttrAlternate)
+* [.header](SyntaxAttrHeader)
+* [.name](SyntaxAttrName)
+* [.compiler\_flags](SyntaxAttrCompileFlag)
+* [.link\_flags](SyntaxAttrLinkFlag)
+* [.libraries](SyntaxAttrLibraries)
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

@@ -1,15 +1,16 @@
 [Wiki Home](Home)
 <br>[Syntax](Syntax)
 
-### libraries (attribute)
+### .libraries (attribute)
 
-The __libraries__ attribute is used for a [check](SyntaxCheck)
+The __.libraries__ attribute is used for a [check](SyntaxCheck)
 statement.
 
-    libraries '-flag' ['-flag' ...];
+    .libraries '-lname' ['-lname' ...];
 
-The __libraries__ attribute is used with a [check](SyntaxCheck)
-statement or with an [alternate](SyntaxAttrAlternate) attribute.
+The __.libraries__ attribute is used with a [check](SyntaxCheck)
+statement, an [.alternate](SyntaxAttrAlternate) attribute or
+with an [.executable](SyntaxStmtExecutable) statement.
 
 The flags specified will be added to the [check](SyntaxCheck).
 

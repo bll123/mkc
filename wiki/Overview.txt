@@ -4,9 +4,9 @@
 
 ### Overview
 
-__mkc__ is build configuration tool.  It will create a configuration
+__mkc__ is configuration and build tool.  It will create a configuration
 file based on the requested checks, build the project based on the
-configuration and targets that are defined (not yet implemented), and
+configuration and targets that are defined (partially implemented), and
 install the project (not yet implemented).
 
 See [Status](Status) for the current status and goals.
@@ -31,7 +31,7 @@ built or processed.
 
 Every target has its own profile for attributes and variables.
 
-<br>References: [Syntax: Profile](SyntaxProfile.txt)
+<br>References: [Syntax: .profile](SyntaxStmtProfile.txt)
 
 ##### Running __mkc__
 

@@ -9,55 +9,68 @@
     // comments may start with //
     # or with #
 
+##### Keywords
+
+All _mkc_ keywords start with a leading period (.).  This prevents
+any conflict with the filename namespace.
+
+Some statements have specific arguments.  These are not keywords, but
+values, and therefore do not have a leading period (.).
+
+    .method auto;
+
 ##### Statements
 
   * [Values and Variables](SyntaxVariable)
   * [Expressions](SyntaxExpression)
   * Statements
-      * [build](SyntaxStmtBuild)
-      * [configuration_file](SyntaxConfigure)
-      * [check_include_compile](SyntaxStmtCheckIncCompile)
-      * [check_include_dependencies](SyntaxStmtCheckIncDeps)
-      * [check_include_guards](SyntaxStmtCheckIncGuards)
-      * [executable](SyntaxStmtExecutable)
-      * [Flow Control Statements](SyntaxControl)
-        if, exit, while, foreach
-      * [function and Function Calls](SyntaxFunction)
-      * [include](SyntaxInclude)
-      * [print](SyntaxPrint)
-      * [project](SyntaxProject)
-      * [profile](SyntaxProfile)
-      * [set](SyntaxSet)
-      * [Directives](SyntaxDirective)
+      * [.auto_build](SyntaxStmtBuild)
+      * [.build](SyntaxStmtBuild)
+      * [.configuration_file](SyntaxStmtConfigure)
+      * [.check_include_compile](SyntaxStmtCheckIncCompile)
+      * [.check_include_dependencies](SyntaxStmtCheckIncDeps)
+      * [.check_include_guards](SyntaxStmtCheckIncGuards)
+      * [.create_file](SyntaxStmtCreateFile)
+      * [.executable](SyntaxStmtExecutable)
+      * [Flow Control Statements](SyntaxStmtControl)
+        .if, .exit, .while, .foreach
+      * [.function and Function Calls](SyntaxStmtFunction)
+      * [.include](SyntaxStmtInclude)
+      * [.print](SyntaxStmtPrint)
+      * [.project](SyntaxStmtProject)
+      * [.profile](SyntaxStmtProfile)
+      * [.set](SyntaxStmtSet)
+      * [Directives](SyntaxStmtDirective)
+        .mkcdebug
   * [Check Statements](SyntaxCheck)
-      * [check_arg_count](SyntaxCheckArgCount)
-      * [check_compiler_flag](SyntaxCheckCompilerFlag)
-        add_compiler_flag
-      * [check_constant](SyntaxCheckConstant)
-      * [check_define](SyntaxCheckDefine)
-      * [check_function](SyntaxCheckFunction)
-      * [chec_header](SyntaxCheckHeader)
-      * [check_link_flag](SyntaxCheckLinkFlag)
-        add_link_flag
-      * [check_package](SyntaxCheckPackage)
-      * [check_size](SyntaxCheckSize)
-      * [check_shell_extract](SyntaxCheckShell)
-      * [check_struct_member](SyntaxCheckStructMember)
-      * [check_type](SyntaxCheckType)
+      * [.check_arg_count](SyntaxCheckArgCount)
+      * [.check_compiler_flag](SyntaxCheckCompilerFlag)
+        .add_compiler_flag
+      * [.check_constant](SyntaxCheckConstant)
+      * [.check_define](SyntaxCheckDefine)
+      * [.check_function](SyntaxCheckFunction)
+      * [.check_header](SyntaxCheckHeader)
+      * [.check_link_flag](SyntaxCheckLinkFlag)
+        .add_link_flag
+      * [.check_package](SyntaxCheckPackage)
+      * [.check_size](SyntaxCheckSize)
+      * [.check_shell_extract](SyntaxCheckShell)
+      * [.check_struct_member](SyntaxCheckStructMember)
+      * [.check_type](SyntaxCheckType)
   * Attributes
-      * [alternate](SyntaxAttrAlternate)
-      * [compiler_flags](SyntaxAttrCompileFlag)
-      * [compiler](SyntaxAttrCompiler)
-      * [failure](SyntaxAttrSuccessFail)
-      * [header](SyntaxAttrHeader)
-      * [input](SyntaxAttrInput)
-      * [libraries](SyntaxAttrLibraries)
-      * [link_flags](SyntaxAttrLinkFlag)
-      * [method](SyntaxAttrMethod)
-      * [name](SyntaxAttrName)
-      * [output](SyntaxAttrOutput)
-      * [path](SyntaxAttrPath)
-      * [source](SyntaxAttrSource)
-      * [success](SyntaxAttrSuccessFail)
+      * [.alternate](SyntaxAttrAlternate)
+      * [.compiler_flags](SyntaxAttrCompileFlag)
+      * [.compiler](SyntaxAttrCompiler)
+      * [.header](SyntaxAttrHeader)
+      * [.input](SyntaxAttrInput)
+      * [.libraries](SyntaxAttrLibraries)
+      * [.link_flags](SyntaxAttrLinkFlag)
+      * [.method](SyntaxAttrMethod)
+      * [.name](SyntaxAttrName)
+      * [.on_failure](SyntaxAttrSuccessFail)
+      * [.on_success](SyntaxAttrSuccessFail)
+      * [.output](SyntaxAttrOutput)
+      * [.path](SyntaxAttrPath)
+      * [.source](SyntaxAttrSource)
 
 [Wiki Home](Home)

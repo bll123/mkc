@@ -153,8 +153,8 @@ bootstrap-pass1: $(SOURCE_FILES) bootstrap-init
             SRC_REL=$(DIR_UP2) \
             VPATH=$(DIR_UP2) \
 	    TARGET=bootstrap $(MKC_LOCAL)
-	@# at this point, 'tmp/pass1/mkc' exists with the internal bootstrap
-	@# flag set.
+	@# at this point, 'mkc-tmp/pass1/mkc' exists with the internal 
+	@# bootstrap flag set.
 
 # pass2
 # generate the mkc_config.h file using the 'mkc' built in 'pass1'
@@ -171,7 +171,7 @@ bootstrap-pass2: bootstrap-pass1
 	    SRC_REL=$(DIR_UP2) \
 	    VPATH=$(DIR_UP2) \
 	    TARGET=bootstrap $(MKC_LOCAL)
-	@# 'tmp/pass2/mkc' now exists.  no bootstrap flag is set
+	@# 'mkc-tmp/pass2/mkc' now exists.  no bootstrap flag is set
 
 bootstrap-config: mkc_config.h
 	@:

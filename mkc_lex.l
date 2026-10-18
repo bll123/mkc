@@ -114,8 +114,8 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 "*"             { return T_OP_MULTIPLY; }
 "+"             { return T_OP_PLUS; }
 "file_exists"   { return T_OP_FILE_EXISTS; }
-"is_dict"       { return T_OP_IS_DICT; }
 "is_defined"    { return T_OP_IS_DEFINED; }
+"is_dictionary" { return T_OP_IS_DICT; }
 "is_directory"  { return T_OP_IS_DIRECTORY; }
 "is_list"       { return T_OP_IS_LIST; }
 "{"             { return T_LEFT_BRACE; }
@@ -153,63 +153,63 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 ".range"       { return T_RANGE; }
 ".return"      { return T_RETURN; }
 
-".auto_build"                  { return T_STMT_AUTOBUILD; }
-".build"                       { return T_STMT_BUILD; }
-".check_include_compile"       { return T_STMT_CHK_INC_COMPILE; }
-".check_include_dependencies"  { return T_STMT_CHK_INC_DEPS; }
-".check_include_guards"        { return T_STMT_CHK_INC_GUARDS; }
-".configuration_file"          { return T_STMT_CONFIGURE; }
-".create_file"                 { return T_STMT_CREATE_FILE; }
-".executable"           { return T_STMT_EXECUTABLE; }
-".load_cache"                  { return T_STMT_LOADCACHE; }
-".mark"               { return T_STMT_MARK_VAR; }
-".include"                     { return T_STMT_INCLUDE; }
-".mkcdebug"                    { return T_STMT_DEBUG; }
-".project"                     { return T_STMT_PROJECT; }
+".auto_build"                 { return T_STMT_AUTOBUILD; }
+".build"                      { return T_STMT_BUILD; }
+".check_include_compile"      { return T_STMT_CHK_INC_COMPILE; }
+".check_include_dependencies" { return T_STMT_CHK_INC_DEPS; }
+".check_include_guards"       { return T_STMT_CHK_INC_GUARDS; }
+".configuration_file"         { return T_STMT_CONFIGURE; }
+".create_file"                { return T_STMT_CREATE_FILE; }
+".executable"                 { return T_STMT_EXECUTABLE; }
+".load_cache"                 { return T_STMT_LOADCACHE; }
+".mark"                       { return T_STMT_MARK_VAR; }
+".include"                    { return T_STMT_INCLUDE; }
+".mkcdebug"                   { return T_STMT_DEBUG; }
+".project"                    { return T_STMT_PROJECT; }
 
-".check_arg_count"           { return T_CHK_ARG_COUNT; }
-".check_compile_flag"        { return T_CHK_COMP_FLAG; }
-".check_constant"            { return T_CHK_CONST; }
-".check_define"              { return T_CHK_DEFINE; }
-".check_function"            { return T_CHK_FUNCTION; }
-".check_header"              { return T_CHK_HEADER; }
-".check_link_flag"           { return T_CHK_LINK_FLAG; }
-".check_package"             { return T_CHK_PACKAGE; }
-".check_size"                { return T_CHK_SIZE; }
-".check_struct_member"       { return T_CHK_STRUCT_MEMBER; }
-".check_type"                { return T_CHK_TYPE; }
-".check_shell_extract"       { return T_CHK_SHELL_EXTRACT; }
+".check_arg_count"          { return T_CHK_ARG_COUNT; }
+".check_compile_flag"       { return T_CHK_COMP_FLAG; }
+".check_constant"           { return T_CHK_CONST; }
+".check_define"             { return T_CHK_DEFINE; }
+".check_function"           { return T_CHK_FUNCTION; }
+".check_header"             { return T_CHK_HEADER; }
+".check_link_flag"          { return T_CHK_LINK_FLAG; }
+".check_package"            { return T_CHK_PACKAGE; }
+".check_size"               { return T_CHK_SIZE; }
+".check_struct_member"      { return T_CHK_STRUCT_MEMBER; }
+".check_type"               { return T_CHK_TYPE; }
+".check_shell_extract"      { return T_CHK_SHELL_EXTRACT; }
 
-".add_compile_flag"          { return T_ADD_COMP_FLAG; }
-".add_library"               { return T_ADD_LIBRARY; }
-".add_link_flag"             { return T_ADD_LINK_FLAG; }
+".add_compile_flag"         { return T_ADD_COMP_FLAG; }
+".add_library"              { return T_ADD_LIBRARY; }
+".add_link_flag"            { return T_ADD_LINK_FLAG; }
 
-".alternate"                 { return T_ATTR_ALTERNATE; }
-".compiler"                  { return T_ATTR_COMPILER; }
-".compiler_flags"            { return T_ATTR_COMP_FLAGS; }
-".define_zero"               { return T_ATTR_DEFINE_ZERO; }
-".on_failure"                { return T_ATTR_FAILURE; }
-".header"                    { return T_ATTR_HEADER; }
-".input"                     { return T_ATTR_INPUT; }
-".library_flags"             { return T_ATTR_LIB_FLAGS; }
-".library_version"           { return T_ATTR_LIBRARY_VERSION; }
-".link_flags"                { return T_ATTR_LINK_FLAGS; }
-".match"             { return T_ATTR_MATCH; }
-".method"                    { return T_ATTR_METHOD; }
-".name"                      { return T_ATTR_NAME; }
-".negate"                    { return T_ATTR_NEGATE; }
-".output"                    { return T_ATTR_OUTPUT; }
-".path"                      { return T_ATTR_PATH; }
-".replace"                   { return T_ATTR_REPLACE; }
+".alternate"                { return T_ATTR_ALTERNATE; }
+".compiler"                 { return T_ATTR_COMPILER; }
+".compiler_flags"           { return T_ATTR_COMP_FLAGS; }
+".define_zero"              { return T_ATTR_DEFINE_ZERO; }
+".on_failure"               { return T_ATTR_FAILURE; }
+".header"                   { return T_ATTR_HEADER; }
+".input"                    { return T_ATTR_INPUT; }
+".libraries"                { return T_ATTR_LIBRARIES; }
+".library_version"          { return T_ATTR_LIBRARY_VERSION; }
+".link_flags"               { return T_ATTR_LINK_FLAGS; }
+".match"                    { return T_ATTR_MATCH; }
+".method"                   { return T_ATTR_METHOD; }
+".name"                     { return T_ATTR_NAME; }
+".negate"                   { return T_ATTR_NEGATE; }
+".output"                   { return T_ATTR_OUTPUT; }
+".path"                     { return T_ATTR_PATH; }
+".replace"                  { return T_ATTR_REPLACE; }
 ".command" {
     BEGIN(RUN_COMMAND);
     return T_ATTR_RUN_COMMAND;
   }
-".on_success"                { return T_ATTR_SUCCESS; }
-".vcontext"                  { return T_ATTR_VCONTEXT; }
-".version"                   { return T_ATTR_VERSION; }
-".voutput"                   { return T_ATTR_VOUTPUT; }
-".source"                    { return T_ATTR_SOURCE; }
+".on_success"               { return T_ATTR_SUCCESS; }
+".vcontext"                 { return T_ATTR_VCONTEXT; }
+".version"                  { return T_ATTR_VERSION; }
+".voutput"                  { return T_ATTR_VOUTPUT; }
+".source"                   { return T_ATTR_SOURCE; }
 
 ({DIGIT}+) {
     yylval->sval = strdup (yytext);

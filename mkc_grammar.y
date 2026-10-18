@@ -178,7 +178,7 @@
 %token T_ATTR_FAILURE         ".on_failure"
 %token T_ATTR_HEADER          ".header"
 %token T_ATTR_INPUT           ".input"
-%token T_ATTR_LIB_FLAGS       ".library_flags"
+%token T_ATTR_LIBRARIES       ".libraries"
 %token T_ATTR_LIBRARY_VERSION ".library_version"
 %token T_ATTR_LINK_FLAGS      ".link_flags"
 %token T_ATTR_MATCH           ".match"
@@ -246,7 +246,7 @@
 // attributes
 %type <astnode> attr attr_alternate attr_compiler attr_compilerflags
 %type <astnode> attr_define_zero attr_failure attr_header
-%type <astnode> attr_input attr_lib_flags attr_libversion attr_linkflags
+%type <astnode> attr_input attr_libraries attr_libversion attr_linkflags
 %type <astnode> attr_match attr_method attr_name attr_negate
 %type <astnode> attr_output attr_path attr_replace attr_command attr_source
 %type <astnode> attr_success attr_vcontext attr_version attr_voutput
@@ -421,7 +421,7 @@ attr[v]:
     {
       $v = $a;
     }
-  | attr_lib_flags[a]
+  | attr_libraries[a]
     {
       $v = $a;
     }
@@ -1030,10 +1030,10 @@ attr_input[v]:
   ;
 
 /* a list of library locations and lib_flags */
-attr_lib_flags[v]:
-    T_ATTR_LIB_FLAGS valuelist[l] T_SEMICOLON
+attr_libraries[v]:
+    T_ATTR_LIBRARIES valuelist[l] T_SEMICOLON
     {
-      $v = ast_mk_attr_nodelist (ast, $l, MKC_T_ATTR_LIB_FLAGS,
+      $v = ast_mk_attr_nodelist (ast, $l, MKC_T_ATTR_LIBRARIES,
           yylloc.first_line, yylloc.first_column);
     }
   ;

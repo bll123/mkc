@@ -212,7 +212,7 @@ set_fortify_flags;
   .if (${MKC_SYS_WINDOWS}) {
     .source os_win_process.c;
   }
-  .library_flags ${pcre_LIBS};
+  .libraries ${pcre_LIBS};
 }
 
 .auto_build;

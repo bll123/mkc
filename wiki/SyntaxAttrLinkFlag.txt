@@ -1,15 +1,16 @@
 [Wiki Home](Home)
 <br>[Syntax](Syntax)
 
-### link_flags (attribute)
+### .link_flags (attribute)
 
-The __link\_flags__ attribute is used for a [check](SyntaxCheck)
+The __.link\_flags__ attribute is used for a [check](SyntaxCheck)
 statement.
 
-    link_flags '-flag' ['-flag' ...];
+    .link_flags '-flag' ['-flag' ...];
 
-The __link\_flags__ attribute is used with a [check](SyntaxCheck)
-statement or with an [alternate](SyntaxAttrAlternate) attribute.
+The __.link\_flags__ attribute is used with a [check](SyntaxCheck)
+statement, an [.alternate](SyntaxAttrAlternate) attribute or
+with an [.executable](SyntaxStmtExecutable) statement.
 
 The flags specified will be added to the [check](SyntaxCheck).
 

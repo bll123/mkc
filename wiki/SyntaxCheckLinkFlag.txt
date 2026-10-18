@@ -4,9 +4,9 @@
 
 [TOC]
 
-### check\_link\_flag
+### .check\_link\_flag
 
-    check_link_flag '-fsanitize=address';
+    .check_link_flag '-fsanitize=address';
 
 Checks to see if a link flag is valid, and if so, adds it to
 LDFLAGS for the current profile.
@@ -17,21 +17,22 @@ Generated Name: Prefix: __lf\___
 
 ##### Adding a Link Flag
 
-    add-link-flag '-DNO_DEPRECATED';
+    .add_link_flag '-DNO_DEPRECATED';
 
 Adds a link flag without any validation.
 
 ##### Examples
 
-    check_link_flag '-fPIC';
-    check_link_flag '-lintl';
+    .check_link_flag '-fPIC';
+    .check_link_flag '-lintl';
 
 ##### Attributes
 
-* [header](SyntaxAttrHeader)
-* [name](SyntaxAttrName)
-* [compiler\_flags](SyntaxAttrCompileFlag)
-* [link\_flags](SyntaxAttrLinkFlag)
+* [.header](SyntaxAttrHeader)
+* [.name](SyntaxAttrName)
+* [.compiler\_flags](SyntaxAttrCompileFlag)
+* [.link\_flags](SyntaxAttrLinkFlag)
+* [.libraries](SyntaxAttrLibraries)
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

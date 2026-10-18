@@ -1,15 +1,24 @@
 [Wiki Home](Home)
 <br>[Syntax](Syntax)
 
-### Syntax: build
+### Syntax: .auto_build
 
-__build__ builds the specified executables and libraries.
+__.auto_build__ builds all executables and libraries that have been
+defined.
 
-    build <name> [<name> ...];
+    .auto_build;
+
+### Syntax: .build
+
+__.build__ builds the specified executables and libraries.
+
+    .build <name> [<name> ...];
 
 ##### Examples
 
-    build helloworld;
+    .build 'helloworld';
+
+    .auto_build;
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

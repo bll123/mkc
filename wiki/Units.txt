@@ -5,10 +5,10 @@
 ### Units
 
 Units are pre-packaged _.mkc_ files that perform common tasks.  To use
-a unit, specify the full unit name in an [include](SyntaxInclude)
+a unit, specify the full unit name in an [.include](SyntaxStmtInclude)
 statement.
 
-    include commonpaths.mkc;
+    .include commonpaths.mkc;
 
 ##### commonpaths.mkc
 
@@ -37,23 +37,30 @@ Paths checked:
 
 Auto-Run: Yes
 
+    .include libintl.mkc;
+
 __libintl__ checks for the correct linkage for _libintl_, and sets
 _libintl_LIBS_ as appropriate.
 
 Sets: _package_libintl, libintl_LIBS, _function_bindtextdomain,
-_function_textdomain, _function_gettext.
+_function_textdomain, _function_gettext,
+_function_wbindtextdomain.
 
 ##### sanitize_flags.mkc
 
 Auto-Run: No
 
-    include sanitize_flags.mkc;
+    .include sanitize_flags.mkc;
     sanitize_flags <profile-name>;
+    set_fortify_flags;
 
 __sanitize_flags__ checks for and sets the sanitizer flags when
 the specified profile is active.
 
-Sets the MKC_FORTIFY variable to false if the sanitizer flags are
-active, and to true if the sanitizer flags are not active.
+Sets the MKC_FORTIFY (boolean) variable to false if the sanitizer
+flags are active, and to true if the sanitizer flags are not active.
+
+__set\_fortify\_flags__ checks the MKC\_FORTIFY variable and sets the
+appropriate compiler flags.
 
 [Wiki Home](Home)

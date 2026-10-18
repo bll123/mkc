@@ -1,0 +1,21 @@
+[Wiki Home](Home)
+<br>[Syntax](Syntax)
+
+### Syntax: Directives
+
+##### Internal Debugging
+
+    .mkcdebug null;                 # does nothing
+    .mkcdebug printhierarchy;       # prints current hierarchy (not useful)
+    .mkcdebug printinfo;            # prints some system information
+    .mkcdebug printinternal;        # prints some internal values
+    .mkcdebug printpath;            # prints internal paths
+    .mkcdebug printprof;            # prints profile names
+    .mkcdebug printvar hierarchy;   # prints all variables in hierarchy (not useful)
+    .mkcdebug printvar profiles;    # prints all defined variables
+    .mkcdebug printvar <profile>;   # user defined profile
+    .mkcdebug printvar test;        # prints default profile
+    .mkcdebug savecache <filename>; # save the cache to _filename_ (with timestamps)
+
+[Wiki Home](Home)
+<br>[Syntax](Syntax)

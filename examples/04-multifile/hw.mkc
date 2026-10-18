@@ -1,0 +1,10 @@
+
+.project hw {
+  .compiler c;
+}
+
+.executable hw {
+  .source h.c world.c;
+}
+
+.auto_build;
