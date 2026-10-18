@@ -315,10 +315,7 @@ mkc_main_set_prefix (mkc_error_t *mkcerr)
 
   *tbuff = '\0';
   env_get ("PREFIX", tbuff, sizeof (tbuff));
-  if (! *tbuff) {
-    /* use $HOME/local as a default */
-    path_build (MKC_PATH_HOME, tbuff, sizeof (tbuff), "local", mkcerr);
-  }
+  /* if PREFIX does not exist, use the empty path as a default */
   path_set_dir (MKC_IDIR_PREFIX, tbuff);
 }
 
@@ -380,6 +377,7 @@ main_process_arguments (mkc_option_t *mkcoptions,
     { "quiet",                no_argument,        NULL, 'q' },
     { "retest",               no_argument,        NULL, 'r' },
     { "verbose",              no_argument,        NULL, 'v' },
+    { "verboselevel",         required_argument,  NULL, 8 },
     { "version",              no_argument,        NULL, 'V' },
     { NULL,                   no_argument,        NULL, 0   },
   };
@@ -448,6 +446,16 @@ main_process_arguments (mkc_option_t *mkcoptions,
       case 7: {
         mkcoptions->clean = true;
         mkcoptions->cleanexit = true;
+        break;
+      }
+      case 8: {
+        if (optarg != NULL) {
+          if (strcmp (optarg, "all") == 0) {
+            mkcoptions->verbose = MKC_V_WTMI;
+          } else {
+            mkcoptions->verbose = atoi (optarg);
+          }
+        }
         break;
       }
       default: {

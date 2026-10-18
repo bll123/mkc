@@ -282,7 +282,7 @@ ast_start (astmain_t *astmain)
   astmain->rdepth = 0;
   astmain->nodecount = 0;
   ast_process (astmain, astmain->mainnode, &ifcond, &stmtcontrol, &funcret, 0);
-  process_save_cache (astmain->process, NULL, MKC_V_WRITE_NO_TS);
+  process_save_cache (astmain->process, NULL, MKC_VAL_WRITE_NO_TS);
   return mkc_error_value (astmain->mkcerr);
 }
 
@@ -1124,7 +1124,7 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
         mkc_log_loc (astmain->log, MKC_LOG_AST,
             astnode->lineno, astnode->colno, -1,
             "%*s%s\n", astmain->depth * 2, " ",
-            value_to_str (value, tbuff, MKC_PATH_MAX, 0, MKC_V_WRITE_ALL));
+            value_to_str (value, tbuff, MKC_PATH_MAX, 0, MKC_VAL_WRITE_ALL));
         free (tbuff);
       }
 
@@ -1204,7 +1204,7 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
     /* statements */
 
     case MKC_T_STMT_AUTOBUILD: {
-      process_save_cache (astmain->process, NULL, MKC_V_WRITE_NO_TS);
+      process_save_cache (astmain->process, NULL, MKC_VAL_WRITE_NO_TS);
       process_stmt_autobuild (astmain->process);
       break;
     }
@@ -1216,7 +1216,7 @@ ast_process (astmain_t *astmain, astnode_t *astnode,
       if (mkc_error_chk_err (astmain->mkcerr)) {
         break;
       }
-      process_save_cache (astmain->process, NULL, MKC_V_WRITE_NO_TS);
+      process_save_cache (astmain->process, NULL, MKC_VAL_WRITE_NO_TS);
       process_stmt_build (astmain->process, val);
       break;
     }

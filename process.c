@@ -313,8 +313,7 @@ process_init (scopedvar_t *sv,
   process->variadicmacro = MKC_VARIADIC_MACRO_SUPPORTED;
   process->compiler_mm = false;
 
-  path_build (MKC_PATH_EXEC_PATH, tbuff, sizeof (tbuff), mkcoptions->mkc_filename, mkcerr);
-  process->mkc_ts = fileop_modtime (tbuff);
+  process->mkc_ts = fileop_modtime (mkcoptions->mkc_filename);
 
   process->compile = compile_init (process->sv,
       &process->attr, log, mkcoptions, mkcerr);
@@ -454,9 +453,9 @@ process_num_op (process_t *process, astnode_token_t asttype,
 
   if (mkc_log_check_flag (process->log, MKC_LOG_PROCESS)) {
     mkc_log (process->log, MKC_LOG_PROCESS, "  p-num-op-a: %s\n",
-        value_to_str (vala, tbuff, sizeof (tbuff), 0, MKC_V_WRITE_ALL));
+        value_to_str (vala, tbuff, sizeof (tbuff), 0, MKC_VAL_WRITE_ALL));
     mkc_log (process->log, MKC_LOG_PROCESS, "  p-num-op-b: %s\n",
-        value_to_str (valb, tbuff, sizeof (tbuff), 0, MKC_V_WRITE_ALL));
+        value_to_str (valb, tbuff, sizeof (tbuff), 0, MKC_VAL_WRITE_ALL));
   }
   ivala = sv_value_get_integer (process->sv, vala);
   ivalb = sv_value_get_integer (process->sv, valb);
@@ -549,9 +548,9 @@ process_str_op (process_t *process, astnode_token_t asttype,
 
   if (mkc_log_check_flag (process->log, MKC_LOG_PROCESS)) {
     mkc_log (process->log, MKC_LOG_PROCESS, "  p-str-op-a: %s\n",
-        value_to_str (vala, stra, MKC_PATH_MAX, 0, MKC_V_WRITE_ALL));
+        value_to_str (vala, stra, MKC_PATH_MAX, 0, MKC_VAL_WRITE_ALL));
     mkc_log (process->log, MKC_LOG_PROCESS, "  p-str-op-b: %s\n",
-        value_to_str (valb, strb, MKC_PATH_MAX, 0, MKC_V_WRITE_ALL));
+        value_to_str (valb, strb, MKC_PATH_MAX, 0, MKC_VAL_WRITE_ALL));
   }
   sv_value_get_str (process->sv, vala, stra, MKC_PATH_MAX);
   sv_value_get_str (process->sv, valb, strb, MKC_PATH_MAX);
@@ -1249,6 +1248,14 @@ process_stmt_autobuild (process_t *process)
   value_t     retvalue;
   char        * vname = NULL;
 
+  if (process->cacheloaded == false) {
+    process->mkc_changed = true;
+    target_set_changed (process->target, true);
+    mkc_log (process->log, MKC_LOG_GENERAL, "cache not loaded, reset-stage\n");
+    process->reset_stage = true;
+    process_clean_check (process);
+  }
+
   tbuff = tmppath_get (process->tmppath);
   *tbuff = '\0';
   mkc_create_project_dir (tbuff, MKC_PATH_MAX, process->mkcerr);
@@ -1320,6 +1327,14 @@ process_stmt_build (process_t *process, value_t *vallist)
   list_t      * blist;
   char        * tbuff = NULL;
 
+
+  if (process->cacheloaded == false) {
+    process->mkc_changed = true;
+    target_set_changed (process->target, true);
+    mkc_log (process->log, MKC_LOG_GENERAL, "cache not loaded, reset-stage\n");
+    process->reset_stage = true;
+    process_clean_check (process);
+  }
 
   tbuff = tmppath_get (process->tmppath);
   mkc_create_project_dir (tbuff, MKC_PATH_MAX, process->mkcerr);
@@ -1413,6 +1428,7 @@ process_stmt_create_file (process_t *process, value_t *value)
   listidx_t sidx;
   char      * filepath;
   char      * srcpath;
+  bool      changed;
 
   process_check_mkc_timestamp (process);
   process_clean_check (process);
@@ -1425,6 +1441,8 @@ process_stmt_create_file (process_t *process, value_t *value)
   filepath = tmppath_get (process->tmppath);
   *filepath = '\0';
 
+  changed = process->mkc_changed;
+
   list_iter_start (flist, &fiteridx);
   while ((fidx = list_iter_next (flist, &fiteridx)) != MKC_ITER_FINISH) {
     value_t     *file;
@@ -1432,6 +1450,12 @@ process_stmt_create_file (process_t *process, value_t *value)
     file = list_get_by_idx (flist, fidx);
     sv_value_get_str (process->sv, file, filepath, MKC_PATH_MAX);
     target_create_target (process->target, filepath, TGT_T_USER_FILE, NULL);
+
+    if (! changed &&
+        sv_is_defined (process->sv, SV_T_BUILD_DATA,
+            filepath, MKC_C_BVAR_DEPENDENCY)) {
+      continue;
+    }
 
     list_iter_start (process->attr.sourcelist, &siteridx);
     while ((sidx = list_iter_next (process->attr.sourcelist, &siteridx)) != MKC_ITER_FINISH) {
@@ -1497,7 +1521,7 @@ process_stmt_debug (process_t *process,
   }
   if (strcmp (tbuff, "savecache") == 0) {
     sv_value_get_str (process->sv, subvalue, tbuff, sizeof (tbuff));
-    process_save_cache (process, tbuff, MKC_V_WRITE_ALL);
+    process_save_cache (process, tbuff, MKC_VAL_WRITE_ALL);
   }
 
   return false;
@@ -1531,14 +1555,6 @@ process_stmt_executable (process_t *process, value_t *valnm)
   sv_set_str (process->sv, SV_T_PATHS, execnm, NULL, epath, MKC_VCTXT_MKC);
 
   changed = process->mkc_changed;
-
-  if (process->cacheloaded == false) {
-    changed = true;
-    process->mkc_changed = true;
-    target_set_changed (process->target, changed);
-    process->reset_stage = true;
-    process_clean_check (process);
-  }
 
   if (! changed &&
       sv_is_defined (process->sv, SV_T_BUILD_DATA,
@@ -1704,6 +1720,7 @@ process_stmt_loadcache_post (process_t *process)
 
     changed = true;
     process->mkc_changed = true;
+    mkc_log (process->log, MKC_LOG_GENERAL, "cache invalidated, reset-stage\n");
     process->reset_stage = true;
   }
 
@@ -1783,7 +1800,7 @@ process_stmt_print (process_t *process, value_t *value, int depth)
   *tbuff = '\0';
 
   sv_value_get_value (process->sv, value, &retvalue);
-  value_to_str (&retvalue, tbuff, MKC_PATH_MAX, 0, MKC_V_WRITE_ALL);
+  value_to_str (&retvalue, tbuff, MKC_PATH_MAX, 0, MKC_VAL_WRITE_ALL);
   fprintf (stdout, "%s", tbuff);
   value_free (&retvalue);
 
@@ -1914,12 +1931,14 @@ process_stmt_set (process_t *process,
   if (trc == MKC_OK_CHANGE &&
      (vctxt == MKC_VCTXT_ENV || vctxt == MKC_VCTXT_MKC_BASE)) {
     process->cacheinvalidated = true;
+    mkc_log (process->log, MKC_LOG_GENERAL, "base/env variable change, reset-stage\n");
     process->reset_stage = true;
     changed = true;
     process->mkc_changed = true;
   } else if (trc == MKC_OK_CHANGE && strcmp (nm, MKC_C_PREFIX) == 0) {
     changed = true;
     process->mkc_changed = true;
+    mkc_log (process->log, MKC_LOG_GENERAL, "prefix change, reset-stage\n");
     process->reset_stage = true;
     process_clean_check (process);
     trc = MKC_OK;
@@ -2437,7 +2456,7 @@ process_check_flag (process_t *process,
     if (mkc_error_chk_err (process->mkcerr)) {
       char    tmp [MKC_VNAME_MAX];
 
-      value_to_str (&retvalue, tmp, sizeof (tmp), 0, MKC_V_WRITE_ALL);
+      value_to_str (&retvalue, tmp, sizeof (tmp), 0, MKC_VAL_WRITE_ALL);
       mkc_error_set (process->mkcerr, MKC_ERR_UNKNOWN_VARIABLE, 0, tmp);
       value_free (&retvalue);
       continue;
@@ -2590,11 +2609,14 @@ process_chk_shell_extract (process_t *process, value_t *valpath)
   char        *buff = NULL;
   size_t      fsz = 0;
   char        * path = NULL;
+  char        * tnm = NULL;
   char        varname [MKC_VNAME_MAX];
   char        * varvalue;
   char        ** match = NULL;
   int         matchcount;
   int         rc = MKC_ERR_FAILURE;
+  int64_t     ts = 0;
+  int64_t     fts = 0;
 
   if (process == NULL) {
     return rc;
@@ -2606,8 +2628,24 @@ process_chk_shell_extract (process_t *process, value_t *valpath)
   sv_value_get_str (process->sv, valpath, path, MKC_PATH_MAX);
 
   if (! fileop_exists (path)) {
+    mkc_message (MKC_V_BASIC, "-- shell extract: %s not found\n", path);
+// ### this is an error...
     tmppath_release (process->tmppath, path);
     return rc;
+  }
+
+  tnm = tmppath_get (process->tmppath);
+  *tnm = '\0';
+
+  process_create_name (process, MKC_T_CHK_SHELL_EXTRACT, tnm, MKC_PATH_MAX,
+      "_shell_", path, NULL);
+  ts = sv_get_timestamp (process->sv, SV_T_INTERNAL, tnm);
+  fts = fileop_modtime (path);
+  if (fts < ts) {
+    mkc_message (MKC_V_CACHED, "-- cached: shell extract\n");
+    tmppath_release (process->tmppath, path);
+    tmppath_release (process->tmppath, tnm);
+    return MKC_OK;
   }
 
   if (process->rxshellvar == NULL) {
@@ -2623,6 +2661,7 @@ process_chk_shell_extract (process_t *process, value_t *valpath)
     /*  6: ... (no quotes) */
     if (mkc_error_chk_err (process->mkcerr)) {
       tmppath_release (process->tmppath, path);
+      tmppath_release (process->tmppath, tnm);
       return rc;
     }
   }
@@ -2631,6 +2670,7 @@ process_chk_shell_extract (process_t *process, value_t *valpath)
   if (mkc_error_chk_err (process->mkcerr)) {
     datafree (buff);
     tmppath_release (process->tmppath, path);
+    tmppath_release (process->tmppath, tnm);
     return rc;
   }
 
@@ -2683,9 +2723,14 @@ process_chk_shell_extract (process_t *process, value_t *valpath)
     free (tvalue);
   }
 
+  ts = mstime ();
+  sv_set_timestamp (process->sv, SV_T_INTERNAL,
+        tnm, NULL, ts, MKC_VCTXT_MKC);
+
   datafree (buff);
   tmppath_release (process->tmppath, path);
   tmppath_release (process->tmppath, varvalue);
+  tmppath_release (process->tmppath, tnm);
 #endif
 
   process_attr_clear (process);
@@ -2817,8 +2862,8 @@ process_create_name (process_t *process, astnode_token_t asttype,
   const char      * str;
   va_list         ap;
   mkc_alternate_t * alt;
-  listidx_t   iteridx;
-  listidx_t   aidx;
+  listidx_t       iteridx;
+  listidx_t       aidx;
 
   va_start (ap, tag);
 
@@ -3247,7 +3292,7 @@ process_configure_auto (process_t *process,
           fprintf (fh, "#define %s %" PRId64 "\n", nm, tmval);
         }
       } else {
-        value_to_str (value, tbuff, MKC_PATH_MAX, 0, MKC_V_WRITE_ALL);
+        value_to_str (value, tbuff, MKC_PATH_MAX, 0, MKC_VAL_WRITE_ALL);
         fprintf (fh, "#define %s \"%s\"\n", nm, tbuff);
       }
     }
@@ -3716,6 +3761,7 @@ process_check_mkc_timestamp (process_t *process)
     mkc_message (MKC_V_TMI, ".mkc ts: changed: true\n");
     changed = true;
     process->mkc_changed = true;
+    mkc_log (process->log, MKC_LOG_GENERAL, ".mkc change, reset-stage\n");
     process->reset_stage = true;
   }
 
@@ -3863,7 +3909,7 @@ process_dbg_print_var (process_t *process, const char *profname)
         }
       }
 
-      value_to_str (value, tbuff, MKC_LARGE_BUFF_SZ, 0, MKC_V_WRITE_ALL);
+      value_to_str (value, tbuff, MKC_LARGE_BUFF_SZ, 0, MKC_VAL_WRITE_ALL);
       if (value_is_string_type (value)) {
         fprintf (stdout, "  %s '%s'\n", nm, tbuff);
       } else {

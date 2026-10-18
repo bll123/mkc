@@ -133,7 +133,7 @@ mkc_message (log_verbose_t vlevel, const char *fmt, ...)
     vlevel = 0;
   }
   if (vlevel > 0) {
-    fprintf (stderr, "%*s", vlevel * 2, "");
+    fprintf (stderr, "%*s", vlevel * 1, "");
   }
   vfprintf (stderr, fmt, vap);
   va_end (vap);

@@ -46,6 +46,7 @@ typedef struct target_t {
   mkc_log_t           * log;
   mkc_error_t         * mkcerr;
   tmppath_t           * tmppath;
+  char                * oodname;
   bool                create_stage_bin;
   bool                mkc_changed;
 } target_t;
@@ -64,7 +65,7 @@ static void target_set_target_flags (target_t *target, const char *builditem, co
 static void target_append_flags (target_t *target, comp_flag_t ftype, value_t *value, chararr_t *flags, chararr_t *include_paths);
 static int64_t target_get_timestamp (target_t *target, const char *filepath);
 static void target_update_timestamp (target_t *target, const char *filepath);
-static int target_command (target_t *target, value_t *cmdlist);
+static int target_run_command (target_t *target, value_t *cmdlist);
 
 MKC_NODISCARD
 target_t *
@@ -86,7 +87,9 @@ target_init (scopedvar_t *sv, compile_t *compile,
   target->mkcerr = mkcerr;
   target->create_stage_bin = false;
   target->mkc_changed = false;
-  target->tmppath = tmppath_init (mkcerr, 5);
+  target->tmppath = tmppath_init (mkcerr, 6);
+  target->oodname = tmppath_get (target->tmppath);
+  *target->oodname = '\0';
 
   return target;
 }
@@ -98,6 +101,7 @@ target_free (target_t *target)
     return;
   }
 
+  tmppath_release (target->tmppath, target->oodname);
   tmppath_free (target->tmppath);
   free (target);
 }
@@ -217,22 +221,24 @@ int
 target_check_dependency_timestamp (target_t *target,
     const char *filepath, sv_type_t svtype)
 {
-  int64_t       fts;
-  int64_t       ts;
-  listidx_t iteridx;
+  int64_t     fts;
+  int64_t     ts;
+  listidx_t   iteridx;
 
 
   mkc_message (MKC_V_TMI, "chk-dep-ts: %s\n", filepath);
   if (! sv_is_defined (target->sv, svtype,
       filepath, MKC_C_BVAR_DEPENDENCY)) {
     mkc_message (MKC_V_TMI, "chk-dep-ts: %s no-dep-def ood\n", filepath);
+    strcpy (target->oodname, "new");
     return TARGET_OUT_OF_DATE;
   }
 
   fts = target_get_timestamp (target, filepath);
   if (fts == 0) {
-    mkc_message (MKC_V_TMI, "chk-dep-ts: %s 0 ood\n", filepath);
+    mkc_message (MKC_V_TMI, "chk-dep-ts: %s no-file ood\n", filepath);
     /* can short-circuit any filepath that does not have a timestamp set */
+    strcpy (target->oodname, filepath);
     return TARGET_OUT_OF_DATE;
   }
 
@@ -245,6 +251,7 @@ target_check_dependency_timestamp (target_t *target,
 
     if (ts == 0 || ts >= fts) {
       mkc_message (MKC_V_TMI, "chk-dep-ts: %s ts-chk ood\n", filepath);
+      strcpy (target->oodname, filepath);
       return TARGET_OUT_OF_DATE;
     }
   }
@@ -606,6 +613,8 @@ target_object_source (target_t *target, const char *objpath,
 
   mkc_log (target->log, MKC_LOG_TARGET, "object-file: %s %s\n", objpath, srcname);
 
+  *target->oodname = '\0';
+
   if (target_check_dependency_timestamp (
       target, objpath, SV_T_BUILD_DATA) == TARGET_OUT_OF_DATE) {
     chararr_t   * compflags;
@@ -699,6 +708,8 @@ target_build (target_t *target, list_t *blist)
   chararr_t     * linkflags;
   chararr_t     * libs;
 
+  *target->oodname = '\0';
+
   source = tmppath_get (target->tmppath);
   *source = '\0';
   mkc_create_project_dir (source, MKC_PATH_MAX, target->mkcerr);
@@ -779,11 +790,16 @@ target_build (target_t *target, list_t *blist)
     if (tgttype != TGT_T_SOURCE) {
       if (target_check_dependency_timestamp (
           target, builditem, SV_T_BUILD_DATA) == TARGET_CURRENT) {
+        mkc_log (target->log, MKC_LOG_GENERAL, "== current: %s: %s\n", buildtag, builditem);
+        mkc_message (MKC_V_INFO, "current: %s: %s\n", buildtag, builditem);
         continue;
       }
 
       mkc_log (target->log, MKC_LOG_GENERAL, "== %s: %s\n", buildtag, builditem);
       mkc_message (MKC_V_BASIC, "-- %s: %s\n", buildtag, builditem);
+      if (*target->oodname) {
+        mkc_message (MKC_V_INFO, "out-of-date: %s\n", target->oodname);
+      }
     }
 
     valdeplist = sv_get_value (target->sv, SV_T_BUILD_DATA,
@@ -828,7 +844,7 @@ target_build (target_t *target, list_t *blist)
       list_iter_start (cmdlist, &citeridx);
       while ((cidx = list_iter_next (cmdlist, &citeridx)) != MKC_ITER_FINISH) {
         cmdval = list_get_by_idx (cmdlist, cidx);
-        target_command (target, cmdval);
+        target_run_command (target, cmdval);
       }
       target_update_timestamp (target, builditem);
     }
@@ -1108,7 +1124,7 @@ target_update_timestamp (target_t *target, const char *filepath)
 }
 
 static int
-target_command (target_t *target, value_t *cmdlist)
+target_run_command (target_t *target, value_t *cmdlist)
 {
   list_t      * clist;
   listidx_t   citeridx;
@@ -1153,7 +1169,8 @@ target_command (target_t *target, value_t *cmdlist)
     }
   }
   chararr_append (cmds, NULL);
-  mkc_message_chararr (MKC_V_INFO, "    command:", cmds);
+  mkc_log_chararr (target->log, "command:", cmds);
+  mkc_message_chararr (MKC_V_COMMANDS, NULL, cmds);
 
   if (hasredirect > 2) {
     tmppath_release (target->tmppath, cmd);

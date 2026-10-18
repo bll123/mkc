@@ -516,7 +516,7 @@ compile_compile (compile_t *compile, mkc_compiler_t compiler,
 
   mkc_log_chararr (compile->log, "comp-only: cmd:", compile->targv);
   if (compile->attr->display) {
-    mkc_message_chararr (MKC_V_INFO, NULL, compile->targv);
+    mkc_message_chararr (MKC_V_COMMANDS, NULL, compile->targv);
   }
 
   rc = os_process_pipe (chararr_get_arr (compile->targv),
@@ -616,7 +616,7 @@ compile_link (compile_t *compile, mkc_compiler_t compiler,
 
   mkc_log_chararr (compile->log, "link: cmd:", compile->targv);
   if (compile->attr->display) {
-    mkc_message_chararr (MKC_V_INFO, NULL, compile->targv);
+    mkc_message_chararr (MKC_V_COMMANDS, NULL, compile->targv);
   }
 
   rc = os_process_pipe (chararr_get_arr (compile->targv),
@@ -674,7 +674,7 @@ compile_link_run (compile_t *compile, mkc_compiler_t compiler,
 
   mkc_log_chararr (compile->log, "run: cmd:", compile->targv);
   if (compile->attr->display) {
-    mkc_message_chararr (MKC_V_INFO, NULL, compile->targv);
+    mkc_message_chararr (MKC_V_COMMANDS, NULL, compile->targv);
   }
 
   rc = os_process_pipe (chararr_get_arr (compile->targv),

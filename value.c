@@ -216,7 +216,7 @@ value_to_str (value_t *value, char *buff, size_t sz, int depth,
         }
 
         name = dict_iter_get_name (diter);
-        if (writets == MKC_V_WRITE_NO_TS &&
+        if (writets == MKC_VAL_WRITE_NO_TS &&
             strcmp (name, MKC_C_BVAR_TIMESTAMP) == 0) {
           /* timestamps are not written to the cache */
           continue;

@@ -52,8 +52,8 @@ typedef enum {
 } value_out_t;
 
 typedef enum {
-  MKC_V_WRITE_ALL,
-  MKC_V_WRITE_NO_TS,
+  MKC_VAL_WRITE_ALL,
+  MKC_VAL_WRITE_NO_TS,
 } value_write_t;
 
 typedef struct range_t {
