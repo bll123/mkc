@@ -227,7 +227,7 @@ oscheck:
 .PHONY: windows-bootstrap
 windows-bootstrap:
 	@$(MAKE) -f $(SRC_REL)$(MAKEFILE) \
-	    CFLAGS="$(CFLAGS) \
+	    CFLAGS="$(CFLAGS) -m64 -mconsole \
 	      -DMKC_BOOTSTRAP_WIN=1" \
 	    MKC_WIN_OBJ="$(WINOBJ)" \
 	    WIN=T \

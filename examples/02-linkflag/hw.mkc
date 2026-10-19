@@ -5,7 +5,7 @@
 
 .executable hw {
   .source hw.c;
-  .library_flags '-lm';
+  .libraries '-lm';
 }
 
 .auto_build;

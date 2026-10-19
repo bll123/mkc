@@ -21,6 +21,9 @@
 
 #define WIN32_LEAN_AND_MEAN 1
 #include <windows.h>
+#ifdef __CYGWIN__
+# include "mkc_cygwin.h"
+#endif
 
 #include "mkc_def.h"
 #include "fileop.h"

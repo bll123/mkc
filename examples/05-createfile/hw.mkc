@@ -1,0 +1,15 @@
+
+.project hw {
+  .compiler c;
+}
+
+.create_file hw.c {
+  .source hw.txt;
+  .command cp hw.txt hw.c;
+}
+
+.executable hw {
+  .source hw.c;
+}
+
+.auto_build;
