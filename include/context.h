@@ -1,8 +1,8 @@
 /*
  * Copyright 2026 Brad Lanam Pleasant Hill CA
  */
-#ifndef INC_MKC_CONTEXT_H
-#define INC_MKC_CONTEXT_H
+#ifndef INC_CONTEXT_H
+#define INC_CONTEXT_H
 
 #include "mkc_error.h"
 #include "mkc_nodiscard.h"
@@ -42,4 +42,4 @@ bool context_check (context_t *context, mkc_ctxt_val_t ctxtval);
 }
 #endif
 
-#endif /* INC_MKC_CONTEXT_H */
+#endif /* INC_CONTEXT_H */

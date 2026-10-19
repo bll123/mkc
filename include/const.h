@@ -1,8 +1,8 @@
 /*
  * Copyright 2026 Brad Lanam Pleasant Hill CA
  */
-#ifndef INC_MKC_CONST_H
-#define INC_MKC_CONST_H
+#ifndef INC_CONST_H
+#define INC_CONST_H
 
 #if defined (__cplusplus) || defined (c_plusplus)
 extern "C" {
@@ -40,4 +40,4 @@ extern int gmkcdebug;
 }
 #endif
 
-#endif /* INC_MKC_CONST_H */
+#endif /* INC_CONST_H */

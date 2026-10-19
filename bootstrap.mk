@@ -39,7 +39,7 @@ MKC_EXEC = $(MKC_LOCAL)
 # base configuration for bootstrap
 
 BASE_OPTFLAGS = -g -O2
-BASE_CFLAGS = -Wall -Wextra -Wno-unused-parameter
+BASE_CFLAGS = -Wall -Wextra -Wno-unused-parameter -Wno-char-subscripts
 BASE_INCLUDE = -I. -Iinclude
 BASE_LDFLAGS = -Wall -Wextra
 BASE_LIBS =
@@ -128,7 +128,8 @@ real-start:
 	    LDFLAGS="$(LDFLAGS)" \
 	    LIBS="$(LIBS)" \
 	    MKC_PROFILE=$(MKC_PROFILE) \
-	    $(MKC_LOCAL)
+	    TARGET=bootstrap \
+            oscheck
 
 # source
 
@@ -152,8 +153,9 @@ bootstrap-pass1: $(SOURCE_FILES) bootstrap-init
 	    CFLAGS="$(CFLAGS) $(INIT_INCLUDE) $(INIT_DEF)" \
             SRC_REL=$(DIR_UP2) \
             VPATH=$(DIR_UP2) \
-	    TARGET=bootstrap $(MKC_LOCAL)
-	@# at this point, 'mkc-tmp/pass1/mkc' exists with the internal 
+	    WIN=$(WIN) \
+	    $(MKC_LOCAL)
+	@# at this point, 'mkc-tmp/pass1/mkc' exists with the internal
 	@# bootstrap flag set.
 
 # pass2
@@ -170,7 +172,8 @@ bootstrap-pass2: bootstrap-pass1
 	    QUIET="@" \
 	    SRC_REL=$(DIR_UP2) \
 	    VPATH=$(DIR_UP2) \
-	    TARGET=bootstrap $(MKC_LOCAL)
+	    WIN=$(WIN) \
+	    $(MKC_LOCAL)
 	@# 'mkc-tmp/pass2/mkc' now exists.  no bootstrap flag is set
 
 bootstrap-config: mkc_config.h
@@ -179,6 +182,7 @@ bootstrap-config: mkc_config.h
 $(MKC_TARGET): bootstrap-pass2
 	@$(MAKE) -f $(MAKEFILE) \
 	    MKC_EXEC=$(MKC_PASS2) \
+	    WIN=$(WIN) \
 	    bootstrap-process
 
 .PHONY: bootstrap-process
@@ -222,7 +226,6 @@ oscheck:
 
 .PHONY: windows-bootstrap
 windows-bootstrap:
-	@# _WIN32 does not seem to be defined under cygwin
 	@$(MAKE) -f $(SRC_REL)$(MAKEFILE) \
 	    CFLAGS="$(CFLAGS) \
 	      -DMKC_BOOTSTRAP_WIN=1" \

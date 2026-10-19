@@ -23,30 +23,30 @@
 #include "attribute.h"
 #include "chararr.h"
 #include "compile.h"
-#include "dict.h"
-#include "dictdict.h"
-#include "envutil.h"
-#include "fileop.h"
-#include "check.h"
 #include "const.h"
 #include "context.h"
-#include "mkc_def.h"
+#include "dictdict.h"
+#include "dict.h"
 #include "dirmatch.h"
+#include "envutil.h"
+#include "fileop.h"
+#include "mkc_check.h"
+#include "mkc_def.h"
 #include "mkc_error.h"
 #include "mkc_log.h"
 #include "mkc_option.h"
-#include "process.h"
 #include "mkc_regex.h"
-#include "strutil.h"
 #include "mkc_util.h"
-#include "var.h"      // for debugging
 #include "pathutil.h"
+#include "process.h"
 #include "scopedvar.h"
+#include "strutil.h"
 #include "target.h"
 #include "tmppath.h"
 #include "tmutil.h"
 #include "toposort.h"
 #include "value.h"
+#include "var.h"      // for debugging
 
 enum {
   MKC_AUTO_DEFINE_ZERO,
@@ -951,7 +951,6 @@ process_stmt_chk_inc_compile (process_t *process)
   chararr_free (cflags);
   chararr_free (include_paths);
   tmppath_release (process->tmppath, hdrpath);
-#endif
   process_attr_clear (process);
 
   {
@@ -963,6 +962,7 @@ process_stmt_chk_inc_compile (process_t *process)
     mkc_log (process->log, MKC_LOG_STATISTICS,
         "-- chk-include-compile: %s\n", tbuff);
   }
+#endif
 
   return rc;
 }
@@ -2650,7 +2650,7 @@ process_chk_shell_extract (process_t *process, value_t *valpath)
 
   if (process->rxshellvar == NULL) {
     process->rxshellvar = mkc_regex_init (
-        "^[ \t]*([[:alnum:]_]+)=((\"(([^\"\\\\]|\\\\.)*)\")|([^ \t\r\n]*))$",
+        "^[ \t]*([[:alpha:]_][[:alnum:]_]*)=((\"(([^\"\\\\]|\\\\.)*)\")|([^ \t\r\n]*))$",
         MKC_REGEX_MULTILINE, process->mkcerr);
     /*  0: entire string */
     /*  1: var-name */

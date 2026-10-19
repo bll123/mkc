@@ -115,7 +115,7 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 "+"             { return T_OP_PLUS; }
 "file_exists"   { return T_OP_FILE_EXISTS; }
 "is_defined"    { return T_OP_IS_DEFINED; }
-"is_dictionary" { return T_OP_IS_DICT; }
+"is_dictionary" { return T_OP_IS_DICTIONARY; }
 "is_directory"  { return T_OP_IS_DIRECTORY; }
 "is_list"       { return T_OP_IS_LIST; }
 "{"             { return T_LEFT_BRACE; }
@@ -179,7 +179,6 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 ".check_struct_member"      { return T_CHK_STRUCT_MEMBER; }
 ".check_type"               { return T_CHK_TYPE; }
 ".check_shell_extract"      { return T_CHK_SHELL_EXTRACT; }
-
 ".add_compile_flag"         { return T_ADD_COMP_FLAG; }
 ".add_library"              { return T_ADD_LIBRARY; }
 ".add_link_flag"            { return T_ADD_LINK_FLAG; }
@@ -254,7 +253,7 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
     return T_VARIABLE;
   }
 
-"$ENV{"({VAR_ALNUM}|"-")+"}"  {
+"$ENV{"({VAR_ALPHA}{VAR_ALNUM}*)"}"  {
     /* is this definition correct? what characters are valid for env names? */
     yytext [yyleng - 1] = '\0';
     yyleng -= 6;

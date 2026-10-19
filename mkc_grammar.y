@@ -73,7 +73,7 @@
 %token T_OP_DIVIDE            "/"
 %token T_OP_FILE_EXISTS       "file_exists"
 %token T_OP_IS_DEFINED        "is_defined"
-%token T_OP_IS_DICT           "is_dict"
+%token T_OP_IS_DICTIONARY     "is_dictionary"
 %token T_OP_IS_DIRECTORY      "is_directory"
 %token T_OP_IS_LIST           "is_list"
 %token T_OP_MINUS             "-"
@@ -260,7 +260,8 @@
 %left T_OP_MINUS T_OP_PLUS
 %left T_OP_MULTIPLY T_OP_DIVIDE T_OP_MODULO
 %precedence UNARY
-%nonassoc T_OP_FILE_EXISTS T_OP_IS_DEFINED T_OP_IS_DICT T_OP_IS_DIRECTORY T_OP_IS_LIST
+%nonassoc T_OP_FILE_EXISTS T_OP_IS_DEFINED T_OP_IS_DICTIONARY
+%nonassoc T_OP_IS_DIRECTORY T_OP_IS_LIST
 
 %%
 mkc:
@@ -1306,9 +1307,9 @@ expr[v]:
       $v = ast_mk_unary_op (ast, $a, MKC_T_OP_IS_DEFINED,
           yylloc.first_line, yylloc.first_column);
     }
-  | T_OP_IS_DICT T_LEFT_PAREN varname[a] T_RIGHT_PAREN
+  | T_OP_IS_DICTIONARY T_LEFT_PAREN varname[a] T_RIGHT_PAREN
     {
-      $v = ast_mk_unary_op (ast, $a, MKC_T_OP_IS_DICT,
+      $v = ast_mk_unary_op (ast, $a, MKC_T_OP_IS_DICTIONARY,
           yylloc.first_line, yylloc.first_column);
     }
   | T_OP_IS_DIRECTORY T_LEFT_PAREN pathname[a] T_RIGHT_PAREN

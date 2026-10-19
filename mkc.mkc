@@ -202,9 +202,9 @@ set_fortify_flags;
 }
 
 .executable mkc {
-  .source ast.c asttoken.c chararr.c check.c compile.c const.c
+  .source ast.c asttoken.c chararr.c compile.c const.c
       context.c dict.c dictdict.c dirmatch.c dirop.c envutil.c
-      fileop.c list.c mkc_compiler.c
+      fileop.c list.c mkc_check.c mkc_compiler.c
       mkc_error.c mkc_grammar.c mkc_lex.c
       mkc_log.c mkc_main.c mkc_regex_pcre.c mkc_util.c
       os_process.c parse.c parsefn.c pathutil.c process.c scopedvar.c
