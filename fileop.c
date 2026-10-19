@@ -19,16 +19,10 @@
 #include <limits.h>
 #include <wchar.h>
 #include <errno.h>
-#if __CYGWIN__
-# include <assert.h>
-#endif
 
 #if __has_include (<windows.h>)
 # define WIN32_LEAN_AND_MEAN 1
 # include <windows.h>
-# ifdef __CYGWIN__
-#  include "mkc_cygwin.h"
-# endif
 #endif
 #if __has_include (<io.h>)
 # include <io.h>
@@ -45,10 +39,6 @@ FILE *
 fileop_open (const char *fname, const char *mode)
 {
   FILE          *fh = NULL;
-
-#if __CYGWIN__
-  assert (sizeof (struct _stat64) == 56);
-#endif
 
 #if MKC_SYS_WINDOWS || MKC_BOOTSTRAP_WIN
   {

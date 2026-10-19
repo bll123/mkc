@@ -13,9 +13,6 @@
 #include <wchar.h>
 #if __has_include (<tchar.h>)
 # include <tchar.h>
-# ifdef __CYGWIN__
-#  include "mkc_cygwin.h"
-# endif
 #endif
 
 #include "envutil.h"
