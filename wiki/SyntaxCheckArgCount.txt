@@ -2,7 +2,7 @@
 <br>[Syntax](Syntax)
 <br>[Checks](SyntaxCheck)
 
-### .check\_arg\_count
+### .check_arg_count
 
 Checks the number of arguments a function requires.  This _check_ does
 not work on macros.  This _check_ provides a way to distinguish function
@@ -16,7 +16,7 @@ value of 0.
     .check_arg_count <function-name> { <attribute-statements> }
 
 Generated Name: Prefix: __\_arg\_count\___
-<br>Example: \_arg\_count\_mkdir 2
+<br>Example: _arg_count_mkdir 2
 
 ##### Examples
 
@@ -29,8 +29,8 @@ Generated Name: Prefix: __\_arg\_count\___
 * [.alternate](SyntaxAttrAlternate)
 * [.header](SyntaxAttrHeader)
 * [.name](SyntaxAttrName)
-* [.compiler\_flags](SyntaxAttrCompileFlag)
-* [.link\_flags](SyntaxAttrLinkFlag)
+* [.compiler_flags](SyntaxAttrCompileFlag)
+* [.link_flags](SyntaxAttrLinkFlag)
 * [.libraries](SyntaxLibraries)
 
 [Wiki Home](Home)

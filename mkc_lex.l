@@ -113,6 +113,7 @@ WHITESPACE            [ \t\r\n]|{COMMENT}
 "%"             { return T_OP_MODULO; }
 "*"             { return T_OP_MULTIPLY; }
 "+"             { return T_OP_PLUS; }
+".."            { return T_OP_RANGE; }
 "file_exists"   { return T_OP_FILE_EXISTS; }
 "is_defined"    { return T_OP_IS_DEFINED; }
 "is_dictionary" { return T_OP_IS_DICTIONARY; }

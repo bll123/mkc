@@ -4,7 +4,7 @@
 ### .path (attribute)
 
 The __.path__ attribute specifies an additional path.  It is used in
-the [.check\_package](SyntaxCheckPackage) statement.
+the [.check_package](SyntaxCheckPackage) statement.
 
     .path <path>;
 

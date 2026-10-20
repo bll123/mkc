@@ -1,7 +1,7 @@
 
-__mkc__ is build configuration tool.  It will create a configuration
-file based on the requested checks, build the project (not yet
-implemented), and install the project (not yet implemented).
+__mkc__ is configuration and build tool.  It will create a
+configuration file based on the requested checks, build the project
+(partially implemented), and install the project (not yet implemented).
 
 ### Contents
 
@@ -22,6 +22,11 @@ version 0.7 has been tested on Windows 10/MSys2, FreeBSD 14.3,
 Debian 13, MacOS Sequoia (intel), MacOS Golden Gate (m1).
 
 (See also: [wiki: Status](https://sourceforge.net/p/mkconf/wiki/Status/)).
+
+##### CYGWIN
+
+_mkc_ on CYGWIN does not handle international characters in filenames.
+currently not working (2026-10-20).
 
 ### About
 

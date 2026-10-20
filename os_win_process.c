@@ -122,16 +122,28 @@ os_process_start (const char *targv[], int flags, const char *outfname)
   if (outfname != NULL && *outfname) {
     bool            rc;
     int             count;
+#if _function_wstat64
     struct __stat64 statbuf;
+#else
+    struct stat statbuf;
+#endif
 
     CloseHandle (outhandle);
+#if _function_wstat64
     rc = _wstat64 (woutfname, &statbuf);
+#else
+    rc = stat (outfname, &statbuf);
+#endif
 
     /* windows is mucked up; wait for the redirected output to appear */
     count = 0;
     while (rc == 0 && statbuf.st_size == 0 && count < 60) {
       mssleep (5);
+#if _function_wstat64
       rc = _wstat64 (woutfname, &statbuf);
+#else
+      rc = stat (outfname, &statbuf);
+#endif
       ++count;
     }
   }

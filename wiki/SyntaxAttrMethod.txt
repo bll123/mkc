@@ -11,7 +11,7 @@ used in the [.configuration_file](SyntaxStmtConfigure) statement.
 For a [.configuration_file](SyntaxStmtConfigure) statement, _method_
 may be one of _auto_ or _manual_.
 
-Repeatable: no
+Repeatable: __no__
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

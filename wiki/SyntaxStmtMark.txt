@@ -1,0 +1,30 @@
+[Wiki Home](Home)
+<br>[Syntax](Syntax)
+
+### Syntax: .mark
+
+Marks a variable to be included or excluded from the configuration file.
+
+    .mark <variable-name> {enable|disable};
+
+When a configuration file is generated (.method auto), variables
+marked as _enable_ will be written to the configuration file.
+Variables marked with _disable_ will not be written.
+
+Variables set by the [check](SyntaxCheck) commands are automatically
+enabled.
+
+Variables that are set, internal variables and any variables fetched
+by [.check_shell_extract](SyntaxCheckShell) may be changed with
+__.mark__ as needed.
+
+##### Examples
+
+    .mark MKC_SYS_WINDOWS enable;
+    .set _have_mystuff true;
+    .mark _have_mystuff enable;
+    .check_function somefunc;
+    .mark _function_somefunc disable;
+
+[Wiki Home](Home)
+<br>[Syntax](Syntax)

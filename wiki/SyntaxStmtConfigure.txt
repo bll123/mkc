@@ -39,6 +39,10 @@ variable substitution will be performed.
 * [.replace](SyntaxAttrReplace) (manual only)
 * .define_zero
 
+##### See Also
+
+* [.mark](SyntaxStmtMark)
+
 ##### Examples
 
 ###### Example 1: Auto, with define_zero

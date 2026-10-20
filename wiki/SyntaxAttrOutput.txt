@@ -8,7 +8,7 @@ It is used in the [.configuration_file](SyntaxStmtConfigure) statement.
 
     ..output <path>;
 
-Repeatable: no
+Repeatable: __no__
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

@@ -1,7 +1,7 @@
 [Wiki Home](Home)
 <br>[Syntax](Syntax)
 
-### Syntax: .check\_include\_compile
+### Syntax: .check_include_compile
 
 __.check\_include\_compile__ checks to make sure the specified include
 files will compile without any dependencies.

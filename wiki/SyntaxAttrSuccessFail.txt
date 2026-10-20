@@ -10,7 +10,7 @@ is used in all [check](SyntaxCheck) statements.
     .on_success { <statement-list> }
     .on_failure { <statement-list> }
 
-Repeatable: no
+Repeatable: __no__
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

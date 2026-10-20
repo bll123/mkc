@@ -1,7 +1,7 @@
 [Wiki Home](Home)
 <br>[Syntax](Syntax)
 
-### .library\_version (attribute)
+### .library_version (attribute)
 
 Not yet implemented.
 
@@ -10,7 +10,7 @@ for something.
 
     .library_version <version-string>;
 
-Repeatable: no
+Repeatable: __no__
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

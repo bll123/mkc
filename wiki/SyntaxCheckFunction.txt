@@ -2,7 +2,7 @@
 <br>[Syntax](Syntax)
 <br>[Checks](SyntaxCheck)
 
-### .check\_function
+### .check_function
 
 Checks if _function&#8209;name_ exists.  The function is determined to
 exist if there is a macro defined with that name, or if the function
@@ -12,7 +12,7 @@ is found.
     .check_function <function-name> { <attribute-statements> }
 
 Generated Name: Prefix: __\_function\___
-<br>Example: \_function\_statvfs
+<br>Example: _function_statvfs
 
 ##### Examples
 
@@ -32,8 +32,8 @@ Generated Name: Prefix: __\_function\___
 * [.alternate](SyntaxAttrAlternate)
 * [.header](SyntaxAttrHeader)
 * [.name](SyntaxAttrName)
-* [.compiler\_flags](SyntaxAttrCompileFlag)
-* [.link\_flags](SyntaxAttrLinkFlag)
+* [.compiler_flags](SyntaxAttrCompileFlag)
+* [.link_flags](SyntaxAttrLinkFlag)
 * [.libraries](SyntaxAttrLibraries)
 
 [Wiki Home](Home)

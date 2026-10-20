@@ -1,7 +1,7 @@
 [Wiki Home](Home)
 <br>[Syntax](Syntax)
 
-### Syntax: .check\_include\_dependencies
+### Syntax: .check_include_dependencies
 
 __.check\_include\_dependencies__ checks for dependency loops in the
 include files.  The include files to be processed are located by

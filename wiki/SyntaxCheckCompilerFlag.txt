@@ -4,7 +4,7 @@
 
 [TOC]
 
-### .check\_compile\_flag
+### .check_compile_flag
 
 Checks to see if a compiler flag is valid, and if so, adds it to
 CFLAGS for the current profile.
@@ -23,7 +23,7 @@ opposite and cannot be tested with the __.negate__ attribute.
 
 Generated Name: Prefix: __cf\___
 <br>The leading '-' or '-W' is removed from the name.
-<br>Example: cf\_missing\_prototypes
+<br>Example: cf_missing_prototypes
 
 ##### Adding a Compiler Flag
 
@@ -41,7 +41,7 @@ Adds a compiler flag without any validation.
 * [.header](SyntaxAttrHeader)
 * [.name](SyntaxAttrName)
 * .negate
-* [.compiler\_flags](SyntaxAttrCompileFlag)
+* [.compiler_flags](SyntaxAttrCompileFlag)
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

@@ -2,7 +2,7 @@
 <br>[Syntax](Syntax)
 <br>[Checks](SyntaxCheck)
 
-### .check\_package
+### .check_package
 
     .check_package '<package-name>';
     .check_package '<package-name>' { <attribute-statements> }
@@ -15,7 +15,7 @@ __.name__ attribute will replace the _package-name_ in the variable
 names.
 
 Generated Name: Prefix: __\_package\___
-<br>Example: \_package\_zlib 1
+<br>Example: _package_zlib 1
 <br>zlib_CFLAGS \[ \]
 <br>zlib_LIBS \[ '-lz' \]
 

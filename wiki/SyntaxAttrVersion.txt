@@ -10,7 +10,7 @@ for the [.project](SyntaxStmtProject) statement.
 
 The __.version__ attribute defines the version number for the project.
 
-Repeatable: no
+Repeatable: __no__
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

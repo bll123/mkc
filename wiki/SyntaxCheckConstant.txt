@@ -2,7 +2,7 @@
 <br>[Syntax](Syntax)
 <br>[Checks](SyntaxCheck)
 
-### .check\_constant
+### .check_constant
 
     .check_constant <constant-name>;
     .check_constant <constant-name> { <attribute-statements> }
@@ -10,7 +10,7 @@
 Checks if _constant-name_ exists and is numeric.
 
 Generated Name: Prefix __\_constant\___
-<br>Example: \_constant\_EPERM
+<br>Example: _constant_EPERM
 
 ##### Examples
 
@@ -23,7 +23,7 @@ Generated Name: Prefix __\_constant\___
 * [.alternate](SyntaxAttrAlternate)
 * [.header](SyntaxAttrHeader)
 * [.name](SyntaxAttrName)
-* [.compiler\_flags](SyntaxAttrCompileFlag)
+* [.compiler_flags](SyntaxAttrCompileFlag)
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

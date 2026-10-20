@@ -2,7 +2,7 @@
 <br>[Syntax](Syntax)
 <br>[Checks](SyntaxCheck)
 
-### .check\_define
+### .check_define
 
 Checks if _macro-name_ exists as a macro.
 
@@ -10,7 +10,7 @@ Checks if _macro-name_ exists as a macro.
     .check_define <macro-name> { <attribute-statements> }
 
 Generated Name: Prefix: __\_define\___
-<br>Example: \_define\_EPERM
+<br>Example: _define_EPERM
 
 ##### Examples
 
@@ -23,7 +23,7 @@ Generated Name: Prefix: __\_define\___
 * [.alternate](SyntaxAttrAlternate)
 * [.header](SyntaxAttrHeader)
 * [.name](SyntaxAttrName)
-* [.compiler\_flags](SyntaxAttrCompileFlag)
+* [.compiler_flags](SyntaxAttrCompileFlag)
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

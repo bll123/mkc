@@ -4,7 +4,7 @@
 
 [TOC]
 
-### .check\_link\_flag
+### .check_link_flag
 
     .check_link_flag '-fsanitize=address';
 
@@ -13,7 +13,7 @@ LDFLAGS for the current profile.
 
 Generated Name: Prefix: __lf\___
 <br>Any leading '-' or '-W' is removed from the name.
-<br>Example: lf\_fsanitize\_address
+<br>Example: lf_fsanitize_address
 
 ##### Adding a Link Flag
 
@@ -30,8 +30,8 @@ Adds a link flag without any validation.
 
 * [.header](SyntaxAttrHeader)
 * [.name](SyntaxAttrName)
-* [.compiler\_flags](SyntaxAttrCompileFlag)
-* [.link\_flags](SyntaxAttrLinkFlag)
+* [.compiler_flags](SyntaxAttrCompileFlag)
+* [.link_flags](SyntaxAttrLinkFlag)
 * [.libraries](SyntaxAttrLibraries)
 
 [Wiki Home](Home)

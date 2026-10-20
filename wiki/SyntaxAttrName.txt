@@ -15,7 +15,7 @@ For [.alternate](SyntaxAttrAlternate) attributes, the __name__
 attribute specifies an additional name that will be set if the
 alternate succeeds.
 
-Repeatable: no
+Repeatable: __no__
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

@@ -265,7 +265,8 @@ os_process_run (const char *prog, ...)
   return ret;
 }
 
-#if defined (WIFEXITED)
+#if _function_fork || defined (WIFEXITED) || \
+    (MKC_BOOTSTRAP && ! MKC_BOOTSTRAP_WIN)
 
 static int
 mkc_os_process_wait (int wstatus)

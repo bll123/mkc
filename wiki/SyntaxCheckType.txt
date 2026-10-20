@@ -2,7 +2,7 @@
 <br>[Syntax](Syntax)
 <br>[Checks](SyntaxCheck)
 
-### .check\_type
+### .check_type
 
 Checks if _type-name_ exists.
 
@@ -10,7 +10,7 @@ Checks if _type-name_ exists.
     .check_type <type-name> { <attribute-statements> }
 
 Generated Name: Prefix __\_type\___
-<br>Example: \_type\_uid\_t
+<br>Example: _type_uid_t
 
 ##### Examples
 

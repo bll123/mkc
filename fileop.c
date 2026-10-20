@@ -40,7 +40,8 @@ fileop_open (const char *fname, const char *mode)
 {
   FILE          *fh = NULL;
 
-#if MKC_SYS_WINDOWS || MKC_BOOTSTRAP_WIN
+#if _function_wfopen || \
+    (! defined (__CYGWIN__) && MKC_BOOTSTRAP && MKC_BOOTSTRAP_WIN)
   {
     wchar_t       *tfname = NULL;
     wchar_t       *tmode = NULL;
@@ -67,7 +68,8 @@ fileop_exists (const char *fname)
   int     rc = -1;
   bool    brc = false;
 
-#if _function__wstat64 || (MKC_BOOTSTRAP && MKC_BOOTSTRAP_WIN)
+#if _function__wstat64 || \
+    (! defined (__CYGWIN__) && MKC_BOOTSTRAP && MKC_BOOTSTRAP_WIN)
   {
     struct __stat64  statbuf;
     wchar_t       *tfname = NULL;
@@ -151,7 +153,8 @@ fileop_size (const char *fname)
 {
   ssize_t       sz = -1;
 
-#if _function__wstat64 || (MKC_BOOTSTRAP && MKC_BOOTSTRAP_WIN)
+#if _function__wstat64 || \
+    (! defined (__CYGWIN__) && MKC_BOOTSTRAP && MKC_BOOTSTRAP_WIN)
   {
     struct __stat64  statbuf;
     wchar_t       *tfname = NULL;
@@ -253,7 +256,8 @@ int
 fileop_file_delete (const char *fname)
 {
   int     rc = -1;
-#if _function__wunlink || (MKC_BOOTSTRAP && MKC_BOOTSTRAP_WIN)
+#if _function__wunlink || \
+    (! defined (__CYGWIN__) && MKC_BOOTSTRAP && MKC_BOOTSTRAP_WIN)
   wchar_t *tname;
 #endif
 
@@ -261,7 +265,8 @@ fileop_file_delete (const char *fname)
     return MKC_ERR_NULL_ARGUMENT;
   }
 
-#if _function__wunlink || (MKC_BOOTSTRAP && MKC_BOOTSTRAP_WIN)
+#if _function__wunlink || \
+    (! defined (__CYGWIN__) && MKC_BOOTSTRAP && MKC_BOOTSTRAP_WIN)
   tname = str_towide (fname);
   if (tname != NULL) {
     rc = _wunlink (tname);
@@ -282,7 +287,8 @@ fileop_file_move (const char *fname, const char *nfn)
     return rc;
   }
 
-#if _function__wrename || (MKC_BOOTSTRAP && MKC_BOOTSTRAP_WIN)
+#if _function__wrename || \
+    (! defined (__CYGWIN__) && MKC_BOOTSTRAP && MKC_BOOTSTRAP_WIN)
   /*
    * Windows won't rename to an existing file, but does
    * not return an error.
@@ -444,7 +450,8 @@ fileop_is_directory (const char *fname)
   int   rc = -1;
   bool  brc = false;
 
-#if _function__wstat64
+#if _function__wstat64 || \
+    (! defined (__CYGWIN__) && MKC_BOOTSTRAP && MKC_BOOTSTRAP_WIN)
   {
     struct __stat64  statbuf;
     wchar_t       *tfname = NULL;

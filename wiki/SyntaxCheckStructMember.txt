@@ -2,7 +2,7 @@
 <br>[Syntax](Syntax)
 <br>[Checks](SyntaxCheck)
 
-### .check\_struct\_member
+### .check_struct_member
 
 Checks to see if _member-name_ exists in _struct-name_.
 
@@ -10,7 +10,7 @@ Checks to see if _member-name_ exists in _struct-name_.
     .check_struct_member <struct-name> <member-name> { <attribute-statements> }
 
 Generated Name: Prefix: __\_member\___
-<br>Example: \_member\_struct\_stat\_st\_mode
+<br>Example: _member_struct_stat_st_mode
 
 ##### Examples
 
@@ -23,7 +23,7 @@ Generated Name: Prefix: __\_member\___
 * [.alternate](SyntaxAttrAlternate)
 * [.header](SyntaxAttrHeader)
 * [.name](SyntaxAttrName)
-* [.compiler\_flags](SyntaxAttrCompileFlag)
+* [.compiler_flags](SyntaxAttrCompileFlag)
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)

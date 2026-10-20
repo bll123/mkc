@@ -7,20 +7,20 @@
 
 ##### Checks
 
-* [.check\_arg\_count](SyntaxCheckArgCount)
-* [.check\_compiler\_flag](SyntaxCheckCompilerFlag)
-  .add\_compiler\_flag
-* [.check\_constant](SyntaxCheckConstant)
-* [.check\_define](SyntaxCheckDefine)
-* [.check\_function](SyntaxCheckFunction)
-* [.check\_header](SyntaxCheckHeader)
-* [.check\_link\_flag](SyntaxCheckLinkFlag)
-  .add\_link\_flag
-* [.check\_package](SyntaxCheckPackage)
-* [.check\_size](SyntaxCheckSize)
-* [.check\_shell\_extract](SyntaxCheckShell)
-* [.check\_struct\_member](SyntaxCheckStructMember)
-* [.check\_type](SyntaxCheckType)
+* [.check_arg_count](SyntaxCheckArgCount)
+* [.check_compiler_flag](SyntaxCheckCompilerFlag)
+  .add_compiler_flag
+* [.check_constant](SyntaxCheckConstant)
+* [.check_define](SyntaxCheckDefine)
+* [.check_function](SyntaxCheckFunction)
+* [.check_header](SyntaxCheckHeader)
+* [.check_link_flag](SyntaxCheckLinkFlag)
+  .add_link_flag
+* [.check_package](SyntaxCheckPackage)
+* [.check_size](SyntaxCheckSize)
+* [.check_shell_extract](SyntaxCheckShell)
+* [.check_struct_member](SyntaxCheckStructMember)
+* [.check_type](SyntaxCheckType)
 
 ##### Standard Headers Included for a Check
 
@@ -41,15 +41,21 @@ the specific wiki page for the check to see which attributes are
 allowed for the check.
 
 * [.alternate](SyntaxAttrAlternate)
-* [.compiler\_flags](SyntaxAttrCompileFlag)
+* [.compiler_flags](SyntaxAttrCompileFlag)
+* [.compiler](SyntaxAttrCompiler)
 * [.header](SyntaxAttrHeader)
-* [.link\_flags](SyntaxAttrLinkFlag)
+* [.input](SyntaxAttrInput)
 * [.libraries](SyntaxAttrLibraries)
+* [.link_flags](SyntaxAttrLinkFlag)
 * [.match](SyntaxAttrMatch)
+* [.method](SyntaxAttrMethod)
 * [.name](SyntaxAttrName)
 * [.negate](SyntaxCheckCompilerFlag)
 * [.on_failure](SyntaxAttrSuccessFail)
 * [.on_success](SyntaxAttrSuccessFail)
+* [.output](SyntaxAttrOutput)
+* [.path](SyntaxAttrPath)
+* [.source](SyntaxAttrSource)
 
 ##### Setting Required Headers for a Check
 
@@ -95,8 +101,8 @@ The [.alternate](SyntaxAttrAlternate) is a powerful method to run
 _checks_ with alternate settings.
 
 Each alternate attribute block may contain the [.name](SyntaxAttrName),
-[.header](SyntaxAttrHeader), [.compiler\_flags](SyntaxAttrCompileFlag),
-[.link\_flags](SyntaxAttrLinkFlag) and
+[.header](SyntaxAttrHeader), [.compiler_flags](SyntaxAttrCompileFlag),
+[.link_flags](SyntaxAttrLinkFlag) and
 [.libraries](SyntaxAttrLibraries) attributes.
 
 For example, the following code checks for the _statfs_ function.  On
@@ -124,7 +130,7 @@ _\_header\_sys\_mount_ variable will be set.
 
 ##### .on_success and .on_failure
 
-The __.on_success__ and __.on_failure__ attributes blocks will execute on
+The __.on\_success__ and __.on\_failure__ attributes blocks will execute on
 success or failure of a [.check](SyntaxCheck).
 
     .check_function statfs {

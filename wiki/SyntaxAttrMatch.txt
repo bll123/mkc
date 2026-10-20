@@ -1,0 +1,24 @@
+[Wiki Home](Home)
+<br>[Syntax](Syntax)
+
+### .match (attribute)
+
+The __.match__ is used for
+[.check_include_compile](SyntaxStmtCheckIncCompile),
+[.check_include_dependencies](SyntaxStmtCheckIncDeps) and
+[.check_include_guards](SyntaxStmtCheckIncGuards).
+
+    .match <regular-expression>;
+
+The __.match__ regular expression is compared against the files in the
+project's include directories.  All files that match are used for the
+check include statement.
+
+Repeatable: __no__
+
+##### Examples
+
+    match '\.h$';
+
+[Wiki Home](Home)
+<br>[Syntax](Syntax)

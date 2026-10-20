@@ -4,6 +4,7 @@
 
 [Overview](Overview)
 <br>[Syntax](Syntax)
+<br>[Check Statements](SyntaxCheck)
 <br>[Internal Variables](InternalVariables)
 <br>[Command Line Arguments](CommandLineArg)
 <br>[Profiles](Profiles)

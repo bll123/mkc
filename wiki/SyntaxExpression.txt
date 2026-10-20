@@ -17,7 +17,6 @@ Listed by precedence (high to low):
 * __== != eq ne eq~ ne~__
 * __&&__
 * __||__
-* __..__
 
 Unary Operations on Integers
 

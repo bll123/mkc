@@ -2,7 +2,7 @@
 <br>[Syntax](Syntax)
 <br>[Checks](SyntaxCheck)
 
-### .check\_header
+### .check_header
 
 Checks if _header_ exists and can be compiled.
 
@@ -17,7 +17,7 @@ code can be used:
     #endif
 
 Generated Name: Prefix: __\_header\___
-<br>Example: \_header\_sys\_stat
+<br>Example: _header_sys_stat
 
 ##### Examples
 
@@ -40,7 +40,7 @@ Generated Name: Prefix: __\_header\___
 * [.alternate](SyntaxAttrAlternate)
 * [.header](SyntaxAttrHeader)
 * [.name](SyntaxAttrName)
-* [.compiler\_flags](SyntaxAttrCompileFlag)
+* [.compiler_flags](SyntaxAttrCompileFlag)
 
 [Wiki Home](Home)
 <br>[Syntax](Syntax)
