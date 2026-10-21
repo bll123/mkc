@@ -1,0 +1,21 @@
+[Wiki Home](Home)
+<br>[Syntax](Syntax)
+
+### .command (attribute)
+
+    .command <command-line>;
+
+The __.command__ attribute is used with a
+[.create_file](SyntaxStmtCreateFile) statement.
+
+The tokens in _command-line_ do not need to be quoted.
+
+Repeatable: __yes__
+
+##### Examples
+
+    .command bison -o grammar.c --defines=grammar.h grammar.y;
+    .command cp -fp a.txt b.txt;
+
+[Wiki Home](Home)
+<br>[Syntax](Syntax)

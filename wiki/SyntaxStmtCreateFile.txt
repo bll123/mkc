@@ -1,0 +1,21 @@
+[Wiki Home](Home)
+<br>[Syntax](Syntax)
+
+### Syntax: .create_file
+
+__.create_file__ creates a file or files given a list of commands to run.
+
+    .create_file <file-name> [<file-name> ...] { <attribute-list> };
+
+##### Attributes
+
+* [.command](SyntaxAttrCommand)
+
+##### Examples
+
+    .create_file grammar.c grammar.h {
+      .command bison -o grammar.c --defines=grammar.h grammar.y;
+    }
+
+[Wiki Home](Home)
+<br>[Syntax](Syntax)

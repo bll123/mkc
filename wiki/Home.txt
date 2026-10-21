@@ -3,6 +3,8 @@
 <div markdown style="float: left; margin-right: 20px;">
 
 [Overview](Overview)
+<br>[Values and Variables](SyntaxVariable)
+Mbr>[Expressions](SyntaxExpression)
 <br>[Syntax](Syntax)
 <br>[Check Statements](SyntaxCheck)
 <br>[Internal Variables](InternalVariables)

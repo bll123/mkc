@@ -60,6 +60,7 @@ values, and therefore do not have a leading period (.).
       * [.check_type](SyntaxCheckType)
   * Attributes
       * [.alternate](SyntaxAttrAlternate)
+      * [.command](SyntaxAttrCommand)
       * [.compiler_flags](SyntaxAttrCompileFlag)
       * [.compiler](SyntaxAttrCompiler)
       * [.header](SyntaxAttrHeader)
