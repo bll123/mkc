@@ -27,7 +27,7 @@ chk900() {
   # all examples have hw.mkc (as of 2026-9-27)
   ../../mkc ${cachearg} --clean --prefix '' hw.mkc
   rc=$?
-  if [ $rc -ne 0 ]]; then
+  if [ $rc -ne 0 ]; then
     echo "   fail: test: ${enm} ${cachedisp} $tnm"
     exit $rc
   fi
@@ -37,7 +37,7 @@ chk900() {
   fi
   out=`./mkc_files/hw/stage/bin/hw`
   rc=$?
-  if [ $rc -ne 0 ]]; then
+  if [ $rc -ne 0 ]; then
     echo "   fail: test: ${enm} (run failed) ${cachedisp} $tnm"
     exit $rc
   fi
@@ -53,7 +53,7 @@ for e in examples/*; do
   enm=`basename ${e}`
 
   rc=$?
-  if [ $rc -ne 0 ]]; then
+  if [ $rc -ne 0 ]; then
     echo "   fail: test: ${enm} (chdir) $tnm"
     cd ${cwd}
     exit $rc

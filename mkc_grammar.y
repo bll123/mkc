@@ -1389,14 +1389,7 @@ list[v]:
 
 // currently undecided on what a range syntax should be...
 range[v]:
-//    T_LEFT_PAREN varvalue[a] T_OP_RANGE varvalue[b] T_RIGHT_PAREN
-//    {
-//      $v = ast_mk_value (ast, MKC_T_VAL_TRUE, NULL,
-//          yylloc.first_line, yylloc.first_column);
-//      $v = ast_mk_value_range (ast, $a, $b, $v,
-//          yylloc.first_line, yylloc.first_column);
-//    }
-  | T_RANGE T_LEFT_PAREN varvalue[a] varvalue[b] T_RIGHT_PAREN
+  T_RANGE T_LEFT_PAREN varvalue[a] varvalue[b] T_RIGHT_PAREN
     {
       $v = ast_mk_value (ast, MKC_T_VAL_TRUE, NULL,
           yylloc.first_line, yylloc.first_column);
