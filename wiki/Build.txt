@@ -20,7 +20,7 @@ distclean` is done.
 * libpcre2-8
 * lorder
   For future use. Recommended.
-  Linux doesn't ship this, an lorder script is included for Linux.
+  Linux doesn't have an lorder package, an lorder script is included for Linux.
 * rm, cp, etc.
 * bison
 * flex
@@ -28,12 +28,15 @@ distclean` is done.
 ##### Building
 
 The bootstrap process will build _mkc_ three times to create a
-functioning _mkc_ program.  This process is optimized to only
-re-compile what is necessary.
+functioning _mkc_ program.
 
 `make`
 
+`make PREFIX=$HOME/local`
+
 ##### Testing
+
+If _mkc_ is built with no prefix, the tests may be run.
 
 `./tests/runtests.sh`
 

@@ -44,7 +44,7 @@ __file\_exists (_path_)__ returns true if _path_ exists and is a
 file.
 
 __is\_defined (_variable&#8209;name_)__ returns true if the variable
-is define.
+is defined.
 
 __is\_dictionary (_variable&#8209;name_)__ returns true if the variable is
 defined and is a dictionary.

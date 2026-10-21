@@ -7,13 +7,18 @@ __.create_file__ creates a file or files given a list of commands to run.
 
     .create_file <file-name> [<file-name> ...] { <attribute-list> };
 
+The [.source](SyntaxAttrSource) attribute is used to specify the
+dependency for the files to be created.
+
 ##### Attributes
 
 * [.command](SyntaxAttrCommand)
+* [.source](SyntaxAttrSource)
 
 ##### Examples
 
     .create_file grammar.c grammar.h {
+      .source grammar.y;
       .command bison -o grammar.c --defines=grammar.h grammar.y;
     }
 
